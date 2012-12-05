@@ -734,3 +734,147 @@
 	"../inc/type.h"
 	"../inc/sym.h"
 
+1354559342 source:c:\users\sam\git\fcc\src\asm-amd64.c
+	"stdlib.h"
+	"stdarg.h"
+	"stdio.h"
+	"../inc/debug.h"
+	"../inc/asm.h"
+	"../inc/asm-amd64.h"
+
+1354645419 c:\users\sam\git\fcc\inc\debug.h
+	"stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1354684735 c:\users\sam\git\fcc\inc\type.h
+	"../std/std.h"
+
+1354577995 c:\users\sam\git\fcc\std\std.h
+
+1354675879 c:\users\sam\git\fcc\inc\sym.h
+	"type.h"
+	"operand.h"
+
+1354296409 c:\users\sam\git\fcc\inc\operand.h
+	"reg.h"
+
+1354570964 c:\users\sam\git\fcc\inc\reg.h
+	"../std/std.h"
+
+1354727175 c:\users\sam\git\fcc\inc\ast.h
+	"type.h"
+
+1354559035 c:\users\sam\git\fcc\inc\asm.h
+	"stdarg.h"
+	"stdio.h"
+
+1354558576 c:\users\sam\git\fcc\inc\asm-amd64.h
+	"../inc/operand.h"
+
+1354564328 source:c:\users\sam\git\fcc\src\asm.c
+	"stdarg.h"
+	"../inc/asm.h"
+
+1354682969 source:c:\users\sam\git\fcc\src\ast.c
+	"stdio.h"
+	"stdlib.h"
+	"../inc/ast.h"
+
+1354684796 source:c:\users\sam\git\fcc\src\debug.c
+	"stdlib.h"
+	"stdio.h"
+	"../inc/debug.h"
+
+1354682128 source:c:\users\sam\git\fcc\src\emitter.c
+	"string.h"
+	"stdio.h"
+	"stdlib.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/operand.h"
+	"../inc/asm.h"
+	"../inc/asm-amd64.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1354727129 c:\users\sam\git\fcc\inc\emitter.h
+	"stdio.h"
+	"../inc/ast.h"
+
+1354738275 source:c:\users\sam\git\fcc\src\lexer.c
+	"stdlib.h"
+	"ctype.h"
+	"stdarg.h"
+	"stdio.h"
+	"string.h"
+	"../std/std.h"
+	"../inc/type.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1354734173 c:\users\sam\git\fcc\inc\stream.h
+
+1354727317 c:\users\sam\git\fcc\inc\lexer.h
+	"../std/std.h"
+
+1354497249 source:c:\users\sam\git\fcc\src\main.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1354727074 c:\users\sam\git\fcc\inc\parser.h
+	"ast.h"
+
+1354731239 source:c:\users\sam\git\fcc\src\operand.c
+	"stdlib.h"
+	"string.h"
+	"stdio.h"
+	"../inc/operand.h"
+	"../inc/reg.h"
+
+1354739660 source:c:\users\sam\git\fcc\src\parser.c
+	"stdlib.h"
+	"string.h"
+	"../inc/debug.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1354679813 source:c:\users\sam\git\fcc\src\reg.c
+	"../inc/reg.h"
+
+1354731477 source:c:\users\sam\git\fcc\src\std.c
+	"stdlib.h"
+	"string.h"
+	"../std/stdlib.h"
+
+1354731412 c:\users\sam\git\fcc\std\stdlib.h
+
+1354675865 source:c:\users\sam\git\fcc\src\sym.c
+	"stdio.h"
+	"string.h"
+	"stdlib.h"
+	"../inc/debug.h"
+	"../inc/sym.h"
+
+1354731657 source:c:\users\sam\git\fcc\src\type.c
+	"stdlib.h"
+	"string.h"
+	"stdio.h"
+	"../inc/type.h"
+	"../inc/sym.h"
+
+1354738126 source:c:\users\sam\git\fcc\src\stream.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../inc/stream.h"
+
