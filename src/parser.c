@@ -1,6 +1,5 @@
 #include "stdlib.h"
 #include "string.h"
-#include "math.h"
 
 #include "../inc/debug.h"
 #include "../inc/lexer.h"
@@ -349,8 +348,8 @@ ast* parserArray (sym* Scope, type DT, char* Ident, int Storage) {
             Node->symbol->dt.array = n;
 
         else if (Node->symbol->dt.array < n) {
-            char* one = malloc(20+log10(n));
-            char* two = malloc(20+log10(n));
+            char* one = malloc(20+n);
+            char* two = malloc(20+n);
             sprintf(one, "%d given", Node->symbol->dt.array);
             sprintf(two, "%d element initializer", n);
             errorMismatch("array size", one, two);

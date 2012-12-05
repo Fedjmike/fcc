@@ -84,10 +84,10 @@ char* operandToStr (operand Value) {
     ret[0] = 0;
 
     if (Value.class == operandFlags)
-        sprintf(ret, "%s", Conditions[Value.condition]);
+        strcat(ret, Conditions[Value.condition]);
 
     else if (Value.class == operandReg)
-        sprintf(ret, regToStr(Value.reg));
+        strcat(ret, regToStr(Value.reg));
 
     else if (Value.class == operandMem || Value.class == operandMemRef) {
         char* Size;
@@ -126,7 +126,7 @@ char* operandToStr (operand Value) {
         sprintf(ret, "%d", Value.literal);
 
     else if (Value.class == operandLabel)
-        sprintf(ret, labelGet(Value));
+        strcat(ret, labelGet(Value));
 
     else
         printf("operandToStr(): unknown operand class, %d.\n", Value.class);

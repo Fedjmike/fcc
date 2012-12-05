@@ -1,8 +1,10 @@
-#include "../std/stdlib.h"
+#include "stdlib.h"
 #include "string.h"
 
-int EXIT_FAILURE = 1;
-int EXIT_SUCCESS = 0;
+#include "../std/stdlib.h"
+
+//int EXIT_FAILURE = 1;
+//int EXIT_SUCCESS = 0;
 
 int SEEK_SET = 0;
 int SEEK_CUR = 1;
@@ -135,7 +137,7 @@ char tolower (char Char) {
 /*Modify a file names extension*/
 char* filext (char* Name, char* Extension) {
     /*Location of the first '.' (if any)*/
-    int Index = strchr(Name, (int) ".")-Name;
+    int Index = (int)(strchr(Name, (int) ".")-Name);
 
     if (Index < 0)
         return strcat(strcat(strcpy(malloc(strlen(Name)+5), Name), "."), Extension);

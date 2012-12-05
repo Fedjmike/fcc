@@ -1,5 +1,4 @@
 #include "stdlib.h"
-#include "math.h"
 #include "string.h"
 #include "stdio.h"
 
@@ -21,7 +20,7 @@ int typeGetSize (type DT) {
 }
 
 char* typeToStr (type DT) {
-    char* Str = malloc(strlen(DT.basic->ident) + DT.ptr + log10(DT.array) + 10);
+    char* Str = malloc(strlen(DT.basic->ident) + DT.ptr + DT.array + 10);
 
     sprintf(Str, "%s", DT.basic ? DT.basic->ident : 0);
 
