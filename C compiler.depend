@@ -637,7 +637,7 @@
 	"stdio.h"
 	"../inc/ast.h"
 
-1354685297 source:c:\users\sam\programming\c++\c compiler\src\lexer.c
+1354734243 source:c:\users\sam\programming\c++\c compiler\src\lexer.c
 	"stdlib.h"
 	"ctype.h"
 	"stdarg.h"
@@ -648,7 +648,7 @@
 	"../inc/stream.h"
 	"../inc/lexer.h"
 
-1354489190 c:\users\sam\programming\c++\c compiler\inc\stream.h
+1354734173 c:\users\sam\programming\c++\c compiler\inc\stream.h
 
 1354727317 c:\users\sam\programming\c++\c compiler\inc\lexer.h
 	"../std/std.h"
@@ -665,17 +665,16 @@
 1354727074 c:\users\sam\programming\c++\c compiler\inc\parser.h
 	"ast.h"
 
-1354682882 source:c:\users\sam\programming\c++\c compiler\src\operand.c
+1354731239 source:c:\users\sam\programming\c++\c compiler\src\operand.c
 	"stdlib.h"
 	"string.h"
 	"stdio.h"
 	"../inc/operand.h"
 	"../inc/reg.h"
 
-1354727041 source:c:\users\sam\programming\c++\c compiler\src\parser.c
+1354732984 source:c:\users\sam\programming\c++\c compiler\src\parser.c
 	"stdlib.h"
 	"string.h"
-	"math.h"
 	"../inc/debug.h"
 	"../inc/lexer.h"
 	"../inc/parser.h"
@@ -683,13 +682,14 @@
 1354679813 source:c:\users\sam\programming\c++\c compiler\src\reg.c
 	"../inc/reg.h"
 
-1354571115 source:c:\users\sam\programming\c++\c compiler\src\std.c
-	"../std/stdlib.h"
+1354731477 source:c:\users\sam\programming\c++\c compiler\src\std.c
+	"stdlib.h"
 	"string.h"
+	"../std/stdlib.h"
 
-1354571147 c:\users\sam\programming\c++\c compiler\std\stdlib.h
+1354731412 c:\users\sam\programming\c++\c compiler\std\stdlib.h
 
-1354492064 source:c:\users\sam\programming\c++\c compiler\src\stream.c
+1354737331 source:c:\users\sam\programming\c++\c compiler\src\stream.c
 	"string.h"
 	"stdlib.h"
 	"stdio.h"
@@ -727,9 +727,8 @@
 1354558576 c:\users\sam\programming\c++\c compiler\inc\asm-amd64.h
 	"../inc/operand.h"
 
-1354684748 source:c:\users\sam\programming\c++\c compiler\src\type.c
+1354731657 source:c:\users\sam\programming\c++\c compiler\src\type.c
 	"stdlib.h"
-	"math.h"
 	"string.h"
 	"stdio.h"
 	"../inc/type.h"

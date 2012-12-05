@@ -154,13 +154,13 @@ void lexerNext () {
 
     lexerBuffer[length++] = 0;
 
-    //printf("token(%i): '%s'.\n", streamGetPos(), lexerBuffer);
+    //printf("token(%d:%d): '%s'.\n", streamGetLine(), streamGetLineChar(), lexerBuffer);
 }
 
 /* ::::PARSER MESSAGES:::: */
 
 static void error (char* format, ...) {
-    printf("error(%d): ", streamGetPos());
+    printf("error(%d:%d): ", streamGetLine(), streamGetLineChar());
 
     va_list args;
     va_start(args, format);
@@ -197,7 +197,10 @@ bool lexerIs (char* Match) {
 }
 
 void lexerMatch () {
-    printf("matched(%d): '%s'.\n", streamGetPos(), lexerBuffer);
+    printf("matched(%d:%d): '%s'.\n",
+           streamGetLine(),
+           streamGetLineChar(),
+           lexerBuffer);
     lexerNext();
 }
 

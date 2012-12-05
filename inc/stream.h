@@ -11,6 +11,8 @@ char streamNext ();
 char streamPrev ();
 
 int streamGetPos ();
+int streamGetLine ();
+int streamGetLineChar ();
 
 extern char* streamFilename;
 extern char streamChar;

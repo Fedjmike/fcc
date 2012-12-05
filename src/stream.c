@@ -12,6 +12,8 @@ int streamFileNo = 0;
 
 char* streamFilename;
 char streamChar = 0;
+int lineNo = 1;
+int lineCharNo = 0;
 
 void streamInit (char* File) {
     streamPush(File);
@@ -52,6 +54,13 @@ char streamNext () {
     if (feof(streamFiles[streamFileNo-1]) || streamChar == ((char) 0xFF))
         streamChar = 0;
 
+    lineCharNo++;
+
+    if (Old == '\n') {
+        lineNo++;
+        lineCharNo = 0;
+    }
+
     //printf("%d\t%c\n", (int) streamChar, streamChar);
 
     return Old;
@@ -63,9 +72,24 @@ char streamPrev () {
     fseek(streamFiles[streamFileNo-1], -2, SEEK_CUR);
     streamNext();
 
+    lineCharNo--;
+
+    if (streamChar == '\n') {
+        lineNo--;
+        lineCharNo = -1;
+    }
+
     return Old;
 }
 
 int streamGetPos () {
     return ftell(streamFiles[streamFileNo-1]);
+}
+
+int streamGetLine () {
+    return lineNo;
+}
+
+int streamGetLineChar () {
+    return lineCharNo;
 }

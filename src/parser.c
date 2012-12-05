@@ -151,10 +151,8 @@ type parserType (sym* Scope) {
         lexerNext();
     }
 
-    while (lexerIs("*")) {
-        DT.ptr += 1;
-        lexerMatch();
-    }
+    while (lexerTryMatchStr("*"))
+        DT.ptr++;
 
     puts("-");
 
@@ -188,8 +186,7 @@ void parserStruct (sym* Scope) {
                 Field->dt = fieldDT;
                 Field->ident = lexerMatchIdent();
 
-                if (lexerIs("[")) {
-                    lexerMatch();
+                if (lexerTryMatchStr("[")) {
                     Field->dt.array = atoi(lexerBuffer);
 
                     if (Field->dt.array <= 0) {
