@@ -1,0 +1,737 @@
+# depslib dependency file v1.0
+1285947108 source:h:\programming\little projects\c compiler\src\main.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1281815952 
+
+1285947108 source:k:\programming\little projects\c compiler\src\main.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1281734558 source:k:\programming\little projects\c compiler\tests\factorial.c
+
+1281984872 source:/media/MY STUFF VI/Programming/little projects/C compiler/src/main.c
+	"stdlib.h"
+	"string.h"
+	"stdio.h"
+	"ctype.h"
+
+1285439330 source:h:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1283623986 h:\programming\little projects\c compiler\inc\reg.h
+
+1284174080 source:h:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1312230836 source:e:\programming\little projects\c compiler\src\emitter.c
+	"../std/std.h"
+	"../std/stdio.h"
+	"../std/stdlib.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1312232934 e:\programming\little projects\c compiler\std\stdio.h
+
+1283441444 e:\programming\little projects\c compiler\std\stdlib.h
+
+1285442702 e:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1283440148 e:\programming\little projects\c compiler\inc\main.h
+
+1312227328 e:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1312232618 e:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+
+1282940848 e:\programming\little projects\c compiler\inc\emitter.h
+	"../std/stdio.h"
+	"../inc/ast.h"
+
+1312229120 source:e:\programming\little projects\c compiler\src\lexer.c
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../std/std.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1284217968 e:\programming\little projects\c compiler\std\std.h
+
+1283441810 e:\programming\little projects\c compiler\inc\lexer.h
+
+1287183558 source:h:\programming\little projects\c compiler\src\emitter.c
+	"../std/std.h"
+	"../std/stdio.h"
+	"../std/stdlib.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1283441632 h:\programming\little projects\c compiler\std\stdio.h
+
+1283441444 h:\programming\little projects\c compiler\std\stdlib.h
+
+1285442702 h:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1283440148 h:\programming\little projects\c compiler\inc\main.h
+
+1283441676 h:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1285442696 h:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+
+1282940848 h:\programming\little projects\c compiler\inc\emitter.h
+	"../std/stdio.h"
+	"../inc/ast.h"
+
+1283448350 source:h:\programming\little projects\c compiler\src\lexer.c
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../std/std.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1284217968 h:\programming\little projects\c compiler\std\std.h
+
+1283441810 h:\programming\little projects\c compiler\inc\lexer.h
+
+1283393378 h:\programming\little projects\c compiler\inc\parser.h
+	"../std/stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1283441574 source:h:\programming\little projects\c compiler\src\ast.c
+	"../std/stdlib.h"
+	"../inc/ast.h"
+
+1283441854 h:\programming\little projects\c compiler\inc\stream.h
+
+1287183580 source:h:\programming\little projects\c compiler\src\parser.c
+	"../std/stdlib.h"
+	"../std/std.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1285519240 source:h:\programming\little projects\c compiler\src\stream.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/stream.h"
+
+1285442672 source:h:\programming\little projects\c compiler\src\sym.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../inc/sym.h"
+
+1283441574 source:k:\programming\little projects\c compiler\src\ast.c
+	"../std/stdlib.h"
+	"../inc/ast.h"
+
+1283441444 k:\programming\little projects\c compiler\std\stdlib.h
+
+1283441676 k:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1283440148 k:\programming\little projects\c compiler\inc\main.h
+
+1285442702 k:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1287183558 source:k:\programming\little projects\c compiler\src\emitter.c
+	"../std/std.h"
+	"../std/stdio.h"
+	"../std/stdlib.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1283441632 k:\programming\little projects\c compiler\std\stdio.h
+
+1285442696 k:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+
+1283623986 k:\programming\little projects\c compiler\inc\reg.h
+
+1282940848 k:\programming\little projects\c compiler\inc\emitter.h
+	"../std/stdio.h"
+	"../inc/ast.h"
+
+1283448350 source:k:\programming\little projects\c compiler\src\lexer.c
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../std/std.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1284217968 k:\programming\little projects\c compiler\std\std.h
+
+1283441854 k:\programming\little projects\c compiler\inc\stream.h
+
+1283441810 k:\programming\little projects\c compiler\inc\lexer.h
+
+1283393378 k:\programming\little projects\c compiler\inc\parser.h
+	"../std/stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1287183580 source:k:\programming\little projects\c compiler\src\parser.c
+	"../std/stdlib.h"
+	"../std/std.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1285439330 source:k:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1284174080 source:k:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1285519240 source:k:\programming\little projects\c compiler\src\stream.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/stream.h"
+
+1285442672 source:k:\programming\little projects\c compiler\src\sym.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../inc/sym.h"
+
+1283441574 source:e:\programming\little projects\c compiler\src\ast.c
+	"../std/stdlib.h"
+	"../inc/ast.h"
+
+1310836778 e:\programming\little projects\c compiler\inc\reg.h
+
+1283441854 e:\programming\little projects\c compiler\inc\stream.h
+
+1285947108 source:e:\programming\little projects\c compiler\src\main.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1283393378 e:\programming\little projects\c compiler\inc\parser.h
+	"../std/stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1312229172 source:e:\programming\little projects\c compiler\src\parser.c
+	"../std/stdlib.h"
+	"../std/std.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1310837672 source:e:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1310759474 source:e:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1285519240 source:e:\programming\little projects\c compiler\src\stream.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../std/stdio.h"
+	"../inc/stream.h"
+
+1308510714 source:e:\programming\little projects\c compiler\src\sym.c
+	"../std/std.h"
+	"../std/stdlib.h"
+	"../inc/sym.h"
+
+1321747182 source:f:\programming\little projects\c compiler\src\ast.c
+	"stdlib.h"
+	"../inc/ast.h"
+
+1283441444 f:\programming\little projects\c compiler\std\stdlib.h
+
+1312227328 f:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1283440148 f:\programming\little projects\c compiler\inc\main.h
+
+1285442702 f:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1321748138 source:f:\programming\little projects\c compiler\src\debug.c
+	"stdio.h"
+	"../inc/debug.h"
+
+1323114240 f:\programming\little projects\c compiler\inc\debug.h
+	"sym.h"
+	"ast.h"
+
+1328404424 f:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+	"operand.h"
+
+1328461938 source:f:\programming\little projects\c compiler\src\emitter.c
+	"string.h"
+	"stdio.h"
+	"stdlib.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/operand.h"
+	"../inc/x86.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1321743646 f:\programming\little projects\c compiler\std\std.h
+
+1312232934 f:\programming\little projects\c compiler\std\stdio.h
+
+1310836778 f:\programming\little projects\c compiler\inc\reg.h
+
+1321743490 f:\programming\little projects\c compiler\inc\emitter.h
+	"stdio.h"
+	"../inc/ast.h"
+
+1321743580 source:f:\programming\little projects\c compiler\src\lexer.c
+	"stdlib.h"
+	"stdio.h"
+	"string.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1283441854 f:\programming\little projects\c compiler\inc\stream.h
+
+1283441810 f:\programming\little projects\c compiler\inc\lexer.h
+
+1328406566 source:f:\programming\little projects\c compiler\src\main.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1321743498 f:\programming\little projects\c compiler\inc\parser.h
+	"stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1310837672 source:f:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1310759474 source:f:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1321743598 source:f:\programming\little projects\c compiler\src\stream.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../inc/stream.h"
+
+1328405122 source:f:\programming\little projects\c compiler\src\sym.c
+	"stdio.h"
+	"string.h"
+	"stdlib.h"
+	"../inc/debug.h"
+	"../inc/sym.h"
+
+1322070318 source:f:\programming\little projects\c compiler\src\parser.c
+	"stdlib.h"
+	"string.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1328406488 f:\programming\little projects\c compiler\inc\operand.h
+
+1328462126 f:\programming\little projects\c compiler\inc\x86.h
+	"../inc/operand.h"
+
+1321747182 source:m:\programming\little projects\c compiler\src\ast.c
+	"stdlib.h"
+	"../inc/ast.h"
+
+1312227328 m:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1283440148 m:\programming\little projects\c compiler\inc\main.h
+
+1285442702 m:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1321748138 source:m:\programming\little projects\c compiler\src\debug.c
+	"stdio.h"
+	"../inc/debug.h"
+
+1323114240 m:\programming\little projects\c compiler\inc\debug.h
+	"sym.h"
+	"ast.h"
+
+1321740602 m:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+
+1321743580 source:m:\programming\little projects\c compiler\src\lexer.c
+	"stdlib.h"
+	"stdio.h"
+	"string.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1283441854 m:\programming\little projects\c compiler\inc\stream.h
+
+1283441810 m:\programming\little projects\c compiler\inc\lexer.h
+
+1323116934 source:m:\programming\little projects\c compiler\src\main.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1321743646 m:\programming\little projects\c compiler\std\std.h
+
+1321743498 m:\programming\little projects\c compiler\inc\parser.h
+	"stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1321743490 m:\programming\little projects\c compiler\inc\emitter.h
+	"stdio.h"
+	"../inc/ast.h"
+
+1310837672 source:m:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1310836778 m:\programming\little projects\c compiler\inc\reg.h
+
+1310759474 source:m:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1283441444 m:\programming\little projects\c compiler\std\stdlib.h
+
+1321743598 source:m:\programming\little projects\c compiler\src\stream.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../inc/stream.h"
+
+1321748372 source:m:\programming\little projects\c compiler\src\sym.c
+	"stdio.h"
+	"string.h"
+	"stdlib.h"
+	"../inc/debug.h"
+	"../inc/sym.h"
+
+1328406508 source:f:\programming\little projects\c compiler\src\operand.c
+	"string.h"
+	"../inc/operand.h"
+	"../inc/reg.h"
+
+1328461384 source:f:\programming\little projects\c compiler\src\x86.c
+	"stdio.h"
+	"../inc/x86.h"
+
+1321747182 source:i:\programming\little projects\c compiler\src\ast.c
+	"stdlib.h"
+	"../inc/ast.h"
+
+1312227328 i:\programming\little projects\c compiler\inc\ast.h
+	"main.h"
+	"type.h"
+
+1283440148 i:\programming\little projects\c compiler\inc\main.h
+
+1285442702 i:\programming\little projects\c compiler\inc\type.h
+	"main.h"
+
+1321748138 source:i:\programming\little projects\c compiler\src\debug.c
+	"stdio.h"
+	"../inc/debug.h"
+
+1323114240 i:\programming\little projects\c compiler\inc\debug.h
+	"sym.h"
+	"ast.h"
+
+1328404424 i:\programming\little projects\c compiler\inc\sym.h
+	"main.h"
+	"type.h"
+	"operand.h"
+
+1328406488 i:\programming\little projects\c compiler\inc\operand.h
+
+1328461938 source:i:\programming\little projects\c compiler\src\emitter.c
+	"string.h"
+	"stdio.h"
+	"stdlib.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/operand.h"
+	"../inc/x86.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1321743646 i:\programming\little projects\c compiler\std\std.h
+
+1328462126 i:\programming\little projects\c compiler\inc\x86.h
+	"../inc/operand.h"
+
+1310836778 i:\programming\little projects\c compiler\inc\reg.h
+
+1321743490 i:\programming\little projects\c compiler\inc\emitter.h
+	"stdio.h"
+	"../inc/ast.h"
+
+1321743580 source:i:\programming\little projects\c compiler\src\lexer.c
+	"stdlib.h"
+	"stdio.h"
+	"string.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1283441854 i:\programming\little projects\c compiler\inc\stream.h
+
+1283441810 i:\programming\little projects\c compiler\inc\lexer.h
+
+1328406566 source:i:\programming\little projects\c compiler\src\main.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1321743498 i:\programming\little projects\c compiler\inc\parser.h
+	"stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1328406508 source:i:\programming\little projects\c compiler\src\operand.c
+	"string.h"
+	"../inc/operand.h"
+	"../inc/reg.h"
+
+1310837672 source:i:\programming\little projects\c compiler\src\reg.c
+	"../inc/reg.h"
+	"../inc/sym.h"
+
+1310759474 source:i:\programming\little projects\c compiler\src\std.c
+	"../std/stdlib.h"
+
+1283441444 i:\programming\little projects\c compiler\std\stdlib.h
+
+1321743598 source:i:\programming\little projects\c compiler\src\stream.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../inc/stream.h"
+
+1328405122 source:i:\programming\little projects\c compiler\src\sym.c
+	"stdio.h"
+	"string.h"
+	"stdlib.h"
+	"../inc/debug.h"
+	"../inc/sym.h"
+
+1328461384 source:i:\programming\little projects\c compiler\src\x86.c
+	"stdio.h"
+	"../inc/x86.h"
+
+1354682969 source:c:\users\sam\programming\c++\c compiler\src\ast.c
+	"stdio.h"
+	"stdlib.h"
+	"../inc/ast.h"
+
+1354727175 c:\users\sam\programming\c++\c compiler\inc\ast.h
+	"type.h"
+
+1354200611 c:\users\sam\programming\c++\c compiler\inc\main.h
+
+1354684735 c:\users\sam\programming\c++\c compiler\inc\type.h
+	"../std/std.h"
+
+1354684796 source:c:\users\sam\programming\c++\c compiler\src\debug.c
+	"stdlib.h"
+	"stdio.h"
+	"../inc/debug.h"
+
+1354645419 c:\users\sam\programming\c++\c compiler\inc\debug.h
+	"stdio.h"
+	"type.h"
+	"sym.h"
+	"ast.h"
+
+1354675879 c:\users\sam\programming\c++\c compiler\inc\sym.h
+	"type.h"
+	"operand.h"
+
+1354296409 c:\users\sam\programming\c++\c compiler\inc\operand.h
+	"reg.h"
+
+1354682128 source:c:\users\sam\programming\c++\c compiler\src\emitter.c
+	"string.h"
+	"stdio.h"
+	"stdlib.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/operand.h"
+	"../inc/asm.h"
+	"../inc/asm-amd64.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+
+1354577995 c:\users\sam\programming\c++\c compiler\std\std.h
+
+1354557563 c:\users\sam\programming\c++\c compiler\inc\x86.h
+	"../inc/operand.h"
+
+1354570964 c:\users\sam\programming\c++\c compiler\inc\reg.h
+	"../std/std.h"
+
+1354727129 c:\users\sam\programming\c++\c compiler\inc\emitter.h
+	"stdio.h"
+	"../inc/ast.h"
+
+1354685297 source:c:\users\sam\programming\c++\c compiler\src\lexer.c
+	"stdlib.h"
+	"ctype.h"
+	"stdarg.h"
+	"stdio.h"
+	"string.h"
+	"../std/std.h"
+	"../inc/type.h"
+	"../inc/stream.h"
+	"../inc/lexer.h"
+
+1354489190 c:\users\sam\programming\c++\c compiler\inc\stream.h
+
+1354727317 c:\users\sam\programming\c++\c compiler\inc\lexer.h
+	"../std/std.h"
+
+1354497249 source:c:\users\sam\programming\c++\c compiler\src\main.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/parser.h"
+	"../inc/emitter.h"
+
+1354727074 c:\users\sam\programming\c++\c compiler\inc\parser.h
+	"ast.h"
+
+1354682882 source:c:\users\sam\programming\c++\c compiler\src\operand.c
+	"stdlib.h"
+	"string.h"
+	"stdio.h"
+	"../inc/operand.h"
+	"../inc/reg.h"
+
+1354727041 source:c:\users\sam\programming\c++\c compiler\src\parser.c
+	"stdlib.h"
+	"string.h"
+	"math.h"
+	"../inc/debug.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+
+1354679813 source:c:\users\sam\programming\c++\c compiler\src\reg.c
+	"../inc/reg.h"
+
+1354571115 source:c:\users\sam\programming\c++\c compiler\src\std.c
+	"../std/stdlib.h"
+	"string.h"
+
+1354571147 c:\users\sam\programming\c++\c compiler\std\stdlib.h
+
+1354492064 source:c:\users\sam\programming\c++\c compiler\src\stream.c
+	"string.h"
+	"stdlib.h"
+	"stdio.h"
+	"../inc/stream.h"
+
+1354675865 source:c:\users\sam\programming\c++\c compiler\src\sym.c
+	"stdio.h"
+	"string.h"
+	"stdlib.h"
+	"../inc/debug.h"
+	"../inc/sym.h"
+
+1354556304 source:c:\users\sam\programming\c++\c compiler\src\x86.c
+	"stdlib.h"
+	"stdio.h"
+	"../inc/debug.h"
+	"../inc/x86.h"
+
+1354564328 source:c:\users\sam\programming\c++\c compiler\src\asm.c
+	"stdarg.h"
+	"../inc/asm.h"
+
+1354559035 c:\users\sam\programming\c++\c compiler\inc\asm.h
+	"stdarg.h"
+	"stdio.h"
+
+1354559342 source:c:\users\sam\programming\c++\c compiler\src\asm-amd64.c
+	"stdlib.h"
+	"stdarg.h"
+	"stdio.h"
+	"../inc/debug.h"
+	"../inc/asm.h"
+	"../inc/asm-amd64.h"
+
+1354558576 c:\users\sam\programming\c++\c compiler\inc\asm-amd64.h
+	"../inc/operand.h"
+
+1354684748 source:c:\users\sam\programming\c++\c compiler\src\type.c
+	"stdlib.h"
+	"math.h"
+	"string.h"
+	"stdio.h"
+	"../inc/type.h"
+	"../inc/sym.h"
+

@@ -1,0 +1,49 @@
+Module := [ Shebang ] { Using } { ModuleLine }
+
+Shebang := "#!" <File>
+Using := "using" <String>
+ModuleLine := TypeDef | SymDef | ( Struct ";" )
+
+TypeDef := "typedef" Type <Ident> ";"
+SymDef := [ "static" ] Type <Ident> Function | ( Variable ";" )
+
+Type := <Datatype> | <Ident> | Struct [ "*" ]
+Struct := "struct" <Ident> | ( "{" { Type <Ident> Variable ";" } "}" )
+
+Function := "(" [ Type Variable [{ "," Type Variable }] ] ")" Code | ";"
+Variable :=  Array | ( "=" Value )
+Array := "[" [ <Int> ] "]" [ "=" "{" Value [{ "," Value }] "}" ]
+
+Code := Line | ( "{" { Line } "}" )
+Line :=   If
+		| While
+		| For
+		| ( ( "return" [ Value ] )
+		    | ( "break" )
+		    | SymDef
+		    | Assign
+		    | .
+			";" )
+
+If := "if" Value Code [ "else" Code ]
+While := "while" Value Code
+For := "for" [ "(" ] [ SymDef | Value ] ";" [ Value ] ";" [ Value ] [ ")" ] Code
+
+Decl := Type Variable
+
+Value := Bool
+Assign := Bool [ "=" | "+=" | "-=" | "*=" | "/=" Bool ]
+Bool := Equality [{ "&&" | "||" Equality }]
+Equality := Rel [{ "==" | "!=" Rel }]
+Rel := Expr [{ ">" | ">=" | "<" | "<=" Expr }]
+Expr := Term [{ "+" | "-"  Term }]
+Term := Object [{ "*" | "/"  Object }]
+Unary := [{ "!" | "-" | "*" | "&" | "++" | "--" }] Object [{ "++" | "--" }]
+Object := Factor [{   ( "[" Value "]" )
+					| ( "(" Value [{ "," Value }] ")" )
+					| ( "." | "->" <Ident> ) }]
+Factor :=   ( "sizeof" "(" Object | Type ")" )
+		  | ( "(" Value ")" )
+		  | <String>
+		  | <Int>
+		  | <Ident>
