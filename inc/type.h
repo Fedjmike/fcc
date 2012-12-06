@@ -18,4 +18,7 @@ char* typeToStr (type DT);
 bool typeIsPtr (type DT);
 type typeDerefPtr (type DT);
 
+bool typeIsArray (type DT);
+type typeIndexArray (type DT);
+
 bool typeIsRecord (type DT);

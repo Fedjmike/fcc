@@ -190,6 +190,13 @@ void errorInvalidOp (char* Op, char* TypeDesc, type DT) {
     free(TypeStr);
 }
 
+void errorInvalidOpExpected (char* Op, char* TypeDesc, type DT) {
+    char* TypeStr = typeToStr(DT);
+    error("invalid %s on %s, expected %s", Op, TypeStr, TypeDesc);
+    free(TypeStr);
+}
+
+
 /* ::::PARSER INTERFACES:::: */
 
 bool lexerIs (char* Match) {

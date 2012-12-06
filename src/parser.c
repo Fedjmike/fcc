@@ -489,8 +489,7 @@ ast* parserFor (sym* Scope) {
 
     lexerMatchStr("for");
 
-    if (lexerIs("("))
-        lexerMatch();
+    lexerTryMatchStr("(");
 
     /*Initializer*/
     if (lexerToken == tokenIdent) {
@@ -527,8 +526,7 @@ ast* parserFor (sym* Scope) {
     else
         astAddChild(Node, astCreate(astEmpty));
 
-    if (lexerIs(")"))
-        lexerMatch();
+    lexerTryMatchStr(")");
 
     Node->l = parserCode(Scope);
 
@@ -690,7 +688,7 @@ ast* parserUnary (sym* Scope) {
                 Node->dt = typeDerefPtr(Node->r->dt);
 
             } else
-                errorInvalidOp("dereference", "non pointer", Node->r->dt);
+                errorInvalidOpExpected("dereference", "pointer", Node->r->dt);
         }
 
     } else
@@ -726,6 +724,15 @@ ast* parserObject (sym* Scope) {
             Node->l = tmp;
             Node->r = parserValue(Scope);
 
+            if (typeIsArray(Node->l->dt))
+                Node->dt = typeIndexArray(Node->l->dt);
+
+            else if (typeIsPtr(Node->l->dt))
+                Node->dt = typeDerefPtr(Node->l->dt);
+
+            else
+                errorInvalidOpExpected("indexing", "array or pointer", Node->l->dt);
+
             lexerMatchStr("]");
 
         /*struct[*] member access*/
@@ -737,11 +744,11 @@ ast* parserObject (sym* Scope) {
 
             /*Was the left hand a valid operand?*/
             if (typeIsRecord(Node->l->dt)) {
-                errorInvalidOp("member access", "non record type", Node->l->dt);
+                errorInvalidOpExpected("member access", "record type", Node->l->dt);
                 lexerNext();
 
             } else if (!strcmp("->", Node->o) && Node->l->dt.ptr != 1) {
-                errorInvalidOp("member dereference", "non struct-pointer", Node->l->dt);
+                errorInvalidOpExpected("member dereference", "struct pointer", Node->l->dt);
                 lexerNext();
 
             } else if (!strcmp(".", Node->o) && Node->l->dt.ptr != 0) {

@@ -734,7 +734,7 @@
 	"../inc/type.h"
 	"../inc/sym.h"
 
-1354559342 source:c:\users\sam\git\fcc\src\asm-amd64.c
+1354761295 source:c:\users\sam\git\fcc\src\asm-amd64.c
 	"stdlib.h"
 	"stdarg.h"
 	"stdio.h"
@@ -748,7 +748,7 @@
 	"sym.h"
 	"ast.h"
 
-1354684735 c:\users\sam\git\fcc\inc\type.h
+1354758546 c:\users\sam\git\fcc\inc\type.h
 	"../std/std.h"
 
 1354577995 c:\users\sam\git\fcc\std\std.h
@@ -757,10 +757,10 @@
 	"type.h"
 	"operand.h"
 
-1354296409 c:\users\sam\git\fcc\inc\operand.h
+1354766552 c:\users\sam\git\fcc\inc\operand.h
 	"reg.h"
 
-1354570964 c:\users\sam\git\fcc\inc\reg.h
+1354761347 c:\users\sam\git\fcc\inc\reg.h
 	"../std/std.h"
 
 1354727175 c:\users\sam\git\fcc\inc\ast.h
@@ -787,7 +787,7 @@
 	"stdio.h"
 	"../inc/debug.h"
 
-1354682128 source:c:\users\sam\git\fcc\src\emitter.c
+1354759024 source:c:\users\sam\git\fcc\src\emitter.c
 	"string.h"
 	"stdio.h"
 	"stdlib.h"
@@ -806,7 +806,7 @@
 	"stdio.h"
 	"../inc/ast.h"
 
-1354738275 source:c:\users\sam\git\fcc\src\lexer.c
+1354758361 source:c:\users\sam\git\fcc\src\lexer.c
 	"stdlib.h"
 	"ctype.h"
 	"stdarg.h"
@@ -819,7 +819,7 @@
 
 1354734173 c:\users\sam\git\fcc\inc\stream.h
 
-1354727317 c:\users\sam\git\fcc\inc\lexer.h
+1354758368 c:\users\sam\git\fcc\inc\lexer.h
 	"../std/std.h"
 
 1354497249 source:c:\users\sam\git\fcc\src\main.c
@@ -834,14 +834,14 @@
 1354727074 c:\users\sam\git\fcc\inc\parser.h
 	"ast.h"
 
-1354731239 source:c:\users\sam\git\fcc\src\operand.c
+1354761357 source:c:\users\sam\git\fcc\src\operand.c
 	"stdlib.h"
 	"string.h"
 	"stdio.h"
 	"../inc/operand.h"
 	"../inc/reg.h"
 
-1354739660 source:c:\users\sam\git\fcc\src\parser.c
+1354758862 source:c:\users\sam\git\fcc\src\parser.c
 	"stdlib.h"
 	"string.h"
 	"../inc/debug.h"
@@ -865,7 +865,7 @@
 	"../inc/debug.h"
 	"../inc/sym.h"
 
-1354731657 source:c:\users\sam\git\fcc\src\type.c
+1354758835 source:c:\users\sam\git\fcc\src\type.c
 	"stdlib.h"
 	"string.h"
 	"stdio.h"

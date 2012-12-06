@@ -41,6 +41,14 @@ type typeDerefPtr (type DT) {
     return typeCreate(DT.basic, DT.ptr-1, 0);
 }
 
+bool typeIsArray (type DT) {
+    return DT.array >= 1;
+}
+
+type typeIndexArray (type DT) {
+    return typeCreate(DT.basic, DT.ptr, 0);
+}
+
 bool typeIsRecord (type DT) {
     return DT.basic->class != symStruct &&
             DT.array == 0;

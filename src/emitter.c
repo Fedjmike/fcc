@@ -88,8 +88,9 @@ void emitterStruct (sym* Symbol) {
         /*Add the size of this field, rounded up to the nearest word boundary*/
         Symbol->size += ((typeGetSize(Current->dt)-1) / 8) + 8;
         reportSymbol(Current);
-        reportSymbol(Symbol);
     }
+
+    reportSymbol(Symbol);
 
     puts("-");
 }
@@ -171,7 +172,7 @@ void emitterLine (ast* Node) {
         emitterVar(Node);
 
     else if (astIsValueClass(Node->class))
-        emitterValue(Node, operandCreate(operandUndefined));
+        operandFree(emitterValue(Node, operandCreate(operandUndefined)));
 
     else
         printf("emitterLine(): unhandled AST class, %d.\n", Node->class);
@@ -386,6 +387,28 @@ operand emitterValue (ast* Node, operand Dest) {
                 } else
                     printf("emitterValue(): unable to convert non lvalue operand class, %d.\n", Value.class);
 
+            } else if (Dest.class == operandStack) {
+                /*Larger than a word?*/
+                if (Value.class == operandMem && Value.size > 8) {
+                    int total = Value.size;
+
+                    /*Then push on *backwards* in word chunks.
+                      Start at the highest address*/
+                    Value.offset += total-8;
+                    Value.size = 8;
+
+                    for (int i = 0; i < total; i += 8) {
+                        asmPush(Value);
+                        Value.offset -= 8;
+                    }
+
+                    Dest.size = total;
+
+                } else {
+                    asmPush(Value);
+                    Dest.size = 8;
+                }
+
             } else if (Value.class == operandUndefined)
                 printf("emitterValue(): expected value, void given.\n");
 
@@ -566,6 +589,17 @@ operand emitterUOP (ast* Node) {
         Value = operandCreateReg(regAllocGeneral());
 
         asmMove(Value, R);
+        operandFree(R);
+
+    } else if (!strcmp(Node->o, "&")) {
+        asmEnter();
+        R = emitterValue(Node->r, operandCreate(operandMem));
+        R.size = 8;
+        asmLeave();
+
+        Value = operandCreateReg(regAllocGeneral());
+
+        asmEvalAddress(Value, R);
 
     } else
         printf("emitterUOP(): unhandled operator '%s'\n", Node->o);
@@ -609,6 +643,8 @@ operand emitterIndex (ast* Node) {
             Value.factor = Node->l->dt.basic->size;
         }
 
+        Value.size = typeGetSize(Node->dt);
+
     /*Is it instead a pointer? Get value and offset*/
     } else {
         asmEnter();
@@ -621,8 +657,10 @@ operand emitterIndex (ast* Node) {
         asmBOP(bopAdd, R, L);
         operandFree(L);
 
-        Value = operandCreateMem(R.reg, 0, Node->l->dt.basic->size);
+        Value = operandCreateMem(R.reg, 0, typeGetSize(Node->dt));
     }
+
+    reportType(Node->dt);
 
     puts("-");
 
@@ -639,19 +677,14 @@ operand emitterCall (ast* Node) {
         if (regIsUsed(reg))
             asmPush(operandCreateReg(reg));
 
-    int Args = 0;
+    int argSize = 0;
 
     /*Push the args on backwards (cdecl)*/
     for (ast* Current = Node->lastChild;
          Current;
          Current = Current->prevSibling) {
-        asmEnter();
-        operand Arg = emitterValue(Current, operandCreate(operandUndefined));
-        asmLeave();
-        asmPush(Arg);
-        operandFree(Arg);
-
-        Args++;
+        operand Arg = emitterValue(Current, operandCreate(operandStack));
+        argSize += Arg.size;
     }
 
     /*Get the address (usually, as a label) of the proc*/
@@ -669,7 +702,7 @@ operand emitterCall (ast* Node) {
         Value = operandCreateReg(regRAX);
 
     /*Pop the args*/
-    asmPopN(8*Args);
+    asmPopN(argSize/8);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (int reg = regR15; reg >= regRAX; reg--)

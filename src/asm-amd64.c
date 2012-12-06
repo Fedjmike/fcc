@@ -78,7 +78,7 @@ void asmPop (operand L) {
 }
 
 void asmPopN (int n) {
-    asmOut("add rsp, %d", n);
+    asmOut("add rsp, %d", n*8);
 }
 
 void asmMove (operand L, operand R) {
@@ -86,7 +86,14 @@ void asmMove (operand L, operand R) {
 
     char* LStr = operandToStr(L);
     char* RStr = operandToStr(R);
-    asmOut("mov %s, %s", LStr, RStr);
+
+    if (operandGetSize(L) > operandGetSize(R) &&
+        R.class != operandLiteral)
+        asmOut("movzx %s, %s", LStr, RStr);
+
+    else
+        asmOut("mov %s, %s", LStr, RStr);
+
     free(LStr);
     free(RStr);
 }

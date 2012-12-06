@@ -79,6 +79,22 @@ operand operandCreateLabel (int Label) {
     return ret;
 }
 
+int operandGetSize (operand Value) {
+    if (Value.class == operandReg)
+        return 8;
+
+    else if (Value.class == operandMem)
+        return Value.size;
+
+    else if (Value.class == operandLiteral)
+        return 1;
+
+    else
+        printf("operandGetSize(): unhandled operand class, %d.\n", Value.class);
+
+    return 0;
+}
+
 char* operandToStr (operand Value) {
     char* ret = malloc(32);
     ret[0] = 0;

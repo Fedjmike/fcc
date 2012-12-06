@@ -20,6 +20,7 @@ void errorExpected (char* Expected);
 void errorMismatch (char* Type, char* One, char* Two);
 void errorUndefSym ();
 void errorInvalidOp (char* Op, char* TypeDesc, type DT);
+void errorInvalidOpExpected (char* Op, char* TypeDesc, type DT);
 
 bool lexerIs (char* Match);
 

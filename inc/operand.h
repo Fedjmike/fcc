@@ -8,8 +8,10 @@ typedef enum {
     operandReg,
     operandMem,
     operandMemRef,
+
     operandLiteral,
-    operandLabel
+    operandLabel,
+    operandStack
 } operandClass;
 
 typedef enum {
@@ -47,6 +49,8 @@ operand operandCreateMem (int Reg, int Offset, int Size);
 operand operandCreateMemRef (int Reg, int Offset, int Size);
 operand operandCreateLiteral (int Literal);
 operand operandCreateLabel (int Label);
+
+int operandGetSize (operand Value);
 
 char* operandToStr (operand Value);
 
