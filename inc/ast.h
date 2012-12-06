@@ -25,6 +25,13 @@ typedef enum {
     astArrayLit
 } astClass;
 
+typedef enum {
+    literalUndefined,
+    literalIdent,
+    literalInt,
+    literalBool
+} literalClass;
+
 typedef struct ast {
 	astClass class;
 
@@ -43,7 +50,7 @@ typedef struct ast {
 	struct sym* symbol;
 
 	/*Literals (idents included) only*/
-	int litClass;
+	literalClass litClass;
 	void* literal;
 } ast;
 
@@ -54,8 +61,3 @@ void astDestroy (ast* Node);
 void astAddChild (ast* Parent, ast* Child);
 
 int astIsValueClass (astClass class);
-
-/*Literal types*/
-extern int literalUndefined;
-extern int literalIdent;
-extern int literalInt;

@@ -3,10 +3,6 @@
 
 #include "../inc/ast.h"
 
-int literalUndefined = 0;
-int literalIdent = 1;
-int literalInt = 2;
-
 ast* astCreate (astClass class) {
     ast* Node = malloc(sizeof(ast));
     Node->class = class;

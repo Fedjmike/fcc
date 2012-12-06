@@ -211,17 +211,22 @@ void emitterLoop (ast* Node) {
     operand OldBreakTo = labelBreakTo; /*Push old break label before erasing*/
     operand EndLabel = labelBreakTo = labelCreate(labelUndefined); /*To exit the loop (or break, anywhere)*/
 
-    asmBranch(emitterValue(Node->firstChild,
-                           operandCreateFlags(conditionUndefined)),
-              EndLabel);
+    /*Work out which order the condition and code came in
+      => whether this is a while or a do while*/
+    bool isDo = Node->l->class == astCode;
+    ast* cond = isDo ? Node->r : Node->l;
+    ast* code = isDo ? Node->l : Node->r;
+
+    if (!isDo)
+        asmBranch(emitterValue(cond, operandCreateFlags(conditionUndefined)),
+                  EndLabel);
 
     asmLabel(LoopLabel);
-    emitterCode(Node->l);
+    emitterCode(code);
 
     asmComment("");
 
-    asmBranch(emitterValue(Node->firstChild,
-                           operandCreateFlags(conditionUndefined)),
+    asmBranch(emitterValue(cond, operandCreateFlags(conditionUndefined)),
               EndLabel);
 
     asmJump(LoopLabel);

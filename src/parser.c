@@ -22,6 +22,7 @@ static ast* parserLine (sym* Scope);
 
 static ast* parserIf (sym* Scope);
 static ast* parserWhile (sym* Scope);
+static ast* parserDoWhile (sym* Scope);
 static ast* parserFor (sym* Scope);
 
 static ast* parserValue (sym* Scope);
@@ -56,6 +57,7 @@ ast* parserModule () {
 
     /*Make new built in data types and add them to the global namespace*/
     symCreateDataType("void", 0);
+    symCreateDataType("bool", 1);
     symCreateDataType("char", 1);
     symCreateDataType("int", 8);
     symCreateDataType("void ptr", 8); /*Dummy*/
@@ -160,7 +162,10 @@ type parserType (sym* Scope) {
 }
 
 /**
- * Struct = "struct" <Ident> [ "{"  "}" ] ";"
+ * Struct = "struct" <Ident> [ "{"
+ *                         Type <Ident> "[" <Int> "]"
+                    [{ "," Type <Ident> "[" <Int> "]" }]
+                               "}" ] ";"
  */
 void parserStruct (sym* Scope) {
     puts("Struct+");
@@ -189,7 +194,11 @@ void parserStruct (sym* Scope) {
                 if (lexerTryMatchStr("[")) {
                     Field->dt.array = atoi(lexerBuffer);
 
-                    if (Field->dt.array <= 0) {
+                    if (lexerToken == tokenInt) {
+                        errorExpected("number");
+                        lexerNext();
+
+                    } else if (Field->dt.array <= 0) {
                         errorExpected("positive array size");
                         lexerNext();
 
@@ -217,7 +226,7 @@ void parserStruct (sym* Scope) {
 }
 
 /**
- * Function = "(" [ Type <Ident> [ "void" | [{ "," Type <Ident> }] ] ] ")" ";" | Code
+ * Function = "(" [ Type <Ident> [{ "," Type <Ident> }] ] ")" ";" | Code
  */
 ast* parserFunction (sym* Scope, type DT, char* Ident, int Storage) {
     puts("Function+");
@@ -233,12 +242,8 @@ ast* parserFunction (sym* Scope, type DT, char* Ident, int Storage) {
 
     lexerMatchStr("(");
 
-    /*Explicitly no parameters*/
-    if (lexerIs("void"))
-        lexerMatch();
-
     /*Parameter list*/
-    else if (!lexerIs(")")) do {
+    if (!lexerIs(")")) do {
         ast* Para = astCreate(astVar);
         Para->symbol = symCreate(symPara);
         Para->symbol->dt = parserType(Scope);
@@ -399,6 +404,9 @@ ast* parserLine (sym* Scope) {
     else if (lexerIs("while"))
         Node = parserWhile(Scope);
 
+    else if (lexerIs("do"))
+        Node = parserDoWhile(Scope);
+
     else if (lexerIs("for"))
         Node = parserFor(Scope);
 
@@ -470,9 +478,24 @@ ast* parserWhile (sym* Scope) {
     ast* Node = astCreate(astLoop);
 
     lexerMatchStr("while");
-    astAddChild(Node, parserValue(Scope));
+    Node->l = parserValue(Scope);
+    Node->r = parserCode(Scope);
 
+    puts("-");
+
+    return Node;
+}
+
+ast* parserDoWhile (sym* Scope) {
+    puts("DoWhile+");
+
+    ast* Node = astCreate(astLoop);
+
+    lexerMatchStr("do");
     Node->l = parserCode(Scope);
+    lexerMatchStr("while");
+    Node->r = parserValue(Scope);
+    lexerMatchStr(";");
 
     puts("-");
 
@@ -488,7 +511,6 @@ ast* parserFor (sym* Scope) {
     ast* Node = astCreate(astIter);
 
     lexerMatchStr("for");
-
     lexerTryMatchStr("(");
 
     /*Initializer*/
@@ -815,6 +837,14 @@ ast* parserFactor (sym* Scope) {
         Node->litClass = literalInt;
         Node->literal = malloc(sizeof(int));
         *(int*) Node->literal = lexerMatchInt();
+
+    /*Boolean literal*/
+    } else if (lexerIs("true") || lexerIs("false")) {
+        Node = astCreate(astLiteral);
+        Node->dt.basic = symFindGlobal("bool");
+        Node->litClass = literalBool;
+        Node->literal = malloc(sizeof(char));
+        *(char*) Node->literal = lexerIs("true") ? 1 : 0;
 
     /*Identifier or function call*/
     } else if (lexerToken == tokenIdent) {

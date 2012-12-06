@@ -196,7 +196,6 @@ void errorInvalidOpExpected (char* Op, char* TypeDesc, type DT) {
     free(TypeStr);
 }
 
-
 /* ::::PARSER INTERFACES:::: */
 
 bool lexerIs (char* Match) {
