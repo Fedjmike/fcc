@@ -26,5 +26,3 @@ Return
 Caller stack cleanup
 
 Right to left param order
-
-: you what?
