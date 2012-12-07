@@ -16,37 +16,47 @@
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
-FILE* Asm;
-
 /*Emitter context*/
-operand labelReturnTo;
-operand labelBreakTo;
 
-static void emitterModule (ast* Tree);
-static void emitterStruct (sym* Symbol);
-static void emitterEnum (sym* Symbol);
-static void emitterFunction (ast* Node);
-static void emitterCode (ast* Node);
-static void emitterLine (ast* Node);
+static void emitterModule (emitterCtx* ctx, ast* Tree);
+static void emitterStruct (emitterCtx* ctx, sym* Symbol);
+static void emitterEnum (emitterCtx* ctx, sym* Symbol);
+static void emitterFunction (emitterCtx* ctx, ast* Node);
+static void emitterCode (emitterCtx* ctx, ast* Node);
+static void emitterLine (emitterCtx* ctx, ast* Node);
 
-static void emitterBranch (ast* Node);
-static void emitterLoop (ast* Node);
-static void emitterIter (ast* Node);
-static void emitterVar (ast* Node);
-static void emitterArrayLit (ast* Node, sym* Symbol);
+static void emitterBranch (emitterCtx* ctx, ast* Node);
+static void emitterLoop (emitterCtx* ctx, ast* Node);
+static void emitterIter (emitterCtx* ctx, ast* Node);
+static void emitterVar (emitterCtx* ctx, ast* Node);
+static void emitterArrayLit (emitterCtx* ctx, ast* Node, sym* Symbol);
+
+static emitterCtx* emitterInit (FILE* File) {
+    emitterCtx* ctx = malloc(sizeof(emitterCtx));
+    ctx->Asm = asmInit(File);
+    ctx->labelReturnTo = operandCreate(operandUndefined);
+    ctx->labelBreakTo = operandCreate(operandUndefined);
+    return ctx;
+}
+
+static void emitterEnd (emitterCtx* ctx) {
+    asmEnd(ctx->Asm);
+    free(ctx);
+}
 
 void emitter (ast* Tree, FILE* File) {
-    asmInit(File);
-
-    Asm = File;
-    fprintf(Asm, ".intel_syntax noprefix\n");
+    emitterCtx* ctx = emitterInit(File);
+    asmFilePrologue(ctx->Asm);
 
     labelFreeAll();
 
-    emitterModule(Tree);
+    emitterModule(ctx, Tree);
+
+    asmFileEpilogue(ctx->Asm);
+    emitterEnd(ctx);
 }
 
-void emitterModule (ast* Tree) {
+void emitterModule (emitterCtx* ctx, ast* Tree) {
     puts("Module+");
 
     /*Resolve struct info*/
@@ -54,10 +64,10 @@ void emitterModule (ast* Tree) {
          Current;
          Current = Current->nextSibling) {
         if (Current->class == symStruct)
-            emitterStruct(Current);
+            emitterStruct(ctx, Current);
 
         else if (Current->class == symEnum)
-            emitterEnum(Current);
+            emitterEnum(ctx, Current);
 
         else if (Current->class == symType ||
                  Current->class == symFunction)
@@ -72,7 +82,7 @@ void emitterModule (ast* Tree) {
          Current;
          Current = Current->nextSibling) {
         if (Current->class == astFunction)
-            emitterFunction(Current);
+            emitterFunction(ctx, Current);
 
         else
             printf("emitterModule(): unhandled AST class, %d.\n", Current->class);
@@ -81,7 +91,7 @@ void emitterModule (ast* Tree) {
     puts("-");
 }
 
-void emitterStruct (sym* Symbol) {
+void emitterStruct (emitterCtx* ctx, sym* Symbol) {
     puts("Struct+");
 
     for (sym* Current = Symbol->firstChild;
@@ -98,7 +108,7 @@ void emitterStruct (sym* Symbol) {
     puts("-");
 }
 
-void emitterEnum (sym* Symbol) {
+void emitterEnum (emitterCtx* ctx, sym* Symbol) {
     puts("Enum+");
 
     for (sym* Current = Symbol->firstChild;
@@ -110,7 +120,7 @@ void emitterEnum (sym* Symbol) {
     puts("-");
 }
 
-void emitterFunction (ast* Node) {
+void emitterFunction (emitterCtx* ctx, ast* Node) {
     puts("Function+");
 
     Node->symbol->label = labelNamed(Node->symbol->ident);
@@ -141,53 +151,54 @@ void emitterFunction (ast* Node) {
     }
 
     /*Label to jump to from returns*/
-    operand EndLabel = labelReturnTo = labelCreate(labelReturn);
+    operand EndLabel = ctx->labelReturnTo = labelCreate(labelReturn);
 
-    asmComment("");
-    asmFnPrologue(labelGet(Node->symbol->label),
+    asmComment(ctx->Asm, "");
+    asmFnPrologue(ctx->Asm,
+                  labelGet(Node->symbol->label),
                   Node->symbol->lastChild && Node->symbol->lastChild->class != symPara
                         ? -Node->symbol->lastChild->offset : 0);
-    emitterCode(Node->r);
-    asmFnEpilogue(labelGet(EndLabel));
+    emitterCode(ctx, Node->r);
+    asmFnEpilogue(ctx->Asm, labelGet(EndLabel));
 
     puts("-");
 }
 
-void emitterCode (ast* Node) {
-    asmEnter();
+void emitterCode (emitterCtx* ctx, ast* Node) {
+    asmEnter(ctx->Asm);
 
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        emitterLine(Current);
+        emitterLine(ctx, Current);
     }
 
-    asmLeave();
+    asmLeave(ctx->Asm);
 }
 
-void emitterLine (ast* Node) {
+void emitterLine (emitterCtx* ctx, ast* Node) {
     puts("Line+");
 
-    asmComment("");
+    asmComment(ctx->Asm, "");
 
     if (Node->class == astBranch)
-        emitterBranch(Node);
+        emitterBranch(ctx, Node);
 
     else if (Node->class == astLoop)
-        emitterLoop(Node);
+        emitterLoop(ctx, Node);
 
     else if (Node->class == astIter)
-        emitterIter(Node);
+        emitterIter(ctx, Node);
 
     else if (Node->class == astReturn) {
-        emitterValue(Node->r, operandCreateReg(regRAX));
-        asmJump(labelReturnTo);
+        emitterValue(ctx, Node->r, operandCreateReg(regRAX));
+        asmJump(ctx->Asm, ctx->labelReturnTo);
 
     } else if (Node->class == astVar)
-        emitterVar(Node);
+        emitterVar(ctx, Node);
 
     else if (astIsValueClass(Node->class))
-        operandFree(emitterValue(Node, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
 
     else
         printf("emitterLine(): unhandled AST class, %d.\n", Node->class);
@@ -195,36 +206,38 @@ void emitterLine (ast* Node) {
     puts("-");
 }
 
-void emitterBranch (ast* Node) {
+void emitterBranch (emitterCtx* ctx, ast* Node) {
     puts("Branch+");
 
     operand ElseLabel = labelCreate(labelUndefined);
     operand EndLabel = labelCreate(labelUndefined);
 
     /*Compute the condition, requesting it be placed in the flags*/
-    asmBranch(emitterValue(Node->firstChild,
-                             operandCreateFlags(conditionUndefined)),
+    asmBranch(ctx->Asm,
+              emitterValue(ctx,
+                           Node->firstChild,
+                           operandCreateFlags(conditionUndefined)),
               ElseLabel);
 
-    emitterCode(Node->l);
+    emitterCode(ctx, Node->l);
 
-    asmComment("");
-    asmJump(EndLabel);
-    asmLabel(ElseLabel);
+    asmComment(ctx->Asm, "");
+    asmJump(ctx->Asm, EndLabel);
+    asmLabel(ctx->Asm, ElseLabel);
 
-    emitterCode(Node->r);
+    emitterCode(ctx, Node->r);
 
-    asmLabel(EndLabel);
+    asmLabel(ctx->Asm, EndLabel);
 
     puts("-");
 }
 
-void emitterLoop (ast* Node) {
+void emitterLoop (emitterCtx* ctx, ast* Node) {
     puts("Loop+");
 
     operand LoopLabel = labelCreate(labelUndefined); /*The place to return to loop again (after confirming condition)*/
-    operand OldBreakTo = labelBreakTo; /*Push old break label before erasing*/
-    operand EndLabel = labelBreakTo = labelCreate(labelUndefined); /*To exit the loop (or break, anywhere)*/
+    operand OldBreakTo = ctx->labelBreakTo; /*Push old break label before erasing*/
+    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined); /*To exit the loop (or break, anywhere)*/
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -233,26 +246,28 @@ void emitterLoop (ast* Node) {
     ast* code = isDo ? Node->l : Node->r;
 
     if (!isDo)
-        asmBranch(emitterValue(cond, operandCreateFlags(conditionUndefined)),
+        asmBranch(ctx->Asm,
+                  emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
                   EndLabel);
 
-    asmLabel(LoopLabel);
-    emitterCode(code);
+    asmLabel(ctx->Asm, LoopLabel);
+    emitterCode(ctx, code);
 
-    asmComment("");
+    asmComment(ctx->Asm, "");
 
-    asmBranch(emitterValue(cond, operandCreateFlags(conditionUndefined)),
+    asmBranch(ctx->Asm,
+              emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
               EndLabel);
 
-    asmJump(LoopLabel);
-    asmLabel(EndLabel);
+    asmJump(ctx->Asm, LoopLabel);
+    asmLabel(ctx->Asm, EndLabel);
 
-    labelBreakTo = OldBreakTo;
+    ctx->labelBreakTo = OldBreakTo;
 
     puts("-");
 }
 
-void emitterIter (ast* Node) {
+void emitterIter (emitterCtx* ctx, ast* Node) {
     puts("Iter+");
 
     ast* init = Node->firstChild;
@@ -260,67 +275,67 @@ void emitterIter (ast* Node) {
     ast* iter = cond->nextSibling;
 
     operand LoopLabel = labelCreate(labelUndefined);
-    operand OldBreakTo = labelBreakTo;
-    operand EndLabel = labelBreakTo = labelCreate(labelUndefined);
+    operand OldBreakTo = ctx->labelBreakTo;
+    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
 
     /*Initialize stuff*/
 
     if (init->class == astVar)
-        emitterVar(init);
+        emitterVar(ctx, init);
 
     else if (astIsValueClass(init->class))
-        operandFree(emitterValue(init, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, init, operandCreate(operandUndefined)));
 
     else if (init->class != astEmpty)
         printf("emitterIter(): unhandled AST class, %d.\n", init->class);
 
-    asmComment("");
+    asmComment(ctx->Asm, "");
 
     /*Check condition*/
 
-    asmLabel(LoopLabel);
+    asmLabel(ctx->Asm, LoopLabel);
 
     if (cond->class != astEmpty) {
-        operand Condition = emitterValue(cond, operandCreateFlags(conditionUndefined));
-        asmBranch(Condition, EndLabel);
+        operand Condition = emitterValue(ctx, cond, operandCreateFlags(conditionUndefined));
+        asmBranch(ctx->Asm, Condition, EndLabel);
     }
 
     /*Do block*/
 
-    emitterCode(Node->l);
+    emitterCode(ctx, Node->l);
 
     /*Iterate*/
 
-    asmComment("");
+    asmComment(ctx->Asm, "");
 
     if (iter->class != astEmpty)
-        operandFree(emitterValue(iter, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, iter, operandCreate(operandUndefined)));
 
     /*loopen Sie*/
 
-    asmComment("");
-    asmJump(LoopLabel);
-    asmLabel(EndLabel);
+    asmComment(ctx->Asm, "");
+    asmJump(ctx->Asm, LoopLabel);
+    asmLabel(ctx->Asm, EndLabel);
 
-    labelBreakTo = OldBreakTo;
+    ctx->labelBreakTo = OldBreakTo;
 
     puts("-");
 }
 
-void emitterVar (ast* Node) {
+void emitterVar (emitterCtx* ctx, ast* Node) {
     puts("Var+");
 
     /*Is there an initial value assigned?*/
     if (Node->r) {
         if (Node->r->class == astArrayLit)
-            emitterArrayLit(Node->r, Node->symbol);
+            emitterArrayLit(ctx, Node->r, Node->symbol);
 
         else if (Node->symbol->storage == storageAuto) {
-            asmEnter();
+            asmEnter(ctx->Asm);
             operand L = operandCreateMem(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
-            operand R = emitterValue(Node->r, operandCreate(operandUndefined));
-            asmLeave();
-            asmMove(L, R);
+            operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+            asmLeave(ctx->Asm);
+            asmMove(ctx->Asm, L, R);
             operandFree(R);
 
         } else
@@ -328,12 +343,12 @@ void emitterVar (ast* Node) {
     }
 
     if (Node->l)
-        emitterVar(Node->l);
+        emitterVar(ctx, Node->l);
 
     puts("-");
 }
 
-void emitterArrayLit (ast* Node, sym* Symbol) {
+void emitterArrayLit (emitterCtx* ctx, ast* Node, sym* Symbol) {
     puts("ArrayLit+");
 
     int n = 0;
@@ -341,13 +356,13 @@ void emitterArrayLit (ast* Node, sym* Symbol) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling, n++) {
-        asmEnter();
+        asmEnter(ctx->Asm);
         operand L = operandCreateMem(regRBP,
                                      Symbol->offset + Symbol->dt.basic->size*n,
                                      Symbol->dt.basic->size);
-        operand R = emitterValue(Current, operandCreate(operandUndefined));
-        asmLeave();
-        asmMove(L, R);
+        operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
+        asmMove(ctx->Asm, L, R);
         operandFree(R);
     }
 

@@ -734,7 +734,7 @@
 	"../inc/type.h"
 	"../inc/sym.h"
 
-1354766729 source:c:\users\sam\git\fcc\src\asm-amd64.c
+1354901404 source:c:\users\sam\git\fcc\src\asm-amd64.c
 	"stdlib.h"
 	"stdarg.h"
 	"stdio.h"
@@ -766,14 +766,15 @@
 1354834023 c:\users\sam\git\fcc\inc\ast.h
 	"type.h"
 
-1354559035 c:\users\sam\git\fcc\inc\asm.h
-	"stdarg.h"
+1354895906 c:\users\sam\git\fcc\inc\asm.h
 	"stdio.h"
+	"stdarg.h"
 
-1354558576 c:\users\sam\git\fcc\inc\asm-amd64.h
-	"../inc/operand.h"
+1354903227 c:\users\sam\git\fcc\inc\asm-amd64.h
+	"operand.h"
 
-1354564328 source:c:\users\sam\git\fcc\src\asm.c
+1354901053 source:c:\users\sam\git\fcc\src\asm.c
+	"stdlib.h"
 	"stdarg.h"
 	"../inc/asm.h"
 
@@ -787,7 +788,7 @@
 	"stdio.h"
 	"../inc/debug.h"
 
-1354886596 source:c:\users\sam\git\fcc\src\emitter.c
+1354902262 source:c:\users\sam\git\fcc\src\emitter.c
 	"string.h"
 	"stdio.h"
 	"stdlib.h"
@@ -803,8 +804,9 @@
 	"../inc/emitter.h"
 	"../inc/emitter-value.h"
 
-1354886800 c:\users\sam\git\fcc\inc\emitter.h
+1354902256 c:\users\sam\git\fcc\inc\emitter.h
 	"stdio.h"
+	"asm.h"
 
 1354819006 source:c:\users\sam\git\fcc\src\lexer.c
 	"stdlib.h"
@@ -840,12 +842,13 @@
 	"../inc/operand.h"
 	"../inc/reg.h"
 
-1354886664 source:c:\users\sam\git\fcc\src\parser.c
+1354887066 source:c:\users\sam\git\fcc\src\parser.c
 	"stdlib.h"
 	"string.h"
 	"../inc/debug.h"
 	"../inc/lexer.h"
 	"../inc/parser.h"
+	"../inc/parser-value.h"
 
 1354679813 source:c:\users\sam\git\fcc\src\reg.c
 	"../inc/reg.h"
@@ -877,10 +880,10 @@
 	"stdio.h"
 	"../inc/stream.h"
 
-1354886642 c:\users\sam\git\fcc\inc\emitter-value.h
+1354899526 c:\users\sam\git\fcc\inc\emitter-value.h
 	"operand.h"
 
-1354886899 source:c:\users\sam\git\fcc\src\emitter-value.c
+1354901764 source:c:\users\sam\git\fcc\src\emitter-value.c
 	"string.h"
 	"stdio.h"
 	"stdlib.h"
@@ -895,4 +898,14 @@
 	"../inc/reg.h"
 	"../inc/emitter.h"
 	"../inc/emitter-value.h"
+
+1354887062 source:c:\users\sam\git\fcc\src\parser-value.c
+	"stdlib.h"
+	"string.h"
+	"../inc/debug.h"
+	"../inc/lexer.h"
+	"../inc/parser.h"
+	"../inc/parser-value.h"
+
+1354887045 c:\users\sam\git\fcc\inc\parser-value.h
 

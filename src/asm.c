@@ -1,34 +1,38 @@
+#include "stdlib.h"
 #include "stdarg.h"
 
 #include "../inc/asm.h"
 
-FILE* Asm;
-int depth;
-
-void asmInit (FILE* File) {
-    Asm = File;
+asmCtx* asmInit (FILE* File) {
+    asmCtx* ctx = malloc(sizeof(asmCtx));
+    ctx->file = File;
+    ctx->depth = 0;
+    return ctx;
+}
+void asmEnd (asmCtx* ctx) {
+    free(ctx);
 }
 
-void asmOut (char* format, ...) {
-    for (int i = 0; i < 4*depth; i++)
-        fputc(' ', Asm);
+void asmOutLn (asmCtx* ctx, char* format, ...) {
+    for (int i = 0; i < 4*ctx->depth; i++)
+        fputc(' ', ctx->file);
 
     va_list args;
     va_start(args, format);
-    asmVarOut(format, args);
+    asmVarOut(ctx, format, args);
     va_end(args);
 
-    fputc('\n', Asm);
+    fputc('\n', ctx->file);
 }
 
-void asmVarOut (char* format, va_list args) {
-    vfprintf(Asm, format, args);
+void asmVarOut (asmCtx* ctx, char* format, va_list args) {
+    vfprintf(ctx->file, format, args);
 }
 
-void asmEnter () {
-    depth++;
+void asmEnter (asmCtx* ctx) {
+    ctx->depth++;
 }
 
-void asmLeave () {
-    depth--;
+void asmLeave (asmCtx* ctx) {
+    ctx->depth--;
 }
