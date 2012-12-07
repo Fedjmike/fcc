@@ -2,16 +2,25 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 [ ] Modules
 [-] struct
+    [ ] Literals
 [ ] enum
 [ ] Operators
     [ ] Pointers
     [ ] Boolean
+    [ ] Bitwise?
+    [ ] Shifts?
+    [ ] Modulo
+    [ ] Division
     [ ] Ternary if
+    [ ] Comma
 [ ] const
 [ ] string
+[-] bool
 [ ] Prototypes
+    [ ] Structs
+    [ ] Functions
 [ ] Function pointers?
-[ ] do while
+[x] do while
 [ ] Varargs
 [ ] static
     [ ] Variables
@@ -40,9 +49,12 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Debug output
     [ ] Command line arg controlled
 [ ] Decode AST nodes like in emitterLoop and emitterFor
+[ ] Assertions
+[ ] Internal error reporting standardisation
 
 [ ] Abysmal error recovery
 [ ] AST is not abstract
+[ ] AST field reuse is weird and unclear
 [ ] Parser/semantics merged => overly complex
     - When in doubt, reject *semantically*
       This means the parser fucks up less.

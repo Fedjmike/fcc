@@ -42,6 +42,14 @@ ast* astCreateUOP (char* o, ast* r) {
     return Node;
 }
 
+ast* astCreateTOP (ast* cond, ast* l, ast* r) {
+    ast* Node = astCreate(astTOP);
+    astAddChild(Node, cond);
+    Node->l = l;
+    Node->r = r;
+    return Node;
+}
+
 void astDestroy (ast* Node) {
     /*Clean up the first in the list, who will clean up its siblings*/
     if (Node->firstChild)
@@ -57,6 +65,7 @@ void astDestroy (ast* Node) {
     if (Node->r)
         astDestroy(Node->r);
 
+    free(Node->o);
     free(Node->literal);
     free(Node);
 }
@@ -79,6 +88,7 @@ void astAddChild (ast* Parent, ast* Child) {
 
 int astIsValueClass (astClass class) {
     return class == astBOP || class == astUOP ||
-             class == astCall || class == astIndex ||
-             class == astLiteral;
+           class == astTOP ||
+           class == astCall || class == astIndex ||
+           class == astLiteral;
 }

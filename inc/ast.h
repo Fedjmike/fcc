@@ -19,6 +19,7 @@ typedef enum {
     astReturn,
     astBOP = 20,
     astUOP,
+    astTOP,
     astIndex,
     astCall,
     astLiteral,
@@ -57,6 +58,7 @@ typedef struct ast {
 ast* astCreate (astClass class);
 ast* astCreateBOP (ast* l, char* o, ast* r);
 ast* astCreateUOP (char* o, ast* r);
+ast* astCreateTOP (ast* cond, ast* l, ast* r);
 void astDestroy (ast* Node);
 void astAddChild (ast* Parent, ast* Child);
 

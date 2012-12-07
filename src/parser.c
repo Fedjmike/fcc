@@ -27,6 +27,7 @@ static ast* parserFor (sym* Scope);
 
 static ast* parserValue (sym* Scope);
 static ast* parserAssign (sym* Scope);
+static ast* parserTernary (sym* Scope );
 static ast* parserBool (sym* Scope);
 static ast* parserEquality (sym* Scope);
 static ast* parserRel (sym* Scope);
@@ -486,6 +487,9 @@ ast* parserWhile (sym* Scope) {
     return Node;
 }
 
+/**
+ * DoWhile = "do" Code "while" Value ";"
+ */
 ast* parserDoWhile (sym* Scope) {
     puts("DoWhile+");
 
@@ -571,21 +575,38 @@ ast* parserValue (sym* Scope) {
 }
 
 /**
- * Assign = Bool [{ "=" | "+=" | "-=" | "*=" | "/=" Bool }]
+ * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" Assign ]
  */
 ast* parserAssign (sym* Scope) {
     puts("Assign+");
 
+    ast* Node = parserTernary(Scope);
+
+    if  (lexerIs("=") ||
+         lexerIs("+=") || lexerIs("-=") || lexerIs("*=") || lexerIs("/=")) {
+        char* o = lexerDupMatch();
+        Node = astCreateBOP(Node, o, parserAssign(Scope));
+    }
+
+    puts("-");
+
+    return Node;
+}
+
+/**
+ * Ternary = Bool [ "?" Ternary ":" Ternary ]
+ */
+ast* parserTernary (sym* Scope ) {
+    puts("Ternary+");
+
     ast* Node = parserBool(Scope);
 
-    while (lexerIs("=") ||
-           lexerIs("+=") || lexerIs("-=") || lexerIs("*=") || lexerIs("/=")) {
+    if (lexerTryMatchStr("?")) {
+        ast* l = parserTernary(Scope);
+        lexerMatch(":");
+        ast* r = parserTernary(Scope);
 
-        ast* tmp = Node;
-        Node = astCreate(astBOP);
-        Node->l = tmp;
-        Node->o = lexerDupMatch();
-        Node->r = parserBool(Scope);
+        Node = astCreateTOP(Node, l, r);
     }
 
     puts("-");
@@ -602,11 +623,8 @@ ast* parserBool (sym* Scope) {
     ast* Node = parserEquality(Scope);
 
     while (lexerIs( "&&") || lexerIs("||")) {
-        ast* tmp = Node;
-        Node = astCreate(astBOP);
-        Node->l = tmp;
-        Node->o = lexerDupMatch();
-        Node->r = parserEquality(Scope);
+        char* o = lexerDupMatch();
+        Node = astCreateBOP(Node, o, parserEquality(Scope));
     }
 
     puts("-");
@@ -845,6 +863,8 @@ ast* parserFactor (sym* Scope) {
         Node->litClass = literalBool;
         Node->literal = malloc(sizeof(char));
         *(char*) Node->literal = lexerIs("true") ? 1 : 0;
+
+        lexerMatch();
 
     /*Identifier or function call*/
     } else if (lexerToken == tokenIdent) {

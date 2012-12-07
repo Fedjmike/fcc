@@ -38,6 +38,7 @@ static operand emitterValue (ast* Node, operand Dest);
 static operand emitterBOP (ast* Node);
 static operand emitterAssign (ast* Node);
 static operand emitterUOP (ast* Node);
+static operand emitterTOP (ast* Node);
 static operand emitterIndex (ast* Node);
 static operand emitterCall (ast* Node);
 static operand emitterSymbol (ast* Node);
@@ -350,20 +351,26 @@ operand emitterValue (ast* Node, operand Dest) {
     else if (Node->class == astUOP)
         Value = emitterUOP(Node);
 
+    else if (Node->class == astTOP)
+        Value = emitterTOP(Node);
+
     else if (Node->class == astCall)
         Value = emitterCall(Node);
 
     else if (Node->class == astIndex)
         Value = emitterIndex(Node);
 
-    else if ((Node->class == astBOP && (!strcmp(Node->o, "->") || !strcmp(Node->o, "."))) ||
-             (Node->class == astLiteral && Node->litClass == literalIdent))
-        Value = emitterSymbol(Node);
+    else if (Node->class == astLiteral) {
+        if (Node->litClass == literalIdent)
+            Value = emitterSymbol(Node);
 
-    else if (Node->class == astLiteral)
-        Value = emitterLiteral(Node);
+        else if (Node->litClass == literalInt || Node->litClass == literalBool)
+            Value = emitterLiteral(Node);
 
-    else
+        else
+            printf("emitterValue: unhandled literal class, %d.\n", Node->litClass);
+
+    } else
         printf("emitterValue(): unhandled AST class, %d.\n", Node->class);
 
     /*Put it where requested*/
@@ -614,6 +621,32 @@ operand emitterUOP (ast* Node) {
     return Value;
 }
 
+operand emitterTOP (ast* Node) {
+    puts("TOP+");
+
+    operand ElseLabel = labelCreate(labelUndefined);
+    operand EndLabel = labelCreate(labelUndefined);
+    operand Value = operandCreateReg(regAllocGeneral());
+
+    asmBranch(emitterValue(Node->firstChild, operandCreateFlags(conditionUndefined)),
+              ElseLabel);
+
+    /*Assert returns Value*/
+    emitterValue(Node->l, Value);
+
+    asmComment("");
+    asmJump(EndLabel);
+    asmLabel(ElseLabel);
+
+    emitterValue(Node->r, Value);
+
+    asmLabel(EndLabel);
+
+    puts("-");
+
+    return Value;
+}
+
 operand emitterIndex (ast* Node) {
     puts("Index+");
 
@@ -749,10 +782,13 @@ operand emitterLiteral (ast* Node) {
     operand Value;
 
     if (Node->litClass == literalInt)
-        Value = operandCreateLiteral(*vptoip(Node->literal));
+        Value = operandCreateLiteral(*(int*) Node->literal);
+
+    else if (Node->litClass == literalBool)
+        Value = operandCreateLiteral(*(char*) Node->literal);
 
     else
-        fprintf(Asm, "4finish me!\n");
+        printf("emitterLiteral(): unhandled literal class, %d.\n", Node->litClass);
 
     puts("-");
 
