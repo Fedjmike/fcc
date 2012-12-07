@@ -787,7 +787,7 @@
 	"stdio.h"
 	"../inc/debug.h"
 
-1354855552 source:c:\users\sam\git\fcc\src\emitter.c
+1354886596 source:c:\users\sam\git\fcc\src\emitter.c
 	"string.h"
 	"stdio.h"
 	"stdlib.h"
@@ -801,10 +801,10 @@
 	"../inc/asm-amd64.h"
 	"../inc/reg.h"
 	"../inc/emitter.h"
+	"../inc/emitter-value.h"
 
-1354727129 c:\users\sam\git\fcc\inc\emitter.h
+1354886800 c:\users\sam\git\fcc\inc\emitter.h
 	"stdio.h"
-	"../inc/ast.h"
 
 1354819006 source:c:\users\sam\git\fcc\src\lexer.c
 	"stdlib.h"
@@ -840,7 +840,7 @@
 	"../inc/operand.h"
 	"../inc/reg.h"
 
-1354854612 source:c:\users\sam\git\fcc\src\parser.c
+1354886664 source:c:\users\sam\git\fcc\src\parser.c
 	"stdlib.h"
 	"string.h"
 	"../inc/debug.h"
@@ -855,7 +855,7 @@
 	"string.h"
 	"../std/stdlib.h"
 
-1354731412 c:\users\sam\git\fcc\std\stdlib.h
+1354856706 c:\users\sam\git\fcc\std\stdlib.h
 
 1354854242 source:c:\users\sam\git\fcc\src\sym.c
 	"stdio.h"
@@ -876,4 +876,23 @@
 	"stdlib.h"
 	"stdio.h"
 	"../inc/stream.h"
+
+1354886642 c:\users\sam\git\fcc\inc\emitter-value.h
+	"operand.h"
+
+1354886899 source:c:\users\sam\git\fcc\src\emitter-value.c
+	"string.h"
+	"stdio.h"
+	"stdlib.h"
+	"../std/std.h"
+	"../inc/debug.h"
+	"../inc/type.h"
+	"../inc/ast.h"
+	"../inc/sym.h"
+	"../inc/operand.h"
+	"../inc/asm.h"
+	"../inc/asm-amd64.h"
+	"../inc/reg.h"
+	"../inc/emitter.h"
+	"../inc/emitter-value.h"
 

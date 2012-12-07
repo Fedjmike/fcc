@@ -1,5 +1,5 @@
 #include "stdio.h"
 
-#include "../inc/ast.h"
+struct ast;
 
 void emitter (ast* Tree, FILE* File);

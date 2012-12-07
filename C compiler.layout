@@ -2,7 +2,7 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="debug" />
 	<File name="docs\todo.txt" open="1" top="0" tabpos="1">
-		<Cursor position="652" topLine="15" />
+		<Cursor position="1090" topLine="9" />
 	</File>
 	<File name="inc\asm-amd64.h" open="0" top="0" tabpos="0">
 		<Cursor position="502" topLine="1" />
@@ -10,38 +10,38 @@
 	<File name="inc\asm.h" open="0" top="0" tabpos="0">
 		<Cursor position="243" topLine="0" />
 	</File>
-	<File name="inc\ast.h" open="1" top="0" tabpos="11">
-		<Cursor position="1120" topLine="0" />
+	<File name="inc\ast.h" open="1" top="0" tabpos="14">
+		<Cursor position="346" topLine="23" />
 	</File>
-	<File name="inc\debug.h" open="0" top="0" tabpos="8">
-		<Cursor position="18" topLine="0" />
+	<File name="inc\debug.h" open="1" top="0" tabpos="8">
+		<Cursor position="79" topLine="0" />
 	</File>
 	<File name="inc\emitter.h" open="0" top="0" tabpos="6">
 		<Cursor position="90" topLine="0" />
 	</File>
-	<File name="inc\lexer.h" open="1" top="0" tabpos="8">
+	<File name="inc\lexer.h" open="1" top="0" tabpos="11">
 		<Cursor position="444" topLine="0" />
 	</File>
 	<File name="inc\main.h" open="0" top="0" tabpos="0">
 		<Cursor position="44" topLine="0" />
 	</File>
-	<File name="inc\operand.h" open="1" top="0" tabpos="16">
-		<Cursor position="154" topLine="0" />
+	<File name="inc\operand.h" open="1" top="0" tabpos="19">
+		<Cursor position="469" topLine="0" />
 	</File>
 	<File name="inc\parser.h" open="0" top="0" tabpos="8">
-		<Cursor position="10" topLine="0" />
+		<Cursor position="12" topLine="0" />
 	</File>
-	<File name="inc\reg.h" open="1" top="0" tabpos="14">
+	<File name="inc\reg.h" open="1" top="0" tabpos="17">
 		<Cursor position="906" topLine="7" />
 	</File>
 	<File name="inc\stream.h" open="0" top="0" tabpos="2">
 		<Cursor position="293" topLine="0" />
 	</File>
-	<File name="inc\sym.h" open="1" top="0" tabpos="12">
-		<Cursor position="682" topLine="5" />
+	<File name="inc\sym.h" open="1" top="0" tabpos="15">
+		<Cursor position="908" topLine="15" />
 	</File>
-	<File name="inc\type.h" open="1" top="0" tabpos="9">
-		<Cursor position="396" topLine="0" />
+	<File name="inc\type.h" open="1" top="0" tabpos="12">
+		<Cursor position="337" topLine="0" />
 	</File>
 	<File name="src\asm-amd64.c" open="0" top="0" tabpos="0">
 		<Cursor position="1673" topLine="58" />
@@ -50,49 +50,49 @@
 		<Cursor position="233" topLine="0" />
 	</File>
 	<File name="src\ast.c" open="0" top="0" tabpos="11">
-		<Cursor position="1146" topLine="29" />
+		<Cursor position="1643" topLine="46" />
 	</File>
 	<File name="src\debug.c" open="1" top="0" tabpos="7">
-		<Cursor position="1865" topLine="49" />
+		<Cursor position="1930" topLine="15" />
 	</File>
-	<File name="src\emitter.c" open="1" top="1" tabpos="6">
-		<Cursor position="18909" topLine="671" />
+	<File name="src\emitter.c" open="1" top="0" tabpos="6">
+		<Cursor position="12302" topLine="419" />
 	</File>
 	<File name="src\lexer.c" open="1" top="0" tabpos="4">
-		<Cursor position="4793" topLine="168" />
+		<Cursor position="2155" topLine="21" />
 	</File>
 	<File name="src\main.c" open="1" top="0" tabpos="2">
-		<Cursor position="769" topLine="0" />
+		<Cursor position="652" topLine="16" />
 	</File>
-	<File name="src\operand.c" open="1" top="0" tabpos="17">
-		<Cursor position="1757" topLine="67" />
+	<File name="src\operand.c" open="1" top="0" tabpos="20">
+		<Cursor position="1886" topLine="67" />
 	</File>
-	<File name="src\parser.c" open="1" top="0" tabpos="5">
-		<Cursor position="15960" topLine="712" />
+	<File name="src\parser.c" open="1" top="1" tabpos="5">
+		<Cursor position="5322" topLine="60" />
 	</File>
-	<File name="src\reg.c" open="1" top="0" tabpos="15">
+	<File name="src\reg.c" open="1" top="0" tabpos="18">
 		<Cursor position="315" topLine="0" />
 	</File>
-	<File name="src\std.c" open="0" top="0" tabpos="9">
-		<Cursor position="1801" topLine="0" />
+	<File name="src\std.c" open="1" top="0" tabpos="9">
+		<Cursor position="1890" topLine="105" />
 	</File>
 	<File name="src\stream.c" open="1" top="0" tabpos="3">
-		<Cursor position="1577" topLine="53" />
+		<Cursor position="372" topLine="0" />
 	</File>
-	<File name="src\sym.c" open="1" top="0" tabpos="13">
-		<Cursor position="2086" topLine="73" />
+	<File name="src\sym.c" open="1" top="0" tabpos="16">
+		<Cursor position="1863" topLine="81" />
 	</File>
-	<File name="src\type.c" open="1" top="0" tabpos="10">
-		<Cursor position="1040" topLine="13" />
+	<File name="src\type.c" open="1" top="0" tabpos="13">
+		<Cursor position="690" topLine="9" />
 	</File>
 	<File name="std\std.h" open="0" top="0" tabpos="10">
-		<Cursor position="741" topLine="0" />
+		<Cursor position="697" topLine="0" />
 	</File>
 	<File name="std\stdio.h" open="0" top="0" tabpos="7">
 		<Cursor position="194" topLine="0" />
 	</File>
-	<File name="std\stdlib.h" open="0" top="0" tabpos="10">
-		<Cursor position="154" topLine="0" />
+	<File name="std\stdlib.h" open="1" top="0" tabpos="10">
+		<Cursor position="222" topLine="0" />
 	</File>
 	<File name="tests\factorial.asm" open="0" top="0" tabpos="9">
 		<Cursor position="250" topLine="0" />
