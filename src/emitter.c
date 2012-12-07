@@ -23,6 +23,7 @@ operand labelBreakTo;
 
 static void emitterModule (ast* Tree);
 static void emitterStruct (sym* Symbol);
+static void emitterEnum (sym* Symbol);
 static void emitterFunction (ast* Node);
 static void emitterCode (ast* Node);
 static void emitterLine (ast* Node);
@@ -61,9 +62,20 @@ void emitterModule (ast* Tree) {
     /*Resolve struct info*/
     for (sym* Current = Tree->symbol->firstChild;
          Current;
-         Current = Current->nextSibling)
+         Current = Current->nextSibling) {
         if (Current->class == symStruct)
             emitterStruct(Current);
+
+        else if (Current->class == symEnum)
+            emitterEnum(Current);
+
+        else if (Current->class == symType ||
+                 Current->class == symFunction)
+            ; //Nothing to do
+
+        else
+            printf("emitterModule: unhandled sym class, %d.\n", Current->class);
+    }
 
     /*Functions*/
     for (ast* Current = Tree->firstChild;
@@ -73,7 +85,7 @@ void emitterModule (ast* Tree) {
             emitterFunction(Current);
 
         else
-            printf("emitterModule(): Unhandled AST class, %d.\n", Current->class);
+            printf("emitterModule(): unhandled AST class, %d.\n", Current->class);
     }
 
     puts("-");
@@ -92,6 +104,18 @@ void emitterStruct (sym* Symbol) {
     }
 
     reportSymbol(Symbol);
+
+    puts("-");
+}
+
+void emitterEnum (sym* Symbol) {
+    puts("Enum+");
+
+    for (sym* Current = Symbol->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        Current->class++;
+    }
 
     puts("-");
 }
@@ -375,6 +399,16 @@ operand emitterValue (ast* Node, operand Dest) {
 
     /*Put it where requested*/
 
+    /*If they haven't specifically asked for the reference as memory
+      then they're unaware it's held as a reference at all
+      so make it a plain ol' value*/
+    if (Value.class == operandMemRef && Dest.class != operandMem) {
+        operand nValue = operandCreateReg(regAllocGeneral());
+        asmEvalAddress(nValue, Value);
+        operandFree(Value);
+        Value = nValue;
+    }
+
     if (Dest.class != operandUndefined) {
         if (Dest.class != Value.class) {
             if (Dest.class == operandFlags) {
@@ -418,6 +452,7 @@ operand emitterValue (ast* Node, operand Dest) {
 
                 } else {
                     asmPush(Value);
+                    operandFree(Value);
                     Dest.size = 8;
                 }
 
@@ -437,20 +472,8 @@ operand emitterValue (ast* Node, operand Dest) {
         } else
             Dest = Value;
 
-    } else {
-        /*If they haven't specifically asked for the reference as memory
-          then they're unaware it's held as a reference at all
-          so make it a plain ol' value*/
-        if (Value.class == operandMemRef) {
-            Dest.class = operandReg;
-            Dest.reg = regAllocGeneral();
-
-            asmEvalAddress(Dest, Value);
-            operandFree(Value);
-
-        } else
-            Dest = Value;
-    }
+    } else
+        Dest = Value;
 
     return Dest;
 }

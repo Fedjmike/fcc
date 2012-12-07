@@ -173,10 +173,8 @@ void parserStruct (sym* Scope) {
 
     lexerMatchStr("struct");
 
-    sym* Symbol = symCreate(symStruct);
+    sym* Symbol = Scope = symCreate(symStruct, Scope);
     Symbol->ident = lexerMatchIdent();
-
-    symAddChild(Scope, Symbol);
 
     /*Body?*/
     if (lexerIs("{")) {
@@ -184,18 +182,18 @@ void parserStruct (sym* Scope) {
 
         /*Eat fields*/
         while (!lexerIs("}")) {
-            type fieldDT = parserType(Scope);
+            type fieldDT = parserType(Scope->parent);
 
             /*Comma separated variables*/
             do {
-                sym* Field = symCreate(symVar);
+                sym* Field = symCreate(symVar, Scope);
                 Field->dt = fieldDT;
                 Field->ident = lexerMatchIdent();
 
                 if (lexerTryMatchStr("[")) {
                     Field->dt.array = atoi(lexerBuffer);
 
-                    if (lexerToken == tokenInt) {
+                    if (lexerToken != tokenInt) {
                         errorExpected("number");
                         lexerNext();
 
@@ -208,8 +206,6 @@ void parserStruct (sym* Scope) {
 
                     lexerMatchStr("]");
                 }
-
-                symAddChild(Symbol, Field);
             } while (lexerTryMatchStr(","));
 
             lexerMatchStr(";");
@@ -227,30 +223,61 @@ void parserStruct (sym* Scope) {
 }
 
 /**
+ * Enum = "enum" <Ident> [ "{"
+ *                     <Ident> [ "=" Value ]
+                [{ "," <Ident> [ "=" Value ] }]
+                           "}" ] ";"
+ */
+void parserEnum (sym* Scope) {
+    puts("Enum+");
+
+    lexerMatchStr("enum");
+
+    sym* Symbol = Scope = symCreate(symEnum, Scope);
+    Symbol->ident = lexerMatchIdent();
+
+    if (lexerIs("{")) {
+        lexerMatch();
+
+        type elementDT = typeCreate(Symbol, 0, 0);
+
+        do {
+            sym* Element = symCreate(symVar, Scope);
+            Element->dt = elementDT;
+            Element->ident = lexerMatchIdent();
+        } while (lexerTryMatchStr(","));
+
+        lexerMatch("}");
+
+    } else
+        Symbol->proto = true;
+
+    lexerMatchStr(";");
+
+    puts("-");
+}
+
+/**
  * Function = "(" [ Type <Ident> [{ "," Type <Ident> }] ] ")" ";" | Code
  */
 ast* parserFunction (sym* Scope, type DT, char* Ident, int Storage) {
     puts("Function+");
 
     ast* Node = astCreate(astFunction);
-    Node->symbol = symCreate(symFunction);
+    Node->symbol = Scope = symCreate(symFunction, Scope);
     Node->symbol->dt = DT;
     Node->symbol->ident = Ident;
     Node->symbol->storage = Storage;
-
-    symAddChild(Scope, Node->symbol);
-    Scope = Node->symbol;
 
     lexerMatchStr("(");
 
     /*Parameter list*/
     if (!lexerIs(")")) do {
         ast* Para = astCreate(astVar);
-        Para->symbol = symCreate(symPara);
-        Para->symbol->dt = parserType(Scope);
+        Para->symbol = symCreate(symPara, Scope);
+        Para->symbol->dt = parserType(Scope->parent);
         Para->symbol->ident = lexerMatchIdent();
 
-        symAddChild(Scope, Para->symbol);
         astAddChild(Node, Para);
     } while (lexerTryMatchStr(","));
 
@@ -282,18 +309,18 @@ ast* parserVariable (sym* Scope, type DT, char* Ident, int Storage) {
 
     else {
         Node = astCreate(astVar);
-        Node->symbol = symCreate(symVar);
+        Node->symbol = symCreate(symVar, Scope);
         Node->symbol->dt = DT;
         Node->symbol->ident = Ident;
         Node->symbol->storage = Storage;
-
-        symAddChild(Scope, Node->symbol);
 
         if (lexerIs("=")) {
             lexerMatch();
             Node->r = parserValue(Scope);
         }
     }
+
+    reportSymbol(Node->symbol);
 
     puts("-");
 
@@ -307,13 +334,11 @@ ast* parserArray (sym* Scope, type DT, char* Ident, int Storage) {
     puts("Array+");
 
     ast* Node = astCreate(astVar);
-    Node->symbol = symCreate(symVar);
+    Node->symbol = symCreate(symVar, Scope);
     Node->symbol->dt = DT;
     Node->symbol->dt.array = -1; /*Temporarily indicates size unspecified*/
     Node->symbol->ident = Ident;
     Node->symbol->storage = Storage;
-
-    symAddChild(Scope, Node->symbol);
 
     lexerMatchStr("[");
 

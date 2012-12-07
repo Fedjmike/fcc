@@ -53,5 +53,6 @@ int main (int argc, char** argv) {
     free(Input);
     free(Output);
 
+    puts("Compilation over.");
     return 0;
 }

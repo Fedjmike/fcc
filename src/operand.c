@@ -83,7 +83,7 @@ int operandGetSize (operand Value) {
     if (Value.class == operandReg)
         return 8;
 
-    else if (Value.class == operandMem)
+    else if (Value.class == operandMem || Value.class == operandMemRef)
         return Value.size;
 
     else if (Value.class == operandLiteral)
@@ -128,15 +128,15 @@ char* operandToStr (operand Value) {
 
         if (Value.index == regUndefined || Value.factor == 0)
             if (Value.offset == 0)
-                sprintf(ret, "%s ptr [%s]", Size, regToStr(Value.reg));
+                snprintf(ret, 32, "%s ptr [%s]", Size, regToStr(Value.reg));
 
             else
-                sprintf(ret, "%s ptr [%s%+d]", Size, regToStr(Value.reg), Value.offset);
+                snprintf(ret, 32, "%s ptr [%s%+d]", Size, regToStr(Value.reg), Value.offset);
 
         else
-            sprintf(ret, "%s ptr [%s%+d*%s%+d]", Size, regToStr(Value.reg),
-                                                         Value.factor, regToStr(Value.index),
-                                                         Value.offset);
+            snprintf(ret, 32, "%s ptr [%s%+d*%s%+d]", Size, regToStr(Value.reg),
+                                                            Value.factor, regToStr(Value.index),
+                                                            Value.offset);
 
     } else if (Value.class == operandLiteral)
         sprintf(ret, "%d", Value.literal);

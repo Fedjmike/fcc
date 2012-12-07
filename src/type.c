@@ -22,13 +22,17 @@ int typeGetSize (type DT) {
 char* typeToStr (type DT) {
     char* Str = malloc(strlen(DT.basic->ident) + DT.ptr + DT.array + 10);
 
-    sprintf(Str, "%s", DT.basic ? DT.basic->ident : 0);
+    sprintf(Str, "%s", DT.basic ? DT.basic->ident : "undefined");
 
     for (int i = 0; i < DT.ptr; i++)
         strcat(Str, "*");
 
-    if (DT.array != 0)
-        sprintf(Str, "[%d]", DT.array);
+    if (DT.array != 0) {
+        char* ArrStr = malloc(DT.array + 10);
+        sprintf(ArrStr, "[%d]", DT.array);
+        strcat(Str, ArrStr);
+        free(ArrStr);
+    }
 
     return Str;
 }

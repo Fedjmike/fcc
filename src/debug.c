@@ -20,6 +20,11 @@ void reportType (type DT) {
 }
 
 void reportSymbol (sym* Symbol) {
+    /*Class*/
+
+    fprintf(debugLog, "class: %d   ",
+            Symbol->class);
+
     /*Symbol name*/
 
     fprintf(debugLog, "symbol: %s   ",
@@ -32,7 +37,7 @@ void reportSymbol (sym* Symbol) {
         Symbol->class != symStruct &&
         Symbol->class != symFunction)
         fprintf(debugLog, "parent: %s   ",
-                Symbol->parent ? Symbol->parent->ident : 0);
+                Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
 

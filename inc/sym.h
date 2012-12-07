@@ -8,6 +8,7 @@ typedef enum {
     symGlobal,
     symType,
     symStruct,
+    symEnum,
     symFunction,
     symPara,
     symVar
@@ -45,8 +46,8 @@ typedef struct sym {
 sym* symInit ();
 void symEnd ();
 
-sym* symCreate (symClass class);
-sym* symCreateDataType (char* Ident, int Size);
+sym* symCreate (symClass class, sym* Parent);
+sym* symCreateDataType (char* ident, int size);
 void symDestroy (sym* Symbol);
 
 void symAddChild (sym* Parent, sym* Child);

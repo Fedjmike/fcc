@@ -71,9 +71,11 @@ void astDestroy (ast* Node) {
 }
 
 void astAddChild (ast* Parent, ast* Child) {
-    if (!Child || !Parent)
+    if (!Child || !Parent) {
         printf("astAddChild(): null %s given.\n",
                !Parent ? "parent" : "child");
+        return;
+    }
 
     if (Parent->firstChild == 0) {
         Parent->firstChild = Child;
