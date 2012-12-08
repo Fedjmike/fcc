@@ -4,92 +4,72 @@
 
 #include "../inc/stream.h"
 
-/*16 defines the maximum level of modules you can import*/
-FILE* streamFiles[16];
-char* streamFilenames[16];
-int streamMaxFiles = 16;
-int streamFileNo = 0;
-
 char* streamFilename;
 char streamChar = 0;
 int lineNo = 1;
 int lineCharNo = 0;
 
-void streamInit (char* File) {
-    streamPush(File);
-}
+streamCtx* streamInit (char* File) {
+    streamCtx* ctx = malloc(sizeof(streamCtx));
+    ctx->filename = strdup(File);
+    ctx->file = fopen(File, "r");
 
-void streamEnd () {
-    while (streamFileNo)
-        streamPop();
-}
-
-void streamPush (char* File) {
-    streamFilenames[streamFileNo] = strdup(File);
-    streamFiles[streamFileNo] = fopen(File, "r");
-
-    if (streamFiles[streamFileNo] == 0) {
+    if (ctx->file == 0) {
         printf("Error opening file, '%s'.\n", File);
         exit(EXIT_FAILURE);
     }
 
-    streamFileNo++;
+    ctx->current = 0;
+    ctx->line = 1;
+    ctx->lineChar = 0;
 
-    streamNext();
+    streamNext(ctx);
+
+    return ctx;
 }
 
-void streamPop () {
-    streamFileNo--;
-
-    if (streamFiles[streamFileNo])
-        fclose(streamFiles[streamFileNo]);
-
-    free(streamFilenames[streamFileNo]);
+void streamEnd (streamCtx* ctx) {
+    fclose(ctx->file);
+    free(ctx->filename);
+    free(ctx);
 }
 
-char streamNext () {
-    char Old = streamChar;
-    streamChar = fgetc(streamFiles[streamFileNo-1]);
+char streamNext (streamCtx* ctx) {
+    char old = ctx->current;
+    ctx->current = fgetc(ctx->file);
 
-    if (feof(streamFiles[streamFileNo-1]) || streamChar == ((char) 0xFF))
-        streamChar = 0;
+    if (feof(ctx->file) || ctx->current == ((char) 0xFF))
+        ctx->current = 0;
 
-    lineCharNo++;
+    ctx->lineChar++;
 
-    if (Old == '\n') {
-        lineNo++;
-        lineCharNo = 0;
+    if (old == '\n') {
+        ctx->line++;
+        ctx->lineChar = 0;
     }
 
-    //printf("%d\t%c\n", (int) streamChar, streamChar);
+    //printf("%d\t%c\n", (int) ctx->current, ctx->current);
 
-    return Old;
+    return old;
 }
 
-char streamPrev () {
-    char Old = streamChar;
+char streamPrev (streamCtx* ctx) {
+    char old = ctx->current;
 
-    fseek(streamFiles[streamFileNo-1], -2, SEEK_CUR);
-    streamNext();
+    fseek(ctx->file, -2, SEEK_CUR);
+    streamNext(ctx);
 
-    lineCharNo--;
+    ctx->lineChar--;
 
-    if (streamChar == '\n') {
-        lineNo--;
-        lineCharNo = -1;
+    if (ctx->current == '\n') {
+        ctx->line--;
+        /*Since it would be such a hassle to go back and count chars
+          (or keep track of them for all lines), we'll just start
+          using Python indices (-1 = last char, -2 = second last etc)*/
+        ctx->lineChar = -1;
     }
 
-    return Old;
+    return old;
+
 }
 
-int streamGetPos () {
-    return ftell(streamFiles[streamFileNo-1]);
-}
-
-int streamGetLine () {
-    return lineNo;
-}
-
-int streamGetLineChar () {
-    return lineCharNo;
-}

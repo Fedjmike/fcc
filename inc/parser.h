@@ -1,5 +1,19 @@
 #pragma once
 
-struct ast;
+#include "lexer.h"
 
-ast* parser (char* File);
+struct ast;
+struct sym;
+
+typedef struct {
+    lexerCtx* lexer;
+
+    struct sym* scope;
+
+    bool insideLoop;
+
+    int errors;
+    int warnings;
+} parserCtx;
+
+struct ast* parser (char* File);

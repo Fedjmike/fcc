@@ -808,7 +808,7 @@
 	"stdio.h"
 	"asm.h"
 
-1354819006 source:c:\users\sam\git\fcc\src\lexer.c
+1354929618 source:c:\users\sam\git\fcc\src\lexer.c
 	"stdlib.h"
 	"ctype.h"
 	"stdarg.h"
@@ -819,10 +819,12 @@
 	"../inc/stream.h"
 	"../inc/lexer.h"
 
-1354734173 c:\users\sam\git\fcc\inc\stream.h
+1354929647 c:\users\sam\git\fcc\inc\stream.h
+	"stdio.h"
 
-1354758368 c:\users\sam\git\fcc\inc\lexer.h
+1354929890 c:\users\sam\git\fcc\inc\lexer.h
 	"../std/std.h"
+	"stream.h"
 
 1354855406 source:c:\users\sam\git\fcc\src\main.c
 	"string.h"
@@ -833,7 +835,8 @@
 	"../inc/parser.h"
 	"../inc/emitter.h"
 
-1354820342 c:\users\sam\git\fcc\inc\parser.h
+1354930324 c:\users\sam\git\fcc\inc\parser.h
+	"lexer.h"
 
 1354855215 source:c:\users\sam\git\fcc\src\operand.c
 	"stdlib.h"
@@ -842,12 +845,13 @@
 	"../inc/operand.h"
 	"../inc/reg.h"
 
-1354887066 source:c:\users\sam\git\fcc\src\parser.c
+1354930978 source:c:\users\sam\git\fcc\src\parser.c
 	"stdlib.h"
 	"string.h"
 	"../inc/debug.h"
 	"../inc/lexer.h"
 	"../inc/parser.h"
+	"../inc/parser-helpers.h"
 	"../inc/parser-value.h"
 
 1354679813 source:c:\users\sam\git\fcc\src\reg.c
@@ -899,13 +903,25 @@
 	"../inc/emitter.h"
 	"../inc/emitter-value.h"
 
-1354887062 source:c:\users\sam\git\fcc\src\parser-value.c
+1354930403 source:c:\users\sam\git\fcc\src\parser-value.c
 	"stdlib.h"
 	"string.h"
 	"../inc/debug.h"
 	"../inc/lexer.h"
 	"../inc/parser.h"
+	"../inc/parser-helpers.h"
 	"../inc/parser-value.h"
 
-1354887045 c:\users\sam\git\fcc\inc\parser-value.h
+1354929392 c:\users\sam\git\fcc\inc\parser-value.h
+	"parser.h"
+
+1354930387 source:c:\users\sam\git\fcc\src\parser-helpers.c
+	"stdlib.h"
+	"stdarg.h"
+	"string.h"
+	"../inc/parser-helpers.h"
+
+1354930191 c:\users\sam\git\fcc\inc\parser-helpers.h
+	"type.h"
+	"parser.h"
 

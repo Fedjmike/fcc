@@ -1,6 +1,7 @@
 Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task   - Information
 
 [ ] Modules
+    - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
 [-] struct
     [ ] Literals
 [-] enum
@@ -36,7 +37,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Lvalues
 
 [ ] Skip line on error
-[-] Global state -> state structs
+[x] Global state -> state structs
 [-] If an operand is not literally the result, recreate it
     fo safety n shizzle
 [ ] Emitter helper functions
@@ -62,7 +63,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Dealing with operands in the emitter is cumbersome
 [ ] Arch specifics are a bit magic value-y
 [ ] Type system overly simple
-[ ] Lack of comments, esp. interface documentation
+[-] Lack of comments, esp. interface documentation
 [ ] Assumption of operand class permutations required
 
 Coding issues:

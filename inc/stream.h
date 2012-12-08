@@ -1,18 +1,28 @@
-void streamInit (char* File);
-void streamEnd ();
+#pragma once
 
-void streamPush (char* File);
-void streamPop ();
+#include "stdio.h"
 
-/*Load the next character, return the old (!) character*/
-char streamNext ();
+/**
+ * Stream context
+ */
+typedef struct {
+    char* filename;
+    FILE* file;
 
-/*Load backtrack a single character, return the old character (that is now next)*/
-char streamPrev ();
+    char current;
+    int line;
+    int lineChar;
+} streamCtx;
 
-int streamGetPos ();
-int streamGetLine ();
-int streamGetLineChar ();
+streamCtx* streamInit (char* File);
+void streamEnd (streamCtx* ctx);
 
-extern char* streamFilename;
-extern char streamChar;
+/**
+ * Load the next character, return the old character
+ */
+char streamNext (streamCtx* ctx);
+
+/**
+ * Backtrack a single character, return the old character (that is now next)
+ */
+char streamPrev (streamCtx* ctx);

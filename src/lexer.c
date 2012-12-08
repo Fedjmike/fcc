@@ -10,78 +10,74 @@
 #include "../inc/stream.h"
 #include "../inc/lexer.h"
 
-int tokenMaxSize = 50;		/*In bytes*/
-
-tokenClass lexerToken;
-char* lexerBuffer;
-
-void lexerInit (char* File) {
-    lexerBuffer = malloc(tokenMaxSize);
-    lexerPush(File);
+lexerCtx* lexerInit (char* File) {
+    lexerCtx* ctx = malloc(sizeof(lexerCtx));
+    ctx->stream = streamInit(File);
+    ctx->token = tokenUndefined;
+    ctx->bufferSize = 32;
+    ctx->buffer = malloc(ctx->bufferSize);
+    lexerNext(ctx);
+    return ctx;
 }
 
-void lexerEnd () {
-    free(lexerBuffer);
-
-    streamEnd();
-}
-
-void lexerPush (char* File) {
-    streamPush(File);
-    lexerNext();
-}
-
-void lexerPop () {
-    streamPop();
-    lexerNext();
+void lexerEnd (lexerCtx* ctx) {
+    streamEnd(ctx->stream);
+    free(ctx->buffer);
+    free(ctx);
 }
 
 /*Eat as many insignificants (comments, whitespace etc) as possible*/
-static void lexerSkipInsignificants () {
-    while (streamChar != 0) {
+static void lexerSkipInsignificants (lexerCtx* ctx) {
+    while (ctx->stream->current != 0) {
         /*Whitespace*/
-        if (streamChar == ' '  || streamChar == '\t' ||
-                streamChar == '\n' || streamChar == '\r')
-            streamNext();
+        if (ctx->stream->current == ' '  ||
+            ctx->stream->current == '\t' ||
+            ctx->stream->current == '\n' ||
+            ctx->stream->current == '\r')
+            streamNext(ctx->stream);
 
         /*C preprocessor is treated as a comment*/
-        else if (streamChar == '#') {
+        else if (ctx->stream->current == '#') {
             /*Eat until a new line*/
-            while (streamChar != '\n' && streamChar != 0)
-                streamNext();
+            while (ctx->stream->current != '\n' &&
+                   ctx->stream->current != 0)
+                streamNext(ctx->stream);
 
-            streamNext();
+            streamNext(ctx->stream);
 
         /*Comment?*/
-        } else if (streamChar == '/') {
-            streamNext();
+        } else if (ctx->stream->current == '/') {
+            streamNext(ctx->stream);
 
             /*C comment*/
-            if (streamChar == '*') {
-                streamNext();
+            if (ctx->stream->current == '*') {
+                streamNext(ctx->stream);
 
                 do {
-                    while (streamChar != '*' && streamChar != 0)
-                        streamNext();
+                    while (ctx->stream->current != '*' &&
+                           ctx->stream->current != 0)
+                        streamNext(ctx->stream);
 
-                    if (streamChar == 0)
+                    if (ctx->stream->current == 0)
                         break;
 
-                    streamNext();
-                } while (streamChar != '/' && streamChar != 0);
+                    streamNext(ctx->stream);
+                } while (ctx->stream->current != '/' &&
+                         ctx->stream->current != 0);
 
-                streamNext();
+                streamNext(ctx->stream);
 
             /*C++ Comment*/
-            } else if (streamChar == '/') {
-                streamNext();
+            } else if (ctx->stream->current == '/') {
+                streamNext(ctx->stream);
 
-                while (streamChar != '\n' && streamChar != '\r')
-                    streamNext();
+                while (ctx->stream->current != '\n' &&
+                       ctx->stream->current != '\r')
+                    streamNext(ctx->stream);
 
             /*Fuck, we just ate an important character. Backtrack!*/
             } else {
-                streamPrev();
+                streamPrev(ctx->stream);
                 break;
             }
 
@@ -92,195 +88,65 @@ static void lexerSkipInsignificants () {
     }
 }
 
-void lexerNext () {
-    if (lexerToken == tokenEOF)
+void lexerNext (lexerCtx* ctx) {
+    if (ctx->token == tokenEOF)
         return;
 
-    lexerSkipInsignificants();
+    lexerSkipInsignificants(ctx);
 
     int length = 0;
 
     /*End of stream. Do not increment pos, as we could segfault.
       Continued calls to this function will prepare more EOF tokens.*/
-    if (streamChar == 0)
-        lexerToken = tokenEOF;
+    if (ctx->stream->current == 0)
+        ctx->token = tokenEOF;
 
-    /* Idents, a letter followed by any number (zero?) alphanumerics*/
-    else if (isalpha(streamChar) || streamChar == '_') {
-        lexerToken = tokenIdent;
-        lexerBuffer[length++] = streamNext();
+    /* Idents, a letter followed by any number (zero?) of alphanumerics*/
+    else if (isalpha(ctx->stream->current) ||
+             ctx->stream->current == '_') {
+        ctx->token = tokenIdent;
+        ctx->buffer[length++] = streamNext(ctx->stream);
 
-        while (isalnum(streamChar) || streamChar == '_')
-            lexerBuffer[length++] = streamNext();
+        while (isalnum(ctx->stream->current) ||
+               ctx->stream->current == '_')
+            ctx->buffer[length++] = streamNext(ctx->stream);
 
     }
     /*Number*/
-    else if (isdigit(streamChar)) {
-        lexerToken = tokenInt;
+    else if (isdigit(ctx->stream->current)) {
+        ctx->token = tokenInt;
 
-        while (isdigit(streamChar))
-            lexerBuffer[length++] = streamNext();
+        while (isdigit(ctx->stream->current))
+            ctx->buffer[length++] = streamNext(ctx->stream);
 
-        if (tolower(streamChar) == 'l')
-            streamNext();
+        if (tolower(ctx->stream->current) == 'l')
+            streamNext(ctx->stream);
 
     /*Other symbol. Operators come into this category*/
     } else {
-        lexerToken = tokenOther;
-        lexerBuffer[length++] = streamNext();
+        ctx->token = tokenOther;
+        ctx->buffer[length++] = streamNext(ctx->stream);
 
         /*If it is a double char operator like != or ->, combine them*/
 
         /* != == */
-        int cond = (lexerBuffer[0] == '=' || lexerBuffer[0] == '!' ||
-                    lexerBuffer[0] == '+' || lexerBuffer[0] == '-' ||
-                    lexerBuffer[0] == '*' || lexerBuffer[0] == '/') &&
-                   streamChar == '=';
-
+        if (((ctx->buffer[0] == '=' || ctx->buffer[0] == '!' ||
+                    ctx->buffer[0] == '+' || ctx->buffer[0] == '-' ||
+                    ctx->buffer[0] == '*' || ctx->buffer[0] == '/') &&
+                   ctx->stream->current == '=')
         /* -> -- */
-        cond = cond || (lexerBuffer[0] == '-' &&
-                        (streamChar == '>' || streamChar == '-'));
-
+            || (ctx->buffer[0] == '-' &&
+                (ctx->stream->current == '>' || ctx->stream->current == '-'))
         /* ++ */
-        cond = cond || (lexerBuffer[0] == '+' &&
-                        streamChar == '+');
+            || (ctx->buffer[0] == '+' &&
+                ctx->stream->current == '+')
         /* >= <= */
-        cond = cond || ((lexerBuffer[0] == '>' || lexerBuffer[0] == '<') &&
-                         streamChar == '=');
-
-        if (cond)
-            lexerBuffer[length++] = streamNext();
+            || ((ctx->buffer[0] == '>' || ctx->buffer[0] == '<') &&
+                ctx->stream->current == '='))
+            ctx->buffer[length++] = streamNext(ctx->stream);
     }
 
-    lexerBuffer[length++] = 0;
+    ctx->buffer[length++] = 0;
 
-    //printf("token(%d:%d): '%s'.\n", streamGetLine(), streamGetLineChar(), lexerBuffer);
-}
-
-/* ::::PARSER MESSAGES:::: */
-
-static void error (char* format, ...) {
-    printf("error(%d:%d): ", streamGetLine(), streamGetLineChar());
-
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-
-    puts(".");
-
-    getchar();
-}
-
-void errorExpected (char* Expected) {
-    error("expected %s, found '%s'", Expected, lexerBuffer);
-}
-
-void errorMismatch (char* Type, char* One, char* Two) {
-    error("%s mismatch between %s and %s at '%s'", Type, One, Two, lexerBuffer);
-}
-
-void errorUndefSym () {
-    error("undefined symbol '%s'", lexerBuffer);
-}
-
-void errorInvalidOp (char* Op, char* TypeDesc, type DT) {
-    char* TypeStr = typeToStr(DT);
-    error("invalid %s on %s: %s", Op, TypeDesc, TypeStr);
-    free(TypeStr);
-}
-
-void errorInvalidOpExpected (char* Op, char* TypeDesc, type DT) {
-    char* TypeStr = typeToStr(DT);
-    error("invalid %s on %s, expected %s", Op, TypeStr, TypeDesc);
-    free(TypeStr);
-}
-
-/* ::::PARSER INTERFACES:::: */
-
-bool lexerIs (char* Match) {
-    return !strcmp(lexerBuffer, Match);
-}
-
-void lexerMatch () {
-    printf("matched(%d:%d): '%s'.\n",
-           streamGetLine(),
-           streamGetLineChar(),
-           lexerBuffer);
-    lexerNext();
-}
-
-char* lexerDupMatch () {
-    char* Old = strdup(lexerBuffer);
-
-    lexerMatch();
-
-    return Old;
-}
-
-/*Convert a token type to string*/
-static char* tokenToStr (int Token) {
-    if (Token == tokenOther)
-        return "other";
-
-    else if (Token == tokenEOF)
-        return "end of file";
-
-    else if (Token == tokenIdent)
-        return "identifier";
-
-    return "undefined";
-}
-
-void lexerMatchToken (tokenClass Match) {
-    if (lexerToken == Match)
-        lexerMatch();
-
-    else {
-        errorExpected(tokenToStr(Match));
-        lexerNext();
-    }
-}
-
-void lexerMatchStr (char* Match) {
-    if (lexerIs(Match))
-        lexerMatch();
-
-    else {
-        char* expectedInQuotes = malloc(strlen(Match)+2);
-        sprintf(expectedInQuotes, "'%s'", Match);
-        errorExpected(expectedInQuotes);
-        free(expectedInQuotes);
-
-        lexerNext();
-    }
-}
-
-bool lexerTryMatchStr (char* Match) {
-    if (lexerIs(Match)) {
-        lexerMatch();
-        return true;
-
-    } else
-        return false;
-}
-
-int lexerMatchInt () {
-    int ret = atoi(lexerBuffer);
-
-    if (lexerToken == tokenInt)
-        lexerMatch();
-
-    else
-        errorExpected("integer");
-
-    return ret;
-}
-
-char* lexerMatchIdent () {
-    char* Old = strdup(lexerBuffer);
-
-    lexerMatchToken(tokenIdent);
-
-    return Old;
+    //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
 }

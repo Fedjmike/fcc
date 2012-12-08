@@ -1,4 +1,6 @@
+#include "parser.h"
+
 struct ast;
 struct sym;
 
-ast* parserValue (sym* Scope);
+ast* parserValue (parserCtx* ctx);
