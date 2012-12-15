@@ -5,8 +5,9 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] struct
     [ ] Literals
 [-] enum
+[ ] Block scope
 [ ] Operators
-    [ ] Pointers
+    [-] Pointers
     [ ] Boolean
     [ ] Bitwise?
     [ ] Shifts?
@@ -27,7 +28,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Variables
     [ ] Functions
 [ ] extern
-[ ] Global variables
+[ ] Global variables?
 [ ] CRT support
 [ ] Sizeof
 [ ] Break
@@ -37,7 +38,9 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Lvalues
 
 [ ] Skip line on error
-[x] Global state -> state structs
+[-] Global state -> state structs
+    [ ] Operands: reg, labels
+    [ ] Symbols
 [-] If an operand is not literally the result, recreate it
     fo safety n shizzle
 [ ] Emitter helper functions
@@ -47,17 +50,32 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [-] ASM output
         [x] Indenting
         [-] Comments
-    [ ] Debug output
+    [-] Debug output
     [ ] Command line arg controlled
 [ ] Decode AST nodes like in emitterLoop and emitterFor
-[ ] Assertions
-[ ] Internal error reporting standardisation
+[-] Assertions
+[-] Internal error reporting standardisation
 [ ] Clean up value moving code
+[-] Const correctness
+[-] Use debugEnter and Leave more
+[-] Make sure prototypes and implementation match exactly (static)
+[ ] Use a cond field of AST
+[ ] Introduce a match-all type class for error handling
+[ ] Do analyzerArrayLiteral lits properly
+[ ] File names in error messages
+[ ] Use bitfields for type properties?
+[ ] Fix type compatibility
+    - Type coercion needed
+[ ] Fix bop location thingy (astCreateBOP(o, l))
+[ ] Fix lvalue error messages
+[ ] Check constness of array sizes, enum values etc
+[ ] Deconfuse array representations
+[ ] Move type assignment stuff to analyzer? Could solve some of the above
 
 [ ] Abysmal error recovery
 [ ] AST is not abstract
 [ ] AST field reuse is weird and unclear
-[ ] Parser/semantics merged => overly complex
+[-] Parser/semantics merged => overly complex
     - When in doubt, reject *semantically*
       This means the parser fucks up less.
 [ ] Dealing with operands in the emitter is cumbersome
