@@ -61,19 +61,30 @@
 		<Unit filename="grammar.txt">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="inc\analyzer-value.h" />
+		<Unit filename="inc\analyzer.h" />
 		<Unit filename="inc\asm-amd64.h" />
 		<Unit filename="inc\asm.h" />
 		<Unit filename="inc\ast.h" />
 		<Unit filename="inc\debug.h" />
+		<Unit filename="inc\emitter-value.h" />
 		<Unit filename="inc\emitter.h" />
 		<Unit filename="inc\lexer.h" />
 		<Unit filename="inc\main.h" />
 		<Unit filename="inc\operand.h" />
+		<Unit filename="inc\parser-helpers.h" />
+		<Unit filename="inc\parser-value.h" />
 		<Unit filename="inc\parser.h" />
 		<Unit filename="inc\reg.h" />
 		<Unit filename="inc\stream.h" />
 		<Unit filename="inc\sym.h" />
 		<Unit filename="inc\type.h" />
+		<Unit filename="src\analyzer-value.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\analyzer.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\asm-amd64.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -86,6 +97,9 @@
 		<Unit filename="src\debug.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src\emitter-value.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src\emitter.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -96,6 +110,12 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\operand.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\parser-helpers.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src\parser-value.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src\parser.c">

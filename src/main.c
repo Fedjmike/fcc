@@ -6,6 +6,7 @@
 
 #include "../inc/debug.h"
 #include "../inc/parser.h"
+#include "../inc/analyzer.h"
 #include "../inc/emitter.h"
 
 int main (int argc, char** argv) {
@@ -28,12 +29,6 @@ int main (int argc, char** argv) {
     else
         Output = strdup(argv[2]);
 
-    /*Parse the module*/
-
-    ast* Tree = parser(Input);
-
-    /*Emit the assembly*/
-
     FILE* File = fopen(Output, "w");
 
     if (File == 0) {
@@ -41,7 +36,55 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
-    emitter(Tree, File);
+    /*Initialize symbol "table",
+      make new built in data types and add them to the global namespace*/
+    sym* Global = symInit();
+    sym* Types[5];
+    Types[builtinVoid] = symCreateType("void", 0, 0);
+    Types[builtinBool] = symCreateType("bool", 1,
+                                       typeEquality || typeAssignment);
+    Types[builtinChar] = symCreateType("char", 1,
+                                       typeNumeric || typeOrdinal ||
+                                       typeEquality || typeAssignment);
+    Types[builtinInt] = symCreateType("int", 8,
+                                      typeNumeric || typeOrdinal ||
+                                      typeEquality || typeAssignment);
+
+    int errors = 0;
+    int warnings = 0;
+    /*Has compilation failed? We could be in a mode where warnings are
+      treated as errors, so this isn't completely obvious from errors
+      and warnings.
+      Emission only happens if there is no failure, semantic analysis
+      if there is no *error*. Important difference.*/
+    bool fail = false;
+    ast* Tree = 0;
+
+    /*Parse the module*/
+
+    if (!fail) {
+        parserResult res = parser(Input, Global);
+        errors += res.errors;
+        warnings += res.warnings;
+        Tree = res.tree;
+    }
+
+    fail = errors != 0;
+
+    /*Semantic analysis*/
+
+    if (errors == 0) {
+        analyzerResult res = analyzer(Tree, Global, Types);
+        errors += res.errors;
+        warnings += res.warnings;
+    }
+
+    fail = errors != 0;
+
+    /*Emit the assembly*/
+
+    if (!fail)
+        emitter(Tree, File);
 
     /*Clean up*/
 
@@ -53,6 +96,11 @@ int main (int argc, char** argv) {
     free(Input);
     free(Output);
 
-    puts("Compilation over.");
-    return 0;
+	if (fail)
+		puts("Compilation unsuccessful.");
+
+	else
+		puts("Compilation successful.");
+
+    return fail;
 }

@@ -29,7 +29,7 @@ static void emitterBranch (emitterCtx* ctx, ast* Node);
 static void emitterLoop (emitterCtx* ctx, ast* Node);
 static void emitterIter (emitterCtx* ctx, ast* Node);
 static void emitterVar (emitterCtx* ctx, ast* Node);
-static void emitterArrayLit (emitterCtx* ctx, ast* Node, sym* Symbol);
+static void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol);
 
 static emitterCtx* emitterInit (FILE* File) {
     emitterCtx* ctx = malloc(sizeof(emitterCtx));
@@ -97,9 +97,10 @@ void emitterStruct (emitterCtx* ctx, sym* Symbol) {
     for (sym* Current = Symbol->firstChild;
          Current;
          Current = Current->nextSibling) {
+
         Current->offset = Symbol->size;
         /*Add the size of this field, rounded up to the nearest word boundary*/
-        Symbol->size += ((typeGetSize(Current->dt)-1) / 8) + 8;
+        Symbol->size += ((typeGetSize(Current->dt) - 1)/8)*8 + 8;
         reportSymbol(Current);
     }
 
@@ -130,7 +131,7 @@ void emitterFunction (emitterCtx* ctx, ast* Node) {
 
     /*Asign offsets to all the parameters*/
     for (Symbol = Node->symbol->firstChild;
-         Symbol && Symbol->class == symPara;
+         Symbol && Symbol->class == symParam;
          Symbol = Symbol->nextSibling) {
         Symbol->offset = lastOffset;
         lastOffset += typeGetSize(Symbol->dt);
@@ -156,7 +157,7 @@ void emitterFunction (emitterCtx* ctx, ast* Node) {
     asmComment(ctx->Asm, "");
     asmFnPrologue(ctx->Asm,
                   labelGet(Node->symbol->label),
-                  Node->symbol->lastChild && Node->symbol->lastChild->class != symPara
+                  Node->symbol->lastChild && Node->symbol->lastChild->class != symParam
                         ? -Node->symbol->lastChild->offset : 0);
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, labelGet(EndLabel));
@@ -327,8 +328,8 @@ void emitterVar (emitterCtx* ctx, ast* Node) {
 
     /*Is there an initial value assigned?*/
     if (Node->r) {
-        if (Node->r->class == astArrayLit)
-            emitterArrayLit(ctx, Node->r, Node->symbol);
+        if (Node->r->class == astLiteral && Node->r->litClass == literalArray)
+            emitterArrayLiteral(ctx, Node->r, Node->symbol);
 
         else if (Node->symbol->storage == storageAuto) {
             asmEnter(ctx->Asm);
@@ -348,8 +349,8 @@ void emitterVar (emitterCtx* ctx, ast* Node) {
     puts("-");
 }
 
-void emitterArrayLit (emitterCtx* ctx, ast* Node, sym* Symbol) {
-    puts("ArrayLit+");
+void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
+    puts("ArrayLiteral+");
 
     int n = 0;
 

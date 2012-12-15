@@ -38,6 +38,9 @@ void symAddChild (sym* Parent, sym* Child) {
     }
 
     Child->parent = Parent;
+
+    if (Child->class == symParam)
+        Parent->params++;
 }
 
 sym* symCreate (symClass class, sym* parent) {
@@ -58,16 +61,34 @@ sym* symCreate (symClass class, sym* parent) {
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
 
+    Symbol->params = 0;
+
     Symbol->label = operandCreateLabel(0);
     Symbol->offset = 0;
 
     return Symbol;
 }
 
-sym* symCreateDataType (char* ident, int size) {
+sym* symCreateType (char* ident, int size, symTypeMask typeMask) {
     sym* Symbol = symCreate(symType, Global);
     Symbol->ident = strdup(ident);
     Symbol->size = size;
+    Symbol->typeMask = typeMask;
+    return Symbol;
+}
+
+sym* symCreateStruct (sym* Parent, char* ident) {
+    sym* Symbol = symCreate(symStruct, Parent);
+    Symbol->ident = ident;
+    Symbol->typeMask = typeAssignment;
+    return Symbol;
+}
+
+sym* symCreateVar (sym* Parent, char* ident, type DT, storageClass storage) {
+    sym* Symbol = symCreate(symVar, Parent);
+    Symbol->ident = ident;
+    Symbol->dt = DT;
+    Symbol->storage = storage;
     return Symbol;
 }
 
@@ -126,4 +147,31 @@ sym* symFind (sym* Scope, char* Look) {
 
 sym* symFindGlobal (char* Look) {
     return symChild(Global, Look);
+}
+
+const char* symClassGetStr (symClass class) {
+	if (class == symUndefined)
+		return "symUndefined";
+	else if (class == symGlobal)
+		return "symGlobal";
+	else if (class == symType)
+		return "symType";
+	else if (class == symStruct)
+		return "symStruct";
+	else if (class == symEnum)
+		return "symEnum";
+	else if (class == symFunction)
+		return "symFunction";
+	else if (class == symParam)
+		return "symParam";
+	else if (class == symVar)
+		return "symVar";
+
+	else {
+		char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("symClassGetStr", "symbol class", Str);
+        free(Str);
+        return "unhandled";
+	}
 }

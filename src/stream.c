@@ -46,7 +46,10 @@ char streamNext (streamCtx* ctx) {
     if (old == '\n') {
         ctx->line++;
         ctx->lineChar = 0;
-    }
+
+    } else if (old == '\t')
+		ctx->lineChar += 3;
+
 
     //printf("%d\t%c\n", (int) ctx->current, ctx->current);
 
@@ -67,7 +70,9 @@ char streamPrev (streamCtx* ctx) {
           (or keep track of them for all lines), we'll just start
           using Python indices (-1 = last char, -2 = second last etc)*/
         ctx->lineChar = -1;
-    }
+
+    } else if (ctx->current == '\t')
+		ctx->lineChar -= 3;
 
     return old;
 

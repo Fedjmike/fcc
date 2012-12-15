@@ -1,16 +1,20 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+#include "../inc/debug.h"
 #include "../inc/ast.h"
 
-ast* astCreate (astClass class) {
+ast* astCreate (astClass class, tokenLocation location) {
     ast* Node = malloc(sizeof(ast));
     Node->class = class;
+
+    Node->location = location;
 
     Node->firstChild = 0;
     Node->lastChild = 0;
     Node->nextSibling = 0;
     Node->prevSibling = 0;
+    Node->children = 0;
 
     Node->l = 0;
     Node->o = 0;
@@ -27,26 +31,46 @@ ast* astCreate (astClass class) {
     return Node;
 }
 
-ast* astCreateBOP (ast* l, char* o, ast* r) {
-    ast* Node = astCreate(astBOP);
+ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r) {
+    ast* Node = astCreate(astBOP, location);
     Node->l = l;
     Node->o = o;
     Node->r = r;
     return Node;
 }
 
-ast* astCreateUOP (char* o, ast* r) {
-    ast* Node = astCreate(astUOP);
+ast* astCreateUOP (tokenLocation location, char* o, ast* r) {
+    ast* Node = astCreate(astUOP, location);
     Node->o = o;
     Node->r = r;
     return Node;
 }
 
-ast* astCreateTOP (ast* cond, ast* l, ast* r) {
-    ast* Node = astCreate(astTOP);
+ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r) {
+    ast* Node = astCreate(astTOP, location);
     astAddChild(Node, cond);
     Node->l = l;
     Node->r = r;
+    return Node;
+}
+
+ast* astCreateIndex (tokenLocation location, ast* base, ast* index) {
+    ast* Node = astCreate(astIndex, location);
+    Node->l = base;
+    Node->r = index;
+    return Node;
+}
+
+ast* astCreateCall (tokenLocation location, ast* function) {
+    ast* Node = astCreate(astCall, location);
+    Node->l = function;
+    Node->symbol = Node->l->symbol;
+    return Node;
+}
+
+ast* astCreateLiteral (tokenLocation location, literalClass litClass) {
+    ast* Node = astCreate(astLiteral, location);
+    Node->litClass = litClass;
     return Node;
 }
 
@@ -86,6 +110,8 @@ void astAddChild (ast* Parent, ast* Child) {
         Parent->lastChild->nextSibling = Child;
         Parent->lastChild = Child;
     }
+
+    Parent->children++;
 }
 
 int astIsValueClass (astClass class) {
@@ -93,4 +119,47 @@ int astIsValueClass (astClass class) {
            class == astTOP ||
            class == astCall || class == astIndex ||
            class == astLiteral;
+}
+
+const char* astClassGetStr (astClass class) {
+    if (class == astUndefined)
+        return "astUndefind";
+    else if (class == astEmpty)
+        return "astEmpty";
+    else if (class == astModule)
+        return "astModule";
+    else if (class == astFunction)
+        return "astFunction";
+    else if (class == astVar)
+        return "astVar";
+    else if (class == astCode)
+        return "astCode";
+    else if (class == astBranch)
+        return "astBranch";
+    else if (class == astLoop)
+        return "astLoop";
+    else if (class == astIter)
+        return "astIter";
+    else if (class == astReturn)
+        return "astReturn";
+    else if (class == astBOP)
+        return "astBOP";
+    else if (class == astUOP)
+        return "astUOP";
+    else if (class == astTOP)
+        return "astTOP";
+    else if (class == astIndex)
+        return "astIndex";
+    else if (class == astCall)
+        return "astCall";
+    else if (class == astLiteral)
+        return "astLiteral";
+
+    else {
+        char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("astClassGetStr", "AST class", Str);
+        free(Str);
+        return "unhandled";
+    }
 }

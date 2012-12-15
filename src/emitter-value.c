@@ -448,7 +448,7 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
     if (Node->symbol->class == symFunction)
         Value = Node->symbol->label;
 
-    else if (Node->symbol->class == symVar || Node->symbol->class == symPara) {
+    else if (Node->symbol->class == symVar || Node->symbol->class == symParam) {
         if (Node->symbol->dt.array == 0)
             Value = operandCreateMem(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
 

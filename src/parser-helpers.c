@@ -5,7 +5,7 @@
 #include "../inc/parser-helpers.h"
 
 static void error (parserCtx* ctx, char* format, ...) {
-    printf("error(%d:%d): ", ctx->lexer->stream->line, ctx->lexer->stream->lineChar);
+    printf("error(%d:%d): ", ctx->location.line, ctx->location.lineChar);
 
     va_list args;
     va_start(args, format);
@@ -47,14 +47,17 @@ bool tokenIs (parserCtx* ctx, char* Match) {
 
 void tokenNext (parserCtx* ctx) {
     lexerNext(ctx->lexer);
+
+    ctx->location.line = ctx->lexer->stream->line;
+    ctx->location.lineChar = ctx->lexer->stream->lineChar;
 }
 
 void tokenMatch (parserCtx* ctx) {
     printf("matched(%d:%d): '%s'.\n",
-           ctx->lexer->stream->line,
-           ctx->lexer->stream->lineChar,
+           ctx->location.line,
+           ctx->location.lineChar,
            ctx->lexer->buffer);
-    lexerNext(ctx->lexer);
+    tokenNext(ctx);
 }
 
 char* tokenDupMatch (parserCtx* ctx) {

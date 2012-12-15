@@ -8,7 +8,7 @@
 #include "../inc/parser-value.h"
 
 static ast* parserAssign (parserCtx* ctx);
-static ast* parserTernary (parserCtx* ctx );
+static ast* parserTernary (parserCtx* ctx);
 static ast* parserBool (parserCtx* ctx);
 static ast* parserEquality (parserCtx* ctx);
 static ast* parserRel (parserCtx* ctx);
@@ -34,15 +34,16 @@ ast* parserValue (parserCtx* ctx) {
 /**
  * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" Assign ]
  */
-ast* parserAssign (parserCtx* ctx) {
+static ast* parserAssign (parserCtx* ctx) {
     puts("Assign+");
 
     ast* Node = parserTernary(ctx);
 
     if  (tokenIs(ctx, "=") ||
-         tokenIs(ctx, "+=") || tokenIs(ctx, "-=") || tokenIs(ctx, "*=") || tokenIs(ctx, "/=")) {
+         tokenIs(ctx, "+=") || tokenIs(ctx, "-=") ||
+         tokenIs(ctx, "*=") || tokenIs(ctx, "/=")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserAssign(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserAssign(ctx));
     }
 
     puts("-");
@@ -53,7 +54,7 @@ ast* parserAssign (parserCtx* ctx) {
 /**
  * Ternary = Bool [ "?" Ternary ":" Ternary ]
  */
-ast* parserTernary (parserCtx* ctx ) {
+static ast* parserTernary (parserCtx* ctx ) {
     puts("Ternary+");
 
     ast* Node = parserBool(ctx);
@@ -63,7 +64,7 @@ ast* parserTernary (parserCtx* ctx ) {
         tokenMatchStr(ctx, ":");
         ast* r = parserTernary(ctx);
 
-        Node = astCreateTOP(Node, l, r);
+        Node = astCreateTOP(ctx->location, Node, l, r);
     }
 
     puts("-");
@@ -74,14 +75,14 @@ ast* parserTernary (parserCtx* ctx ) {
 /**
  * Bool = Equality [{ "&&" | "||" Equality }]
  */
-ast* parserBool (parserCtx* ctx) {
+static ast* parserBool (parserCtx* ctx) {
     puts("Bool+");
 
     ast* Node = parserEquality(ctx);
 
     while (tokenIs(ctx,  "&&") || tokenIs(ctx, "||")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserEquality(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserEquality(ctx));
     }
 
     puts("-");
@@ -92,14 +93,14 @@ ast* parserBool (parserCtx* ctx) {
 /**
  * Equality = Rel [{ "==" | "!=" Rel }]
  */
-ast* parserEquality (parserCtx* ctx) {
+static ast* parserEquality (parserCtx* ctx) {
     puts("Equality+");
 
     ast* Node = parserRel(ctx);
 
     while (tokenIs(ctx, "==") || tokenIs(ctx, "!=")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserRel(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserRel(ctx));
     }
 
     puts("-");
@@ -110,14 +111,15 @@ ast* parserEquality (parserCtx* ctx) {
 /**
  * Rel = Expr [{ ">" | ">=" | "<" | "<=" Expr }]
  */
-ast* parserRel (parserCtx* ctx) {
+static ast* parserRel (parserCtx* ctx) {
     puts("Rel+");
 
     ast* Node = parserExpr(ctx);
 
-    while (tokenIs(ctx, ">") || tokenIs(ctx, ">=") || tokenIs(ctx, "<") || tokenIs(ctx, "<=")) {
+    while (tokenIs(ctx, ">") || tokenIs(ctx, ">=") ||
+           tokenIs(ctx, "<") || tokenIs(ctx, "<=")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserExpr(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserExpr(ctx));
     }
 
     puts("-");
@@ -128,14 +130,14 @@ ast* parserRel (parserCtx* ctx) {
 /**
  * Expr = Term [{ "+" | "-" Term }]
  */
-ast* parserExpr (parserCtx* ctx) {
+static ast* parserExpr (parserCtx* ctx) {
     puts("Expr+");
 
     ast* Node = parserTerm(ctx);
 
     while (tokenIs(ctx, "+") || tokenIs(ctx, "-")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserTerm(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserTerm(ctx));
     }
 
     puts("-");
@@ -146,14 +148,14 @@ ast* parserExpr (parserCtx* ctx) {
 /**
  * Term = Unary [{ "*" | "/" Unary }]
  */
-ast* parserTerm (parserCtx* ctx) {
+static ast* parserTerm (parserCtx* ctx) {
     puts("Term+");
 
     ast* Node = parserUnary(ctx);
 
     while (tokenIs(ctx, "*") || tokenIs(ctx, "/")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(Node, o, parserUnary(ctx));
+        Node = astCreateBOP(ctx->location, Node, o, parserUnary(ctx));
     }
 
     puts("-");
@@ -162,9 +164,9 @@ ast* parserTerm (parserCtx* ctx) {
 }
 
 /**
- * Unary = ( "!" | "-" | "*" | "&" | "++" | "--" Unary ) | Object [{ "++" | "--" }]
+ * Unary = ( "!" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
  */
-ast* parserUnary (parserCtx* ctx) {
+static ast* parserUnary (parserCtx* ctx) {
     /* Interestingly, this function makes extensive use of itself */
 
     puts("Unary+");
@@ -174,27 +176,15 @@ ast* parserUnary (parserCtx* ctx) {
     if (tokenIs(ctx, "!") ||
         tokenIs(ctx, "-") ||
         tokenIs(ctx, "*") ||
-        tokenIs(ctx, "&") ||
-        tokenIs(ctx, "++") ||
-        tokenIs(ctx, "--")) {
+        tokenIs(ctx, "&")) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateUOP(o, parserUnary(ctx));
-
-        if (!strcmp(Node->o, "*")) {
-            if (typeIsPtr(Node->r->dt)) {
-                Node->dt = typeDerefPtr(Node->r->dt);
-
-            } else
-                errorInvalidOpExpected(ctx, "dereference", "pointer", Node->r->dt);
-        }
+        Node = astCreateUOP(ctx->location, o, parserUnary(ctx));
 
     } else
         Node = parserObject(ctx);
 
-    while (tokenIs(ctx, "++") || tokenIs(ctx, "--")) {
-        char* o = tokenDupMatch(ctx);
-        Node = astCreateUOP(o, Node);
-    }
+    while (tokenIs(ctx, "++") || tokenIs(ctx, "--"))
+        Node = astCreateUOP(ctx->location, tokenDupMatch(ctx), Node);
 
     puts("-");
 
@@ -206,81 +196,39 @@ ast* parserUnary (parserCtx* ctx) {
                       | ( "." <Ident> )
                       | ( "->" <Ident> ) }]
  */
-ast* parserObject (parserCtx* ctx) {
+static ast* parserObject (parserCtx* ctx) {
     puts("Object+");
 
     ast* Node = parserFactor(ctx);
 
     while (tokenIs(ctx, "[") || tokenIs(ctx, ".") || tokenIs(ctx, "->")) {
         /*Array or pointer indexing*/
-        if (tokenIs(ctx, "[")) {
-            tokenMatch(ctx);
-
-            ast* tmp = Node;
-            Node = astCreate(astIndex);
-            Node->l = tmp;
-            Node->r = parserValue(ctx);
-
-            if (typeIsArray(Node->l->dt))
-                Node->dt = typeIndexArray(Node->l->dt);
-
-            else if (typeIsPtr(Node->l->dt))
-                Node->dt = typeDerefPtr(Node->l->dt);
-
-            else
-                errorInvalidOpExpected(ctx, "indexing", "array or pointer", Node->l->dt);
-
+        if (tokenTryMatchStr(ctx, "[")) {
+            Node = astCreateIndex(ctx->location, Node, parserValue(ctx));
             tokenMatchStr(ctx, "]");
 
         /*struct[*] member access*/
         } else /*if (tokenIs(ctx, ".") || tokenIs(ctx, "->"))*/ {
             ast* tmp = Node;
-            Node = astCreate(astBOP);
-            Node->o = strdup(ctx->lexer->buffer);
+            Node = astCreate(astBOP, ctx->location);
+            Node->o = tokenDupMatch(ctx);
             Node->l = tmp;
 
-            /*Was the left hand a valid operand?*/
-            if (typeIsRecord(Node->l->dt)) {
-                errorInvalidOpExpected(ctx, "member access", "record type", Node->l->dt);
-                tokenNext(ctx);
+            /*Is the right hand a valid symbol?*/
 
-            } else if (!strcmp("->", Node->o) && Node->l->dt.ptr != 1) {
-                errorInvalidOpExpected(ctx, "member dereference", "struct pointer", Node->l->dt);
-                tokenNext(ctx);
+			Node->r = astCreate(astLiteral, ctx->location);
+			Node->r->litClass = literalIdent;
+			Node->r->literal = (void*) strdup(ctx->lexer->buffer);
+			Node->symbol = Node->r->symbol = symChild(Node->l->symbol->dt.basic,
+													  (char*) Node->r->literal);
 
-            } else if (!strcmp(".", Node->o) && Node->l->dt.ptr != 0) {
-                errorInvalidOp(ctx, "member access", "struct pointer", Node->l->dt);
-                tokenNext(ctx);
+			if (Node->r->symbol)
+				tokenMatch(ctx);
 
-            } else
-                tokenMatch(ctx);
-
-            /*Is the right hand a valid operand?*/
-            if (ctx->lexer->token == tokenIdent) {
-                Node->r = astCreate(astLiteral);
-                Node->r->litClass = literalIdent;
-                Node->r->literal = (void*) strdup(ctx->lexer->buffer);
-                Node->r->symbol = symChild(Node->l->dt.basic, (char*) Node->r->literal);
-
-                if (Node->r->symbol == 0) {
-                    errorExpected(ctx, "field name");
-                    tokenNext(ctx);
-                    Node->r->dt.basic = symFindGlobal("int");
-
-                } else {
-                    tokenMatch(ctx);
-                    Node->r->dt = Node->r->symbol->dt;
-                    reportType(Node->r->dt);
-                }
-
-            } else {
-                errorExpected(ctx, "field name");
-                tokenNext(ctx);
-                Node->r->dt.basic = symFindGlobal("int");
-            }
-
-            /*Propogate type*/
-            Node->dt = Node->r->dt;
+			else {
+				errorExpected(ctx, "field name");
+				tokenNext(ctx);
+			}
         }
     }
 
@@ -294,30 +242,25 @@ ast* parserObject (parserCtx* ctx) {
             | <Int>
             | ( <Ident> [ "(" [ Value [{ "," Value }] ] ")" ] )
  */
-ast* parserFactor (parserCtx* ctx) {
+static ast* parserFactor (parserCtx* ctx) {
     puts("Factor+");
 
     ast* Node = 0;
 
     /*Parenthesized expression*/
-    if (tokenIs(ctx, "(")) {
-        tokenMatch(ctx);
+    if (tokenTryMatchStr(ctx, "(")) {
         Node = parserValue(ctx);
         tokenMatchStr(ctx, ")");
 
     /*Integer literal*/
     } else if (ctx->lexer->token == tokenInt) {
-        Node = astCreate(astLiteral);
-        Node->dt.basic = symFindGlobal("int");
-        Node->litClass = literalInt;
+        Node = astCreateLiteral(ctx->location, literalInt);
         Node->literal = malloc(sizeof(int));
         *(int*) Node->literal = tokenMatchInt(ctx);
 
     /*Boolean literal*/
     } else if (tokenIs(ctx, "true") || tokenIs(ctx, "false")) {
-        Node = astCreate(astLiteral);
-        Node->dt.basic = symFindGlobal("bool");
-        Node->litClass = literalBool;
+        Node = astCreateLiteral(ctx->location, literalBool);
         Node->literal = malloc(sizeof(char));
         *(char*) Node->literal = tokenIs(ctx, "true") ? 1 : 0;
 
@@ -325,8 +268,7 @@ ast* parserFactor (parserCtx* ctx) {
 
     /*Identifier or function call*/
     } else if (ctx->lexer->token == tokenIdent) {
-        Node = astCreate(astLiteral);
-        Node->litClass = literalIdent;
+        Node = astCreateLiteral(ctx->location, literalIdent);
         Node->literal = (void*) strdup(ctx->lexer->buffer);
         Node->symbol = symFind(ctx->scope, (char*) Node->literal);
 
@@ -348,9 +290,7 @@ ast* parserFactor (parserCtx* ctx) {
         if (tokenIs(ctx, "(")) {
             tokenMatch(ctx);
 
-            ast* tmp = Node;
-            Node = astCreate(astCall);
-            Node->l = tmp;
+            Node = astCreateCall(ctx->location, Node);
 
             /*Eat params*/
             if (!tokenIs(ctx, ")")) do {
