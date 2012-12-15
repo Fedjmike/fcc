@@ -170,12 +170,12 @@ static void analyzerNode (analyzerCtx* ctx, ast* Node) {
 static void analyzerFunction (analyzerCtx* ctx, ast* Node) {
     debugEnter("Function");
 
-	ctx->returnType = Node->symbol->dt;
+    ctx->returnType = Node->symbol->dt;
 
     if (Node->r)
-		analyzerNode(ctx, Node->r);
+        analyzerNode(ctx, Node->r);
 
-	debugLeave();
+    debugLeave();
 }
 
 static void analyzerVar (analyzerCtx* ctx, ast* Node) {
@@ -185,11 +185,11 @@ static void analyzerVar (analyzerCtx* ctx, ast* Node) {
     if (Node->r) {
         type R = analyzerValue(ctx, Node->r);
 
-		if (typeIsArray(Node->symbol->dt) && typeIsArray(R) &&
-			Node->symbol->dt.array >= R.array &&
-			typeIsCompatible(typeCreateElementFromArray(R),
+        if (typeIsArray(Node->symbol->dt) && typeIsArray(R) &&
+            Node->symbol->dt.array >= R.array &&
+            typeIsCompatible(typeCreateElementFromArray(R),
                              typeCreateElementFromArray(Node->symbol->dt)))
-			;
+            ;
 
         else if (!typeIsCompatible(R, Node->symbol->dt))
             analyzerErrorExpectedType(ctx, Node->r, "variable initialization", Node->symbol->dt, R);
@@ -262,7 +262,7 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
     /*Initializer*/
 
     if (init->class == astVar)
-		analyzerNode(ctx, init);
+        analyzerNode(ctx, init);
 
     else if (init->class != astEmpty)
         analyzerValue(ctx, init);

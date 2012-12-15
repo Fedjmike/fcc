@@ -150,28 +150,28 @@ sym* symFindGlobal (char* Look) {
 }
 
 const char* symClassGetStr (symClass class) {
-	if (class == symUndefined)
-		return "symUndefined";
-	else if (class == symGlobal)
-		return "symGlobal";
-	else if (class == symType)
-		return "symType";
-	else if (class == symStruct)
-		return "symStruct";
-	else if (class == symEnum)
-		return "symEnum";
-	else if (class == symFunction)
-		return "symFunction";
-	else if (class == symParam)
-		return "symParam";
-	else if (class == symVar)
-		return "symVar";
+    if (class == symUndefined)
+        return "symUndefined";
+    else if (class == symGlobal)
+        return "symGlobal";
+    else if (class == symType)
+        return "symType";
+    else if (class == symStruct)
+        return "symStruct";
+    else if (class == symEnum)
+        return "symEnum";
+    else if (class == symFunction)
+        return "symFunction";
+    else if (class == symParam)
+        return "symParam";
+    else if (class == symVar)
+        return "symVar";
 
-	else {
-		char* Str = malloc(class+1);
+    else {
+        char* Str = malloc(class+1);
         sprintf(Str, "%d", class);
         debugErrorUnhandled("symClassGetStr", "symbol class", Str);
         free(Str);
         return "unhandled";
-	}
+    }
 }

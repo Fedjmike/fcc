@@ -134,7 +134,7 @@ bool typeIsCompatible (type DT, type Model) {
     /*If array requested, accept only arrays of matching size and type*/
     } else if (typeIsArray(Model))
         return typeIsArray(DT) &&
-			((DT.array == Model.array) || Model.array == -1) &&
+            ((DT.array == Model.array) || Model.array == -1) &&
             typeIsCompatible(typeCreateElementFromArray(DT),
                              typeCreateElementFromArray(Model));
 

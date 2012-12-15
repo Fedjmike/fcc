@@ -50,27 +50,27 @@ typedef enum {
 } symTypeMask;
 
 typedef struct sym {
-	symClass class;
-	char* ident;
-	bool proto;
+    symClass class;
+    char* ident;
+    bool proto;
 
-	storageClass storage;
-	type dt;		/*Ignore for types themselves*/
+    storageClass storage;
+    type dt;        /*Ignore for types themselves*/
 
     /*Types and Structs only*/
-	int size;
-	symTypeMask typeMask;
+    int size;
+    symTypeMask typeMask;
 
-	/*Linked list of symbols in our namespace*/
-	struct sym* parent;
-	struct sym* firstChild;
-	struct sym* lastChild;
-	struct sym* nextSibling;
+    /*Linked list of symbols in our namespace*/
+    struct sym* parent;
+    struct sym* firstChild;
+    struct sym* lastChild;
+    struct sym* nextSibling;
 
-	int params;
+    int params;
 
-	operand label;
-	int offset;		/*Offset, in word bytes, for stack stored vars/parameters
+    operand label;
+    int offset;        /*Offset, in word bytes, for stack stored vars/parameters
                       and non static fields*/
 } sym;
 

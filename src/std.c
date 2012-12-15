@@ -25,13 +25,13 @@ int* vptoip (void* Ptr) {
 /*int strlen (char* Str)
 {
 
-	char* i;
+    char* i;
 
-	/ *Walk up the string until a null* /
-	for (i = Str; *i; i++)
-		;
+    / *Walk up the string until a null* /
+    for (i = Str; *i; i++)
+        ;
 
-	return i-Str;
+    return i-Str;
 
 }
 
@@ -39,27 +39,27 @@ char* memcpy (char* Dest, char* Src, int Length)
 {
 
 
-	int i = 0;
+    int i = 0;
 
-	do
-		Dest[i] = Src[i];
-	while (i++ < Length)
+    do
+        Dest[i] = Src[i];
+    while (i++ < Length)
 
-	return Dest;
+    return Dest;
 
 }
 
 char* strcpy (char* Dest, char* Src)
 {
 
-	char* Ret = Dest;
+    char* Ret = Dest;
 
-	while (*Src)
-		*Dest++ = *Src++;
+    while (*Src)
+        *Dest++ = *Src++;
 
-	*Dest = 0;
+    *Dest = 0;
 
-	return Ret;
+    return Ret;
 
 }
 
@@ -67,39 +67,39 @@ char* strcpy (char* Dest, char* Src)
 char* strdup (char* Str)
 {
 
-	return strcpy(malloc(strlen(Str)+1), Str);
+    return strcpy(malloc(strlen(Str)+1), Str);
 
 }
 
 char* strcat (char* Dest, char* Src)
 {
 
-	strcpy(Dest+strlen(Dest), Src);
+    strcpy(Dest+strlen(Dest), Src);
 
-	return Dest;
+    return Dest;
 
 }
 
 char* strchr (char* Haystack, int Needle)
 {
 
-	char* i;
+    char* i;
 
-	for (i = Haystack; ctoi(*i) != Needle; i++)
-		;
+    for (i = Haystack; ctoi(*i) != Needle; i++)
+        ;
 
-	return i;
+    return i;
 
 }
 
 int strcmp (char* L, char* R)
 {
 
-	while (*L++ == *R++)
-		if (*L == 0)
-			return 0;
+    while (*L++ == *R++)
+        if (*L == 0)
+            return 0;
 
-	return *(--L) - *(--R);
+    return *(--L) - *(--R);
 
 }*/
 

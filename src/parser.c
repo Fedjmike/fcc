@@ -112,7 +112,7 @@ void parserStruct (parserCtx* ctx) {
 
     tokenMatchStr(ctx, "struct");
 
-	sym* Scope = ctx->scope;
+    sym* Scope = ctx->scope;
     sym* Symbol = ctx->scope = symCreateStruct(Scope, tokenMatchIdent(ctx));
 
     /*Body?*/
@@ -158,7 +158,7 @@ void parserStruct (parserCtx* ctx) {
 
     tokenMatchStr(ctx, ";");
 
-	/*Revert to the old scope*/
+    /*Revert to the old scope*/
     ctx->scope = Scope;
 
     puts("-");
@@ -175,7 +175,7 @@ void parserEnum (parserCtx* ctx) {
 
     tokenMatchStr(ctx, "enum");
 
-	sym* Scope = ctx->scope;
+    sym* Scope = ctx->scope;
     sym* Symbol = ctx->scope = symCreate(symEnum, Scope);
     Symbol->ident = tokenMatchIdent(ctx);
 
@@ -225,13 +225,13 @@ ast* parserSymDef (parserCtx* ctx) {
     else {
         Node = parserVariable(ctx, DT, ident, storage);
 
-		while (tokenTryMatchStr(ctx, ",")) {
-			ident = tokenMatchIdent(ctx);
+        while (tokenTryMatchStr(ctx, ",")) {
+            ident = tokenMatchIdent(ctx);
 
-			ast* tmp = Node;
-			Node = parserVariable(ctx, DT, ident, storage);
-			Node->l = tmp;
-		}
+            ast* tmp = Node;
+            Node = parserVariable(ctx, DT, ident, storage);
+            Node->l = tmp;
+        }
     }
 
     puts("-");
@@ -295,8 +295,8 @@ ast* parserFunction (parserCtx* ctx, type DT, char* ident, storageClass storage)
 
     tokenMatchStr(ctx, ")");
 
-	/*Push scope*/
-	sym* Scope = ctx->scope;
+    /*Push scope*/
+    sym* Scope = ctx->scope;
     ctx->scope = Node->symbol;
 
     /*Prototype*/
@@ -307,8 +307,8 @@ ast* parserFunction (parserCtx* ctx, type DT, char* ident, storageClass storage)
     } else
         Node->r = parserCode(ctx);
 
-	/*Pop scope*/
-	ctx->scope = Scope;
+    /*Pop scope*/
+    ctx->scope = Scope;
 
     puts("-");
 

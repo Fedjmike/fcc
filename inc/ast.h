@@ -33,28 +33,28 @@ typedef enum {
 } literalClass;
 
 typedef struct ast {
-	astClass class;
+    astClass class;
 
     tokenLocation location;
 
-	/*Linked list for container nodes like a module or parameter list and children of containers*/
-	struct ast* firstChild;
-	struct ast* lastChild;
-	struct ast* nextSibling;
-	struct ast* prevSibling;
-	int children;
+    /*Linked list for container nodes like a module or parameter list and children of containers*/
+    struct ast* firstChild;
+    struct ast* lastChild;
+    struct ast* nextSibling;
+    struct ast* prevSibling;
+    int children;
 
-	/*Binary tree*/
-	struct ast* l;
-	char* o;
-	struct ast* r;	/*Always used for unary operators*/
-	type dt;        /*Result data type*/
+    /*Binary tree*/
+    struct ast* l;
+    char* o;
+    struct ast* r;    /*Always used for unary operators*/
+    type dt;        /*Result data type*/
 
-	struct sym* symbol;
+    struct sym* symbol;
 
-	/*Literals (idents included) only*/
-	literalClass litClass;
-	void* literal;
+    /*Literals (idents included) only*/
+    literalClass litClass;
+    void* literal;
 } ast;
 
 ast* astCreate (astClass class, tokenLocation location);

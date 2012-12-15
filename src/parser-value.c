@@ -216,19 +216,19 @@ static ast* parserObject (parserCtx* ctx) {
 
             /*Is the right hand a valid symbol?*/
 
-			Node->r = astCreate(astLiteral, ctx->location);
-			Node->r->litClass = literalIdent;
-			Node->r->literal = (void*) strdup(ctx->lexer->buffer);
-			Node->symbol = Node->r->symbol = symChild(Node->l->symbol->dt.basic,
-													  (char*) Node->r->literal);
+            Node->r = astCreate(astLiteral, ctx->location);
+            Node->r->litClass = literalIdent;
+            Node->r->literal = (void*) strdup(ctx->lexer->buffer);
+            Node->symbol = Node->r->symbol = symChild(Node->l->symbol->dt.basic,
+                                                      (char*) Node->r->literal);
 
-			if (Node->r->symbol)
-				tokenMatch(ctx);
+            if (Node->r->symbol)
+                tokenMatch(ctx);
 
-			else {
-				errorExpected(ctx, "field name");
-				tokenNext(ctx);
-			}
+            else {
+                errorExpected(ctx, "field name");
+                tokenNext(ctx);
+            }
         }
     }
 

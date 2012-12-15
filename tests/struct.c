@@ -4,7 +4,7 @@ struct A {
 
 struct B {
 	A* x;
-	int y[3];
+	char y[3];
 };
 
 int f (B b) {

@@ -48,7 +48,7 @@ char streamNext (streamCtx* ctx) {
         ctx->lineChar = 0;
 
     } else if (old == '\t')
-		ctx->lineChar += 3;
+        ctx->lineChar += 3;
 
 
     //printf("%d\t%c\n", (int) ctx->current, ctx->current);
@@ -72,7 +72,7 @@ char streamPrev (streamCtx* ctx) {
         ctx->lineChar = -1;
 
     } else if (ctx->current == '\t')
-		ctx->lineChar -= 3;
+        ctx->lineChar -= 3;
 
     return old;
 

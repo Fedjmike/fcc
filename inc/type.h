@@ -5,10 +5,10 @@
 struct sym;
 
 typedef struct {
-	struct sym* basic;
-	int ptr;    /*Levels of indirection. e.g. char*** would be 3.*/
-	int array;  /*Array size, 0 if not array, -1 if unspecified*/
-	bool lvalue;
+    struct sym* basic;
+    int ptr;    /*Levels of indirection. e.g. char*** would be 3.*/
+    int array;  /*Array size, 0 if not array, -1 if unspecified*/
+    bool lvalue;
 } type;
 
 type typeCreate (struct sym* basic, int ptr, int array, bool lvalue);

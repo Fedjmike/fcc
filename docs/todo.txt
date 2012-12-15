@@ -86,103 +86,103 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 Coding issues:
 
-	[ ] Give streams their own namespace.
+    [ ] Give streams their own namespace.
 
-	[ ] Write a bunch of ASM out routines
+    [ ] Write a bunch of ASM out routines
 
-	[-] Remove globals and replace with functions with static vars a la labelCreate.
+    [-] Remove globals and replace with functions with static vars a la labelCreate.
 
-	[x] Get rid of Class in "enum" field names.
+    [x] Get rid of Class in "enum" field names.
 
-	[ ] Rename x86 to asm.h and asm-amd64.c
+    [ ] Rename x86 to asm.h and asm-amd64.c
 
-	[-] Use enums
+    [-] Use enums
 
-	[ ] Split emitter into emitter and emitter-amd64
+    [ ] Split emitter into emitter and emitter-amd64
 
-	[ ] Explain the specific uses of all the ast enums
+    [ ] Explain the specific uses of all the ast enums
 
 Features:
 
-	[ ] int64 ?
+    [ ] int64 ?
 
-	[ ] Casts
-		- (type) value
-		- cast<type>(value)
-		- casttype(value)
-		- ???
+    [ ] Casts
+        - (type) value
+        - cast<type>(value)
+        - casttype(value)
+        - ???
 
-	[-] Include system
-		- using "file"
-		- Macro in host, special case in self
-		- As there is no PP, actively do nothing if a file is already used and requested twice+
-		[ ] When self hosting, add a ";" to the syntax (consistency)
+    [-] Include system
+        - using "file"
+        - Macro in host, special case in self
+        - As there is no PP, actively do nothing if a file is already used and requested twice+
+        [ ] When self hosting, add a ";" to the syntax (consistency)
 
-	[-] Static
-		[ ] Variables
-		[ ] Functions
+    [-] Static
+        [ ] Variables
+        [ ] Functions
 
-	[ ] Arrays, array literals
+    [ ] Arrays, array literals
 
-	[ ] Varargs (for printf)
+    [ ] Varargs (for printf)
 
-	[ ] Count lines (count \n in stream.c)
+    [ ] Count lines (count \n in stream.c)
 
 Optimizations:
 
-	[ ] Evaluate operations before simple values in bops
-		- e.g. in x*f(y): the function first, then x
-		- because a simple register or even literal doesn't need to be stored beforehand
+    [ ] Evaluate operations before simple values in bops
+        - e.g. in x*f(y): the function first, then x
+        - because a simple register or even literal doesn't need to be stored beforehand
 
-	[ ] Stop lvalues being computed twice (!!) in assignment, postcrements
+    [ ] Stop lvalues being computed twice (!!) in assignment, postcrements
 
-	[ ] p[const]: const*sizeof(*p) is const
+    [ ] p[const]: const*sizeof(*p) is const
 
 Fix:
 
-	[ ] Conform to windows amd64 calling conventions:
-		- First four parameters into rcx, rdx, r8, r9 or xmm0-3 for floats, respectively
-		- 32 bytes of shadow space added before call, after params
+    [ ] Conform to windows amd64 calling conventions:
+        - First four parameters into rcx, rdx, r8, r9 or xmm0-3 for floats, respectively
+        - 32 bytes of shadow space added before call, after params
 
-	[ ] Register saving before calls
+    [ ] Register saving before calls
 
-	[ ] Error reporting when lvalues are not given to indecrement operators
-		- MOAR lvalueyness
+    [ ] Error reporting when lvalues are not given to indecrement operators
+        - MOAR lvalueyness
 
     [ ] Fuck, any type checking
 
-	[ ] File ext
+    [ ] File ext
 
 Things to let me sleep better at night:
 
-	[ ] Make a proper system for the necessity to negate flag conditions (ifs, whiles)
-	    Hey, it was 2AM and I wanted to just see it work... once
-	    - And then use it for when you don't want it negated (for loops)
+    [ ] Make a proper system for the necessity to negate flag conditions (ifs, whiles)
+        Hey, it was 2AM and I wanted to just see it work... once
+        - And then use it for when you don't want it negated (for loops)
 
 Differences from C:
 
-	[ ] Post increment/decrement operators act immediately after value returned
+    [ ] Post increment/decrement operators act immediately after value returned
 
     [ ] Pointer declaration binding - normalize cuz y'know
 
 Misc:
 
-	[-] Standard library
-		[x] Reimplement some of the simple ones:
-			[x] string.h
-				[x] strlen
-				[x] strdup
-				[x] strcat
-				[x] strchr
-				[x] memcpy
-				[x] strcmp
-			[x] ctype.h
-				[x] isspace
-				[x] isalpha
-				[x] isdigit
-				[x] isalnum
-				[x] tolower
-		[-] Link & hope for the rest! Write headers for:
-			[-] stdlib.h
-			[x] stdio.h
-				- IS THERE AN FPUTS? IF SO, USE IT IN EMITTER.C
+    [-] Standard library
+        [x] Reimplement some of the simple ones:
+            [x] string.h
+                [x] strlen
+                [x] strdup
+                [x] strcat
+                [x] strchr
+                [x] memcpy
+                [x] strcmp
+            [x] ctype.h
+                [x] isspace
+                [x] isalpha
+                [x] isdigit
+                [x] isalnum
+                [x] tolower
+        [-] Link & hope for the rest! Write headers for:
+            [-] stdlib.h
+            [x] stdio.h
+                - IS THERE AN FPUTS? IF SO, USE IT IN EMITTER.C

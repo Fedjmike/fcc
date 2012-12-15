@@ -184,18 +184,18 @@ static type analyzerBOP (analyzerCtx* ctx, ast* Node) {
         isEqualityBOP(Node->o) ||
         isAssignmentBOP(Node->o)) {
         if (typeIsCompatible(L, R)) {
-        	/*The type of the right hand side
-			  (assignment does not return an lvalue)*/
-			if (isAssignmentBOP(Node->o))
-				Node->dt = typeCreateFrom(R);
+            /*The type of the right hand side
+              (assignment does not return an lvalue)*/
+            if (isAssignmentBOP(Node->o))
+                Node->dt = typeCreateFrom(R);
 
-			else
-				Node->dt = typeCreateFromTwo(L, R);
+            else
+                Node->dt = typeCreateFromTwo(L, R);
 
-		} else {
-			analyzerErrorMismatch(ctx, Node, Node->o, L, R);
-			Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
-		}
+        } else {
+            analyzerErrorMismatch(ctx, Node, Node->o, L, R);
+            Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
+        }
     } else {
         debugErrorUnhandled("analyzerBOP", "operator", Node->o);
         Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
@@ -214,7 +214,7 @@ static type analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Operator allowed?*/
 
-	/* -> */
+    /* -> */
     if (isDerefBOP(Node->o)) {
         if (!typeIsPtr(L))
             analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->l, L);
@@ -222,9 +222,9 @@ static type analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
         if (!typeIsRecord(typeCreateLValueFromPtr(L)))
             analyzerErrorOp(ctx, Node, Node->o, "structure pointer", Node->l, L);
 
-	/* . */
+    /* . */
     } else {
-    	if (!typeIsRecord(L))
+        if (!typeIsRecord(L))
             analyzerErrorOp(ctx, Node, Node->o, "structure type", Node->l, L);
     }
 
@@ -320,10 +320,10 @@ static type analyzerTernary (analyzerCtx* ctx, ast* Node) {
     if (!typeIsCompatible(L, R))
         Node->dt = typeCreateUnified(L, R);
 
-	else {
-		analyzerErrorMismatch(ctx, Node, "?:", L, R);
-		Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
-	}
+    else {
+        analyzerErrorMismatch(ctx, Node, "?:", L, R);
+        Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
+    }
 
     debugLeave();
 

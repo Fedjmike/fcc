@@ -96,11 +96,11 @@ int main (int argc, char** argv) {
     free(Input);
     free(Output);
 
-	if (fail)
-		puts("Compilation unsuccessful.");
+    if (fail)
+        puts("Compilation unsuccessful.");
 
-	else
-		puts("Compilation successful.");
+    else
+        puts("Compilation successful.");
 
     return fail;
 }
