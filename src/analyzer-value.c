@@ -378,7 +378,7 @@ static type analyzerCall (analyzerCtx* ctx, ast* Node) {
 
         /*Traverse down both lists at once, checking types, leaving
           once either ends (we already know they have the same length)*/
-        for (cNode = Node->firstChild, cParam = Node->symbol->firstChild;
+        for (cNode = Node->firstChild, cParam = Node->symbol->firstChild, n = 0;
              cNode && cParam;
              cNode = cNode->nextSibling, cParam = cParam->nextSibling, n++) {
             type Param = analyzerValue(ctx, cNode);
