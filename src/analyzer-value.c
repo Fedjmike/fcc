@@ -5,7 +5,7 @@
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
 
-static type analyzerNumericBOP (analyzerCtx* ctx, ast* Node);
+static type analyzerBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerMemberBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerCommaBOP (analyzerCtx* ctx, ast* Node);
@@ -80,8 +80,8 @@ static bool isCommaBOP (char* o) {
 
 type analyzerValue (analyzerCtx* ctx, ast* Node) {
     if (Node->class == astBOP) {
-        if (isNumericBOP(Node->o))
-            return analyzerNumericBOP(ctx, Node);
+        if (isNumericBOP(Node->o) || isAssignmentBOP(Node->o))
+            return analyzerBOP(ctx, Node);
 
         else if (isOrdinalBOP(Node->o) || isEqualityBOP(Node->o))
             return analyzerComparisonBOP(ctx, Node);
@@ -122,7 +122,7 @@ type analyzerValue (analyzerCtx* ctx, ast* Node) {
     }
 }
 
-static type analyzerNumericBOP (analyzerCtx* ctx, ast* Node) {
+static type analyzerBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("BOP");
 
     type L = analyzerValue(ctx, Node->l);
@@ -130,10 +130,11 @@ static type analyzerNumericBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Check that the operation are allowed on the operands given*/
 
-    if (!typeIsNumeric(L) || !typeIsNumeric(R))
-        analyzerErrorOp(ctx, Node, Node->o, "numeric type",
-                        !typeIsNumeric(L) ? Node->l : Node->r,
-                        !typeIsNumeric(L) ? L : R);
+    if (isNumericBOP(Node->o))
+        if (!typeIsNumeric(L) || !typeIsNumeric(R))
+            analyzerErrorOp(ctx, Node, Node->o, "numeric type",
+                            !typeIsNumeric(L) ? Node->l : Node->r,
+                            !typeIsNumeric(L) ? L : R);
 
     if (isAssignmentBOP(Node->o)) {
         if (!typeIsAssignment(L) || !typeIsAssignment(R))
