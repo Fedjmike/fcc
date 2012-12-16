@@ -5,7 +5,8 @@
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
 
-static type analyzerBOP (analyzerCtx* ctx, ast* Node);
+static type analyzerNumericBOP (analyzerCtx* ctx, ast* Node);
+static type analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerMemberBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerCommaBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerUOP (analyzerCtx* ctx, ast* Node);
@@ -14,11 +15,6 @@ static type analyzerIndex (analyzerCtx* ctx, ast* Node);
 static type analyzerCall (analyzerCtx* ctx, ast* Node);
 static type analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static type analyzerArrayLiteral (analyzerCtx* ctx, ast* Node);
-
-/*A lot of the following static functions essentially define the
-  semantics of the language. e.g. typeIsNumeric() is what decides
-  that bools are not numeric, and therefore that you need to cast
-  them to int (or something) before adding them to another numeric.*/
 
 /**
  * Returns whether the (binary) operator is one that can only act on
@@ -82,36 +78,24 @@ static bool isCommaBOP (char* o) {
     return !strcmp(o, ",");
 }
 
-/*I think you get the point now*/
-static bool isNumericUOP (char* o) {
-    return !strcmp(o, "+") || !strcmp(o, "-") ||
-           !strcmp(o, "++") || !strcmp(o, "--") ||
-           !strcmp(o, "!") ||
-           !strcmp(o, "~");
-}
-
-static bool isAssignmentUOP (char* o) {
-    return !strcmp(o, "++") || !strcmp(o, "--");
-}
-
-static bool isDerefUOP (char* o) {
-    return !strcmp(o, "*");
-}
-
-static bool isRefUOP (char* o) {
-    return !strcmp(o, "&");
-}
-
 type analyzerValue (analyzerCtx* ctx, ast* Node) {
     if (Node->class == astBOP) {
-        if (isMemberBOP(Node->o))
+        if (isNumericBOP(Node->o))
+            return analyzerNumericBOP(ctx, Node);
+
+        else if (isOrdinalBOP(Node->o) || isEqualityBOP(Node->o))
+            return analyzerComparisonBOP(ctx, Node);
+
+        else if (isMemberBOP(Node->o))
             return analyzerMemberBOP(ctx, Node);
 
         else if (isCommaBOP(Node->o))
             return analyzerCommaBOP(ctx, Node);
 
-        else
-            return analyzerBOP(ctx, Node);
+        else {
+            debugErrorUnhandled("analyzerValue", "operator", Node->o);
+            return Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
+        }
 
     } else if (Node->class == astUOP)
         return analyzerUOP(ctx, Node);
@@ -138,34 +122,18 @@ type analyzerValue (analyzerCtx* ctx, ast* Node) {
     }
 }
 
-static type analyzerBOP (analyzerCtx* ctx, ast* Node) {
+static type analyzerNumericBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("BOP");
 
     type L = analyzerValue(ctx, Node->l);
     type R = analyzerValue(ctx, Node->r);
 
-    /*Check that the operations are allowed on the operands given*/
+    /*Check that the operation are allowed on the operands given*/
 
-    /*The following classes of operator are not mutually exclusive,
-      e.g. += is both numeric and assignment*/
-
-    if (isNumericBOP(Node->o))
-        if (!typeIsNumeric(L) || !typeIsNumeric(R))
-            analyzerErrorOp(ctx, Node, Node->o, "numeric type",
-                            !typeIsNumeric(L) ? Node->l : Node->r,
-                            !typeIsNumeric(L) ? L : R);
-
-    if (isOrdinalBOP(Node->o))
-        if (!typeIsOrdinal(L) || !typeIsOrdinal(R))
-            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
-                            !typeIsOrdinal(L) ? Node->l : Node->r,
-                            !typeIsOrdinal(L) ? L : R);
-
-    if (isEqualityBOP(Node->o))
-        if (!typeIsEquality(L) || !typeIsEquality(R))
-            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
-                            !typeIsEquality(L) ? Node->l : Node->r,
-                            !typeIsEquality(L) ? L : R);
+    if (!typeIsNumeric(L) || !typeIsNumeric(R))
+        analyzerErrorOp(ctx, Node, Node->o, "numeric type",
+                        !typeIsNumeric(L) ? Node->l : Node->r,
+                        !typeIsNumeric(L) ? L : R);
 
     if (isAssignmentBOP(Node->o)) {
         if (!typeIsAssignment(L) || !typeIsAssignment(R))
@@ -179,25 +147,52 @@ static type analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Work out the type of the result*/
 
-    if (isNumericBOP(Node->o) ||
-        isOrdinalBOP(Node->o) ||
-        isEqualityBOP(Node->o) ||
-        isAssignmentBOP(Node->o)) {
-        if (typeIsCompatible(L, R)) {
-            /*The type of the right hand side
-              (assignment does not return an lvalue)*/
-            if (isAssignmentBOP(Node->o))
-                Node->dt = typeCreateFrom(R);
+    if (typeIsCompatible(L, R)) {
+        /*The type of the right hand side
+          (assignment does not return an lvalue)*/
+        if (isAssignmentBOP(Node->o))
+            Node->dt = typeCreateFrom(R);
 
-            else
-                Node->dt = typeCreateFromTwo(L, R);
+        else
+            Node->dt = typeCreateFromTwo(L, R);
 
-        } else {
-            analyzerErrorMismatch(ctx, Node, Node->o, L, R);
-            Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
-        }
     } else {
-        debugErrorUnhandled("analyzerBOP", "operator", Node->o);
+        analyzerErrorMismatch(ctx, Node, Node->o, L, R);
+        Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
+    }
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static type analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
+    debugEnter("ComparisonBOP");
+
+    type L = analyzerValue(ctx, Node->l);
+    type R = analyzerValue(ctx, Node->r);
+
+    /*Allowed?*/
+
+    if (isOrdinalBOP(Node->o)) {
+        if (!typeIsOrdinal(L) || !typeIsOrdinal(R))
+            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
+                            !typeIsOrdinal(L) ? Node->l : Node->r,
+                            !typeIsOrdinal(L) ? L : R);
+
+    } else /*if (isEqualityBOP(Node->o))*/
+        if (!typeIsEquality(L) || !typeIsEquality(R))
+            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
+                            !typeIsEquality(L) ? Node->l : Node->r,
+                            !typeIsEquality(L) ? L : R);
+
+    /*Result*/
+
+    if (typeIsCompatible(L, R))
+        Node->dt = typeCreateFromTwo(L, R);
+
+    else {
+        analyzerErrorMismatch(ctx, Node, Node->o, L, R);
         Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
     }
 
@@ -216,17 +211,16 @@ static type analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     /* -> */
     if (isDerefBOP(Node->o)) {
-        if (!typeIsPtr(L))
-            analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->l, L);
-
         if (!typeIsRecord(typeCreateLValueFromPtr(L)))
             analyzerErrorOp(ctx, Node, Node->o, "structure pointer", Node->l, L);
 
+        else if (!typeIsPtr(L))
+            analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->l, L);
+
     /* . */
-    } else {
+    } else
         if (!typeIsRecord(L))
             analyzerErrorOp(ctx, Node, Node->o, "structure type", Node->l, L);
-    }
 
     /*Return type: the field*/
 
@@ -261,26 +255,27 @@ static type analyzerUOP (analyzerCtx* ctx, ast* Node) {
     type R = analyzerValue(ctx, Node->r);
     Node->dt = typeCreateFromBasic(ctx->types[builtinVoid]);
 
-    /*Numeric operator
-      (possibly assignment, remember: all unary assignments are numeric)*/
-    if (isNumericUOP(Node->o)) {
+    /*Numeric operator*/
+    if (!strcmp(Node->o, "+") || !strcmp(Node->o, "-") ||
+        !strcmp(Node->o, "++") || !strcmp(Node->o, "--") ||
+        !strcmp(Node->o, "!") ||
+        !strcmp(Node->o, "~")) {
         if (!typeIsNumeric(R))
             analyzerErrorOp(ctx, Node, Node->o, "numeric type", Node->r, R);
 
-        else if (!isAssignmentUOP(Node->o))
-            Node->dt = typeCreateFrom(R);
-
         /*Assignment operator*/
-        else {
+        else if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--")) {
             if (typeIsLValue(R))
                 Node->dt = typeCreateFrom(R);
 
             else
                 analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->r, R);
-        }
+
+        } else
+            Node->dt = typeCreateFrom(R);
 
     /*Dereferencing a pointer*/
-    } else if (isDerefUOP(Node->o)) {
+    } else if (!strcmp(Node->o, "*")) {
         if (typeIsPtr(R))
             Node->dt = typeCreateLValueFromPtr(R);
 
@@ -288,7 +283,7 @@ static type analyzerUOP (analyzerCtx* ctx, ast* Node) {
             analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->r, R);
 
     /*Referencing an lvalue*/
-    } else if (isRefUOP(Node->o)) {
+    } else if (!strcmp(Node->o, "&")) {
         if (typeIsLValue(R))
             Node->dt = typeCreatePtrFromLValue(R);
 
