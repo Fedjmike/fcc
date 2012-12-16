@@ -8,7 +8,6 @@ typedef enum {
     operandReg,
     operandMem,
     operandMemRef,
-
     operandLiteral,
     operandLabel,
     operandStack
@@ -55,6 +54,8 @@ int operandGetSize (operand Value);
 char* operandToStr (operand Value);
 
 void operandFree (operand Value);
+
+const char* operandClassGetStr (operandClass class);
 
 /* ::::CONDITIONS:::: */
 

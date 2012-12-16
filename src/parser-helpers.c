@@ -2,6 +2,7 @@
 #include "stdarg.h"
 #include "string.h"
 
+#include "../inc/debug.h"
 #include "../inc/parser-helpers.h"
 
 static void error (parserCtx* ctx, char* format, ...) {
@@ -53,10 +54,10 @@ void tokenNext (parserCtx* ctx) {
 }
 
 void tokenMatch (parserCtx* ctx) {
-    printf("matched(%d:%d): '%s'.\n",
-           ctx->location.line,
-           ctx->location.lineChar,
-           ctx->lexer->buffer);
+    debugMsg("matched(%d:%d): '%s'",
+             ctx->location.line,
+             ctx->location.lineChar,
+             ctx->lexer->buffer);
     tokenNext(ctx);
 }
 
@@ -68,8 +69,10 @@ char* tokenDupMatch (parserCtx* ctx) {
     return Old;
 }
 
-/*Convert a token type to string*/
-static char* tokenToStr (int Token) {
+/**
+ * Return the string associated with a token class
+ */
+static char* tokenClassGetStr (int Token) {
     if (Token == tokenOther)
         return "other";
 
@@ -87,7 +90,7 @@ void tokenMatchToken (parserCtx* ctx, tokenClass Match) {
         tokenMatch(ctx);
 
     else {
-        errorExpected(ctx, tokenToStr(Match));
+        errorExpected(ctx, tokenClassGetStr(Match));
         lexerNext(ctx->lexer);
     }
 }

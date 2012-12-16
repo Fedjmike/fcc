@@ -163,3 +163,28 @@ const char* astClassGetStr (astClass class) {
         return "unhandled";
     }
 }
+
+const char* literalClassGetStr (literalClass class) {
+    if (class == literalUndefined)
+        return "literalUndefined";
+
+    else if (class == literalIdent)
+        return "literalIdent";
+
+    else if (class == literalInt)
+        return "literalInt";
+
+    else if (class == literalBool)
+        return "literalBool";
+
+    else if (class == literalArray)
+        return "literalArray";
+
+    else {
+        char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("literalClassGetStr", "literal class", Str);
+        free(Str);
+        return "unhandled";
+    }
+}

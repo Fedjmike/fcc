@@ -175,3 +175,28 @@ const char* symClassGetStr (symClass class) {
         return "unhandled";
     }
 }
+
+const char* storageClassGetStr (storageClass class) {
+    if (class == storageUndefined)
+        return "storageUndefined";
+
+    else if (class == storageAuto)
+        return "storageAuto";
+
+    else if (class == storageRegister)
+        return "storageRegister";
+
+    else if (class == storageStatic)
+        return "storageStatic";
+
+    else if (class == storageExtern)
+        return "storageExtern";
+
+    else {
+        char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("storageClassGetStr", "storage class", Str);
+        free(Str);
+        return "undefined";
+    }
+}

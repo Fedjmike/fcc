@@ -95,3 +95,5 @@ sym* symFindGlobal (char* Look);
  * Does not allocate a new string, so no need to free it.
  */
 const char* symClassGetStr (symClass class);
+
+const char* storageClassGetStr (storageClass class);

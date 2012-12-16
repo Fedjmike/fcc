@@ -57,7 +57,7 @@ void emitter (ast* Tree, FILE* File) {
 }
 
 void emitterModule (emitterCtx* ctx, ast* Tree) {
-    puts("Module+");
+    debugEnter("Module");
 
     /*Resolve struct info*/
     for (sym* Current = Tree->symbol->firstChild;
@@ -74,7 +74,7 @@ void emitterModule (emitterCtx* ctx, ast* Tree) {
             ; //Nothing to do
 
         else
-            printf("emitterModule: unhandled sym class, %d.\n", Current->class);
+            debugErrorUnhandled("emitterModule", "symbol", symClassGetStr(Current->class));
     }
 
     /*Functions*/
@@ -85,14 +85,14 @@ void emitterModule (emitterCtx* ctx, ast* Tree) {
             emitterFunction(ctx, Current);
 
         else
-            printf("emitterModule(): unhandled AST class, %d.\n", Current->class);
+            debugErrorUnhandled("emitterModule", "AST class", astClassGetStr(Current->class));
     }
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterStruct (emitterCtx* ctx, sym* Symbol) {
-    puts("Struct+");
+    debugEnter("Struct");
 
     for (sym* Current = Symbol->firstChild;
          Current;
@@ -106,11 +106,11 @@ void emitterStruct (emitterCtx* ctx, sym* Symbol) {
 
     reportSymbol(Symbol);
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterEnum (emitterCtx* ctx, sym* Symbol) {
-    puts("Enum+");
+    debugEnter("Enum");
 
     for (sym* Current = Symbol->firstChild;
          Current;
@@ -118,11 +118,11 @@ void emitterEnum (emitterCtx* ctx, sym* Symbol) {
         Current->class++;
     }
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterFunction (emitterCtx* ctx, ast* Node) {
-    puts("Function+");
+    debugEnter("Function");
 
     Node->symbol->label = labelNamed(Node->symbol->ident);
 
@@ -162,7 +162,7 @@ void emitterFunction (emitterCtx* ctx, ast* Node) {
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, labelGet(EndLabel));
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterCode (emitterCtx* ctx, ast* Node) {
@@ -178,7 +178,7 @@ void emitterCode (emitterCtx* ctx, ast* Node) {
 }
 
 void emitterLine (emitterCtx* ctx, ast* Node) {
-    puts("Line+");
+    debugEnter("Line");
 
     asmComment(ctx->Asm, "");
 
@@ -202,13 +202,13 @@ void emitterLine (emitterCtx* ctx, ast* Node) {
         operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
 
     else
-        printf("emitterLine(): unhandled AST class, %d.\n", Node->class);
+        debugErrorUnhandled("emitterLine", "AST class", astClassGetStr(Node->class));
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterBranch (emitterCtx* ctx, ast* Node) {
-    puts("Branch+");
+    debugEnter("Branch");
 
     operand ElseLabel = labelCreate(labelUndefined);
     operand EndLabel = labelCreate(labelUndefined);
@@ -230,11 +230,11 @@ void emitterBranch (emitterCtx* ctx, ast* Node) {
 
     asmLabel(ctx->Asm, EndLabel);
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterLoop (emitterCtx* ctx, ast* Node) {
-    puts("Loop+");
+    debugEnter("Loop");
 
     operand LoopLabel = labelCreate(labelUndefined); /*The place to return to loop again (after confirming condition)*/
     operand OldBreakTo = ctx->labelBreakTo; /*Push old break label before erasing*/
@@ -265,11 +265,11 @@ void emitterLoop (emitterCtx* ctx, ast* Node) {
 
     ctx->labelBreakTo = OldBreakTo;
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterIter (emitterCtx* ctx, ast* Node) {
-    puts("Iter+");
+    debugEnter("Iter");
 
     ast* init = Node->firstChild;
     ast* cond = init->nextSibling;
@@ -288,7 +288,7 @@ void emitterIter (emitterCtx* ctx, ast* Node) {
         operandFree(emitterValue(ctx, init, operandCreate(operandUndefined)));
 
     else if (init->class != astEmpty)
-        printf("emitterIter(): unhandled AST class, %d.\n", init->class);
+        debugErrorUnhandled("emitterIter", "AST class", astClassGetStr(init->class));
 
     asmComment(ctx->Asm, "");
 
@@ -320,11 +320,11 @@ void emitterIter (emitterCtx* ctx, ast* Node) {
 
     ctx->labelBreakTo = OldBreakTo;
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterVar (emitterCtx* ctx, ast* Node) {
-    puts("Var+");
+    debugEnter("Var");
 
     /*Is there an initial value assigned?*/
     if (Node->r) {
@@ -340,17 +340,17 @@ void emitterVar (emitterCtx* ctx, ast* Node) {
             operandFree(R);
 
         } else
-            puts("finish me");
+            debugErrorUnhandled("emitterVar", "storage class", storageClassGetStr(Node->symbol->storage));
     }
 
     if (Node->l)
         emitterVar(ctx, Node->l);
 
-    puts("-");
+    debugLeave();
 }
 
 void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
-    puts("ArrayLiteral+");
+    debugEnter("ArrayLiteral");
 
     int n = 0;
 
@@ -367,5 +367,5 @@ void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
         operandFree(R);
     }
 
-    puts("-");
+    debugLeave();
 }

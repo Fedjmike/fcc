@@ -75,3 +75,5 @@ int astIsValueClass (astClass class);
  * Does not allocate a new string, so no need to free it.
  */
 const char* astClassGetStr (astClass class);
+
+const char* literalClassGetStr (literalClass class);

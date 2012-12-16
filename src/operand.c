@@ -2,6 +2,7 @@
 #include "string.h"
 #include "stdio.h"
 
+#include "../inc/debug.h"
 #include "../inc/operand.h"
 #include "../inc/reg.h"
 
@@ -160,6 +161,40 @@ void operandFree (operand Value) {
 
         if (Value.index != regUndefined)
             regFree(Value.index);
+    }
+}
+
+const char* operandClassGetStr (operandClass class) {
+    if (class == operandUndefined)
+        return "operandUndefined";
+
+    else if (class == operandFlags)
+        return "operandFlags";
+
+    else if (class == operandReg)
+        return "operandReg";
+
+    else if (class == operandMem)
+        return "operandMem";
+
+    else if (class == operandMemRef)
+        return "operandMemRef";
+
+    else if (class == operandLiteral)
+        return "operandLiteral";
+
+    else if (class == operandLabel)
+        return "operandLabel";
+
+    else if (class == operandStack)
+        return "operandStack";
+
+    else {
+        char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("operandClassGetStr", "operand class", Str);
+        free(Str);
+        return "unhandled";
     }
 }
 

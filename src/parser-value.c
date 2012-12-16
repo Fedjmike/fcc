@@ -22,11 +22,11 @@ static ast* parserFactor (parserCtx* ctx);
  * Value = Assign
  */
 ast* parserValue (parserCtx* ctx) {
-    puts("Value+");
+    debugEnter("Value");
 
     ast* Node = parserAssign(ctx);
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -35,7 +35,7 @@ ast* parserValue (parserCtx* ctx) {
  * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" Assign ]
  */
 static ast* parserAssign (parserCtx* ctx) {
-    puts("Assign+");
+    debugEnter("Assign");
 
     ast* Node = parserTernary(ctx);
 
@@ -46,7 +46,7 @@ static ast* parserAssign (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserAssign(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -55,7 +55,7 @@ static ast* parserAssign (parserCtx* ctx) {
  * Ternary = Bool [ "?" Ternary ":" Ternary ]
  */
 static ast* parserTernary (parserCtx* ctx ) {
-    puts("Ternary+");
+    debugEnter("Ternary");
 
     ast* Node = parserBool(ctx);
 
@@ -67,7 +67,7 @@ static ast* parserTernary (parserCtx* ctx ) {
         Node = astCreateTOP(ctx->location, Node, l, r);
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -76,7 +76,7 @@ static ast* parserTernary (parserCtx* ctx ) {
  * Bool = Equality [{ "&&" | "||" Equality }]
  */
 static ast* parserBool (parserCtx* ctx) {
-    puts("Bool+");
+    debugEnter("Bool");
 
     ast* Node = parserEquality(ctx);
 
@@ -85,7 +85,7 @@ static ast* parserBool (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserEquality(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -94,7 +94,7 @@ static ast* parserBool (parserCtx* ctx) {
  * Equality = Rel [{ "==" | "!=" Rel }]
  */
 static ast* parserEquality (parserCtx* ctx) {
-    puts("Equality+");
+    debugEnter("Equality");
 
     ast* Node = parserRel(ctx);
 
@@ -103,7 +103,7 @@ static ast* parserEquality (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserRel(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -112,7 +112,7 @@ static ast* parserEquality (parserCtx* ctx) {
  * Rel = Expr [{ ">" | ">=" | "<" | "<=" Expr }]
  */
 static ast* parserRel (parserCtx* ctx) {
-    puts("Rel+");
+    debugEnter("Rel");
 
     ast* Node = parserExpr(ctx);
 
@@ -122,7 +122,7 @@ static ast* parserRel (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserExpr(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -131,7 +131,7 @@ static ast* parserRel (parserCtx* ctx) {
  * Expr = Term [{ "+" | "-" Term }]
  */
 static ast* parserExpr (parserCtx* ctx) {
-    puts("Expr+");
+    debugEnter("Expr");
 
     ast* Node = parserTerm(ctx);
 
@@ -140,7 +140,7 @@ static ast* parserExpr (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserTerm(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -149,7 +149,7 @@ static ast* parserExpr (parserCtx* ctx) {
  * Term = Unary [{ "*" | "/" Unary }]
  */
 static ast* parserTerm (parserCtx* ctx) {
-    puts("Term+");
+    debugEnter("Term");
 
     ast* Node = parserUnary(ctx);
 
@@ -158,7 +158,7 @@ static ast* parserTerm (parserCtx* ctx) {
         Node = astCreateBOP(ctx->location, Node, o, parserUnary(ctx));
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -169,7 +169,7 @@ static ast* parserTerm (parserCtx* ctx) {
 static ast* parserUnary (parserCtx* ctx) {
     /* Interestingly, this function makes extensive use of itself */
 
-    puts("Unary+");
+    debugEnter("Unary");
 
     ast* Node = 0;
 
@@ -186,7 +186,7 @@ static ast* parserUnary (parserCtx* ctx) {
     while (tokenIs(ctx, "++") || tokenIs(ctx, "--"))
         Node = astCreateUOP(ctx->location, tokenDupMatch(ctx), Node);
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -197,7 +197,7 @@ static ast* parserUnary (parserCtx* ctx) {
                       | ( "->" <Ident> ) }]
  */
 static ast* parserObject (parserCtx* ctx) {
-    puts("Object+");
+    debugEnter("Object");
 
     ast* Node = parserFactor(ctx);
 
@@ -232,7 +232,7 @@ static ast* parserObject (parserCtx* ctx) {
         }
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -243,7 +243,7 @@ static ast* parserObject (parserCtx* ctx) {
             | ( <Ident> [ "(" [ Value [{ "," Value }] ] ")" ] )
  */
 static ast* parserFactor (parserCtx* ctx) {
-    puts("Factor+");
+    debugEnter("Factor");
 
     ast* Node = 0;
 
@@ -305,7 +305,7 @@ static ast* parserFactor (parserCtx* ctx) {
         tokenNext(ctx);
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }

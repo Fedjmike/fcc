@@ -67,7 +67,7 @@ parserResult parser (char* File, sym* Global) {
  * Module = [{ ModuleLine }]
  */
 ast* parserModule (parserCtx* ctx) {
-    puts("Module+");
+    debugEnter("Module");
 
     ast* Module = astCreate(astModule, ctx->location);
     Module->symbol = ctx->scope;
@@ -75,7 +75,7 @@ ast* parserModule (parserCtx* ctx) {
     while (ctx->lexer->token != tokenEOF)
         astAddChild(Module, parserModuleLine(ctx));
 
-    puts("-");
+    debugLeave();
 
     return Module;
 }
@@ -84,7 +84,7 @@ ast* parserModule (parserCtx* ctx) {
  * ModuleLine = Struct | SymDef
  */
 ast* parserModuleLine (parserCtx* ctx) {
-    puts("ModuleLine+");
+    debugEnter("ModuleLine");
 
     ast* Node = 0;
 
@@ -94,7 +94,7 @@ ast* parserModuleLine (parserCtx* ctx) {
     else
         Node = parserSymDef(ctx);
 
-    puts("-");
+    debugLeave();
 
     //getchar();
 
@@ -108,7 +108,7 @@ ast* parserModuleLine (parserCtx* ctx) {
                                "}" ] ";"
  */
 void parserStruct (parserCtx* ctx) {
-    puts("Struct+");
+    debugEnter("Struct");
 
     tokenMatchStr(ctx, "struct");
 
@@ -161,7 +161,7 @@ void parserStruct (parserCtx* ctx) {
     /*Revert to the old scope*/
     ctx->scope = Scope;
 
-    puts("-");
+    debugLeave();
 }
 
 /**
@@ -171,7 +171,7 @@ void parserStruct (parserCtx* ctx) {
                            "}" ] ";"
  */
 void parserEnum (parserCtx* ctx) {
-    puts("Enum+");
+    debugEnter("Enum");
 
     tokenMatchStr(ctx, "enum");
 
@@ -199,14 +199,14 @@ void parserEnum (parserCtx* ctx) {
 
     ctx->scope = Scope;
 
-    puts("-");
+    debugLeave();
 }
 
 /**
  * SymDef = [ "static" ] Type <Ident> Function | ( Variable [{ "," <Ident> Variable }] )
  */
 ast* parserSymDef (parserCtx* ctx) {
-    puts("SymDef+");
+    debugEnter("SymDef");
 
     int storage = storageAuto;
 
@@ -234,7 +234,7 @@ ast* parserSymDef (parserCtx* ctx) {
         }
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -243,7 +243,7 @@ ast* parserSymDef (parserCtx* ctx) {
  * Type = <Ident> [{ "*" }]
  */
 type parserType (parserCtx* ctx) {
-    puts("Type+");
+    debugEnter("Type");
 
     type DT = typeCreateFromBasic(symFind(ctx->scope, ctx->lexer->buffer));
     DT.lvalue = true;
@@ -264,7 +264,7 @@ type parserType (parserCtx* ctx) {
     while (tokenTryMatchStr(ctx, "*"))
         DT.ptr++;
 
-    puts("-");
+    debugLeave();
 
     return DT;
 }
@@ -273,7 +273,7 @@ type parserType (parserCtx* ctx) {
  * Function = "(" [ Type <Ident> [{ "," Type <Ident> }] ] ")" ";" | Code
  */
 ast* parserFunction (parserCtx* ctx, type DT, char* ident, storageClass storage) {
-    puts("Function+");
+    debugEnter("Function");
 
     ast* Node = astCreate(astFunction, ctx->location);
     Node->symbol = symCreate(symFunction, ctx->scope);
@@ -310,7 +310,7 @@ ast* parserFunction (parserCtx* ctx, type DT, char* ident, storageClass storage)
     /*Pop scope*/
     ctx->scope = Scope;
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -319,7 +319,7 @@ ast* parserFunction (parserCtx* ctx, type DT, char* ident, storageClass storage)
  * Variable = Array | ( "=" Value )
  */
 ast* parserVariable (parserCtx* ctx, type DT, char* ident, storageClass storage) {
-    puts("Variable+");
+    debugEnter("Variable");
 
     ast* Node = 0;
 
@@ -336,7 +336,7 @@ ast* parserVariable (parserCtx* ctx, type DT, char* ident, storageClass storage)
 
     reportSymbol(Node->symbol);
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -345,7 +345,7 @@ ast* parserVariable (parserCtx* ctx, type DT, char* ident, storageClass storage)
  * Array = "[" [ <Number> ] "]" [ "=" "{" Value [{ "," Value }] "}" ]
  */
 ast* parserArray (parserCtx* ctx, type DT, char* ident, storageClass storage) {
-    puts("Array+");
+    debugEnter("Array");
 
     ast* Node = astCreate(astVar, ctx->location);
     Node->symbol = symCreateVar(ctx->scope, ident, DT, storage);
@@ -397,7 +397,7 @@ ast* parserArray (parserCtx* ctx, type DT, char* ident, storageClass storage) {
         }
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -406,7 +406,7 @@ ast* parserArray (parserCtx* ctx, type DT, char* ident, storageClass storage) {
  * Code = ("{" [{ Line }] "}") | Line
  */
 ast* parserCode (parserCtx* ctx) {
-    puts("Code+");
+    debugEnter("Code");
 
     ast* Node = astCreate(astCode, ctx->location);
 
@@ -421,7 +421,7 @@ ast* parserCode (parserCtx* ctx) {
     } else
         astAddChild(Node, parserLine(ctx));
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -430,7 +430,7 @@ ast* parserCode (parserCtx* ctx) {
  * Line = [ If | While | For | ("return" Value) | SymDef | Value ] ";"
  */
 ast* parserLine (parserCtx* ctx) {
-    puts("Line+");
+    debugEnter("Line");
 
     ast* Node = 0;
 
@@ -477,7 +477,7 @@ ast* parserLine (parserCtx* ctx) {
         tokenMatchStr(ctx, ";");
     }
 
-    puts("-");
+    debugLeave();
 
     getchar();
 
@@ -488,7 +488,7 @@ ast* parserLine (parserCtx* ctx) {
  * If = "if" Value Code [ "else" Code ]
  */
 ast* parserIf (parserCtx* ctx) {
-    puts("If+");
+    debugEnter("If");
 
     ast* Node = astCreate(astBranch, ctx->location);
 
@@ -503,7 +503,7 @@ ast* parserIf (parserCtx* ctx) {
         Node->r = parserCode(ctx);
     }
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -512,7 +512,7 @@ ast* parserIf (parserCtx* ctx) {
  * While = "while" Value Code
  */
 ast* parserWhile (parserCtx* ctx) {
-    puts("While+");
+    debugEnter("While");
 
     ast* Node = astCreate(astLoop, ctx->location);
 
@@ -520,7 +520,7 @@ ast* parserWhile (parserCtx* ctx) {
     Node->l = parserValue(ctx);
     Node->r = parserCode(ctx);
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -529,7 +529,7 @@ ast* parserWhile (parserCtx* ctx) {
  * DoWhile = "do" Code "while" Value ";"
  */
 ast* parserDoWhile (parserCtx* ctx) {
-    puts("DoWhile+");
+    debugEnter("DoWhile");
 
     ast* Node = astCreate(astLoop, ctx->location);
 
@@ -539,7 +539,7 @@ ast* parserDoWhile (parserCtx* ctx) {
     Node->r = parserValue(ctx);
     tokenMatchStr(ctx, ";");
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }
@@ -548,7 +548,7 @@ ast* parserDoWhile (parserCtx* ctx) {
  * For := "for" [ "(" ] [ SymDef | Value ] ";" [ Value ] ";" [ Value ] [ ")" ] Code
  */
 ast* parserFor (parserCtx* ctx) {
-    puts("For+");
+    debugEnter("For");
 
     ast* Node = astCreate(astIter, ctx->location);
 
@@ -592,7 +592,7 @@ ast* parserFor (parserCtx* ctx) {
 
     Node->l = parserCode(ctx);
 
-    puts("-");
+    debugLeave();
 
     return Node;
 }

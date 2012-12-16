@@ -17,7 +17,7 @@
 #include "../inc/emitter-value.h"
 
 static operand emitterBOP (emitterCtx* ctx, ast* Node);
-static operand emitterAssign (emitterCtx* ctx, ast* Node);
+static operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node);
 static operand emitterUOP (emitterCtx* ctx, ast* Node);
 static operand emitterTOP (emitterCtx* ctx, ast* Node);
 static operand emitterIndex (emitterCtx* ctx, ast* Node);
@@ -53,10 +53,10 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
             Value = emitterLiteral(ctx, Node);
 
         else
-            printf("emitterValue: unhandled literal class, %d.\n", Node->litClass);
+            debugErrorUnhandled("emitterValue", "literal class", literalClassGetStr(Node->litClass));
 
     } else
-        printf("emitterValue(): unhandled AST class, %d.\n", Node->class);
+        debugErrorUnhandled("emitterValue", "AST class", astClassGetStr(Node->class));
 
     /*Put it where requested*/
 
@@ -121,7 +121,8 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
                 printf("emitterValue(): expected value, void given.\n");
 
             else
-                printf("emitterValue(): unhandled operand class, %d, %d.\n", Dest.class, Value.class);
+                debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Value.class));
+                debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Dest.class));
 
         } else if (Dest.class == operandReg && Dest.reg != Value.reg) {
             if (Dest.reg == regUndefined)
@@ -140,7 +141,7 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
 }
 
 operand emitterBOP (emitterCtx* ctx, ast* Node) {
-    puts("BOP+");
+    debugEnter("BOP");
 
     operand L;
     operand R;
@@ -150,7 +151,7 @@ operand emitterBOP (emitterCtx* ctx, ast* Node) {
         !strcmp(Node->o, "+=") ||
         !strcmp(Node->o, "-=") ||
         !strcmp(Node->o, "*="))
-        Value = emitterAssign(ctx, Node);
+        Value = emitterAssignmentBOP(ctx, Node);
 
     else if (!strcmp(Node->o, ".")) {
         asmEnter(ctx->Asm);
@@ -196,18 +197,18 @@ operand emitterBOP (emitterCtx* ctx, ast* Node) {
                 asmBOP(ctx->Asm, bopMul, L, R);
 
             else
-                printf("emitterBOP(): unhandled operator '%s'\n", Node->o);
+                debugErrorUnhandled("emitterBOP", "operator", Node->o);
         }
 
         operandFree(R);
     }
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
-operand emitterAssign (emitterCtx* ctx, ast* Node) {
+operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node) {
     asmEnter(ctx->Asm);
     operand L = emitterValue(ctx, Node->l, operandCreate(operandMem));;
     operand R;
@@ -246,7 +247,7 @@ operand emitterAssign (emitterCtx* ctx, ast* Node) {
             asmBOP(ctx->Asm, bopSub, L, R);
 
         else
-            printf("emitterBOP(): unhandled operator '%s'\n", Node->o);
+            debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
     }
 
     Value = R;
@@ -256,7 +257,7 @@ operand emitterAssign (emitterCtx* ctx, ast* Node) {
 }
 
 operand emitterUOP (emitterCtx* ctx, ast* Node) {
-    puts("UOP+");
+    debugEnter("UOP");
 
     operand Value;
     operand R;
@@ -298,15 +299,15 @@ operand emitterUOP (emitterCtx* ctx, ast* Node) {
         asmEvalAddress(ctx->Asm, Value, R);
 
     } else
-        printf("emitterUOP(): unhandled operator '%s'\n", Node->o);
+        debugErrorUnhandled("emitterUOP", "operator", Node->o);
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
 operand emitterTOP (emitterCtx* ctx, ast* Node) {
-    puts("TOP+");
+    debugEnter("TOP");
 
     operand ElseLabel = labelCreate(labelUndefined);
     operand EndLabel = labelCreate(labelUndefined);
@@ -329,13 +330,13 @@ operand emitterTOP (emitterCtx* ctx, ast* Node) {
 
     asmLabel(ctx->Asm, EndLabel);
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
 operand emitterIndex (emitterCtx* ctx, ast* Node) {
-    puts("Index+");
+    debugEnter("Index");
 
     operand Value;
 
@@ -387,13 +388,13 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
 
     reportType(Node->dt);
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
 operand emitterCall (emitterCtx* ctx, ast* Node) {
-    puts("Call+");
+    debugEnter("Call");
 
     operand Value;
 
@@ -435,13 +436,13 @@ operand emitterCall (emitterCtx* ctx, ast* Node) {
         if (regIsUsed(reg) && reg != Value.reg)
             asmPop(ctx->Asm, operandCreateReg(reg));
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
 operand emitterSymbol (emitterCtx* ctx, ast* Node) {
-    puts("Symbol+");
+    debugEnter("Symbol");
 
     operand Value = operandCreate(operandUndefined);
 
@@ -456,15 +457,15 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
             Value = operandCreateMemRef(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
 
     } else
-        printf("emitterSymbol(): unhandled symbol class, %d\n", Node->symbol->class);
+        debugErrorUnhandled("emitterSymbol", "symbol class", symClassGetStr(Node->symbol->class));
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }
 
 operand emitterLiteral (emitterCtx* ctx, ast* Node) {
-    puts("Literal+");
+    debugEnter("Literal");
 
     operand Value;
 
@@ -475,9 +476,9 @@ operand emitterLiteral (emitterCtx* ctx, ast* Node) {
         Value = operandCreateLiteral(*(char*) Node->literal);
 
     else
-        printf("emitterLiteral(): unhandled literal class, %d.\n", Node->litClass);
+        debugErrorUnhandled("emitterLiteral", "literal class", literalClassGetStr(Node->litClass));
 
-    puts("-");
+    debugLeave();
 
     return Value;
 }

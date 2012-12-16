@@ -24,7 +24,7 @@ void debugLeave () {
 void debugMsg (char* format, ...) {
     for (int i = 0; i < debugDepth; i++) {
         fputc('|', debugLog);
-        //fputc(' ', debugLog);
+        fputc(' ', debugLog);
     }
 
     va_list args;

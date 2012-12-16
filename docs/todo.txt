@@ -57,7 +57,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] Internal error reporting standardisation
 [ ] Clean up value moving code
 [-] Const correctness
-[-] Use debugEnter and Leave more
+[x] Use debugEnter and Leave more
 [-] Make sure prototypes and implementation match exactly (static)
 [ ] Use a cond field of AST
 [ ] Introduce a match-all type class for error handling
