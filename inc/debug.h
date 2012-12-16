@@ -5,7 +5,17 @@
 #include "sym.h"
 #include "ast.h"
 
+typedef enum {
+    debugFull,
+    debugCompressed,
+    debugMinimal,
+    debugSilent
+} debugMode;
+
 void debugInit (FILE* log);
+
+debugMode debugSetMode (debugMode mode);
+
 void debugEnter (char* str);
 void debugLeave ();
 void debugMsg (char* format, ...);

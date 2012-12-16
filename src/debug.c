@@ -3,36 +3,52 @@
 
 #include "../inc/debug.h"
 
-FILE* debugLog;
+FILE* logFile;
+debugMode mode;
 //Indentation level of debug output
-int debugDepth;
+int depth;
 
-void debugInit (FILE* log) {
-    debugLog = log;
+void debugInit (FILE* nlog) {
+    logFile = nlog;
+    debugSetMode(debugFull);
+}
+
+debugMode debugSetMode (debugMode nmode) {
+    debugMode old = mode;
+    mode = nmode;
+    return old;
 }
 
 void debugEnter (char* str) {
-    debugMsg("+ %s", str);
-    debugDepth++;
+    if (mode <= debugCompressed) {
+        debugMsg("+ %s", str);
+        depth++;
+    }
 }
 
 void debugLeave () {
-    debugDepth--;
-    debugMsg("-");
+    if (mode <= debugCompressed)
+        depth--;
+
+    if (mode == debugFull)
+        debugMsg("-");
 }
 
 void debugMsg (char* format, ...) {
-    for (int i = 0; i < debugDepth; i++) {
-        fputc('|', debugLog);
-        fputc(' ', debugLog);
+    if (mode == debugSilent)
+        return;
+
+    for (int i = 0; i < depth; i++) {
+        fputc('|', logFile);
+        fputc(' ', logFile);
     }
 
     va_list args;
     va_start(args, format);
-    vfprintf(debugLog, format, args);
+    vfprintf(logFile, format, args);
     va_end(args);
 
-    fputc('\n', debugLog);
+    fputc('\n', logFile);
 }
 
 /*:::: INTERNAL ERRORS ::::*/
@@ -55,24 +71,24 @@ void debugErrorUnhandled (const char* functionName,
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
 void report (char* str) {
-    fputs(str, debugLog);
+    fputs(str, logFile);
 }
 
 void reportType (type DT) {
     char* Str = typeToStr(DT);
-    fprintf(debugLog, "type: %s\n", Str);
+    fprintf(logFile, "type: %s\n", Str);
     free(Str);
 }
 
 void reportSymbol (sym* Symbol) {
     /*Class*/
 
-    fprintf(debugLog, "class: %s   ",
+    fprintf(logFile, "class: %s   ",
             symClassGetStr(Symbol->class));
 
     /*Symbol name*/
 
-    fprintf(debugLog, "symbol: %s   ",
+    fprintf(logFile, "symbol: %s   ",
             Symbol->ident);
 
     /*Parent*/
@@ -81,7 +97,7 @@ void reportSymbol (sym* Symbol) {
         Symbol->class != symType &&
         Symbol->class != symStruct &&
         Symbol->class != symFunction)
-        fprintf(debugLog, "parent: %s   ",
+        fprintf(logFile, "parent: %s   ",
                 Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
@@ -90,7 +106,7 @@ void reportSymbol (sym* Symbol) {
         Symbol->class == symParam ||
         Symbol->class == symFunction) {
         char* Str = typeToStr(Symbol->dt);
-        fprintf(debugLog, "type: %s   ", Str);
+        fprintf(logFile, "type: %s   ", Str);
         free(Str);
     }
 
@@ -99,30 +115,30 @@ void reportSymbol (sym* Symbol) {
     if (Symbol->class == symVar ||
         Symbol->class == symParam) {
         if (Symbol->dt.array == 0)
-            fprintf(debugLog, "size:   %d   ",
+            fprintf(logFile, "size:   %d   ",
                     Symbol->dt.basic ? typeGetSize(Symbol->dt) : 0);
 
         else
-            fprintf(debugLog, "size: %dx%d   ",
+            fprintf(logFile, "size: %dx%d   ",
                     Symbol->dt.basic ? Symbol->dt.basic->size : 0,
                     Symbol->dt.array);
 
     } else if (Symbol->class == symStruct)
-        fprintf(debugLog, "size:   %d   ",
+        fprintf(logFile, "size:   %d   ",
                 Symbol->size);
 
     /*Offset*/
 
     if (Symbol->class == symVar ||
         Symbol->class == symParam)
-        fprintf(debugLog, "offset: %d   ",
-               Symbol->offset);
+        fprintf(logFile, "offset: %d",
+                Symbol->offset);
 
-    fputc('\n', debugLog);
+    fputc('\n', logFile);
 }
 
 void reportNode (ast* Node) {
-    fprintf(debugLog, "node: %p   class: %s   next: %p   fc: %p   l: %p\n",
+    fprintf(logFile, "node: %p   class: %s   next: %p   fc: %p   l: %p\n",
             (void*) Node,
             astClassGetStr(Node->class),
             (void*) Node->nextSibling,
@@ -131,11 +147,11 @@ void reportNode (ast* Node) {
 }
 
 void reportRegs () {
-    fprintf(debugLog, "[ ");
+    fprintf(logFile, "[ ");
 
     for (int i = 0; i < regMax; i++)
         if (regIsUsed(i))
-            fprintf(debugLog, "%s ", regToStr(i));
+            fprintf(logFile, "%s ", regToStr(i));
 
-    fprintf(debugLog, "]\n");
+    fprintf(logFile, "]\n");
 }

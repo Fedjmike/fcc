@@ -387,8 +387,6 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
         Value = operandCreateMem(R.reg, 0, typeGetSize(Node->dt));
     }
 
-    reportType(Node->dt);
-
     debugLeave();
 
     return Value;

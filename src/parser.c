@@ -334,8 +334,6 @@ ast* parserVariable (parserCtx* ctx, type DT, char* ident, storageClass storage)
             Node->r = parserValue(ctx);
     }
 
-    reportSymbol(Node->symbol);
-
     debugLeave();
 
     return Node;

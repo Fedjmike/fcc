@@ -23,9 +23,11 @@ static ast* parserFactor (parserCtx* ctx);
  */
 ast* parserValue (parserCtx* ctx) {
     debugEnter("Value");
+    debugMode old = debugSetMode(debugMinimal);
 
     ast* Node = parserAssign(ctx);
 
+    debugSetMode(old);
     debugLeave();
 
     return Node;
@@ -273,17 +275,12 @@ static ast* parserFactor (parserCtx* ctx) {
         Node->symbol = symFind(ctx->scope, (char*) Node->literal);
 
         /*Valid symbol?*/
-        if (Node->symbol) {
+        if (Node->symbol)
             tokenMatch(ctx);
-            Node->dt = Node->symbol->dt;
 
-            reportSymbol(Node->symbol);
-
-        } else {
+        else {
             errorUndefSym(ctx);
             tokenNext(ctx);
-
-            Node->dt.basic = symFindGlobal("int");
         }
 
         /*Actually it was a function call*/
