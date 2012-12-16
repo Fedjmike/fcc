@@ -2,3 +2,5 @@
 /profile.txt
 /C compiler.depend
 /C compiler.layout
+/obj/
+/bin/
