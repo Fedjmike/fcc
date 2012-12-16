@@ -120,9 +120,10 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
             } else if (Value.class == operandUndefined)
                 printf("emitterValue(): expected value, void given.\n");
 
-            else
+            else {
                 debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Value.class));
                 debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Dest.class));
+            }
 
         } else if (Dest.class == operandReg && Dest.reg != Value.reg) {
             if (Dest.reg == regUndefined)
