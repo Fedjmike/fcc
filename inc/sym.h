@@ -58,7 +58,7 @@ typedef enum {
     ///with =
     typeAssignment = 1 << 3,
     ///Combination of attributes for integral types
-    typeIntegral = typeNumeric || typeOrdinal || typeEquality || typeAssignment
+    typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment
 } symTypeMask;
 
 /**

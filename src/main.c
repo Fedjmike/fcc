@@ -43,7 +43,7 @@ int main (int argc, char** argv) {
     sym* Global = symInit();
     sym* Types[5];
     Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality || typeAssignment);
+    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality | typeAssignment);
     Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
     Types[builtinInt] = symCreateType(Global, "int", 8, typeIntegral);
 
