@@ -5,48 +5,22 @@
 #include "string.h"
 #include "stdlib.h"
 
-static sym* Global = 0;
+static void symAddChild (sym* Parent, sym* Child);
+static void symDestroy (sym* Symbol);
 
 sym* symInit () {
-    Global = symCreate(symGlobal, 0);
-    Global->ident = "global namespace";
-
-    return Global;
+    return symCreate(symScope, 0);
 }
 
-void symEnd () {
+void symEnd (sym* Global) {
     symDestroy(Global);
 }
 
-void symAddChild (sym* Parent, sym* Child) {
-    if (Child->class == symGlobal)
-        return;
-
-    if (!Child || !Parent) {
-        printf("symAddChild(): null %s given.\n",
-               !Parent ? "parent" : "child");
-        return;
-    }
-
-    if (Parent->firstChild == 0) {
-        Parent->firstChild = Child;
-        Parent->lastChild = Child;
-
-    } else {
-        Parent->lastChild->nextSibling = Child;
-        Parent->lastChild = Child;
-    }
-
-    Child->parent = Parent;
-
-    if (Child->class == symParam)
-        Parent->params++;
-}
-
-sym* symCreate (symClass class, sym* parent) {
+sym* symCreate (symClass class, sym* Parent) {
     sym* Symbol = malloc(sizeof(sym));
     Symbol->class = class;
     Symbol->ident = 0;
+
     Symbol->proto = false;
 
     Symbol->storage = storageAuto;
@@ -56,7 +30,7 @@ sym* symCreate (symClass class, sym* parent) {
 
     Symbol->size = 0;
 
-    symAddChild(parent, Symbol);
+    symAddChild(Parent, Symbol);
     Symbol->firstChild = 0;
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
@@ -69,8 +43,8 @@ sym* symCreate (symClass class, sym* parent) {
     return Symbol;
 }
 
-sym* symCreateType (char* ident, int size, symTypeMask typeMask) {
-    sym* Symbol = symCreate(symType, Global);
+sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
+    sym* Symbol = symCreate(symType, Parent);
     Symbol->ident = strdup(ident);
     Symbol->size = size;
     Symbol->typeMask = typeMask;
@@ -92,7 +66,33 @@ sym* symCreateVar (sym* Parent, char* ident, type DT, storageClass storage) {
     return Symbol;
 }
 
-void symDestroy (sym* Symbol) {
+static void symAddChild (sym* Parent, sym* Child) {
+    /*Global namespace?*/
+    if (!Parent && Child->class == symScope)
+        return;
+
+    else if (!Child || !Parent) {
+        printf("symAddChild(): null %s given.\n",
+               !Parent ? "parent" : "child");
+        return;
+    }
+
+    if (Parent->firstChild == 0) {
+        Parent->firstChild = Child;
+        Parent->lastChild = Child;
+
+    } else {
+        Parent->lastChild->nextSibling = Child;
+        Parent->lastChild = Child;
+    }
+
+    Child->parent = Parent;
+
+    if (Child->class == symParam)
+        Parent->params++;
+}
+
+static void symDestroy (sym* Symbol) {
     free(Symbol->ident);
 
     if (Symbol->firstChild)
@@ -116,7 +116,7 @@ sym* symChild (sym* Scope, char* Look) {
         if (Current->ident && !strcmp(Current->ident, Look))
             return Current;
 
-        /*Enum elements are effectively in its parents namespace*/
+        /*Children of enums are visible from their parents scope*/
         if (Current->class == symEnum) {
             sym* Found = symChild(Current, Look);
 
@@ -131,6 +131,7 @@ sym* symChild (sym* Scope, char* Look) {
 sym* symFind (sym* Scope, char* Look) {
     //printf("look: %s\n", Look);
 
+    /*Search the current namespace and all its ancestors*/
     for (;
          Scope;
          Scope = Scope->parent) {
@@ -142,18 +143,14 @@ sym* symFind (sym* Scope, char* Look) {
         }
     }
 
-    return symChild(Global, Look);;
-}
-
-sym* symFindGlobal (char* Look) {
-    return symChild(Global, Look);
+    return 0;
 }
 
 const char* symClassGetStr (symClass class) {
     if (class == symUndefined)
         return "symUndefined";
-    else if (class == symGlobal)
-        return "symGlobal";
+    else if (class == symScope)
+        return "symScope";
     else if (class == symType)
         return "symType";
     else if (class == symStruct)

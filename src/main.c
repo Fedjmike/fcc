@@ -42,13 +42,10 @@ int main (int argc, char** argv) {
       make new built in data types and add them to the global namespace*/
     sym* Global = symInit();
     sym* Types[5];
-    Types[builtinVoid] = symCreateType("void", 0, 0);
-    Types[builtinBool] = symCreateType("bool", 1,
-                                       typeEquality || typeAssignment);
-    Types[builtinChar] = symCreateType("char", 1,
-                                       typeIntegral);
-    Types[builtinInt] = symCreateType("int", 8,
-                                      typeIntegral);
+    Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
+    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality || typeAssignment);
+    Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
+    Types[builtinInt] = symCreateType(Global, "int", 8, typeIntegral);
 
     int errors = 0;
     int warnings = 0;
@@ -89,7 +86,7 @@ int main (int argc, char** argv) {
     /*Clean up*/
 
     astDestroy(Tree);
-    symEnd();
+    symEnd(Global);
 
     fclose(File);
 

@@ -91,13 +91,13 @@ void reportSymbol (sym* Symbol) {
 
     /*Symbol name*/
 
-    fprintf(logFile, "symbol: %s   ",
-            Symbol->ident);
+    if (Symbol->class != symScope)
+        fprintf(logFile, "symbol: %s   ",
+                Symbol->ident);
 
     /*Parent*/
 
-    if (Symbol->class != symGlobal &&
-        Symbol->class != symType &&
+    if (Symbol->class != symType &&
         Symbol->class != symStruct &&
         Symbol->class != symFunction)
         fprintf(logFile, "parent: %s   ",
