@@ -1,12 +1,12 @@
-#include "stdlib.h"
-#include "stdarg.h"
-
 #include "../inc/debug.h"
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
+
+#include "stdlib.h"
+#include "stdarg.h"
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node);
 

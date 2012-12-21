@@ -1,7 +1,10 @@
-#include "stdlib.h"
-#include "stdio.h"
-
 #include "../inc/debug.h"
+#include "../inc/ast.h"
+#include "../inc/sym.h"
+
+#include "stdlib.h"
+#include "stdarg.h"
+#include "stdio.h"
 
 FILE* logFile;
 debugMode mode;

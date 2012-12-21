@@ -1,7 +1,8 @@
+#include "../std/std.h"
+#include "../std/stdlib.h"
+
 #include "stdlib.h"
 #include "string.h"
-
-#include "../std/stdlib.h"
 
 //int EXIT_FAILURE = 1;
 //int EXIT_SUCCESS = 0;

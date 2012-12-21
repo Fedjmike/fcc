@@ -1,8 +1,8 @@
-#include "stdio.h"
-#include "stdlib.h"
-
 #include "../inc/debug.h"
 #include "../inc/ast.h"
+
+#include "stdio.h"
+#include "stdlib.h"
 
 ast* astCreate (astClass class, tokenLocation location) {
     ast* Node = malloc(sizeof(ast));

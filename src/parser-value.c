@@ -1,11 +1,13 @@
-#include "stdlib.h"
-#include "string.h"
-
 #include "../inc/debug.h"
+#include "../inc/ast.h"
+#include "../inc/sym.h"
 #include "../inc/lexer.h"
 #include "../inc/parser.h"
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
+
+#include "stdlib.h"
+#include "string.h"
 
 static ast* parserAssign (parserCtx* ctx);
 static ast* parserTernary (parserCtx* ctx);

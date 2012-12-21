@@ -1,7 +1,3 @@
-#include "string.h"
-#include "stdio.h"
-#include "stdlib.h"
-
 #include "../std/std.h"
 
 #include "../inc/debug.h"
@@ -15,6 +11,10 @@
 #include "../inc/reg.h"
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
+
+#include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
 
 static operand emitterBOP (emitterCtx* ctx, ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node);
@@ -430,7 +430,7 @@ operand emitterCall (emitterCtx* ctx, ast* Node) {
     asmPopN(ctx->Asm, argSize/8);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
-    for (int reg = regR15; reg >= regRAX; reg--)
+    for (regClass reg = regR15; reg >= regRAX; reg--)
         //Attempt to restore all but the one we just allocated for the ret value
         if (regIsUsed(reg) && reg != Value.reg)
             asmPop(ctx->Asm, operandCreateReg(reg));

@@ -1,7 +1,8 @@
-#include "stdlib.h"
-#include "stdarg.h"
-
 #include "../inc/asm.h"
+
+#include "stdlib.h"
+#include "stdio.h"
+#include "stdarg.h"
 
 asmCtx* asmInit (FILE* File) {
     asmCtx* ctx = malloc(sizeof(asmCtx));

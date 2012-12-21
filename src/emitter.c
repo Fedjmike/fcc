@@ -1,7 +1,3 @@
-#include "string.h"
-#include "stdio.h"
-#include "stdlib.h"
-
 #include "../std/std.h"
 
 #include "../inc/debug.h"
@@ -15,6 +11,10 @@
 #include "../inc/reg.h"
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
+
+#include "string.h"
+#include "stdio.h"
+#include "stdlib.h"
 
 /*Emitter context*/
 
@@ -115,7 +115,7 @@ void emitterEnum (emitterCtx* ctx, sym* Symbol) {
     for (sym* Current = Symbol->firstChild;
          Current;
          Current = Current->nextSibling) {
-        Current->class++;
+
     }
 
     debugLeave();

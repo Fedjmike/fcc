@@ -1,8 +1,8 @@
+#include "../inc/stream.h"
+
 #include "string.h"
 #include "stdlib.h"
 #include "stdio.h"
-
-#include "../inc/stream.h"
 
 char* streamFilename;
 char streamChar = 0;

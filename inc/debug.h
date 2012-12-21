@@ -1,9 +1,9 @@
-#include "stdarg.h"
+#include "type.h"
+
 #include "stdio.h"
 
-#include "type.h"
-#include "sym.h"
-#include "ast.h"
+struct ast;
+struct sym;
 
 typedef enum {
     debugFull,
@@ -30,6 +30,6 @@ void debugErrorUnhandled (const char* functionName,
 
 void report (char* str);
 void reportType (type DT);
-void reportSymbol (sym* Symbol);
-void reportNode (ast* Node);
+void reportSymbol (struct sym* Symbol);
+void reportNode (struct ast* Node);
 void reportRegs ();

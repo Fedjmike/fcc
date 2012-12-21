@@ -1,9 +1,10 @@
+#include "../inc/debug.h"
+#include "../inc/parser.h"
+#include "../inc/parser-helpers.h"
+
 #include "stdlib.h"
 #include "stdarg.h"
 #include "string.h"
-
-#include "../inc/debug.h"
-#include "../inc/parser-helpers.h"
 
 static void error (parserCtx* ctx, char* format, ...) {
     printf("error(%d:%d): ", ctx->location.line, ctx->location.lineChar);

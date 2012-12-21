@@ -1,14 +1,10 @@
-#include "stdlib.h"
-#include "ctype.h"
-#include "stdarg.h"
-#include "stdio.h"
-#include "string.h"
-
 #include "../std/std.h"
 
-#include "../inc/type.h"
 #include "../inc/stream.h"
 #include "../inc/lexer.h"
+
+#include "stdlib.h"
+#include "ctype.h"
 
 lexerCtx* lexerInit (char* File) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));

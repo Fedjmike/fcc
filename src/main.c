@@ -1,13 +1,15 @@
-#include "string.h"
-#include "stdlib.h"
-#include "stdio.h"
-
 #include "../std/std.h"
 
 #include "../inc/debug.h"
+#include "../inc/ast.h"
+#include "../inc/sym.h"
 #include "../inc/parser.h"
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
+
+#include "string.h"
+#include "stdlib.h"
+#include "stdio.h"
 
 int main (int argc, char** argv) {
     debugInit(stdout);
@@ -44,11 +46,9 @@ int main (int argc, char** argv) {
     Types[builtinBool] = symCreateType("bool", 1,
                                        typeEquality || typeAssignment);
     Types[builtinChar] = symCreateType("char", 1,
-                                       typeNumeric || typeOrdinal ||
-                                       typeEquality || typeAssignment);
+                                       typeIntegral);
     Types[builtinInt] = symCreateType("int", 8,
-                                      typeNumeric || typeOrdinal ||
-                                      typeEquality || typeAssignment);
+                                      typeIntegral);
 
     int errors = 0;
     int warnings = 0;

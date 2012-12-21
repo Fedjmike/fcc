@@ -1,5 +1,7 @@
 #include "type.h"
-#include "parser.h"
+#include "lexer.h"
+
+struct parserCtx;
 
 void errorExpected (parserCtx* ctx, char* Expected);
 void errorMismatch (parserCtx* ctx, char* Type, char* One, char* Two);

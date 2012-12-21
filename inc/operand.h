@@ -26,8 +26,8 @@ typedef enum {
 typedef struct {
     operandClass class;
 
-    int reg;
-    int index;
+    regClass reg;
+    regClass index;
     int factor;
     int offset;
     int size; 		/*In bytes, for mem operands*/

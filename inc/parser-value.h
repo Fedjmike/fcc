@@ -1,6 +1,4 @@
-#include "parser.h"
-
 struct ast;
-struct sym;
+struct parserCtx;
 
-ast* parserValue (parserCtx* ctx);
+struct ast* parserValue (parserCtx* ctx);

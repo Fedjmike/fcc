@@ -1,7 +1,7 @@
 #pragma once
 
-#include "stdio.h"
 #include "stdarg.h"
+#include "stdio.h"
 
 /**
  * Assembly output context
@@ -9,8 +9,7 @@
  * Allocated and initialized by asmInit(), destroyed with asmEnd().
  * Provides file context for all asmXXX functions.
  *
- * @see asmInit()
- * @see asmEnd()
+ * @see asmInit() @see asmEnd()
  */
 typedef struct {
     ///File being written to

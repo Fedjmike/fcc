@@ -1,9 +1,10 @@
-#include "string.h"
-
 #include "../inc/debug.h"
+#include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
+
+#include "string.h"
 
 static type analyzerBOP (analyzerCtx* ctx, ast* Node);
 static type analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);

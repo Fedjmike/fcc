@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../std/std.h"
-
 #include "stream.h"
 
 typedef enum {

@@ -1,9 +1,9 @@
+#include "../inc/debug.h"
+#include "../inc/sym.h"
+
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
-
-#include "../inc/debug.h"
-#include "../inc/sym.h"
 
 static sym* Global = 0;
 
