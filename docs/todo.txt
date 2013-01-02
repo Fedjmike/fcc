@@ -6,11 +6,16 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
         - Ptr decl binding: non issue
         - struct and union decl syntax & semantics
         - Module system
-        - Sequence points
+        - Sequence points? No, seems to be the same
     [ ] ABI
 [ ] Command line options
 [ ] Modules
     - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
+[-] Type system
+    - By val -> By ref (grr)
+    - Wrap types in modifiers: ptr, array, fn
+    - Match-all class for error handling
+[ ] Operator table
 [-] struct
     [ ] Literals
 [-] enum
@@ -47,7 +52,6 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] main
     [ ] Args
     [ ] Conformance
-[x] Type checker
 
 [ ] Skip line on error
 [-] Global state -> state structs
@@ -66,22 +70,17 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Command line arg controlled
 [ ] Decode AST nodes like in emitterLoop and emitterFor
 [-] Assertions
-[x] Internal error reporting standardisation
 [ ] Clean up value moving code
 [-] Const correctness
-[x] Use debugEnter and Leave more
 [-] Make sure prototypes and implementation match exactly (static)
-[ ] Use a cond field of AST
-[ ] Introduce a match-all type class for error handling
+[ ] Use a cond field of
 [ ] Do analyzerArrayLiteral lits properly
 [ ] File names in error messages
-[ ] Use bitfields for type properties?
 [ ] Fix type compatibility
-    - Type coercion needed
+    - Type coercion needed (remember: bool -> int)
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [ ] Fix lvalue error messages
 [ ] Check constness of array sizes, enum values etc
-[ ] Deconfuse array representations
 [ ] Move type assignment stuff to analyzer? Could solve some of the above
 [ ] Filext
 
@@ -96,3 +95,4 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] Type system overly simple
 [-] Lack of comments, esp. interface documentation
 [ ] Assumption of operand class permutations required
+[ ] Unit tests

@@ -1,4 +1,5 @@
 #include "../inc/debug.h"
+#include "../inc/type.h"
 #include "../inc/sym.h"
 
 #include "stdio.h"
@@ -24,9 +25,7 @@ sym* symCreate (symClass class, sym* Parent) {
     Symbol->proto = false;
 
     Symbol->storage = storageAuto;
-    Symbol->dt.basic = 0;
-    Symbol->dt.ptr = 0;
-    Symbol->dt.array = 0;
+    Symbol->dt = 0;
 
     Symbol->size = 0;
 
@@ -58,7 +57,7 @@ sym* symCreateStruct (sym* Parent, char* ident) {
     return Symbol;
 }
 
-sym* symCreateVar (sym* Parent, char* ident, type DT, storageClass storage) {
+sym* symCreateVar (sym* Parent, char* ident, type* DT, storageClass storage) {
     sym* Symbol = symCreate(symVar, Parent);
     Symbol->ident = ident;
     Symbol->dt = DT;
@@ -100,6 +99,9 @@ static void symDestroy (sym* Symbol) {
 
     if (Symbol->nextSibling)
         symDestroy(Symbol->nextSibling);
+
+    if (Symbol->dt)
+        typeDestroy(Symbol->dt);
 
     free(Symbol);
 }

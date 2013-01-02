@@ -1,4 +1,5 @@
 #include "../inc/debug.h"
+#include "../inc/type.h"
 #include "../inc/ast.h"
 
 #include "stdio.h"
@@ -19,9 +20,7 @@ ast* astCreate (astClass class, tokenLocation location) {
     Node->l = 0;
     Node->o = 0;
     Node->r = 0;
-
-    Node->dt.basic = 0;
-    Node->dt.ptr = 0;
+    Node->dt = 0;
 
     Node->symbol = 0;
 
@@ -75,19 +74,19 @@ ast* astCreateLiteral (tokenLocation location, literalClass litClass) {
 }
 
 void astDestroy (ast* Node) {
-    /*Clean up the first in the list, who will clean up its siblings*/
-    if (Node->firstChild)
-        astDestroy(Node->firstChild);
-
-    /*Clean up *our* next sibling (not the previous, it's cleaning us!)*/
-    if (Node->nextSibling)
-        astDestroy(Node->nextSibling);
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling)
+        astDestroy(Current);
 
     if (Node->l)
         astDestroy(Node->l);
 
     if (Node->r)
         astDestroy(Node->r);
+
+    if (Node->dt)
+        typeDestroy(Node->dt);
 
     free(Node->o);
     free(Node->literal);

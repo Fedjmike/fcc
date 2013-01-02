@@ -223,15 +223,30 @@ static ast* parserObject (parserCtx* ctx) {
             Node->r = astCreate(astLiteral, ctx->location);
             Node->r->litClass = literalIdent;
             Node->r->literal = (void*) strdup(ctx->lexer->buffer);
-            Node->symbol = Node->r->symbol = symChild(Node->l->symbol->dt.basic,
-                                                      (char*) Node->r->literal);
 
-            if (Node->r->symbol)
-                tokenMatch(ctx);
+            const type* searchType = Node->l->symbol->dt;
 
-            else {
-                errorExpected(ctx, "field name");
-                tokenNext(ctx);
+            /*Is there a namespace we could be searching?
+              The semantic analyzer will deal with cases when there
+              aren't / wrong level of indirection*/
+            if (typeIsBasic(searchType) ||
+                (typeIsPtr(searchType) && typeIsBasic(searchType->base))) {
+                if (typeIsBasic(searchType))
+                    Node->symbol = Node->r->symbol = symChild(searchType->basic,
+                                                              (char*) Node->r->literal);
+
+                else
+                    Node->symbol = Node->r->symbol = symChild(searchType->base->basic,
+                                                              (char*) Node->r->literal);
+
+                if (Node->r->symbol)
+                    tokenMatch(ctx);
+
+                else {
+                    errorExpected(ctx, "field name");
+                    tokenNext(ctx);
+
+                }
             }
         }
     }

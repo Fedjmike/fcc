@@ -1,5 +1,4 @@
-#include "type.h"
-
+struct type;
 struct ast;
 
-type analyzerValue (analyzerCtx* ctx, struct ast* Node);
+struct type* analyzerValue (analyzerCtx* ctx, struct ast* Node);

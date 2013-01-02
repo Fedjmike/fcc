@@ -8,9 +8,9 @@ int* vptoip (void* Ptr);
 /*/ *string.h* /
 int strlen ( char* Str );
 char* memcpy ( char* Dest, char* Src, int Length );
-char* strcpy ( char* Dest, char* Src );
+char* strcpy ( char* Dest, char* Src );*/
 char* strdup ( char* Str );						//Non standard (GNU extension)
-char* strcat ( char* Dest, char* Src );
+/*char* strcat ( char* Dest, char* Src );
 char* strchr ( char* Haystack, int Needle );
 int strcmp ( char* L, char* R );
 

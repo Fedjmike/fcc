@@ -1,4 +1,5 @@
 #include "../inc/debug.h"
+#include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 
@@ -22,7 +23,7 @@ debugMode debugSetMode (debugMode nmode) {
     return old;
 }
 
-void debugEnter (char* str) {
+void debugEnter (const char* str) {
     if (mode <= debugCompressed) {
         debugMsg("+ %s", str);
         depth++;
@@ -37,7 +38,7 @@ void debugLeave () {
         debugMsg("-");
 }
 
-void debugMsg (char* format, ...) {
+void debugMsg (const char* format, ...) {
     if (mode == debugSilent)
         return;
 
@@ -73,17 +74,39 @@ void debugErrorUnhandled (const char* functionName,
 
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
-void report (char* str) {
+void report (const char* str) {
     fputs(str, logFile);
 }
 
-void reportType (type DT) {
-    char* Str = typeToStr(DT);
-    fprintf(logFile, "type: %s\n", Str);
-    free(Str);
+void reportType (const type* DT) {
+    fprintf(logFile, "type: %p   ",
+            (void*) DT);
+
+    if (DT != 0) {
+        /*Class*/
+
+        fprintf(logFile, "class: %s   ",
+                typeClassGetStr(DT->class));
+
+        /*Base type*/
+
+        if (typeIsPtr(DT) || typeIsArray(DT))
+            fprintf(logFile, "base: %p   ",
+                    DT->base);
+
+        /*String form*/
+
+        if (!typeIsInvalid(DT)) {
+            char* Str = typeToStr(DT, "");
+            fprintf(logFile, "str: %s   ", Str);
+            free(Str);
+        }
+    }
+
+    fputc('\n', logFile);
 }
 
-void reportSymbol (sym* Symbol) {
+void reportSymbol (const sym* Symbol) {
     /*Class*/
 
     fprintf(logFile, "class: %s   ",
@@ -108,23 +131,24 @@ void reportSymbol (sym* Symbol) {
     if (Symbol->class == symVar ||
         Symbol->class == symParam ||
         Symbol->class == symFunction) {
-        char* Str = typeToStr(Symbol->dt);
+        char* Str = typeToStr(Symbol->dt, "");
         fprintf(logFile, "type: %s   ", Str);
         free(Str);
     }
 
     /*Size*/
 
-    if (Symbol->class == symVar ||
-        Symbol->class == symParam) {
-        if (Symbol->dt.array == 0)
-            fprintf(logFile, "size:   %d   ",
-                    Symbol->dt.basic ? typeGetSize(Symbol->dt) : 0);
+    if ((Symbol->class == symVar ||
+        Symbol->class == symParam) &&
+        Symbol->dt != 0) {
+        if (typeIsArray(Symbol->dt))
+            fprintf(logFile, "size: %dx%d   ",
+                    typeGetSize(Symbol->dt->base),
+                    Symbol->dt->array);
 
         else
-            fprintf(logFile, "size: %dx%d   ",
-                    Symbol->dt.basic ? Symbol->dt.basic->size : 0,
-                    Symbol->dt.array);
+            fprintf(logFile, "size:   %d   ",
+                    typeGetSize(Symbol->dt));
 
     } else if (Symbol->class == symStruct)
         fprintf(logFile, "size:   %d   ",
@@ -140,13 +164,24 @@ void reportSymbol (sym* Symbol) {
     fputc('\n', logFile);
 }
 
-void reportNode (ast* Node) {
-    fprintf(logFile, "node: %p   class: %s   next: %p   fc: %p   l: %p\n",
+void reportNode (const ast* Node) {
+    fprintf(logFile, "node: %p   class: %s   ",
             (void*) Node,
-            astClassGetStr(Node->class),
-            (void*) Node->nextSibling,
-            (void*) Node->firstChild,
-            (void*) Node->l);
+            astClassGetStr(Node->class));
+
+    if (Node->nextSibling)
+        fprintf(logFile, "next: %p   ",
+                (void*) Node->nextSibling);
+
+    if (Node->firstChild)
+        fprintf(logFile, "fc: %p   ",
+                (void*) Node->firstChild);
+
+    if (Node->l)
+        fprintf(logFile, "l: %p",
+                (void*) Node->l);
+
+    fputc('\n', logFile);
 }
 
 void reportRegs () {

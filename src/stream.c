@@ -1,3 +1,5 @@
+#include "../std/std.h"
+
 #include "../inc/stream.h"
 
 #include "string.h"

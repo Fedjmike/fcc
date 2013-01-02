@@ -48,9 +48,9 @@ void emitter (ast* Tree, FILE* File) {
     emitterCtx* ctx = emitterInit(File);
     asmFilePrologue(ctx->Asm);
 
-    labelFreeAll();
-
     emitterModule(ctx, Tree);
+
+    labelFreeAll();
 
     asmFileEpilogue(ctx->Asm);
     emitterEnd(ctx);
@@ -333,7 +333,7 @@ void emitterVar (emitterCtx* ctx, ast* Node) {
 
         else if (Node->symbol->storage == storageAuto) {
             asmEnter(ctx->Asm);
-            operand L = operandCreateMem(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
+            operand L = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
             operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
             asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
@@ -359,8 +359,8 @@ void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
          Current = Current->nextSibling, n++) {
         asmEnter(ctx->Asm);
         operand L = operandCreateMem(regRBP,
-                                     Symbol->offset + Symbol->dt.basic->size*n,
-                                     Symbol->dt.basic->size);
+                                     Symbol->offset + typeGetSize(Symbol->dt->base)*n,
+                                     typeGetSize(Symbol->dt->base));
         operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
         asmMove(ctx->Asm, L, R);

@@ -345,7 +345,7 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
     operand R;
 
     /*Is it an array? Are we directly offsetting the address*/
-    if (Node->l->dt.array != 0) {
+    if (typeIsArray(Node->l->dt)) {
         asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, operandCreate(operandMem));
         R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
@@ -353,12 +353,12 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
 
         if (R.class == operandLiteral) {
             Value = L;
-            Value.offset += Node->l->dt.basic->size*R.literal;
+            Value.offset += typeGetSize(Node->l->dt->base) * R.literal;
 
         } else if (R.class == operandReg) {
             Value = L;
             Value.index = R.reg;
-            Value.factor = Node->l->dt.basic->size;
+            Value.factor = typeGetSize(Node->l->dt->base);
 
         } else {
             operand index = operandCreateReg(regAllocGeneral());
@@ -367,16 +367,16 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
 
             Value = L;
             Value.index = index.reg;
-            Value.factor = Node->l->dt.basic->size;
+            Value.factor = typeGetSize(Node->l->dt->base);
         }
 
         Value.size = typeGetSize(Node->dt);
 
     /*Is it instead a pointer? Get value and offset*/
-    } else {
+    } else /*if (typeIsPtr(Node->l->dt)*/ {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
-        asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(Node->l->dt.basic->size));
+        asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(typeGetSize(Node->l->dt->base)));
         asmLeave(ctx->Asm);
 
         L = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
@@ -449,11 +449,11 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
         Value = Node->symbol->label;
 
     else if (Node->symbol->class == symVar || Node->symbol->class == symParam) {
-        if (Node->symbol->dt.array == 0)
-            Value = operandCreateMem(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
+        if (typeIsArray(Node->symbol->dt))
+            Value = operandCreateMemRef(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt->base));
 
         else
-            Value = operandCreateMemRef(regRBP, Node->symbol->offset, Node->symbol->dt.basic->size);
+            Value = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
 
     } else
         debugErrorUnhandled("emitterSymbol", "symbol class", symClassGetStr(Node->symbol->class));

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "type.h"
 #include "parser.h"
 
+struct type;
 struct sym;
 
 typedef enum {
@@ -47,8 +47,8 @@ typedef struct ast {
     /*Binary tree*/
     struct ast* l;
     char* o;
-    struct ast* r;    /*Always used for unary operators*/
-    type dt;        /*Result data type*/
+    struct ast* r;      /*Always used for unary operators*/
+    struct type* dt;           /*Result data type*/
 
     struct sym* symbol;
 
@@ -64,7 +64,9 @@ ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
 ast* astCreateLiteral (tokenLocation location, literalClass litClass);
+
 void astDestroy (ast* Node);
+
 void astAddChild (ast* Parent, ast* Child);
 
 int astIsValueClass (astClass class);

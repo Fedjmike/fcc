@@ -1,7 +1,8 @@
 #pragma once
 
-#include "type.h"
 #include "operand.h"
+
+struct type;
 
 /**
  * Indices of certain built in symbols for arrays passed between
@@ -57,8 +58,11 @@ typedef enum {
     ///Assignment describes whether you can assign new values directly
     ///with =
     typeAssignment = 1 << 3,
+    ///Condition describes whether the type can be tested for boolean
+    ///truth
+    typeCondition = 1 << 4,
     ///Combination of attributes for integral types
-    typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment
+    typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition
 } symTypeMask;
 
 /**
@@ -76,7 +80,7 @@ typedef struct sym {
 
     /*Functions, params, vars only*/
     storageClass storage;
-    type dt;  ///In the case of functions, the return type
+    struct type* dt;  ///In the case of functions, the return type
 
     /*Types and structs only*/
     int size;  ///Size in bytes
@@ -111,7 +115,7 @@ void symEnd (sym* Global);
 sym* symCreate (symClass class, sym* Parent);
 sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask);
 sym* symCreateStruct (sym* Parent, char* ident);
-sym* symCreateVar (sym* Parent, char* ident, type DT, storageClass storage);
+sym* symCreateVar (sym* Parent, char* ident, struct type* DT, storageClass storage);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search

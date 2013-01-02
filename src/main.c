@@ -43,7 +43,7 @@ int main (int argc, char** argv) {
     sym* Global = symInit();
     sym* Types[5];
     Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality | typeAssignment);
+    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality | typeAssignment | typeCondition);
     Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
     Types[builtinInt] = symCreateType(Global, "int", 8, typeIntegral);
 
@@ -59,18 +59,18 @@ int main (int argc, char** argv) {
 
     /*Parse the module*/
 
-    if (!fail) {
+    {
+        debugMsg("Parsing");
         parserResult res = parser(Input, Global);
         errors += res.errors;
         warnings += res.warnings;
         Tree = res.tree;
     }
 
-    fail = errors != 0;
-
     /*Semantic analysis*/
 
     if (errors == 0) {
+        debugMsg("Analyzing");
         analyzerResult res = analyzer(Tree, Global, Types);
         errors += res.errors;
         warnings += res.warnings;
@@ -80,8 +80,10 @@ int main (int argc, char** argv) {
 
     /*Emit the assembly*/
 
-    if (!fail)
+    if (!fail) {
+        debugMsg("Emitting");
         emitter(Tree, File);
+    }
 
     /*Clean up*/
 

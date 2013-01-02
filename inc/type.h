@@ -4,37 +4,76 @@
 
 struct sym;
 
-typedef struct {
-    struct sym* basic;
-    int ptr;    /*Levels of indirection. e.g. char*** would be 3.*/
-    int array;  /*Array size, 0 if not array, -1 if unspecified*/
+typedef enum {
+    typeBasic,
+    typePtr,
+    typeArray,
+    typeFunction,
+    typeInvalid
+} typeClass;
+
+typedef struct type {
+    typeClass class;
+
+    union {
+        /*typeBasic*/
+        struct sym* basic;
+        /*typePtr
+          typeArray*/
+        struct {
+            struct type* base;
+            int array;
+        };
+        /*typeFunction*/
+        struct {
+            struct type* returnType;
+            struct type** paramTypes;
+            int params;
+        };
+    };
+
     bool lvalue;
+    //bool const;
 } type;
 
-type typeCreate (struct sym* basic, int ptr, int array, bool lvalue);
-type typeCreateFromBasic (struct sym* basic);
-type typeCreateFrom (type DT);
-type typeCreateFromTwo (type L, type R);
-type typeCreateUnified (type L, type R);
-type typeCreateLValueFromPtr (type DT);
-type typeCreatePtrFromLValue (type DT);
-type typeCreateElementFromArray (type DT);
-type typeCreateArrayFromElement (type DT, int array);
+type* typeCreateBasic (struct sym* basic, bool lvalue);
+type* typeCreatePtr (type* base, bool lvalue);
+type* typeCreateArray (type* base, int size, bool lvalue);
+type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool lvalue);
+type* typeCreateInvalid ();
 
-bool typeIsVoid (type DT);
+void typeDestroy (type* DT);
 
-bool typeIsPtr (type DT);
-bool typeIsArray (type DT);
-bool typeIsRecord (type DT);
-bool typeIsLValue (type DT);
+type* typeDeepDuplicate (const type* Old);
 
-bool typeIsNumeric (type DT);
-bool typeIsOrdinal (type DT);
-bool typeIsEquality (type DT);
-bool typeIsAssignment (type DT);
+type* typeDeriveFrom (const type* DT);
+type* typeDeriveFromTwo (const type* L, const type* R);
+type* typeDeriveUnified (const type* L, const type* R);
+type* typeDeriveBase (const type* DT);
+type* typeDerivePtr (const type* base);
+type* typeDeriveArray (const type* base, int size);
 
-bool typeIsCompatible (type DT, type Model);
-bool typeIsEqual (type L, type R);
+bool typeIsBasic (const type* DT);
+bool typeIsPtr (const type* DT);
+bool typeIsArray (const type* DT);
+bool typeIsFunction (const type* DT);
+bool typeIsInvalid (const type* DT);
 
-int typeGetSize (type DT);
-char* typeToStr (type DT);
+bool typeIsLValue (const type* DT);
+
+bool typeIsVoid (const type* DT);
+bool typeIsRecord (const type* DT);
+
+bool typeIsNumeric (const type* DT);
+bool typeIsOrdinal (const type* DT);
+bool typeIsEquality (const type* DT);
+bool typeIsAssignment (const type* DT);
+bool typeIsCondition (const type* DT);
+
+bool typeIsCompatible (const type* DT, const type* Model);
+bool typeIsEqual (const type* L, const type* R);
+
+const char* typeClassGetStr (typeClass class);
+
+int typeGetSize (const type* DT);
+char* typeToStr (const type* DT, const char* embedded);

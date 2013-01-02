@@ -12,12 +12,12 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option parameters="tests/factorial.c" />
+				<Option projectCompilerOptionsRelation="0" />
 				<Compiler>
 					<Add option="-Wmain" />
 					<Add option="-pedantic" />
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
-					<Add option="-std=gnu99" />
 				</Compiler>
 			</Target>
 			<Target title="release">
@@ -25,6 +25,7 @@
 				<Option object_output="obj\release\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option projectCompilerOptionsRelation="0" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
@@ -50,7 +51,7 @@
 			<Add option="-pedantic" />
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
-			<Add option="-std=gnu99" />
+			<Add option="-std=c11" />
 		</Compiler>
 		<Unit filename="compile.sh">
 			<Option target="&lt;{~None~}&gt;" />

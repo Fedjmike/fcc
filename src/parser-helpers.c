@@ -6,7 +6,7 @@
 #include "stdarg.h"
 #include "string.h"
 
-static void error (parserCtx* ctx, char* format, ...) {
+static void error (parserCtx* ctx, const char* format, ...) {
     printf("error(%d:%d): ", ctx->location.line, ctx->location.lineChar);
 
     va_list args;
@@ -19,31 +19,19 @@ static void error (parserCtx* ctx, char* format, ...) {
     getchar();
 }
 
-void errorExpected (parserCtx* ctx, char* Expected) {
+void errorExpected (parserCtx* ctx, const char* Expected) {
     error(ctx, "expected %s, found '%s'", Expected, ctx->lexer->buffer);
 }
 
-void errorMismatch (parserCtx* ctx, char* Type, char* One, char* Two) {
-    error(ctx, "%s mismatch between %s and %s at '%s'", Type, One, Two, ctx->lexer->buffer);
+void errorMismatch (parserCtx* ctx, const char* Type, const char* L, const char* R) {
+    error(ctx, "%s mismatch between %s and %s at '%s'", Type, L, R, ctx->lexer->buffer);
 }
 
 void errorUndefSym (parserCtx* ctx) {
     error(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
 }
 
-void errorInvalidOp (parserCtx* ctx, char* Op, char* TypeDesc, type DT) {
-    char* TypeStr = typeToStr(DT);
-    error(ctx, "invalid %s on %s: %s", Op, TypeDesc, TypeStr);
-    free(TypeStr);
-}
-
-void errorInvalidOpExpected (parserCtx* ctx, char* Op, char* TypeDesc, type DT) {
-    char* TypeStr = typeToStr(DT);
-    error(ctx, "invalid %s on %s, expected %s", Op, TypeStr, TypeDesc);
-    free(TypeStr);
-}
-
-bool tokenIs (parserCtx* ctx, char* Match) {
+bool tokenIs (parserCtx* ctx, const char* Match) {
     return !strcmp(ctx->lexer->buffer, Match);
 }
 
@@ -96,7 +84,7 @@ void tokenMatchToken (parserCtx* ctx, tokenClass Match) {
     }
 }
 
-void tokenMatchStr (parserCtx* ctx, char* Match) {
+void tokenMatchStr (parserCtx* ctx, const char* Match) {
     if (tokenIs(ctx, Match))
         tokenMatch(ctx);
 
@@ -110,7 +98,7 @@ void tokenMatchStr (parserCtx* ctx, char* Match) {
     }
 }
 
-bool tokenTryMatchStr (parserCtx* ctx, char* Match) {
+bool tokenTryMatchStr (parserCtx* ctx, const char* Match) {
     if (tokenIs(ctx, Match)) {
         tokenMatch(ctx);
         return true;

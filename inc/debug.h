@@ -1,7 +1,8 @@
-#include "type.h"
+#include "../std/std.h"
 
 #include "stdio.h"
 
+struct type;
 struct ast;
 struct sym;
 
@@ -16,9 +17,9 @@ void debugInit (FILE* log);
 
 debugMode debugSetMode (debugMode mode);
 
-void debugEnter (char* str);
+void debugEnter (const char* str);
 void debugLeave ();
-void debugMsg (char* format, ...);
+void debugMsg (const char* format, ...);
 
 void debugAssert (const char* functionName,
                   const char* testName,
@@ -28,8 +29,8 @@ void debugErrorUnhandled (const char* functionName,
                           const char* className,
                           const char* classStr);
 
-void report (char* str);
-void reportType (type DT);
-void reportSymbol (struct sym* Symbol);
-void reportNode (struct ast* Node);
+void report (const char* str);
+void reportType (const struct type* DT);
+void reportSymbol (const struct sym* Symbol);
+void reportNode (const struct ast* Node);
 void reportRegs ();
