@@ -239,7 +239,10 @@ static type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
 
     const type* R = analyzerValue(ctx, Node->r);
 
-    if (!typeIsVoid(R))
+    /*typeXXX functions always respond positively when provided with
+      invalids. As this is one of the rare times when a negative response
+      is desired, specifically let invalids through.*/
+    if (!typeIsVoid(R) || typeIsInvalid(R))
         Node->dt = typeDeepDuplicate(R);
 
     else {
@@ -256,23 +259,25 @@ static type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("UOP");
 
     const type* R = analyzerValue(ctx, Node->r);
-    Node->dt = typeCreateInvalid();
 
     /*Numeric operator*/
     if (!strcmp(Node->o, "+") || !strcmp(Node->o, "-") ||
         !strcmp(Node->o, "++") || !strcmp(Node->o, "--") ||
         !strcmp(Node->o, "!") ||
         !strcmp(Node->o, "~")) {
-        if (!typeIsNumeric(R))
+        if (!typeIsNumeric(R)) {
             analyzerErrorOp(ctx, Node, Node->o, "numeric type", Node->r, R);
+            Node->dt = typeCreateInvalid();
 
         /*Assignment operator*/
-        else if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--")) {
+        } else if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--")) {
             if (typeIsLValue(R))
                 Node->dt = typeDeriveFrom(R);
 
-            else
+            else {
                 analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->r, R);
+                Node->dt = typeCreateInvalid();
+            }
 
         } else
             Node->dt = typeDeriveFrom(R);
@@ -282,19 +287,25 @@ static type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
         if (typeIsPtr(R))
             Node->dt = typeDeriveBase(R);
 
-        else
+        else {
             analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->r, R);
+            Node->dt = typeCreateInvalid();
+        }
 
     /*Referencing an lvalue*/
     } else if (!strcmp(Node->o, "&")) {
         if (typeIsLValue(R))
             Node->dt = typeDerivePtr(R);
 
-        else
+        else {
             analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->r, R);
+            Node->dt = typeCreateInvalid();
+        }
 
-    } else
+    } else {
         debugErrorUnhandled("analyzerUOP", "operator", Node->o);
+        Node->dt = typeCreateInvalid();
+    }
 
     debugLeave();
 
