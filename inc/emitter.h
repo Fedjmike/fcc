@@ -5,7 +5,7 @@
 
 struct ast;
 
-typedef struct {
+typedef struct emitterCtx {
     asmCtx* Asm;
 
     operand labelReturnTo;

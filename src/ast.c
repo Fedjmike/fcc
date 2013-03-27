@@ -1,6 +1,7 @@
+#include "../inc/ast.h"
+
 #include "../inc/debug.h"
 #include "../inc/type.h"
-#include "../inc/ast.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -27,6 +28,47 @@ ast* astCreate (astClass class, tokenLocation location) {
     Node->litClass = literalUndefined;
     Node->literal = 0;
 
+    return Node;
+}
+
+ast* astCreateInvalid (tokenLocation location) {
+    return astCreate(astInvalid, location);
+}
+
+ast* astCreateEmpty (tokenLocation location) {
+    return astCreate(astEmpty, location);
+}
+
+ast* astCreateFnImpl (tokenLocation location, ast* decl, ast* impl) {
+    ast* Node = astCreate(astFnImpl, location);
+    Node->l = decl;
+    Node->r = impl;
+    return Node;
+}
+
+ast* astCreateDeclStruct (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astDeclStruct, location);
+    Node->l = name;
+    return Node;
+}
+
+ast* astCreateDecl (tokenLocation location, ast* basic) {
+    ast* Node = astCreate(astDecl, location);
+    Node->l = basic;
+    return Node;
+}
+
+ast* astCreateDeclParam (tokenLocation location, ast* basic, ast* expr) {
+    ast* Node = astCreate(astDeclParam, location);
+    Node->l = basic;
+    Node->r = expr;
+    return Node;
+}
+
+ast* astCreateType (tokenLocation location, ast* basic, ast* expr) {
+    ast* Node = astCreate(astType, location);
+    Node->l = basic;
+    Node->r = expr;
     return Node;
 }
 
@@ -67,9 +109,21 @@ ast* astCreateCall (tokenLocation location, ast* function) {
     return Node;
 }
 
+ast* astCreateCast (tokenLocation location, ast* result) {
+    ast* Node = astCreate(astCast, location);
+    Node->l = result;
+    return Node;
+}
+
 ast* astCreateLiteral (tokenLocation location, literalClass litClass) {
     ast* Node = astCreate(astLiteral, location);
     Node->litClass = litClass;
+    return Node;
+}
+
+ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
+    ast* Node = astCreateLiteral(location, literalIdent);
+    Node->literal = (void*) ident;
     return Node;
 }
 
@@ -114,23 +168,30 @@ void astAddChild (ast* Parent, ast* Child) {
 }
 
 int astIsValueClass (astClass class) {
-    return class == astBOP || class == astUOP ||
-           class == astTOP ||
-           class == astCall || class == astIndex ||
-           class == astLiteral;
+    return    class == astBOP || class == astUOP || class == astTOP
+           || class == astCall || class == astIndex || class == astCast
+           || class == astLiteral;
 }
 
 const char* astClassGetStr (astClass class) {
     if (class == astUndefined)
-        return "astUndefind";
+        return "astUndefined";
+    else if (class == astInvalid)
+        return "astInvalid";
     else if (class == astEmpty)
         return "astEmpty";
     else if (class == astModule)
         return "astModule";
-    else if (class == astFunction)
-        return "astFunction";
-    else if (class == astVar)
-        return "astVar";
+    else if (class == astFnImpl)
+        return "astFnImpl";
+    else if (class == astDeclStruct)
+        return "astDeclStruct";
+    else if (class == astDecl)
+        return "astDecl";
+    else if (class == astDeclParam)
+        return "astDeclParam";
+    else if (class == astType)
+        return "astType";
     else if (class == astCode)
         return "astCode";
     else if (class == astBranch)
@@ -141,6 +202,8 @@ const char* astClassGetStr (astClass class) {
         return "astIter";
     else if (class == astReturn)
         return "astReturn";
+    else if (class == astBreak)
+        return "astBreak";
     else if (class == astBOP)
         return "astBOP";
     else if (class == astUOP)
@@ -151,6 +214,8 @@ const char* astClassGetStr (astClass class) {
         return "astIndex";
     else if (class == astCall)
         return "astCall";
+    else if (class == astCast)
+        return "astCast";
     else if (class == astLiteral)
         return "astLiteral";
 
@@ -166,16 +231,12 @@ const char* astClassGetStr (astClass class) {
 const char* literalClassGetStr (literalClass class) {
     if (class == literalUndefined)
         return "literalUndefined";
-
     else if (class == literalIdent)
         return "literalIdent";
-
     else if (class == literalInt)
         return "literalInt";
-
     else if (class == literalBool)
         return "literalBool";
-
     else if (class == literalArray)
         return "literalArray";
 

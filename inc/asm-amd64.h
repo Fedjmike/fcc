@@ -19,67 +19,67 @@ typedef enum {
 /**
  * Emit the opening of a file
  */
-void asmFilePrologue (asmCtx* ctx);
+void asmFilePrologue (struct asmCtx* ctx);
 
 /**
  * Emit the ending of a file
  */
-void asmFileEpilogue (asmCtx* ctx);
+void asmFileEpilogue (struct asmCtx* ctx);
 
 /**
  * Emit the prologue to a function
  */
-void asmFnPrologue (asmCtx* ctx, char* Name, int LocalSize);
+void asmFnPrologue (struct asmCtx* ctx, char* Name, int LocalSize);
 
 /**
  * Emit the epilogue to a function
  */
-void asmFnEpilogue (asmCtx* ctx, char* EndLabel);
+void asmFnEpilogue (struct asmCtx* ctx, char* EndLabel);
 
 /**
  * Place a previously named label in the output
  */
-void asmLabel (asmCtx* ctx, operand L);
+void asmLabel (struct asmCtx* ctx, operand L);
 
 /**
  * Emit an unconditionally jump
  */
-void asmJump (asmCtx* ctx, operand L);
+void asmJump (struct asmCtx* ctx, operand L);
 
 /**
  * Emit a conditional jump
  */
-void asmBranch (asmCtx* ctx, operand Condition, operand L);
+void asmBranch (struct asmCtx* ctx, operand Condition, operand L);
 
 /**
  * Pushe an operand onto the stack
  */
-void asmPush (asmCtx* ctx, operand L);
+void asmPush (struct asmCtx* ctx, operand L);
 
 /**
  * Pop a word off the stack, into an operand
  */
-void asmPop (asmCtx* ctx, operand L);
+void asmPop (struct asmCtx* ctx, operand L);
 
 /**
  * Remove n words from the stack and discard them
  */
-void asmPopN (asmCtx* ctx, int n);
+void asmPopN (struct asmCtx* ctx, int n);
 
-void asmMove (asmCtx* ctx, operand L, operand R);
-void asmEvalAddress (asmCtx* ctx, operand L, operand R);
+void asmMove (struct asmCtx* ctx, operand L, operand R);
+void asmEvalAddress (struct asmCtx* ctx, operand L, operand R);
 
 /**
  * Perform a binary operation (e.g. add, mul, or)
  */
-void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R);
+void asmBOP (struct asmCtx* ctx, boperation Op, operand L, operand R);
 
 /**
  * Perform a unary operation (e.g. not, neg)
  */
-void asmUOP (asmCtx* ctx, uoperation Op, operand L);
+void asmUOP (struct asmCtx* ctx, uoperation Op, operand L);
 
 /**
  * Call a function with the arguments currently on the stack
  */
-void asmCall (asmCtx* ctx, operand L);
+void asmCall (struct asmCtx* ctx, operand L);

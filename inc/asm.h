@@ -11,7 +11,7 @@
  *
  * @see asmInit() @see asmEnd()
  */
-typedef struct {
+typedef struct asmCtx {
     ///File being written to
     FILE* file;
     ///Indentation depth level

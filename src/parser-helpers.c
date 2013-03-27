@@ -1,10 +1,17 @@
-#include "../inc/debug.h"
-#include "../inc/parser.h"
 #include "../inc/parser-helpers.h"
+
+#include "../inc/debug.h"
+#include "../inc/sym.h"
+
+#include "../inc/parser.h"
 
 #include "stdlib.h"
 #include "stdarg.h"
 #include "string.h"
+
+static char* tokenClassGetStr (tokenClass Token);
+
+/*:::: ERROR MESSAGING ::::*/
 
 static void error (parserCtx* ctx, const char* format, ...) {
     printf("error(%d:%d): ", ctx->location.line, ctx->location.lineChar);
@@ -16,6 +23,7 @@ static void error (parserCtx* ctx, const char* format, ...) {
 
     puts(".");
 
+    ctx->errors++;
     getchar();
 }
 
@@ -23,16 +31,43 @@ void errorExpected (parserCtx* ctx, const char* Expected) {
     error(ctx, "expected %s, found '%s'", Expected, ctx->lexer->buffer);
 }
 
-void errorMismatch (parserCtx* ctx, const char* Type, const char* L, const char* R) {
-    error(ctx, "%s mismatch between %s and %s at '%s'", Type, L, R, ctx->lexer->buffer);
-}
-
 void errorUndefSym (parserCtx* ctx) {
     error(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
 }
 
+void errorIllegalBreak (parserCtx* ctx) {
+    error(ctx, "cannot break when not in loop or switch");
+}
+
+void errorIdentOutsideDecl (struct parserCtx* ctx) {
+    error(ctx, "identifier given outside declaration");
+}
+
+void errorDuplicateSym (struct parserCtx* ctx) {
+    error(ctx, "duplicated identifier '%s'", ctx->lexer->buffer);
+}
+
+/*:::: TOKEN HANDLING ::::*/
+
 bool tokenIs (parserCtx* ctx, const char* Match) {
     return !strcmp(ctx->lexer->buffer, Match);
+}
+
+bool tokenIsIdent (struct parserCtx* ctx) {
+    return ctx->lexer->token == tokenIdent;
+}
+
+bool tokenIsInt (struct parserCtx* ctx) {
+    return ctx->lexer->token == tokenInt;
+}
+
+bool tokenIsDecl (parserCtx* ctx) {
+    sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
+
+    return    (Symbol && (   Symbol->class == symType
+                          || Symbol->class == symStruct
+                          || Symbol->class == symEnum))
+           || tokenIs(ctx, "const");
 }
 
 void tokenNext (parserCtx* ctx) {
@@ -61,17 +96,23 @@ char* tokenDupMatch (parserCtx* ctx) {
 /**
  * Return the string associated with a token class
  */
-static char* tokenClassGetStr (int Token) {
-    if (Token == tokenOther)
+static char* tokenClassGetStr (tokenClass class) {
+    if (class == tokenOther)
         return "other";
-
-    else if (Token == tokenEOF)
+    else if (class == tokenEOF)
         return "end of file";
-
-    else if (Token == tokenIdent)
+    else if (class == tokenIdent)
         return "identifier";
+    else if (class == tokenInt)
+        return "int";
 
-    return "undefined";
+    else {
+        char* Str = malloc(class+1);
+        sprintf(Str, "%d", class);
+        debugErrorUnhandled("tokenClassGetStr", "token class", Str);
+        free(Str);
+        return "unhandled";
+    }
 }
 
 void tokenMatchToken (parserCtx* ctx, tokenClass Match) {
@@ -110,11 +151,7 @@ bool tokenTryMatchStr (parserCtx* ctx, const char* Match) {
 int tokenMatchInt (parserCtx* ctx) {
     int ret = atoi(ctx->lexer->buffer);
 
-    if (ctx->lexer->token == tokenInt)
-        tokenMatch(ctx);
-
-    else
-        errorExpected(ctx, "integer");
+    tokenMatchToken(ctx, tokenInt);
 
     return ret;
 }

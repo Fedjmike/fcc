@@ -4,6 +4,9 @@
 
 struct sym;
 
+/**
+ * @see type @see type::class
+ */
 typedef enum {
     typeBasic,
     typePtr,
@@ -12,16 +15,25 @@ typedef enum {
     typeInvalid
 } typeClass;
 
+/**
+ *
+ */
 typedef struct type {
     typeClass class;
 
+    //bool const;
+
     union {
+        /*typeInvalid*/
         /*typeBasic*/
         struct sym* basic;
         /*typePtr
           typeArray*/
         struct {
             struct type* base;
+            ///Size of the array
+            ///-1 to indicate unspecified size in a declaration e.g. int x[] = {1, 2};
+            ///NOT as a synonym for * e.g. void (*)(int[]) == void (*)(int*)
             int array;
         };
         /*typeFunction*/
@@ -31,15 +43,12 @@ typedef struct type {
             int params;
         };
     };
-
-    bool lvalue;
-    //bool const;
 } type;
 
-type* typeCreateBasic (struct sym* basic, bool lvalue);
-type* typeCreatePtr (type* base, bool lvalue);
-type* typeCreateArray (type* base, int size, bool lvalue);
-type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool lvalue);
+type* typeCreateBasic (struct sym* basic);
+type* typeCreatePtr (type* base);
+type* typeCreateArray (type* base, int size);
+type* typeCreateFunction (type* returnType, type** paramTypes, int params);
 type* typeCreateInvalid ();
 
 void typeDestroy (type* DT);
@@ -52,6 +61,7 @@ type* typeDeriveUnified (const type* L, const type* R);
 type* typeDeriveBase (const type* DT);
 type* typeDerivePtr (const type* base);
 type* typeDeriveArray (const type* base, int size);
+type* typeDeriveReturn (const type* fn);
 
 bool typeIsBasic (const type* DT);
 bool typeIsPtr (const type* DT);
@@ -59,10 +69,9 @@ bool typeIsArray (const type* DT);
 bool typeIsFunction (const type* DT);
 bool typeIsInvalid (const type* DT);
 
-bool typeIsLValue (const type* DT);
-
 bool typeIsVoid (const type* DT);
 bool typeIsRecord (const type* DT);
+bool typeIsCallable (const type* DT);
 
 bool typeIsNumeric (const type* DT);
 bool typeIsOrdinal (const type* DT);

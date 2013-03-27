@@ -1,9 +1,10 @@
+#include "../inc/operand.h"
+
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
 
 #include "../inc/debug.h"
-#include "../inc/operand.h"
 #include "../inc/reg.h"
 
 char* Conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
@@ -167,25 +168,18 @@ void operandFree (operand Value) {
 const char* operandClassGetStr (operandClass class) {
     if (class == operandUndefined)
         return "operandUndefined";
-
     else if (class == operandFlags)
         return "operandFlags";
-
     else if (class == operandReg)
         return "operandReg";
-
     else if (class == operandMem)
         return "operandMem";
-
     else if (class == operandMemRef)
         return "operandMemRef";
-
     else if (class == operandLiteral)
         return "operandLiteral";
-
     else if (class == operandLabel)
         return "operandLabel";
-
     else if (class == operandStack)
         return "operandStack";
 
@@ -271,8 +265,8 @@ char* labelGet (operand Label) {
 }
 
 void labelFreeAll () {
-    for (int i = 0; i < labelNo; i++)
+    for (int i = 1; i < labelNo; i++)
         free(labels[i]);
 
-    labelNo = 0;
+    labelNo = 1;
 }

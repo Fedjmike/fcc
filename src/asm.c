@@ -1,5 +1,7 @@
 #include "../inc/asm.h"
 
+#include "../inc/debug.h"
+
 #include "stdlib.h"
 #include "stdio.h"
 #include "stdarg.h"
@@ -10,6 +12,7 @@ asmCtx* asmInit (FILE* File) {
     ctx->depth = 0;
     return ctx;
 }
+
 void asmEnd (asmCtx* ctx) {
     free(ctx);
 }
@@ -27,6 +30,7 @@ void asmOutLn (asmCtx* ctx, char* format, ...) {
 }
 
 void asmVarOut (asmCtx* ctx, char* format, va_list args) {
+    debugVarMsg(format, args);
     vfprintf(ctx->file, format, args);
 }
 

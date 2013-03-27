@@ -1,4 +1,5 @@
 struct ast;
+
 struct parserCtx;
 
-struct ast* parserValue (parserCtx* ctx);
+struct ast* parserValue (struct parserCtx* ctx);

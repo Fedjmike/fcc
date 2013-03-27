@@ -1,10 +1,11 @@
+#include "../inc/asm-amd64.h"
+
 #include "stdlib.h"
 #include "stdarg.h"
 #include "stdio.h"
 
 #include "../inc/debug.h"
 #include "../inc/asm.h"
-#include "../inc/asm-amd64.h"
 
 void asmComment (asmCtx* ctx, char* format, ...) {
     asmOutLn(ctx, ";");
@@ -20,6 +21,7 @@ void asmFilePrologue (asmCtx* ctx) {
 }
 
 void asmFileEpilogue (asmCtx* ctx) {
+    (void) ctx;
 }
 
 void asmFnPrologue (asmCtx* ctx, char* Name, int LocalSize) {

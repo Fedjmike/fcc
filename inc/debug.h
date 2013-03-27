@@ -1,6 +1,7 @@
 #include "../std/std.h"
 
 #include "stdio.h"
+#include "stdarg.h"
 
 struct type;
 struct ast;
@@ -20,6 +21,7 @@ debugMode debugSetMode (debugMode mode);
 void debugEnter (const char* str);
 void debugLeave ();
 void debugMsg (const char* format, ...);
+void debugVarMsg (const char* format, va_list args);
 
 void debugAssert (const char* functionName,
                   const char* testName,

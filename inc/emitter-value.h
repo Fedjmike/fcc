@@ -3,4 +3,4 @@
 struct ast;
 struct emitterCtx;
 
-operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest);
+operand emitterValue (struct emitterCtx* ctx, struct ast* Node, operand Dest);

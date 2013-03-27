@@ -26,9 +26,8 @@ typedef enum {
     symType,
     symStruct,
     symEnum,
-    symFunction,
-    symParam,
-    symVar
+    symId,
+    symParam
 } symClass;
 
 /**
@@ -93,8 +92,6 @@ typedef struct sym {
     struct sym* lastChild;
     struct sym* nextSibling;
 
-    int params;  ///Number of parameters, updated when params added to namespace
-
     operand label;  ///Label associated with this symbol in the assembly
     int offset;  ///Offset, in bytes, for stack stored vars/parameters and non
                  ///static fields
@@ -112,10 +109,10 @@ sym* symInit ();
  */
 void symEnd (sym* Global);
 
-sym* symCreate (symClass class, sym* Parent);
 sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask);
 sym* symCreateStruct (sym* Parent, char* ident);
-sym* symCreateVar (sym* Parent, char* ident, struct type* DT, storageClass storage);
+sym* symCreateId (sym* Parent, char* ident);
+sym* symCreateParam (sym* Parent, char* ident);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search

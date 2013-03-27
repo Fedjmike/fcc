@@ -1,3 +1,5 @@
+#include "../inc/emitter-value.h"
+
 #include "../std/std.h"
 
 #include "../inc/debug.h"
@@ -7,10 +9,9 @@
 #include "../inc/operand.h"
 #include "../inc/asm.h"
 #include "../inc/asm-amd64.h"
-
 #include "../inc/reg.h"
+
 #include "../inc/emitter.h"
-#include "../inc/emitter-value.h"
 
 #include "string.h"
 #include "stdio.h"
@@ -159,15 +160,15 @@ operand emitterBOP (emitterCtx* ctx, ast* Node) {
         Value = L = emitterValue(ctx, Node->l, operandCreate(operandMem));
         asmLeave(ctx->Asm);
 
-        Value.offset += Node->r->symbol->offset;
-        Value.size = typeGetSize(Node->r->symbol->dt);
+        Value.offset += Node->symbol->offset;
+        Value.size = typeGetSize(Node->symbol->dt);
 
     } else if (!strcmp(Node->o, "->")) {
         asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
         asmLeave(ctx->Asm);
 
-        Value = operandCreateMem(L.reg, Node->r->symbol->offset, typeGetSize(Node->r->dt));
+        Value = operandCreateMem(L.reg, Node->symbol->offset, typeGetSize(Node->dt));
 
     } else {
         asmEnter(ctx->Asm);
@@ -263,8 +264,8 @@ operand emitterUOP (emitterCtx* ctx, ast* Node) {
     operand Value;
     operand R;
 
-    if (!strcmp(Node->o, "++") ||
-        !strcmp(Node->o, "--")) {
+    if (   !strcmp(Node->o, "++")
+        || !strcmp(Node->o, "--")) {
         /*Specifically ask it to be stored in a register so that it's previous
           value is returned*/
         asmEnter(ctx->Asm);
@@ -441,22 +442,23 @@ operand emitterCall (emitterCtx* ctx, ast* Node) {
 }
 
 operand emitterSymbol (emitterCtx* ctx, ast* Node) {
+    (void) ctx;
+
     debugEnter("Symbol");
 
     operand Value = operandCreate(operandUndefined);
 
-    if (Node->symbol->class == symFunction)
+    if (typeIsFunction(Node->symbol->dt))
         Value = Node->symbol->label;
 
-    else if (Node->symbol->class == symVar || Node->symbol->class == symParam) {
+    else /*var or param*/ {
         if (typeIsArray(Node->symbol->dt))
             Value = operandCreateMemRef(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt->base));
 
         else
             Value = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
 
-    } else
-        debugErrorUnhandled("emitterSymbol", "symbol class", symClassGetStr(Node->symbol->class));
+    }
 
     debugLeave();
 
@@ -464,6 +466,8 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
 }
 
 operand emitterLiteral (emitterCtx* ctx, ast* Node) {
+    (void) ctx;
+
     debugEnter("Literal");
 
     operand Value;

@@ -10,13 +10,14 @@ typedef struct {
     int lineChar;
 } tokenLocation;
 
-typedef struct {
+typedef struct parserCtx {
     lexerCtx* lexer;
     tokenLocation location;
 
     struct sym* scope;
 
-    bool insideLoop;
+    /*The levels of break-able control flows currently in*/
+    int breakLevel;
 
     int errors;
     int warnings;
@@ -29,3 +30,5 @@ typedef struct {
 } parserResult;
 
 parserResult parser (char* File, struct sym* Global);
+
+struct ast* parserCode (parserCtx* ctx);

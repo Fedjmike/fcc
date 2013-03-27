@@ -1,3 +1,5 @@
+#include "../inc/emitter.h"
+
 #include "../std/std.h"
 
 #include "../inc/debug.h"
@@ -7,29 +9,30 @@
 #include "../inc/operand.h"
 #include "../inc/asm.h"
 #include "../inc/asm-amd64.h"
-
 #include "../inc/reg.h"
-#include "../inc/emitter.h"
+
 #include "../inc/emitter-value.h"
 
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
 
-/*Emitter context*/
-
 static void emitterModule (emitterCtx* ctx, ast* Tree);
+
+static void emitterFnImpl (emitterCtx* ctx, ast* Node);
+
 static void emitterStruct (emitterCtx* ctx, sym* Symbol);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
-static void emitterFunction (emitterCtx* ctx, ast* Node);
+
+static void emitterDecl (emitterCtx* ctx, ast* Node);
+static void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol);
+
 static void emitterCode (emitterCtx* ctx, ast* Node);
 static void emitterLine (emitterCtx* ctx, ast* Node);
 
 static void emitterBranch (emitterCtx* ctx, ast* Node);
 static void emitterLoop (emitterCtx* ctx, ast* Node);
 static void emitterIter (emitterCtx* ctx, ast* Node);
-static void emitterVar (emitterCtx* ctx, ast* Node);
-static void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol);
 
 static emitterCtx* emitterInit (FILE* File) {
     emitterCtx* ctx = malloc(sizeof(emitterCtx));
@@ -56,10 +59,10 @@ void emitter (ast* Tree, FILE* File) {
     emitterEnd(ctx);
 }
 
-void emitterModule (emitterCtx* ctx, ast* Tree) {
+static void emitterModule (emitterCtx* ctx, ast* Tree) {
     debugEnter("Module");
 
-    /*Resolve struct info*/
+    /*Resolve struct & enum info*/
     for (sym* Current = Tree->symbol->firstChild;
          Current;
          Current = Current->nextSibling) {
@@ -69,8 +72,8 @@ void emitterModule (emitterCtx* ctx, ast* Tree) {
         else if (Current->class == symEnum)
             emitterEnum(ctx, Current);
 
-        else if (Current->class == symType ||
-                 Current->class == symFunction)
+        else if (   Current->class == symType
+                 || Current->class == symId)
             ; //Nothing to do
 
         else
@@ -81,8 +84,12 @@ void emitterModule (emitterCtx* ctx, ast* Tree) {
     for (ast* Current = Tree->firstChild;
          Current;
          Current = Current->nextSibling) {
-        if (Current->class == astFunction)
-            emitterFunction(ctx, Current);
+        /*!!!*/
+        if (Current->class == astFnImpl)
+            emitterFnImpl(ctx, Current);
+
+        else if (Current->class == astDecl)
+            emitterDecl(ctx, Current);
 
         else
             debugErrorUnhandled("emitterModule", "AST class", astClassGetStr(Current->class));
@@ -91,38 +98,8 @@ void emitterModule (emitterCtx* ctx, ast* Tree) {
     debugLeave();
 }
 
-void emitterStruct (emitterCtx* ctx, sym* Symbol) {
-    debugEnter("Struct");
-
-    for (sym* Current = Symbol->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-
-        Current->offset = Symbol->size;
-        /*Add the size of this field, rounded up to the nearest word boundary*/
-        Symbol->size += ((typeGetSize(Current->dt) - 1)/8)*8 + 8;
-        reportSymbol(Current);
-    }
-
-    reportSymbol(Symbol);
-
-    debugLeave();
-}
-
-void emitterEnum (emitterCtx* ctx, sym* Symbol) {
-    debugEnter("Enum");
-
-    for (sym* Current = Symbol->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-
-    }
-
-    debugLeave();
-}
-
-void emitterFunction (emitterCtx* ctx, ast* Node) {
-    debugEnter("Function");
+static void emitterFnImpl (emitterCtx* ctx, ast* Node) {
+    debugEnter("FnImpl");
 
     Node->symbol->label = labelNamed(Node->symbol->ident);
 
@@ -165,7 +142,92 @@ void emitterFunction (emitterCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-void emitterCode (emitterCtx* ctx, ast* Node) {
+static void emitterStruct (emitterCtx* ctx, sym* Symbol) {
+    (void) ctx;
+
+    debugEnter("Struct");
+
+    for (sym* Current = Symbol->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+
+        Current->offset = Symbol->size;
+        /*Add the size of this field, rounded up to the nearest word boundary*/
+        Symbol->size += ((typeGetSize(Current->dt) - 1)/8)*8 + 8;
+        reportSymbol(Current);
+    }
+
+    reportSymbol(Symbol);
+
+    debugLeave();
+}
+
+static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
+    (void) ctx;
+
+    debugEnter("Enum");
+
+    for (sym* Current = Symbol->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+
+    }
+
+    debugLeave();
+}
+
+static void emitterDecl (emitterCtx* ctx, ast* Node) {
+    (void) ctx;
+
+    debugEnter("Decl");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        /*Initial assignment*/
+        if (Current->class == astBOP && !strcmp(Current->o, "=")) {
+            /*Array*/
+            if (Current->r->class == astLiteral && Current->r->litClass == literalArray)
+                emitterArrayLiteral(ctx, Current->r, Current->symbol);
+
+            else if (Current->symbol->storage == storageAuto) {
+                asmEnter(ctx->Asm);
+                operand L = operandCreateMem(regRBP, Current->symbol->offset, typeGetSize(Current->symbol->dt));
+                operand R = emitterValue(ctx, Current->r, operandCreate(operandUndefined));
+                asmLeave(ctx->Asm);
+                asmMove(ctx->Asm, L, R);
+                operandFree(R);
+
+            } else
+                debugErrorUnhandled("emitterDecl", "storage class", storageClassGetStr(Node->symbol->storage));
+        }
+    }
+
+    debugLeave();
+}
+
+static void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
+    debugEnter("ArrayLiteral");
+
+    int n = 0;
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling, n++) {
+        asmEnter(ctx->Asm);
+        operand L = operandCreateMem(regRBP,
+                                     Symbol->offset + typeGetSize(Symbol->dt->base)*n,
+                                     typeGetSize(Symbol->dt->base));
+        operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
+        asmMove(ctx->Asm, L, R);
+        operandFree(R);
+    }
+
+    debugLeave();
+}
+
+static void emitterCode (emitterCtx* ctx, ast* Node) {
     asmEnter(ctx->Asm);
 
     for (ast* Current = Node->firstChild;
@@ -177,7 +239,7 @@ void emitterCode (emitterCtx* ctx, ast* Node) {
     asmLeave(ctx->Asm);
 }
 
-void emitterLine (emitterCtx* ctx, ast* Node) {
+static void emitterLine (emitterCtx* ctx, ast* Node) {
     debugEnter("Line");
 
     asmComment(ctx->Asm, "");
@@ -195,8 +257,8 @@ void emitterLine (emitterCtx* ctx, ast* Node) {
         emitterValue(ctx, Node->r, operandCreateReg(regRAX));
         asmJump(ctx->Asm, ctx->labelReturnTo);
 
-    } else if (Node->class == astVar)
-        emitterVar(ctx, Node);
+    } else if (Node->class == astDecl)
+        emitterDecl(ctx, Node);
 
     else if (astIsValueClass(Node->class))
         operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
@@ -207,7 +269,7 @@ void emitterLine (emitterCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-void emitterBranch (emitterCtx* ctx, ast* Node) {
+static void emitterBranch (emitterCtx* ctx, ast* Node) {
     debugEnter("Branch");
 
     operand ElseLabel = labelCreate(labelUndefined);
@@ -233,12 +295,15 @@ void emitterBranch (emitterCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-void emitterLoop (emitterCtx* ctx, ast* Node) {
+static void emitterLoop (emitterCtx* ctx, ast* Node) {
     debugEnter("Loop");
 
-    operand LoopLabel = labelCreate(labelUndefined); /*The place to return to loop again (after confirming condition)*/
-    operand OldBreakTo = ctx->labelBreakTo; /*Push old break label before erasing*/
-    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined); /*To exit the loop (or break, anywhere)*/
+    /*The place to return to loop again (after confirming condition)*/
+    operand LoopLabel = labelCreate(labelUndefined);
+    /*Push old break label before erasing*/
+    operand OldBreakTo = ctx->labelBreakTo;
+    /*To exit the loop (or break, anywhere)*/
+    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -268,7 +333,7 @@ void emitterLoop (emitterCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-void emitterIter (emitterCtx* ctx, ast* Node) {
+static void emitterIter (emitterCtx* ctx, ast* Node) {
     debugEnter("Iter");
 
     ast* init = Node->firstChild;
@@ -281,8 +346,8 @@ void emitterIter (emitterCtx* ctx, ast* Node) {
 
     /*Initialize stuff*/
 
-    if (init->class == astVar)
-        emitterVar(ctx, init);
+    if (init->class == astDecl)
+        emitterDecl(ctx, init);
 
     else if (astIsValueClass(init->class))
         operandFree(emitterValue(ctx, init, operandCreate(operandUndefined)));
@@ -319,53 +384,6 @@ void emitterIter (emitterCtx* ctx, ast* Node) {
     asmLabel(ctx->Asm, EndLabel);
 
     ctx->labelBreakTo = OldBreakTo;
-
-    debugLeave();
-}
-
-void emitterVar (emitterCtx* ctx, ast* Node) {
-    debugEnter("Var");
-
-    /*Is there an initial value assigned?*/
-    if (Node->r) {
-        if (Node->r->class == astLiteral && Node->r->litClass == literalArray)
-            emitterArrayLiteral(ctx, Node->r, Node->symbol);
-
-        else if (Node->symbol->storage == storageAuto) {
-            asmEnter(ctx->Asm);
-            operand L = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
-            operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-            asmLeave(ctx->Asm);
-            asmMove(ctx->Asm, L, R);
-            operandFree(R);
-
-        } else
-            debugErrorUnhandled("emitterVar", "storage class", storageClassGetStr(Node->symbol->storage));
-    }
-
-    if (Node->l)
-        emitterVar(ctx, Node->l);
-
-    debugLeave();
-}
-
-void emitterArrayLiteral (emitterCtx* ctx, ast* Node, sym* Symbol) {
-    debugEnter("ArrayLiteral");
-
-    int n = 0;
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling, n++) {
-        asmEnter(ctx->Asm);
-        operand L = operandCreateMem(regRBP,
-                                     Symbol->offset + typeGetSize(Symbol->dt->base)*n,
-                                     typeGetSize(Symbol->dt->base));
-        operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
-        asmLeave(ctx->Asm);
-        asmMove(ctx->Asm, L, R);
-        operandFree(R);
-    }
 
     debugLeave();
 }

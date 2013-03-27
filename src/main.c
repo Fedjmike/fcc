@@ -51,17 +51,18 @@ int main (int argc, char** argv) {
     int warnings = 0;
     /*Has compilation failed? We could be in a mode where warnings are
       treated as errors, so this isn't completely obvious from errors
-      and warnings.
-      Emission only happens if there is no failure, semantic analysis
-      if there is no *error*. Important difference.*/
+      and warnings.*/
     bool fail = false;
     ast* Tree = 0;
 
     /*Parse the module*/
 
     {
+        debugSetMode(debugCompressed);
         debugMsg("Parsing");
         parserResult res = parser(Input, Global);
+        debugSetMode(debugFull);
+        debugMsg("");
         errors += res.errors;
         warnings += res.warnings;
         Tree = res.tree;
@@ -69,9 +70,10 @@ int main (int argc, char** argv) {
 
     /*Semantic analysis*/
 
-    if (errors == 0) {
+    {
         debugMsg("Analyzing");
-        analyzerResult res = analyzer(Tree, Global, Types);
+        analyzerResult res = analyzer(Tree, Types);
+        debugMsg("");
         errors += res.errors;
         warnings += res.warnings;
     }
@@ -83,6 +85,7 @@ int main (int argc, char** argv) {
     if (!fail) {
         debugMsg("Emitting");
         emitter(Tree, File);
+        debugMsg("");
     }
 
     /*Clean up*/

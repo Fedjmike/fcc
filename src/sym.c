@@ -1,11 +1,13 @@
+#include "../inc/sym.h"
+
 #include "../inc/debug.h"
 #include "../inc/type.h"
-#include "../inc/sym.h"
 
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
 
+static sym* symCreate (symClass class, sym* Parent);
 static void symAddChild (sym* Parent, sym* Child);
 static void symDestroy (sym* Symbol);
 
@@ -17,7 +19,7 @@ void symEnd (sym* Global) {
     symDestroy(Global);
 }
 
-sym* symCreate (symClass class, sym* Parent) {
+static sym* symCreate (symClass class, sym* Parent) {
     sym* Symbol = malloc(sizeof(sym));
     Symbol->class = class;
     Symbol->ident = 0;
@@ -34,7 +36,7 @@ sym* symCreate (symClass class, sym* Parent) {
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
 
-    Symbol->params = 0;
+    //Symbol->params = 0;
 
     Symbol->label = operandCreateLabel(0);
     Symbol->offset = 0;
@@ -52,25 +54,30 @@ sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
 
 sym* symCreateStruct (sym* Parent, char* ident) {
     sym* Symbol = symCreate(symStruct, Parent);
-    Symbol->ident = ident;
+    Symbol->ident = strdup(ident);
     Symbol->typeMask = typeAssignment;
     return Symbol;
 }
 
-sym* symCreateVar (sym* Parent, char* ident, type* DT, storageClass storage) {
-    sym* Symbol = symCreate(symVar, Parent);
-    Symbol->ident = ident;
-    Symbol->dt = DT;
-    Symbol->storage = storage;
+sym* symCreateId (sym* Parent, char* ident) {
+    sym* Symbol = symCreate(symId, Parent);
+    Symbol->ident = strdup(ident);
+    return Symbol;
+}
+
+sym* symCreateParam (sym* Parent, char* ident) {
+    sym* Symbol = symCreate(symParam, Parent);
+    Symbol->ident = strdup(ident);
     return Symbol;
 }
 
 static void symAddChild (sym* Parent, sym* Child) {
     /*Global namespace?*/
-    if (!Parent && Child->class == symScope)
+    if (!Parent && Child->class == symScope) {
+        Child->parent = 0;
         return;
 
-    else if (!Child || !Parent) {
+    } else if (!Child || !Parent) {
         printf("symAddChild(): null %s given.\n",
                !Parent ? "parent" : "child");
         return;
@@ -87,8 +94,8 @@ static void symAddChild (sym* Parent, sym* Child) {
 
     Child->parent = Parent;
 
-    if (Child->class == symParam)
-        Parent->params++;
+    //if (Child->class == symParam)
+    //    Parent->params++;
 }
 
 static void symDestroy (sym* Symbol) {
@@ -142,8 +149,12 @@ sym* symFind (sym* Scope, char* Look) {
         if (Found) {
             //printf("found: %s\n", Found->ident);
             return Found;
-        }
+
+        } /*else
+            printf("not found in %s\n", Scope->ident);*/
     }
+
+    //puts("find failed");
 
     return 0;
 }
@@ -159,12 +170,10 @@ const char* symClassGetStr (symClass class) {
         return "symStruct";
     else if (class == symEnum)
         return "symEnum";
-    else if (class == symFunction)
-        return "symFunction";
+    else if (class == symId)
+        return "symId";
     else if (class == symParam)
         return "symParam";
-    else if (class == symVar)
-        return "symVar";
 
     else {
         char* Str = malloc(class+1);
@@ -178,16 +187,12 @@ const char* symClassGetStr (symClass class) {
 const char* storageClassGetStr (storageClass class) {
     if (class == storageUndefined)
         return "storageUndefined";
-
     else if (class == storageAuto)
         return "storageAuto";
-
     else if (class == storageRegister)
         return "storageRegister";
-
     else if (class == storageStatic)
         return "storageStatic";
-
     else if (class == storageExtern)
         return "storageExtern";
 

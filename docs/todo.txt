@@ -3,24 +3,30 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 [ ] Self hosting
     [ ] Discrepancies between GCC and FCC:
-        - Ptr decl binding: non issue
         - struct and union decl syntax & semantics
         - Module system
         - Sequence points? No, seems to be the same
     [ ] ABI
 [ ] Command line options
+    [ ] Control pretty printing
 [ ] Modules
     - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
 [-] Type system
     - By val -> By ref (grr)
     - Wrap types in modifiers: ptr, array, fn
     - Match-all class for error handling
+    [ ] Unique ptrs?
+    [ ] Lvalues
+    [ ] Narrowing/widening (careful with function rets)
+[ ] Error handling
+    [ ] Skipping
 [ ] Operator table
 [-] struct
     [ ] Literals
 [-] enum
+	[ ] Cray-cray anonymous struct in anonymous enum in struct things
 [-] Block scope
-[ ] Casts
+[-] Casts
     - (type) value
     - Differentiate between this and (value) by symbol lookup
 [-] Operators
@@ -53,7 +59,6 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Args
     [ ] Conformance
 
-[ ] Skip line on error
 [-] Global state -> state structs
     [ ] Operands: reg, labels
     [x] Symbols
@@ -62,18 +67,12 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Emitter helper functions
 [ ] Normalize ptr decl binding
 [-] astCreateBOP(op, left, right)
-[-] Pretty printing
-    [-] ASM output
-        [x] Indenting
-        [-] Comments
-    [-] Debug output
-    [ ] Command line arg controlled
-[ ] Decode AST nodes like in emitterLoop and emitterFor
+[-] Decode AST nodes like in emitterLoop and emitterFor
 [-] Assertions
 [ ] Clean up value moving code
 [-] Const correctness
 [-] Make sure prototypes and implementation match exactly (static)
-[ ] Use a cond field of
+[ ] Use a cond field of ??? AST ???
 [ ] Do analyzerArrayLiteral lits properly
 [ ] File names in error messages
 [ ] Fix type compatibility
@@ -81,18 +80,20 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [ ] Fix lvalue error messages
 [ ] Check constness of array sizes, enum values etc
-[ ] Move type assignment stuff to analyzer? Could solve some of the above
+[x] Move type assignment stuff to analyzer? Could solve some of the above
 [ ] Filext
+[ ] class -> tag
+[ ] Array size detection (basic x[] = {...})
 
 [ ] Abysmal error recovery
-[ ] AST is not abstract
+[-] AST is not abstract
 [ ] AST field reuse is weird and unclear
 [x] Parser/semantics merged => overly complex
     - When in doubt, reject *semantically*
       This means the parser fucks up less.
 [ ] Dealing with operands in the emitter is cumbersome
 [ ] Arch specifics are a bit magic value-y
-[-] Type system overly simple
+[x] Type system overly simple
 [-] Lack of comments, esp. interface documentation
 [ ] Assumption of operand class permutations required
-[ ] Unit tests
+[ ] Unit tests?

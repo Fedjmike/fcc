@@ -7,7 +7,9 @@ typedef enum {
     tokenOther,
     tokenEOF,
     tokenIdent,
-    tokenInt
+    tokenInt,
+    tokenStr,
+    tokenChar
 } tokenClass;
 
 typedef struct  {
@@ -16,6 +18,7 @@ typedef struct  {
     tokenClass token;
     char* buffer;
     int bufferSize;
+    int length;
 } lexerCtx;
 
 lexerCtx* lexerInit (char* File);

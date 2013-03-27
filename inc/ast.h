@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../std/std.h"
+
 #include "parser.h"
 
 struct type;
@@ -7,20 +9,26 @@ struct sym;
 
 typedef enum {
     astUndefined,
+    astInvalid,
     astEmpty,
     astModule,
-    astFunction,
-    astVar = 10,
+    astFnImpl,
+    astDeclStruct,
+    astDecl,
+    astDeclParam,
+    astType,
     astCode,
     astBranch,
     astLoop,
     astIter,
     astReturn,
+    astBreak,
     astBOP = 20,
     astUOP,
     astTOP,
     astIndex,
     astCall,
+    astCast,
     astLiteral,
 } astClass;
 
@@ -48,22 +56,34 @@ typedef struct ast {
     struct ast* l;
     char* o;
     struct ast* r;      /*Always used for unary operators*/
-    struct type* dt;           /*Result data type*/
+    struct type* dt;    /*Result data type*/
 
     struct sym* symbol;
 
-    /*Literals (idents included) only*/
+    /*Literals*/
     literalClass litClass;
     void* literal;
 } ast;
 
 ast* astCreate (astClass class, tokenLocation location);
+ast* astCreateInvalid (tokenLocation location);
+ast* astCreateEmpty (tokenLocation location);
+
+ast* astCreateFnImpl (tokenLocation location, ast* decl, ast* impl);
+
+ast* astCreateDeclStruct (tokenLocation location, ast* name);
+ast* astCreateDecl (tokenLocation location, ast* basic);
+ast* astCreateDeclParam (tokenLocation location, ast* basic, ast* declExpr);
+ast* astCreateType (tokenLocation location, ast* basic, ast* expr);
+
 ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r);
 ast* astCreateUOP (tokenLocation location, char* o, ast* r);
 ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
+ast* astCreateCast (tokenLocation location, ast* result);
 ast* astCreateLiteral (tokenLocation location, literalClass litClass);
+ast* astCreateLiteralIdent (tokenLocation location, char* ident);
 
 void astDestroy (ast* Node);
 

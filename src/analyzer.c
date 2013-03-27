@@ -1,19 +1,19 @@
+#include "../inc/analyzer.h"
+
 #include "../inc/debug.h"
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
-#include "../inc/analyzer.h"
+
 #include "../inc/analyzer-value.h"
+#include "../inc/analyzer-decl.h"
 
 #include "stdlib.h"
 #include "stdarg.h"
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node);
 
-static void analyzerNode (analyzerCtx* ctx, ast* Node);
-
-static void analyzerFunction (analyzerCtx* ctx, ast* Node);
-static void analyzerVar (analyzerCtx* ctx, ast* Node);
+static void analyzerFnImpl (analyzerCtx* ctx, ast* Node);
 static void analyzerCode (analyzerCtx* ctx, ast* Node);
 static void analyzerBranch (analyzerCtx* ctx, ast* Node);
 static void analyzerLoop (analyzerCtx* ctx, ast* Node);
@@ -33,20 +33,8 @@ static void analyzerError (analyzerCtx* ctx, const ast* Node, const char* format
     ctx->errors++;
 }
 
-static void analyzerWarning (analyzerCtx* ctx, const ast* Node, const char* format, ...) {
-    printf("warning(%d:%d): ", Node->location.line, Node->location.lineChar);
-
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-
-    putchar('\n');
-
-    ctx->warnings++;
-}
-
 void analyzerErrorExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* Expected, const type* Found) {
+
     char* FoundStr = typeToStr(Found, "");
 
     analyzerError(ctx, Node, "%s expected %s, found %s",
@@ -63,7 +51,7 @@ void analyzerErrorExpectedType (analyzerCtx* ctx, const ast* Node, const char* w
     free(ExpectedStr);
 }
 
-void analyzerErrorOp (analyzerCtx* ctx, const ast* Operator, const char* o, const char* desc, const ast* Operand, const type* DT) {
+void analyzerErrorOp (analyzerCtx* ctx, const char* o, const char* desc, const ast* Operand, const type* DT) {
     char* DTStr = typeToStr(DT, "");
 
     analyzerError(ctx, Operand, "%s requires %s, found %s",
@@ -99,6 +87,15 @@ void analyzerErrorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const
     free(FoundStr);
 }
 
+void analyzerErrorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* Record) {
+    char* RecordStr = typeToStr(Record, "");
+
+    analyzerError(ctx, Node, "%s expected field of %s, found %s",
+                  o, RecordStr, Node->literal);
+
+    free(RecordStr);
+}
+
 static analyzerCtx* analyzerInit (sym** Types) {
     analyzerCtx* ctx = malloc(sizeof(analyzerCtx));
     ctx->types = Types;
@@ -112,7 +109,7 @@ static void analyzerEnd (analyzerCtx* ctx) {
     free(ctx);
 }
 
-analyzerResult analyzer (ast* Tree, sym* Global, sym** Types) {
+analyzerResult analyzer (ast* Tree, sym** Types) {
     analyzerCtx* ctx = analyzerInit(Types);
 
     analyzerModule(ctx, Tree);
@@ -133,15 +130,21 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-static void analyzerNode (analyzerCtx* ctx, ast* Node) {
+void analyzerNode (analyzerCtx* ctx, ast* Node) {
     if (Node->class == astEmpty)
         debugMsg("Empty");
 
-    else if (Node->class == astFunction)
-        analyzerFunction(ctx, Node);
+    else if (Node->class == astInvalid)
+        debugMsg("Invalid");
 
-    else if (Node->class == astVar)
-        analyzerVar(ctx, Node);
+    else if (Node->class == astFnImpl)
+        analyzerFnImpl(ctx, Node);
+
+    else if (Node->class == astDeclStruct)
+        analyzerDeclStruct(ctx, Node);
+
+    else if (Node->class == astDecl)
+        analyzerDecl(ctx, Node);
 
     else if (Node->class == astCode)
         analyzerCode(ctx, Node);
@@ -158,40 +161,25 @@ static void analyzerNode (analyzerCtx* ctx, ast* Node) {
     else if (Node->class == astReturn)
         analyzerReturn(ctx, Node);
 
+    else if (Node->class == astBreak)
+        ; /*Nothing to check (inside breakable block is a parsing issue)*/
+
     else if (astIsValueClass(Node->class))
-        /*Throw away return*/
+        /*TODO: Check not throwing away value*/
         analyzerValue(ctx, Node);
 
     else
         debugErrorUnhandled("analyzerNode", "AST class", astClassGetStr(Node->class));
 }
 
-static void analyzerFunction (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Function");
+static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
+    debugEnter("FnImpl");
 
-    ctx->returnType = Node->symbol->dt;
+    analyzerDecl(ctx, Node->l);
 
-    if (Node->r)
-        analyzerNode(ctx, Node->r);
-
-    debugLeave();
-}
-
-static void analyzerVar (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Var");
-
-    /*Initial value?*/
-    if (Node->r) {
-        type* R = analyzerValue(ctx, Node->r);
-
-        if (typeIsArray(Node->symbol->dt) && typeIsArray(R) &&
-            Node->symbol->dt->array >= R->array &&
-            typeIsCompatible(R->base, Node->symbol->dt->base))
-            ;
-
-        else if (!typeIsCompatible(R, Node->symbol->dt))
-            analyzerErrorExpectedType(ctx, Node->r, "variable initialization", Node->symbol->dt, R);
-    }
+    ctx->returnType = Node->symbol->dt->returnType;
+    analyzerNode(ctx, Node->r);
+    ctx->returnType = 0;
 
     debugLeave();
 }
@@ -213,7 +201,7 @@ static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
     /*Is the condition a valid condition?*/
 
     ast* cond = Node->firstChild;
-    type* condDT = analyzerValue(ctx, cond);
+    const type* condDT = analyzerValue(ctx, cond);
 
     if (!typeIsCondition(condDT))
         analyzerErrorExpected(ctx, cond, "if", "condition", condDT);
@@ -238,7 +226,7 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
 
     /*Condition*/
 
-    type* condDT = analyzerValue(ctx, cond);
+    const type* condDT = analyzerValue(ctx, cond);
 
     if (!typeIsCondition(condDT))
         analyzerErrorExpected(ctx, cond, "do loop", "condition", condDT);
@@ -259,7 +247,7 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 
     /*Initializer*/
 
-    if (init->class == astVar)
+    if (init->class == astDecl)
         analyzerNode(ctx, init);
 
     else if (init->class != astEmpty)
@@ -267,10 +255,12 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 
     /*Condition*/
 
-    type* condDT = analyzerValue(ctx, cond);
+    if (cond->class != astEmpty) {
+        const type* condDT = analyzerValue(ctx, cond);
 
-    if (!typeIsCondition(condDT))
-        analyzerErrorExpected(ctx, cond, "for loop", "condition", condDT);
+        if (!typeIsCondition(condDT))
+            analyzerErrorExpected(ctx, cond, "for loop", "condition", condDT);
+    }
 
     /*Iterator*/
 
@@ -289,13 +279,13 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
 
     /*Return type, if any, matches?*/
 
-    type* R = typeCreateInvalid();
+    const type* R = typeCreateInvalid();
 
     if (Node->r)
         R = analyzerValue(ctx, Node->r);
 
     if (!typeIsCompatible(R, ctx->returnType))
-        analyzerErrorExpectedType(ctx, Node->r, "function return", ctx->returnType, R);
+        analyzerErrorExpectedType(ctx, Node->r, "return", ctx->returnType, R);
 
     debugLeave();
 }

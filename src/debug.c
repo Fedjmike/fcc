@@ -1,4 +1,5 @@
 #include "../inc/debug.h"
+
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
@@ -39,6 +40,13 @@ void debugLeave () {
 }
 
 void debugMsg (const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    debugVarMsg(format, args);
+    va_end(args);
+}
+
+void debugVarMsg (const char* format, va_list args) {
     if (mode == debugSilent)
         return;
 
@@ -47,10 +55,7 @@ void debugMsg (const char* format, ...) {
         fputc(' ', logFile);
     }
 
-    va_list args;
-    va_start(args, format);
     vfprintf(logFile, format, args);
-    va_end(args);
 
     fputc('\n', logFile);
 }
@@ -92,7 +97,7 @@ void reportType (const type* DT) {
 
         if (typeIsPtr(DT) || typeIsArray(DT))
             fprintf(logFile, "base: %p   ",
-                    DT->base);
+                    (void*) DT->base);
 
         /*String form*/
 
@@ -120,17 +125,16 @@ void reportSymbol (const sym* Symbol) {
 
     /*Parent*/
 
-    if (Symbol->class != symType &&
-        Symbol->class != symStruct &&
-        Symbol->class != symFunction)
+    if (   Symbol->class != symType
+        && Symbol->class != symStruct)
         fprintf(logFile, "parent: %s   ",
                 Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
 
-    if (Symbol->class == symVar ||
-        Symbol->class == symParam ||
-        Symbol->class == symFunction) {
+    if (   (   Symbol->class == symId
+            || Symbol->class == symParam)
+        && Symbol->dt != 0) {
         char* Str = typeToStr(Symbol->dt, "");
         fprintf(logFile, "type: %s   ", Str);
         free(Str);
@@ -138,9 +142,9 @@ void reportSymbol (const sym* Symbol) {
 
     /*Size*/
 
-    if ((Symbol->class == symVar ||
-        Symbol->class == symParam) &&
-        Symbol->dt != 0) {
+    if (   (   Symbol->class == symId
+            || Symbol->class == symParam)
+        && Symbol->dt != 0) {
         if (typeIsArray(Symbol->dt))
             fprintf(logFile, "size: %dx%d   ",
                     typeGetSize(Symbol->dt->base),
@@ -156,8 +160,8 @@ void reportSymbol (const sym* Symbol) {
 
     /*Offset*/
 
-    if (Symbol->class == symVar ||
-        Symbol->class == symParam)
+    if (   Symbol->class == symId
+        || Symbol->class == symParam)
         fprintf(logFile, "offset: %d",
                 Symbol->offset);
 

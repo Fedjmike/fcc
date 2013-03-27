@@ -1,6 +1,6 @@
-#include "../std/std.h"
-
 #include "../inc/stream.h"
+
+#include "../std/std.h"
 
 #include "string.h"
 #include "stdlib.h"

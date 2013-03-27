@@ -1,48 +1,50 @@
+#include "../inc/analyzer-value.h"
+
 #include "../inc/debug.h"
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+
 #include "../inc/analyzer.h"
-#include "../inc/analyzer-value.h"
 
 #include "string.h"
 
-static type* analyzerBOP (analyzerCtx* ctx, ast* Node);
-static type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
-static type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node);
-static type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node);
-static type* analyzerUOP (analyzerCtx* ctx, ast* Node);
-static type* analyzerTernary (analyzerCtx* ctx, ast* Node);
-static type* analyzerIndex (analyzerCtx* ctx, ast* Node);
-static type* analyzerCall (analyzerCtx* ctx, ast* Node);
-static type* analyzerLiteral (analyzerCtx* ctx, ast* Node);
-static type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node);
+static const type* analyzerBOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerUOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerTernary (analyzerCtx* ctx, ast* Node);
+static const type* analyzerIndex (analyzerCtx* ctx, ast* Node);
+static const type* analyzerCall (analyzerCtx* ctx, ast* Node);
+static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node);
+static const type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node);
 
 /**
  * Returns whether the (binary) operator is one that can only act on
  * numeric types (e.g. int, char, not bool, not x*)
  */
 static bool isNumericBOP (char* o) {
-    return !strcmp(o, "+") || !strcmp(o, "-") ||
-           !strcmp(o, "*") || !strcmp(o, "/") ||
-           !strcmp(o, "%") ||
-           !strcmp(o, "&") || !strcmp(o, "|") ||
-           !strcmp(o, "^") ||
-           !strcmp(o, "<<") || !strcmp(o, ">>") ||
-           !strcmp(o, "+=") || !strcmp(o, "-=") ||
-           !strcmp(o, "*=") || !strcmp(o, "/=") ||
-           !strcmp(o, "%=") ||
-           !strcmp(o, "&=") || !strcmp(o, "|=") ||
-           !strcmp(o, "^=") ||
-           !strcmp(o, "<<=") || !strcmp(o, ">>=");
+    return    !strcmp(o, "+") || !strcmp(o, "-")
+           || !strcmp(o, "*") || !strcmp(o, "/")
+           || !strcmp(o, "%")
+           || !strcmp(o, "&") || !strcmp(o, "|")
+           || !strcmp(o, "^")
+           || !strcmp(o, "<<") || !strcmp(o, ">>")
+           || !strcmp(o, "+=") || !strcmp(o, "-=")
+           || !strcmp(o, "*=") || !strcmp(o, "/=")
+           || !strcmp(o, "%=")
+           || !strcmp(o, "&=") || !strcmp(o, "|=")
+           || !strcmp(o, "^=")
+           || !strcmp(o, "<<=") || !strcmp(o, ">>=");
 }
 
 /**
  * Is it an ordinal operator (defines an ordering...)?
  */
 static bool isOrdinalBOP (char* o) {
-    return !strcmp(o, ">") || !strcmp(o, "<") ||
-           !strcmp(o, ">=") || !strcmp(o, "<=");
+    return    !strcmp(o, ">") || !strcmp(o, "<")
+           || !strcmp(o, ">=") || !strcmp(o, "<=");
 }
 
 static bool isEqualityBOP (char* o) {
@@ -50,13 +52,13 @@ static bool isEqualityBOP (char* o) {
 }
 
 static bool isAssignmentBOP (char* o) {
-    return !strcmp(o, "=") ||
-           !strcmp(o, "+=") || !strcmp(o, "-=") ||
-           !strcmp(o, "*=") || !strcmp(o, "/=") ||
-           !strcmp(o, "%=") ||
-           !strcmp(o, "&=") || !strcmp(o, "|=") ||
-           !strcmp(o, "^=") ||
-           !strcmp(o, "<<=") || !strcmp(o, ">>=");
+    return    !strcmp(o, "=")
+           || !strcmp(o, "+=") || !strcmp(o, "-=")
+           || !strcmp(o, "*=") || !strcmp(o, "/=")
+           || !strcmp(o, "%=")
+           || !strcmp(o, "&=") || !strcmp(o, "|=")
+           || !strcmp(o, "^=")
+           || !strcmp(o, "<<=") || !strcmp(o, ">>=");
 }
 
 /**
@@ -80,7 +82,7 @@ static bool isCommaBOP (char* o) {
     return !strcmp(o, ",");
 }
 
-type* analyzerValue (analyzerCtx* ctx, ast* Node) {
+const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
     if (Node->class == astBOP) {
         if (isNumericBOP(Node->o) || isAssignmentBOP(Node->o))
             return analyzerBOP(ctx, Node);
@@ -118,13 +120,16 @@ type* analyzerValue (analyzerCtx* ctx, ast* Node) {
         else
             return analyzerLiteral(ctx, Node);
 
+    } else if (Node->class == astInvalid) {
+        return Node->dt = typeCreateInvalid();
+
     } else {
         debugErrorUnhandled("analyzerValue", "AST class", astClassGetStr(Node->class));
         return Node->dt = typeCreateInvalid();
     }
 }
 
-static type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("BOP");
 
     const type* L = analyzerValue(ctx, Node->l);
@@ -134,18 +139,19 @@ static type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
     if (isNumericBOP(Node->o))
         if (!typeIsNumeric(L) || !typeIsNumeric(R))
-            analyzerErrorOp(ctx, Node, Node->o, "numeric type",
+            analyzerErrorOp(ctx, Node->o, "numeric type",
                             !typeIsNumeric(L) ? Node->l : Node->r,
                             !typeIsNumeric(L) ? L : R);
 
     if (isAssignmentBOP(Node->o)) {
         if (!typeIsAssignment(L) || !typeIsAssignment(R))
-            analyzerErrorOp(ctx, Node, Node->o, "assignable type",
+            analyzerErrorOp(ctx, Node->o, "assignable type",
                             !typeIsAssignment(L) ? Node->l : Node->r,
                             !typeIsAssignment(L) ? L : R);
 
-        if (!typeIsLValue(L))
-            analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->l, L);
+        /*!!!LVALUE CHECK ON L*/
+        if (false)
+            analyzerErrorOp(ctx, Node->o, "lvalue", Node->l, L);
     }
 
     /*Work out the type of the result*/
@@ -169,7 +175,7 @@ static type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("ComparisonBOP");
 
     const type* L = analyzerValue(ctx, Node->l);
@@ -179,13 +185,13 @@ static type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
 
     if (isOrdinalBOP(Node->o)) {
         if (!typeIsOrdinal(L) || !typeIsOrdinal(R))
-            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
+            analyzerErrorOp(ctx, Node->o, "comparable type",
                             !typeIsOrdinal(L) ? Node->l : Node->r,
                             !typeIsOrdinal(L) ? L : R);
 
     } else /*if (isEqualityBOP(Node->o))*/
         if (!typeIsEquality(L) || !typeIsEquality(R))
-            analyzerErrorOp(ctx, Node, Node->o, "comparable type",
+            analyzerErrorOp(ctx, Node->o, "comparable type",
                             !typeIsEquality(L) ? Node->l : Node->r,
                             !typeIsEquality(L) ? L : R);
 
@@ -204,37 +210,48 @@ static type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("MemberBOP");
 
     const type* L = analyzerValue(ctx, Node->l);
-    const type* R = analyzerValue(ctx, Node->r);
 
     /*Operator allowed?*/
 
     /* -> */
     if (isDerefBOP(Node->o)) {
-        if (!typeIsRecord(L->base))
-            analyzerErrorOp(ctx, Node, Node->o, "structure pointer", Node->l, L);
+        if (!typeIsPtr(L))
+            analyzerErrorOp(ctx, Node->o, "pointer", Node->l, L);
 
-        else if (!typeIsPtr(L))
-            analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->l, L);
+        else if (!typeIsRecord(L->base))
+            analyzerErrorOp(ctx, Node->o, "structure pointer", Node->l, L);
 
     /* . */
     } else
         if (!typeIsRecord(L))
-            analyzerErrorOp(ctx, Node, Node->o, "structure type", Node->l, L);
+            analyzerErrorOp(ctx, Node->o, "structure type", Node->l, L);
 
     /*Return type: the field*/
 
-    Node->dt = typeDeepDuplicate(R);
+    if (typeIsBasic(L))
+        Node->symbol = symChild(L->basic, (char*) Node->r->literal);
+
+    else if (typeIsPtr(L) && typeIsBasic(L->base))
+        Node->symbol = symChild(L->base->basic, (char*) Node->r->literal);
+
+    if (Node->symbol)
+        Node->dt = typeDeepDuplicate(Node->symbol->dt);
+
+    else {
+        analyzerErrorMember(ctx, Node->o, Node->r, L);
+        Node->dt = typeCreateInvalid();
+    }
 
     debugLeave();
 
     return Node->dt;
 }
 
-static type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("CommaBOP");
 
     const type* R = analyzerValue(ctx, Node->r);
@@ -246,7 +263,7 @@ static type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeDeepDuplicate(R);
 
     else {
-        analyzerErrorOp(ctx, Node, Node->o, "non-void", Node->r, R);
+        analyzerErrorOp(ctx, Node->o, "non-void", Node->r, R);
         Node->dt = typeCreateInvalid();
     }
 
@@ -255,27 +272,28 @@ static type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("UOP");
 
     const type* R = analyzerValue(ctx, Node->r);
 
     /*Numeric operator*/
-    if (!strcmp(Node->o, "+") || !strcmp(Node->o, "-") ||
-        !strcmp(Node->o, "++") || !strcmp(Node->o, "--") ||
-        !strcmp(Node->o, "!") ||
-        !strcmp(Node->o, "~")) {
+    if (   !strcmp(Node->o, "+") || !strcmp(Node->o, "-")
+        || !strcmp(Node->o, "++") || !strcmp(Node->o, "--")
+        || !strcmp(Node->o, "!")
+        || !strcmp(Node->o, "~")) {
         if (!typeIsNumeric(R)) {
-            analyzerErrorOp(ctx, Node, Node->o, "numeric type", Node->r, R);
+            analyzerErrorOp(ctx, Node->o, "numeric type", Node->r, R);
             Node->dt = typeCreateInvalid();
 
         /*Assignment operator*/
         } else if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--")) {
-            if (typeIsLValue(R))
+            /*!!!LVALUE CHECK ON R*/
+            if (true)
                 Node->dt = typeDeriveFrom(R);
 
             else {
-                analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->r, R);
+                analyzerErrorOp(ctx, Node->o, "lvalue", Node->r, R);
                 Node->dt = typeCreateInvalid();
             }
 
@@ -288,17 +306,18 @@ static type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
             Node->dt = typeDeriveBase(R);
 
         else {
-            analyzerErrorOp(ctx, Node, Node->o, "pointer", Node->r, R);
+            analyzerErrorOp(ctx, Node->o, "pointer", Node->r, R);
             Node->dt = typeCreateInvalid();
         }
 
     /*Referencing an lvalue*/
     } else if (!strcmp(Node->o, "&")) {
-        if (typeIsLValue(R))
+        /*!!!LVALUE CHECK ON R*/
+        if (true)
             Node->dt = typeDerivePtr(R);
 
         else {
-            analyzerErrorOp(ctx, Node, Node->o, "lvalue", Node->r, R);
+            analyzerErrorOp(ctx, Node->o, "lvalue", Node->r, R);
             Node->dt = typeCreateInvalid();
         }
 
@@ -312,7 +331,7 @@ static type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerTernary (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerTernary (analyzerCtx* ctx, ast* Node) {
     debugEnter("Ternary");
 
     const type* Cond = analyzerValue(ctx, Node->firstChild);
@@ -322,7 +341,7 @@ static type* analyzerTernary (analyzerCtx* ctx, ast* Node) {
     /*Operation allowed*/
 
     if (!typeIsCondition(Cond))
-        analyzerErrorOp(ctx, Node, "ternary ?:", "condition value", Node->firstChild, Cond);
+        analyzerErrorOp(ctx, "ternary ?:", "condition value", Node->firstChild, Cond);
 
     /*Result types match => return type*/
 
@@ -339,20 +358,20 @@ static type* analyzerTernary (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerIndex (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerIndex (analyzerCtx* ctx, ast* Node) {
     debugEnter("Index");
 
     const type* L = analyzerValue(ctx, Node->l);
     const type* R = analyzerValue(ctx, Node->r);
 
     if (!typeIsNumeric(R))
-        analyzerErrorOp(ctx, Node, "[]", "numeric index", Node->r, R);
+        analyzerErrorOp(ctx, "[]", "numeric index", Node->r, R);
 
     if (typeIsArray(L) || typeIsPtr(L))
         Node->dt = typeDeriveBase(L);
 
     else {
-        analyzerErrorOp(ctx, Node, "[]", "array or pointer", Node->l, L);
+        analyzerErrorOp(ctx, "[]", "array or pointer", Node->l, L);
         Node->dt = typeCreateInvalid();
     }
 
@@ -361,56 +380,59 @@ static type* analyzerIndex (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerCall (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
     debugEnter("Call");
 
-    /*Allowed?*/
+    const type* L = analyzerValue(ctx, Node->l);
 
-    /*Is it actually a function?*/
-    if (Node->symbol->class != symFunction)
-        analyzerErrorOp(ctx, Node, "()", "function", Node->firstChild, Node->symbol->dt);
+    /*Callable*/
+    if (!typeIsCallable(L)) {
+        analyzerErrorOp(ctx, "()", "function", Node->firstChild, Node->symbol->dt);
+        Node->dt = typeCreateInvalid();
 
-    /*Right number of params?*/
-    else if (Node->symbol->params != Node->children)
-        analyzerErrorDegree(ctx, Node, "parameters",
-                            Node->symbol->params, Node->children,
-                            Node->symbol->ident);
+    } else {
+        /*If callable, then a result type can be derived,
+          regardless of parameter matches*/
+        Node->dt = typeDeepDuplicate(typeDeriveReturn(Node->symbol->dt));
 
-    /*Do the parameter types match?*/
-    else {
-        ast* cNode;
-        sym* cParam;
-        int n;
+        /*Right number of params?*/
+        if ((typeIsPtr(L) ? L->base->params : L->params) != Node->children)
+            analyzerErrorDegree(ctx, Node, "parameters",
+                                typeIsPtr(L) ? L->base->params : L->params, Node->children,
+                                Node->symbol->ident);
 
-        /*Traverse down both lists at once, checking types, leaving
-          once either ends (we already know they have the same length)*/
-        for (cNode = Node->firstChild, cParam = Node->symbol->firstChild, n = 0;
-             cNode && cParam;
-             cNode = cNode->nextSibling, cParam = cParam->nextSibling, n++) {
-            type* Param = analyzerValue(ctx, cNode);
+        /*Do the parameter types match?*/
+        else {
+            ast* cNode;
+            sym* cParam;
+            int n;
 
-            if (!typeIsCompatible(Param, cParam->dt))
-                analyzerErrorParamMismatch(ctx, Node, n, cParam->dt, Param);
+            /*Traverse down both lists at once, checking types, leaving
+              once either ends (we already know they have the same length)*/
+            for (cNode = Node->firstChild, cParam = Node->symbol->firstChild, n = 0;
+                 cNode && cParam;
+                 cNode = cNode->nextSibling, cParam = cParam->nextSibling, n++) {
+                const type* Param = analyzerValue(ctx, cNode);
+
+                if (!typeIsCompatible(Param, cParam->dt))
+                    analyzerErrorParamMismatch(ctx, Node, n, cParam->dt, Param);
+            }
         }
     }
-
-    /*Return type*/
-
-    Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
     debugLeave();
 
     return Node->dt;
 }
 
-static type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("Literal");
 
     if (Node->litClass == literalInt)
-        Node->dt = typeCreateBasic(ctx->types[builtinInt], false);
+        Node->dt = typeCreateBasic(ctx->types[builtinInt]);
 
     else if (Node->litClass == literalBool)
-        Node->dt = typeCreateBasic(ctx->types[builtinBool], false);
+        Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
     else if (Node->litClass == literalIdent)
         Node->dt = typeDeepDuplicate(Node->symbol->dt);
@@ -425,7 +447,7 @@ static type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node) {
+static const type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("ArrayLiteral");
 
     /*Allowed?*/

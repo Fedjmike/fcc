@@ -41,7 +41,7 @@ regClass regAllocGeneral () {
         if (!regRequest(i))
             return i;
 
-    return regUndefined;
+    return regRequest(regRAX);
 }
 
 char* regToStr (regClass Reg) {

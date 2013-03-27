@@ -1,4 +1,6 @@
 struct type;
 struct ast;
 
-struct type* analyzerValue (analyzerCtx* ctx, struct ast* Node);
+struct analyzerCtx;
+
+const struct type* analyzerValue (struct analyzerCtx* ctx, struct ast* Node);

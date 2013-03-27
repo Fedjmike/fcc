@@ -1,22 +1,26 @@
-#include "type.h"
+#include "../std/std.h"
+
 #include "lexer.h"
 
 struct parserCtx;
 
-void errorExpected (parserCtx* ctx, const char* Expected);
-void errorMismatch (parserCtx* ctx, const char* Type, const char* L, const char* R);
-void errorUndefSym (parserCtx* ctx);
-void errorInvalidOp (parserCtx* ctx, char* Op, char* TypeDesc, type DT);
-void errorInvalidOpExpected (parserCtx* ctx, char* Op, char* TypeDesc, type DT);
+void errorExpected (struct parserCtx* ctx, const char* Expected);
+void errorUndefSym (struct parserCtx* ctx);
+void errorIllegalBreak (struct parserCtx* ctx);
+void errorIdentOutsideDecl (struct parserCtx* ctx);
+void errorDuplicateSym (struct parserCtx* ctx);
 
-bool tokenIs (parserCtx* ctx, const char* Match);
+bool tokenIs (struct parserCtx* ctx, const char* Match);
+bool tokenIsIdent (struct parserCtx* ctx);
+bool tokenIsInt (struct parserCtx* ctx);
+bool tokenIsDecl (struct parserCtx* ctx);
 
-void tokenNext (parserCtx* ctx);
+void tokenNext (struct parserCtx* ctx);
 
-void tokenMatch (parserCtx* ctx);
-char* tokenDupMatch (parserCtx* ctx);
-void tokenMatchToken (parserCtx* ctx, tokenClass Match);
-void tokenMatchStr (parserCtx* ctx, const char* Match);
-bool tokenTryMatchStr (parserCtx* ctx, const char* Match);
-int tokenMatchInt (parserCtx* ctx);
-char* tokenMatchIdent (parserCtx* ctx);
+void tokenMatch (struct parserCtx* ctx);
+char* tokenDupMatch (struct parserCtx* ctx);
+void tokenMatchToken (struct parserCtx* ctx, tokenClass Match);
+void tokenMatchStr (struct parserCtx* ctx, const char* Match);
+bool tokenTryMatchStr (struct parserCtx* ctx, const char* Match);
+int tokenMatchInt (struct parserCtx* ctx);
+char* tokenMatchIdent (struct parserCtx* ctx);
