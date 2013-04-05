@@ -6,9 +6,9 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-ast* astCreate (astClass class, tokenLocation location) {
+ast* astCreate (astTag tag, tokenLocation location) {
     ast* Node = malloc(sizeof(ast));
-    Node->class = class;
+    Node->tag = tag;
 
     Node->location = location;
 
@@ -25,7 +25,7 @@ ast* astCreate (astClass class, tokenLocation location) {
 
     Node->symbol = 0;
 
-    Node->litClass = literalUndefined;
+    Node->litTag = literalUndefined;
     Node->literal = 0;
 
     return Node;
@@ -142,9 +142,9 @@ ast* astCreateSizeof (tokenLocation location, ast* r) {
     return Node;
 }
 
-ast* astCreateLiteral (tokenLocation location, literalClass litClass) {
+ast* astCreateLiteral (tokenLocation location, literalTag litTag) {
     ast* Node = astCreate(astLiteral, location);
-    Node->litClass = litClass;
+    Node->litTag = litTag;
     return Node;
 }
 
@@ -174,87 +174,87 @@ void astAddChild (ast* Parent, ast* Child) {
     Parent->children++;
 }
 
-int astIsValueClass (astClass class) {
-    return    class == astBOP || class == astUOP || class == astTOP
-           || class == astCall || class == astIndex || class == astCast
-           || class == astSizeof || class == astLiteral;
+int astIsValueTag (astTag tag) {
+    return    tag == astBOP || tag == astUOP || tag == astTOP
+           || tag == astCall || tag == astIndex || tag == astCast
+           || tag == astSizeof || tag == astLiteral;
 }
 
-const char* astClassGetStr (astClass class) {
-    if (class == astUndefined)
+const char* astTagGetStr (astTag tag) {
+    if (tag == astUndefined)
         return "astUndefined";
-    else if (class == astInvalid)
+    else if (tag == astInvalid)
         return "astInvalid";
-    else if (class == astEmpty)
+    else if (tag == astEmpty)
         return "astEmpty";
-    else if (class == astModule)
+    else if (tag == astModule)
         return "astModule";
-    else if (class == astFnImpl)
+    else if (tag == astFnImpl)
         return "astFnImpl";
-    else if (class == astDeclStruct)
+    else if (tag == astDeclStruct)
         return "astDeclStruct";
-    else if (class == astDecl)
+    else if (tag == astDecl)
         return "astDecl";
-    else if (class == astDeclParam)
+    else if (tag == astDeclParam)
         return "astDeclParam";
-    else if (class == astType)
+    else if (tag == astType)
         return "astType";
-    else if (class == astCode)
+    else if (tag == astCode)
         return "astCode";
-    else if (class == astBranch)
+    else if (tag == astBranch)
         return "astBranch";
-    else if (class == astLoop)
+    else if (tag == astLoop)
         return "astLoop";
-    else if (class == astIter)
+    else if (tag == astIter)
         return "astIter";
-    else if (class == astReturn)
+    else if (tag == astReturn)
         return "astReturn";
-    else if (class == astBreak)
+    else if (tag == astBreak)
         return "astBreak";
-    else if (class == astBOP)
+    else if (tag == astBOP)
         return "astBOP";
-    else if (class == astUOP)
+    else if (tag == astUOP)
         return "astUOP";
-    else if (class == astTOP)
+    else if (tag == astTOP)
         return "astTOP";
-    else if (class == astIndex)
+    else if (tag == astIndex)
         return "astIndex";
-    else if (class == astCall)
+    else if (tag == astCall)
         return "astCall";
-    else if (class == astCast)
+    else if (tag == astCast)
         return "astCast";
-    else if (class == astSizeof)
+    else if (tag == astSizeof)
         return "astSizeof";
-    else if (class == astLiteral)
+    else if (tag == astLiteral)
         return "astLiteral";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("astClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("astTagGetStr", "symbol tag", str);
         free(str);
         return "unhandled";
     }
 }
 
-const char* literalClassGetStr (literalClass class) {
-    if (class == literalUndefined)
+const char* literalTagGetStr (literalTag tag) {
+    if (tag == literalUndefined)
         return "literalUndefined";
-    else if (class == literalIdent)
+    else if (tag == literalIdent)
         return "literalIdent";
-    else if (class == literalInt)
+    else if (tag == literalInt)
         return "literalInt";
-    else if (class == literalStr)
+    else if (tag == literalStr)
         return "literalStr";
-    else if (class == literalBool)
+    else if (tag == literalBool)
         return "literalBool";
-    else if (class == literalArray)
+    else if (tag == literalArray)
         return "literalArray";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("literalClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("literalTagGetStr", "symbol tag", str);
         free(str);
         return "unhandled";
     }

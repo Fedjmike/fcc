@@ -11,9 +11,9 @@ static type* typeCreate ();
 
 /*:::: TYPE CTORS/DTOR ::::*/
 
-static type* typeCreate (typeClass class) {
+static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
-    DT->class = class;
+    DT->tag = tag;
     DT->basic = 0;
 
     DT->base = 0;
@@ -102,7 +102,7 @@ type* typeDeepDuplicate (const type* DT) {
         return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params);
 
     } else {
-        debugErrorUnhandled("typeDeepDuplicate", "type class", typeClassGetStr(DT->class));
+        debugErrorUnhandled("typeDeepDuplicate", "type tag", typeTagGetStr(DT->tag));
         return typeCreateInvalid();
     }
 }
@@ -170,65 +170,65 @@ type* typeDeriveReturn (const type* DT) {
 /*:::: TYPE CLASSIFICATION ::::*/
 
 bool typeIsBasic (const type* DT) {
-    return DT->class == typeBasic || typeIsInvalid(DT);
+    return DT->tag == typeBasic || typeIsInvalid(DT);
 }
 
 bool typeIsPtr (const type* DT) {
-    return DT->class == typePtr || typeIsInvalid(DT);
+    return DT->tag == typePtr || typeIsInvalid(DT);
 }
 
 bool typeIsArray (const type* DT) {
-    return DT->class == typeArray || typeIsInvalid(DT);
+    return DT->tag == typeArray || typeIsInvalid(DT);
 }
 
 bool typeIsFunction (const type* DT) {
-    return DT->class == typeFunction || typeIsInvalid(DT);
+    return DT->tag == typeFunction || typeIsInvalid(DT);
 }
 
 bool typeIsInvalid (const type* DT) {
-    return DT->class == typeInvalid;
+    return DT->tag == typeInvalid;
 }
 
 bool typeIsVoid (const type* DT) {
     /*Is it a built in type of size zero (void)*/
-    return    (   (DT->class == typeBasic && DT->basic->class == symType)
+    return    (   (DT->tag == typeBasic && DT->basic->tag == symType)
                && typeGetSize(DT) == 0)
            || typeIsInvalid(DT);
 }
 
 bool typeIsRecord (const type* DT) {
-    return    (DT->class == typeBasic && DT->basic->class == symStruct)
+    return    (DT->tag == typeBasic && DT->basic->tag == symStruct)
            || typeIsInvalid(DT);
 }
 
 bool typeIsCallable (const type* DT) {
     return    (   typeIsFunction(DT)
-               || (DT->class == typePtr && typeIsFunction(DT->base)))
+               || (DT->tag == typePtr && typeIsFunction(DT->base)))
            || typeIsInvalid(DT);
 }
 
 bool typeIsNumeric (const type* DT) {
-    return    (DT->class == typeBasic && (DT->basic->typeMask & typeNumeric))
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeNumeric))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsOrdinal (const type* DT) {
-    return    (DT->class == typeBasic && (DT->basic->typeMask & typeOrdinal))
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeOrdinal))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsEquality (const type* DT) {
-    return    (DT->class == typeBasic && (DT->basic->typeMask & typeEquality))
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeEquality))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsAssignment (const type* DT) {
-    return    (DT->class == typeBasic && (DT->basic->typeMask & typeAssignment))
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeAssignment))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsCondition (const type* DT) {
-    return (DT->class == typeBasic && (DT->basic->typeMask & typeCondition)) ||
+    return (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition)) ||
             typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
@@ -272,7 +272,7 @@ bool typeIsEqual (const type* L, const type* R) {
     if (typeIsInvalid(L) || typeIsInvalid(R))
         return true;
 
-    else if (L->class != R->class)
+    else if (L->tag != R->tag)
         return false;
 
     else if (typeIsFunction(L))
@@ -291,22 +291,22 @@ bool typeIsEqual (const type* L, const type* R) {
 
 /*:::: MISC INTERFACES ::::*/
 
-const char* typeClassGetStr (typeClass class) {
-    if (class == typeBasic)
+const char* typeTagGetStr (typeTag tag) {
+    if (tag == typeBasic)
         return "typeBasic";
-    else if (class == typePtr)
+    else if (tag == typePtr)
         return "typePtr";
-    else if (class == typeArray)
+    else if (tag == typeArray)
         return "typeArray";
-    else if (class == typeFunction)
+    else if (tag == typeFunction)
         return "typeFunction";
-    else if (class == typeInvalid)
+    else if (tag == typeInvalid)
         return "typeInvalid";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("typeClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("typeTagGetStr", "symbol tag", str);
         free(str);
         return "unhandled";
     }

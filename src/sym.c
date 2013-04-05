@@ -7,7 +7,7 @@
 #include "string.h"
 #include "stdlib.h"
 
-static sym* symCreate (symClass class, sym* Parent);
+static sym* symCreate (symTag tag, sym* Parent);
 static void symDestroy (sym* Symbol);
 
 static void symAddChild (sym* Parent, sym* Child);
@@ -20,9 +20,9 @@ void symEnd (sym* Global) {
     symDestroy(Global);
 }
 
-static sym* symCreate (symClass class, sym* Parent) {
+static sym* symCreate (symTag tag, sym* Parent) {
     sym* Symbol = malloc(sizeof(sym));
-    Symbol->class = class;
+    Symbol->tag = tag;
     Symbol->ident = 0;
 
     Symbol->proto = false;
@@ -88,7 +88,7 @@ sym* symCreateParam (sym* Parent, char* ident) {
 
 static void symAddChild (sym* Parent, sym* Child) {
     /*Global namespace?*/
-    if (!Parent && Child->class == symScope) {
+    if (!Parent && Child->tag == symScope) {
         Child->parent = 0;
         return;
 
@@ -123,7 +123,7 @@ sym* symChild (const sym* Scope, const char* Look) {
             return Current;
 
         /*Children of enums are visible from their parents scope*/
-        if (Current->class == symEnum) {
+        if (Current->tag == symEnum) {
             sym* Found = symChild(Current, Look);
 
             if (Found)
@@ -156,47 +156,47 @@ sym* symFind (const sym* Scope, const char* Look) {
     return 0;
 }
 
-const char* symClassGetStr (symClass class) {
-    if (class == symUndefined)
+const char* symTagGetStr (symTag tag) {
+    if (tag == symUndefined)
         return "symUndefined";
-    else if (class == symScope)
+    else if (tag == symScope)
         return "symScope";
-    else if (class == symType)
+    else if (tag == symType)
         return "symType";
-    else if (class == symStruct)
+    else if (tag == symStruct)
         return "symStruct";
-    else if (class == symEnum)
+    else if (tag == symEnum)
         return "symEnum";
-    else if (class == symId)
+    else if (tag == symId)
         return "symId";
-    else if (class == symParam)
+    else if (tag == symParam)
         return "symParam";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("symClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("symTagGetStr", "symbol tag", str);
         free(str);
         return "unhandled";
     }
 }
 
-const char* storageClassGetStr (storageClass class) {
-    if (class == storageUndefined)
+const char* storageTagGetStr (storageTag tag) {
+    if (tag == storageUndefined)
         return "storageUndefined";
-    else if (class == storageAuto)
+    else if (tag == storageAuto)
         return "storageAuto";
-    else if (class == storageRegister)
+    else if (tag == storageRegister)
         return "storageRegister";
-    else if (class == storageStatic)
+    else if (tag == storageStatic)
         return "storageStatic";
-    else if (class == storageExtern)
+    else if (tag == storageExtern)
         return "storageExtern";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("storageClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("storageTagGetStr", "symbol tag", str);
         free(str);
         return "undefined";
     }

@@ -65,17 +65,17 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
          Current = Current->nextSibling) {
         /*!!!
           what?*/
-        if (Current->class == astFnImpl)
+        if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
-        else if (Current->class == astDeclStruct)
+        else if (Current->tag == astDeclStruct)
             emitterDeclStruct(ctx, Current);
 
-        else if (Current->class == astDecl)
+        else if (Current->tag == astDecl)
             emitterDecl(ctx, Current);
 
         else
-            debugErrorUnhandled("emitterModule", "AST class", astClassGetStr(Current->class));
+            debugErrorUnhandled("emitterModule", "AST tag", astTagGetStr(Current->tag));
     }
 
     debugLeave();
@@ -91,7 +91,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
 
     /*Asign offsets to all the parameters*/
     for (Symbol = Node->symbol->firstChild;
-         Symbol && Symbol->class == symParam;
+         Symbol && Symbol->tag == symParam;
          Symbol = Symbol->nextSibling) {
         Symbol->offset = lastOffset;
         lastOffset += typeGetSize(Symbol->dt);
@@ -117,7 +117,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     asmComment(ctx->Asm, "");
     asmFnPrologue(ctx->Asm,
                   Node->symbol->label,
-                  Node->symbol->lastChild && Node->symbol->lastChild->class != symParam
+                  Node->symbol->lastChild && Node->symbol->lastChild->tag != symParam
                         ? -Node->symbol->lastChild->offset : 0);
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, EndLabel);
@@ -154,9 +154,9 @@ static void emitterDecl (emitterCtx* ctx, const ast* Node) {
          Current;
          Current = Current->nextSibling) {
         /*Initial assignment*/
-        if (Current->class == astBOP && !strcmp(Current->o, "=")) {
+        if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
             /*Array*/
-            if (Current->r->class == astLiteral && Current->r->litClass == literalArray)
+            if (Current->r->tag == astLiteral && Current->r->litTag == literalArray)
                 emitterArrayLiteral(ctx, Current->r, Current->symbol);
 
             else if (Current->symbol->storage == storageAuto) {
@@ -168,7 +168,7 @@ static void emitterDecl (emitterCtx* ctx, const ast* Node) {
                 operandFree(R);
 
             } else
-                debugErrorUnhandled("emitterDecl", "storage class", storageClassGetStr(Node->symbol->storage));
+                debugErrorUnhandled("emitterDecl", "storage tag", storageTagGetStr(Node->symbol->storage));
         }
     }
 
@@ -213,30 +213,30 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
 
     asmComment(ctx->Asm, "");
 
-    if (Node->class == astBranch)
+    if (Node->tag == astBranch)
         emitterBranch(ctx, Node);
 
-    else if (Node->class == astLoop)
+    else if (Node->tag == astLoop)
         emitterLoop(ctx, Node);
 
-    else if (Node->class == astIter)
+    else if (Node->tag == astIter)
         emitterIter(ctx, Node);
 
-    else if (Node->class == astReturn) {
+    else if (Node->tag == astReturn) {
         emitterValue(ctx, Node->r, operandCreateReg(regRAX));
         asmJump(ctx->Asm, ctx->labelReturnTo);
 
-    } else if (Node->class == astBreak)
+    } else if (Node->tag == astBreak)
         asmJump(ctx->Asm, ctx->labelBreakTo);
 
-    else if (Node->class == astDecl)
+    else if (Node->tag == astDecl)
         emitterDecl(ctx, Node);
 
-    else if (astIsValueClass(Node->class))
+    else if (astIsValueTag(Node->tag))
         operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
 
     else
-        debugErrorUnhandled("emitterLine", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("emitterLine", "AST tag", astTagGetStr(Node->tag));
 
     debugLeave();
 }
@@ -283,7 +283,7 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
-    bool isDo = Node->l->class == astCode;
+    bool isDo = Node->l->tag == astCode;
     ast* cond = isDo ? Node->r : Node->l;
     ast* code = isDo ? Node->l : Node->r;
 
@@ -322,23 +322,23 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
 
     /*Initialize stuff*/
 
-    if (init->class == astDecl) {
+    if (init->tag == astDecl) {
         emitterDecl(ctx, init);
         asmComment(ctx->Asm, "");
 
-    } else if (astIsValueClass(init->class)) {
+    } else if (astIsValueTag(init->tag)) {
         operandFree(emitterValue(ctx, init, operandCreate(operandUndefined)));
         asmComment(ctx->Asm, "");
 
-    } else if (init->class != astEmpty)
-        debugErrorUnhandled("emitterIter", "AST class", astClassGetStr(init->class));
+    } else if (init->tag != astEmpty)
+        debugErrorUnhandled("emitterIter", "AST tag", astTagGetStr(init->tag));
 
 
     /*Check condition*/
 
     asmLabel(ctx->Asm, LoopLabel);
 
-    if (cond->class != astEmpty) {
+    if (cond->tag != astEmpty) {
         operand Condition = emitterValue(ctx, cond, operandCreateFlags(conditionUndefined));
         asmBranch(ctx->Asm, Condition, EndLabel);
     }
@@ -350,7 +350,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
 
     /*Iterate*/
 
-    if (iter->class != astEmpty) {
+    if (iter->tag != astEmpty) {
         operandFree(emitterValue(ctx, iter, operandCreate(operandUndefined)));
         asmComment(ctx->Asm, "");
     }

@@ -86,7 +86,7 @@ static bool isCommaBOP (char* o) {
 }
 
 const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
-    if (Node->class == astBOP) {
+    if (Node->tag == astBOP) {
         if (isNumericBOP(Node->o) || isAssignmentBOP(Node->o))
             return analyzerBOP(ctx, Node);
 
@@ -104,37 +104,37 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
             return Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->class == astUOP)
+    } else if (Node->tag == astUOP)
         return analyzerUOP(ctx, Node);
 
-    else if (Node->class == astTOP)
+    else if (Node->tag == astTOP)
         return analyzerTernary(ctx, Node);
 
-    else if (Node->class == astIndex)
+    else if (Node->tag == astIndex)
         return analyzerIndex(ctx, Node);
 
-    else if (Node->class == astCall)
+    else if (Node->tag == astCall)
         return analyzerCall(ctx, Node);
 
-    else if (Node->class == astCast)
+    else if (Node->tag == astCast)
         return analyzerCast(ctx, Node);
 
-    else if (Node->class == astSizeof)
+    else if (Node->tag == astSizeof)
         return analyzerSizeof(ctx, Node);
 
-    else if (Node->class == astLiteral) {
-        if (Node->litClass == literalArray)
+    else if (Node->tag == astLiteral) {
+        if (Node->litTag == literalArray)
             return analyzerArrayLiteral(ctx, Node);
 
         else
             return analyzerLiteral(ctx, Node);
 
-    } else if (Node->class == astInvalid) {
+    } else if (Node->tag == astInvalid) {
         debugMsg("Invalid");
         return Node->dt = typeCreateInvalid();
 
     } else {
-        debugErrorUnhandled("analyzerValue", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("analyzerValue", "AST tag", astTagGetStr(Node->tag));
         return Node->dt = typeCreateInvalid();
     }
 }
@@ -463,7 +463,7 @@ static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node) {
     /*Hand it off to the relevant function, but there's no analysis
       to be done here*/
 
-    if (Node->r->class == astType)
+    if (Node->r->tag == astType)
         analyzerType(ctx, Node->r);
 
     else
@@ -479,21 +479,21 @@ static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("Literal");
 
-    if (Node->litClass == literalInt)
+    if (Node->litTag == literalInt)
         Node->dt = typeCreateBasic(ctx->types[builtinInt]);
 
-    else if (Node->litClass == literalBool)
+    else if (Node->litTag == literalBool)
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
-    else if (Node->litClass == literalStr)
+    else if (Node->litTag == literalStr)
         /* char* */
         Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
 
-    else if (Node->litClass == literalIdent)
+    else if (Node->litTag == literalIdent)
         Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
     else {
-        debugErrorUnhandled("analyzerLiteral", "literal class", literalClassGetStr(Node->litClass));
+        debugErrorUnhandled("analyzerLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Node->dt = typeCreateInvalid();
     }
 

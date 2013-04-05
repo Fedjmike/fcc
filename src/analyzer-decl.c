@@ -16,7 +16,7 @@ static void analyzerDeclParam (analyzerCtx* ctx, ast* Node);
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
 
 /**
- * Handles any node class that parserDeclExpr may produce by passing it
+ * Handles any node tag that parserDeclExpr may produce by passing it
  * off to one of the following specialized handlers.
  */
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base);
@@ -84,17 +84,17 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
 
     debugEnter("DeclBasic");
 
-    if (Node->class == astLiteral) {
-        if (Node->litClass == literalIdent)
+    if (Node->tag == astLiteral) {
+        if (Node->litTag == literalIdent)
             Node->dt = typeCreateBasic(Node->symbol);
 
         else {
-            debugErrorUnhandled("analyzerDeclBasic", "literal class", literalClassGetStr(Node->litClass));
+            debugErrorUnhandled("analyzerDeclBasic", "literal tag", literalTagGetStr(Node->litTag));
             Node->dt = typeCreateInvalid();
         }
 
     } else {
-        debugErrorUnhandled("analyzerDeclBasic", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("analyzerDeclBasic", "AST tag", astTagGetStr(Node->tag));
         Node->dt = typeCreateInvalid();
     }
 
@@ -104,14 +104,14 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
 }
 
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
-    if (Node->class == astInvalid) {
+    if (Node->tag == astInvalid) {
         debugMsg("Invalid");
         return Node->dt = typeCreateInvalid();
 
-    } else if (Node->class == astEmpty)
+    } else if (Node->tag == astEmpty)
         return Node->dt = typeDeepDuplicate(base);
 
-    else if (Node->class == astBOP) {
+    else if (Node->tag == astBOP) {
         if (!strcmp(Node->o, "="))
             return analyzerDeclAssignBOP(ctx, Node, base);
 
@@ -120,7 +120,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
             return Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->class == astUOP) {
+    } else if (Node->tag == astUOP) {
         if (!strcmp(Node->o, "*"))
             return analyzerDeclPtrUOP(ctx, Node, base);
 
@@ -129,23 +129,23 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
             return Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->class == astCall)
+    } else if (Node->tag == astCall)
         return analyzerDeclCall(ctx, Node, base);
 
-    else if (Node->class == astIndex)
+    else if (Node->tag == astIndex)
         return analyzerDeclIndex(ctx, Node, base);
 
-    else if (Node->class == astLiteral) {
-        if (Node->litClass == literalIdent)
+    else if (Node->tag == astLiteral) {
+        if (Node->litTag == literalIdent)
             return analyzerDeclIdentLiteral(ctx, Node, base);
 
         else {
-            debugErrorUnhandled("analyzerDeclNode", "literal class", literalClassGetStr(Node->litClass));
+            debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
             return Node->dt = typeCreateInvalid();
         }
 
     } else {
-        debugErrorUnhandled("analyzerDeclNode", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
         return Node->dt = typeCreateInvalid();
     }
 }
@@ -208,14 +208,14 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base) {
     debugEnter("DeclIndex");
 
-    if (Node->r->class == astEmpty)
+    if (Node->r->tag == astEmpty)
         Node->dt = typeCreatePtr(typeDeepDuplicate(base));
 
     else {
         /*!!!*/
         analyzerValue(ctx, Node->r);
-        int size =      Node->r->class == astLiteral
-                     && Node->r->litClass == literalInt
+        int size =      Node->r->tag == astLiteral
+                     && Node->r->litTag == literalInt
                    ? *(int*) Node->r->literal
                    : 10; //lol
 

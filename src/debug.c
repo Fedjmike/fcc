@@ -96,10 +96,10 @@ void reportType (const type* DT) {
             (void*) DT);
 
     if (DT != 0) {
-        /*Class*/
+        /*Tag*/
 
-        fprintf(logFile, "class: %s   ",
-                typeClassGetStr(DT->class));
+        fprintf(logFile, "tag: %s   ",
+                typeTagGetStr(DT->tag));
 
         /*Base type*/
 
@@ -120,28 +120,28 @@ void reportType (const type* DT) {
 }
 
 void reportSymbol (const sym* Symbol) {
-    /*Class*/
+    /*Tag*/
 
-    fprintf(logFile, "class: %s   ",
-            symClassGetStr(Symbol->class));
+    fprintf(logFile, "tag: %s   ",
+            symTagGetStr(Symbol->tag));
 
     /*Symbol name*/
 
-    if (Symbol->class != symScope)
+    if (Symbol->tag != symScope)
         fprintf(logFile, "symbol: %s   ",
                 Symbol->ident);
 
     /*Parent*/
 
-    if (   Symbol->class != symType
-        && Symbol->class != symStruct)
+    if (   Symbol->tag != symType
+        && Symbol->tag != symStruct)
         fprintf(logFile, "parent: %s   ",
                 Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
 
-    if (   (   Symbol->class == symId
-            || Symbol->class == symParam)
+    if (   (   Symbol->tag == symId
+            || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         char* Str = typeToStr(Symbol->dt, "");
         fprintf(logFile, "type: %s   ", Str);
@@ -150,10 +150,10 @@ void reportSymbol (const sym* Symbol) {
 
     /*Size*/
 
-    if (   (   Symbol->class == symId
-            || Symbol->class == symParam)
+    if (   (   Symbol->tag == symId
+            || Symbol->tag == symParam)
         && Symbol->dt != 0) {
-        if (Symbol->dt->class == typeArray)
+        if (Symbol->dt->tag == typeArray)
             fprintf(logFile, "size: %dx%d   ",
                     typeGetSize(Symbol->dt->base),
                     Symbol->dt->array);
@@ -162,14 +162,14 @@ void reportSymbol (const sym* Symbol) {
             fprintf(logFile, "size:   %d   ",
                     typeGetSize(Symbol->dt));
 
-    } else if (Symbol->class == symStruct)
+    } else if (Symbol->tag == symStruct)
         fprintf(logFile, "size:   %d   ",
                 Symbol->size);
 
     /*Offset*/
 
-    if (   Symbol->class == symId
-        || Symbol->class == symParam)
+    if (   Symbol->tag == symId
+        || Symbol->tag == symParam)
         fprintf(logFile, "offset: %d",
                 Symbol->offset);
 
@@ -177,9 +177,9 @@ void reportSymbol (const sym* Symbol) {
 }
 
 void reportNode (const ast* Node) {
-    fprintf(logFile, "node: %p   class: %s   ",
+    fprintf(logFile, "node: %p   tag: %s   ",
             (void*) Node,
-            astClassGetStr(Node->class));
+            astTagGetStr(Node->tag));
 
     if (Node->nextSibling)
         fprintf(logFile, "next: %p   ",

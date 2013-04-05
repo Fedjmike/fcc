@@ -133,45 +133,45 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
 }
 
 void analyzerNode (analyzerCtx* ctx, ast* Node) {
-    if (Node->class == astEmpty)
+    if (Node->tag == astEmpty)
         debugMsg("Empty");
 
-    else if (Node->class == astInvalid)
+    else if (Node->tag == astInvalid)
         debugMsg("Invalid");
 
-    else if (Node->class == astFnImpl)
+    else if (Node->tag == astFnImpl)
         analyzerFnImpl(ctx, Node);
 
-    else if (Node->class == astDeclStruct)
+    else if (Node->tag == astDeclStruct)
         analyzerDeclStruct(ctx, Node);
 
-    else if (Node->class == astDecl)
+    else if (Node->tag == astDecl)
         analyzerDecl(ctx, Node);
 
-    else if (Node->class == astCode)
+    else if (Node->tag == astCode)
         analyzerCode(ctx, Node);
 
-    else if (Node->class == astBranch)
+    else if (Node->tag == astBranch)
         analyzerBranch(ctx, Node);
 
-    else if (Node->class == astLoop)
+    else if (Node->tag == astLoop)
         analyzerLoop(ctx, Node);
 
-    else if (Node->class == astIter)
+    else if (Node->tag == astIter)
         analyzerIter(ctx, Node);
 
-    else if (Node->class == astReturn)
+    else if (Node->tag == astReturn)
         analyzerReturn(ctx, Node);
 
-    else if (Node->class == astBreak)
+    else if (Node->tag == astBreak)
         ; /*Nothing to check (inside breakable block is a parsing issue)*/
 
-    else if (astIsValueClass(Node->class))
+    else if (astIsValueTag(Node->tag))
         /*TODO: Check not throwing away value*/
         analyzerValue(ctx, Node);
 
     else
-        debugErrorUnhandled("analyzerNode", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("analyzerNode", "AST tag", astTagGetStr(Node->tag));
 }
 
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
@@ -222,7 +222,7 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
     debugEnter("Loop");
 
     /*do while?*/
-    bool isDo = Node->l->class == astCode;
+    bool isDo = Node->l->tag == astCode;
     ast* cond = isDo ? Node->r : Node->l;
     ast* code = isDo ? Node->l : Node->r;
 
@@ -249,15 +249,15 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 
     /*Initializer*/
 
-    if (init->class == astDecl)
+    if (init->tag == astDecl)
         analyzerNode(ctx, init);
 
-    else if (init->class != astEmpty)
+    else if (init->tag != astEmpty)
         analyzerValue(ctx, init);
 
     /*Condition*/
 
-    if (cond->class != astEmpty) {
+    if (cond->tag != astEmpty) {
         const type* condDT = analyzerValue(ctx, cond);
 
         if (!typeIsCondition(condDT))
@@ -266,7 +266,7 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 
     /*Iterator*/
 
-    if (iter->class != astEmpty)
+    if (iter->tag != astEmpty)
         analyzerValue(ctx, iter);
 
     /*Code*/

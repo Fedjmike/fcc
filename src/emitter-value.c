@@ -31,55 +31,55 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
 
     /*Calculate the value*/
 
-    if (Node->class == astBOP)
+    if (Node->tag == astBOP)
         Value = emitterBOP(ctx, Node);
 
-    else if (Node->class == astUOP)
+    else if (Node->tag == astUOP)
         Value = emitterUOP(ctx, Node);
 
-    else if (Node->class == astTOP)
+    else if (Node->tag == astTOP)
         Value = emitterTOP(ctx, Node);
 
-    else if (Node->class == astIndex)
+    else if (Node->tag == astIndex)
         Value = emitterIndex(ctx, Node);
 
-    else if (Node->class == astCall)
+    else if (Node->tag == astCall)
         Value = emitterCall(ctx, Node);
 
-    else if (Node->class == astCast)
+    else if (Node->tag == astCast)
         Value = emitterValue(ctx, Node->r, Dest);
 
-    else if (Node->class == astLiteral) {
-        if (Node->litClass == literalIdent)
+    else if (Node->tag == astLiteral) {
+        if (Node->litTag == literalIdent)
             Value = emitterSymbol(ctx, Node);
 
         else
             Value = emitterLiteral(ctx, Node);
 
     } else
-        debugErrorUnhandled("emitterValue", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("emitterValue", "AST tag", astTagGetStr(Node->tag));
 
     /*Put it where requested*/
 
     /*If they haven't specifically asked for the reference as memory
       then they're unaware it's held as a reference at all
       so make it a plain ol' value*/
-    if (Value.class == operandMemRef && Dest.class != operandMem) {
+    if (Value.tag == operandMemRef && Dest.tag != operandMem) {
         operand nValue = operandCreateReg(regAllocGeneral());
         asmEvalAddress(ctx->Asm, nValue, Value);
         operandFree(Value);
         Value = nValue;
     }
 
-    if (Dest.class != operandUndefined) {
-        if (Dest.class != Value.class) {
-            if (Dest.class == operandFlags) {
+    if (Dest.tag != operandUndefined) {
+        if (Dest.tag != Value.tag) {
+            if (Dest.tag == operandFlags) {
                 asmBOP(ctx->Asm, bopCmp, Value, operandCreateLiteral(0));
                 operandFree(Value);
 
                 Dest = operandCreateFlags(conditionEqual);
 
-            } else if (Dest.class == operandReg) {
+            } else if (Dest.tag == operandReg) {
                 /*If a specific register wasn't requested, allocate one*/
                 if (Dest.reg == regUndefined)
                     Dest.reg = regAllocGeneral();
@@ -87,17 +87,17 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
                 asmMove(ctx->Asm, Dest, Value);
                 operandFree(Value);
 
-            } else if (Dest.class == operandMem) {
-                if (Value.class == operandMemRef) {
+            } else if (Dest.tag == operandMem) {
+                if (Value.tag == operandMemRef) {
                     Dest = Value;
-                    Dest.class = operandMem;
+                    Dest.tag = operandMem;
 
                 } else
-                    printf("emitterValue(): unable to convert non lvalue operand class, %d.\n", Value.class);
+                    printf("emitterValue(): unable to convert non lvalue operand tag, %d.\n", Value.tag);
 
-            } else if (Dest.class == operandStack) {
+            } else if (Dest.tag == operandStack) {
                 /*Larger than a word?*/
-                if (Value.class == operandMem && Value.size > 8) {
+                if (Value.tag == operandMem && Value.size > 8) {
                     int total = Value.size;
 
                     /*Then push on *backwards* in word chunks.
@@ -118,15 +118,15 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
                     Dest.size = 8;
                 }
 
-            } else if (Value.class == operandUndefined)
+            } else if (Value.tag == operandUndefined)
                 printf("emitterValue(): expected value, void given.\n");
 
             else {
-                debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Value.class));
-                debugErrorUnhandled("emitterValue", "operand class", operandClassGetStr(Dest.class));
+                debugErrorUnhandled("emitterValue", "operand tag", operandTagGetStr(Value.tag));
+                debugErrorUnhandled("emitterValue", "operand tag", operandTagGetStr(Dest.tag));
             }
 
-        } else if (Dest.class == operandReg && Dest.reg != Value.reg) {
+        } else if (Dest.tag == operandReg && Dest.reg != Value.reg) {
             if (Dest.reg == regUndefined)
                 Dest.reg = regAllocGeneral();
 
@@ -360,11 +360,11 @@ operand emitterIndex (emitterCtx* ctx, const ast* Node) {
         R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
 
-        if (R.class == operandLiteral) {
+        if (R.tag == operandLiteral) {
             Value = L;
             Value.offset += typeGetSize(Node->l->dt->base) * R.literal;
 
-        } else if (R.class == operandReg) {
+        } else if (R.tag == operandReg) {
             Value = L;
             Value.index = R.reg;
             Value.factor = typeGetSize(Node->l->dt->base);
@@ -439,7 +439,7 @@ operand emitterCall (emitterCtx* ctx, const ast* Node) {
     asmPopN(ctx->Asm, argSize/8);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
-    for (regClass reg = regR15; reg >= regRAX; reg--)
+    for (regTag reg = regR15; reg >= regRAX; reg--)
         //Attempt to restore all but the one we just allocated for the ret value
         if (regIsUsed(reg) && reg != Value.reg)
             asmPop(ctx->Asm, operandCreateReg(reg));
@@ -479,19 +479,19 @@ operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
 
     operand Value;
 
-    if (Node->litClass == literalInt)
+    if (Node->litTag == literalInt)
         Value = operandCreateLiteral(*(int*) Node->literal);
 
-    else if (Node->litClass == literalBool)
+    else if (Node->litTag == literalBool)
         Value = operandCreateLiteral(*(char*) Node->literal);
 
-    else if (Node->litClass == literalStr) {
+    else if (Node->litTag == literalStr) {
         operand ConstLabel = labelCreate(labelROData);
         asmStringConstant(ctx->Asm, ConstLabel, (char*) Node->literal);
         Value = operandCreateLabelOffset(ConstLabel);
 
     } else {
-        debugErrorUnhandled("emitterLiteral", "literal class", literalClassGetStr(Node->litClass));
+        debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Value = operandCreateInvalid();
     }
 

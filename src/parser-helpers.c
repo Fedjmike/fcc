@@ -9,7 +9,7 @@
 #include "stdarg.h"
 #include "string.h"
 
-static char* tokenClassGetStr (tokenClass Token);
+static char* tokenTagGetStr (tokenTag Token);
 
 /*:::: SCOPE ::::*/
 
@@ -80,9 +80,9 @@ bool tokenIsString (const parserCtx* ctx) {
 bool tokenIsDecl (const parserCtx* ctx) {
     sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
-    return    (Symbol && (   Symbol->class == symType
-                          || Symbol->class == symStruct
-                          || Symbol->class == symEnum))
+    return    (Symbol && (   Symbol->tag == symType
+                          || Symbol->tag == symStruct
+                          || Symbol->tag == symEnum))
            || tokenIs(ctx, "const");
 }
 
@@ -110,33 +110,33 @@ char* tokenDupMatch (parserCtx* ctx) {
 }
 
 /**
- * Return the string associated with a token class
+ * Return the string associated with a token tag
  */
-static char* tokenClassGetStr (tokenClass class) {
-    if (class == tokenOther)
+static char* tokenTagGetStr (tokenTag tag) {
+    if (tag == tokenOther)
         return "other";
-    else if (class == tokenEOF)
+    else if (tag == tokenEOF)
         return "end of file";
-    else if (class == tokenIdent)
+    else if (tag == tokenIdent)
         return "identifier";
-    else if (class == tokenInt)
+    else if (tag == tokenInt)
         return "int";
 
     else {
-        char* str = malloc(logi(class, 10)+2);
-        sprintf(str, "%d", class);
-        debugErrorUnhandled("tokenClassGetStr", "symbol class", str);
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("tokenTagGetStr", "symbol tag", str);
         free(str);
         return "unhandled";
     }
 }
 
-void tokenMatchToken (parserCtx* ctx, tokenClass Match) {
+void tokenMatchToken (parserCtx* ctx, tokenTag Match) {
     if (ctx->lexer->token == Match)
         tokenMatch(ctx);
 
     else {
-        errorExpected(ctx, tokenClassGetStr(Match));
+        errorExpected(ctx, tokenTagGetStr(Match));
         lexerNext(ctx->lexer);
     }
 }
