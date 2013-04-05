@@ -11,6 +11,14 @@
 
 static char* tokenClassGetStr (tokenClass Token);
 
+/*:::: SCOPE ::::*/
+
+sym* scopeSet (parserCtx* ctx, sym* Scope) {
+    sym* Old = ctx->scope;
+    ctx->scope = Scope;
+    return Old;
+}
+
 /*:::: ERROR MESSAGING ::::*/
 
 static void error (parserCtx* ctx, const char* format, ...) {
@@ -24,7 +32,7 @@ static void error (parserCtx* ctx, const char* format, ...) {
     puts(".");
 
     ctx->errors++;
-    getchar();
+    debugWait();
 }
 
 void errorExpected (parserCtx* ctx, const char* Expected) {
@@ -39,29 +47,37 @@ void errorIllegalBreak (parserCtx* ctx) {
     error(ctx, "cannot break when not in loop or switch");
 }
 
-void errorIdentOutsideDecl (struct parserCtx* ctx) {
+void errorIdentOutsideDecl (parserCtx* ctx) {
     error(ctx, "identifier given outside declaration");
 }
 
-void errorDuplicateSym (struct parserCtx* ctx) {
+void errorDuplicateSym (parserCtx* ctx) {
     error(ctx, "duplicated identifier '%s'", ctx->lexer->buffer);
+}
+
+void errorRedeclaredSym (struct parserCtx* ctx) {
+    error(ctx, "identifier '%s' redeclared as a different kind of symbol", ctx->lexer->buffer);
 }
 
 /*:::: TOKEN HANDLING ::::*/
 
-bool tokenIs (parserCtx* ctx, const char* Match) {
+bool tokenIs (const parserCtx* ctx, const char* Match) {
     return !strcmp(ctx->lexer->buffer, Match);
 }
 
-bool tokenIsIdent (struct parserCtx* ctx) {
+bool tokenIsIdent (const parserCtx* ctx) {
     return ctx->lexer->token == tokenIdent;
 }
 
-bool tokenIsInt (struct parserCtx* ctx) {
+bool tokenIsInt (const parserCtx* ctx) {
     return ctx->lexer->token == tokenInt;
 }
 
-bool tokenIsDecl (parserCtx* ctx) {
+bool tokenIsString (const parserCtx* ctx) {
+    return ctx->lexer->token == tokenStr;
+}
+
+bool tokenIsDecl (const parserCtx* ctx) {
     sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
     return    (Symbol && (   Symbol->class == symType
@@ -107,10 +123,10 @@ static char* tokenClassGetStr (tokenClass class) {
         return "int";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("tokenClassGetStr", "token class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("tokenClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }

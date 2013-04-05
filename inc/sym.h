@@ -119,14 +119,14 @@ sym* symCreateParam (sym* Parent, char* ident);
  * inside contained enums, anon. unions but will not look at parent scopes.
  * @return Symbol, or null on failure.
  */
-sym* symChild (sym* Scope, char* Look);
+sym* symChild (const sym* Scope, const char* Look);
 
 /**
  * Attempt to find a symbol visible from a scope. Will recurse up parent
  * scopes.
  * @return Symbol, or null on failure
  */
-sym* symFind (sym* Scope, char* Look);
+sym* symFind (const sym* Scope, const char* Look);
 
 const char* symClassGetStr (symClass class);
 const char* storageClassGetStr (storageClass class);

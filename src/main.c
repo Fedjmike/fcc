@@ -83,6 +83,7 @@ int main (int argc, char** argv) {
     /*Emit the assembly*/
 
     if (!fail) {
+        debugWait();
         debugMsg("Emitting");
         emitter(Tree, File);
         debugMsg("");

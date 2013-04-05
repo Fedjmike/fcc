@@ -18,6 +18,8 @@ void debugInit (FILE* log);
 
 debugMode debugSetMode (debugMode mode);
 
+void debugWait ();
+
 void debugEnter (const char* str);
 void debugLeave ();
 void debugMsg (const char* format, ...);

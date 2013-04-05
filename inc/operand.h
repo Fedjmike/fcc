@@ -4,12 +4,14 @@
 
 typedef enum {
     operandUndefined,
+    operandInvalid,
     operandFlags,
     operandReg,
     operandMem,
     operandMemRef,
     operandLiteral,
     operandLabel,
+    operandLabelOffset,
     operandStack
 } operandClass;
 
@@ -22,6 +24,13 @@ typedef enum {
     conditionLess,
     conditionLessEqual
 } conditionClass;
+
+typedef enum {
+    labelUndefined,
+    labelReturn,
+    labelBreak,
+    labelROData
+} labelClass;
 
 typedef struct {
     operandClass class;
@@ -41,13 +50,15 @@ typedef struct {
 
 extern char* Conditions[];
 
-operand operandCreate (operandClass Class);
+operand operandCreate (operandClass class);
+operand operandCreateInvalid ();
 operand operandCreateFlags (conditionClass Condition);
 operand operandCreateReg (regClass Reg);
 operand operandCreateMem (int Reg, int Offset, int Size);
 operand operandCreateMemRef (int Reg, int Offset, int Size);
 operand operandCreateLiteral (int Literal);
 operand operandCreateLabel (int Label);
+operand operandCreateLabelOffset (operand label);
 
 int operandGetSize (operand Value);
 
@@ -65,14 +76,10 @@ int conditionNegate (int Condition);
 
 /* ::::LABELS:::: */
 
-extern int labelUndefined;
-extern int labelReturn;
-extern int labelBreak;
+operand labelCreate (int class);
 
-operand labelCreate (int Class);
+operand labelNamed (const char* Name);
 
-operand labelNamed (char* Name);
-
-char* labelGet (operand Label);
+const char* labelGet (operand Label);
 
 void labelFreeAll ();

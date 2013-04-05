@@ -5,7 +5,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Discrepancies between GCC and FCC:
         - struct and union decl syntax & semantics
         - Module system
-        - Sequence points? No, seems to be the same
+        - Operator precedence
     [ ] ABI
 [ ] Command line options
     [ ] Control pretty printing
@@ -26,7 +26,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] enum
 	[ ] Cray-cray anonymous struct in anonymous enum in struct things
 [-] Block scope
-[-] Casts
+[x] Casts
     - (type) value
     - Differentiate between this and (value) by symbol lookup
 [-] Operators
@@ -41,10 +41,10 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] const
 [ ] string
 [x] bool
-[ ] Prototypes
+[-] Prototypes
     [ ] Structs
     [ ] Functions
-[ ] Function pointers?
+[-] Function pointers?
 [x] do while
 [ ] Varargs
 [ ] static
@@ -53,8 +53,8 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] extern
 [ ] Global variables
 [ ] CRT support
-[ ] sizeof
-[ ] break
+[-] sizeof
+[x] break
 [ ] main
     [ ] Args
     [ ] Conformance
@@ -65,13 +65,13 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] If an operand is not literally the result, recreate it
     fo safety n shizzle
 [ ] Emitter helper functions
-[ ] Normalize ptr decl binding
-[-] astCreateBOP(op, left, right)
+[x] Normalize ptr decl binding
+[x] astCreateBOP(op, left, right)
 [-] Decode AST nodes like in emitterLoop and emitterFor
 [-] Assertions
 [ ] Clean up value moving code
-[-] Const correctness
-[-] Make sure prototypes and implementation match exactly (static)
+[x] Const correctness
+[ ] Make sure prototypes and implementation match exactly (static)
 [ ] Use a cond field of ??? AST ???
 [ ] Do analyzerArrayLiteral lits properly
 [ ] File names in error messages
@@ -81,9 +81,16 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Fix lvalue error messages
 [ ] Check constness of array sizes, enum values etc
 [x] Move type assignment stuff to analyzer? Could solve some of the above
-[ ] Filext
+[x] Filext
 [ ] class -> tag
 [ ] Array size detection (basic x[] = {...})
+[ ] Lvalues
+[ ] Free operands before use, so can do things like:
+      mov rbx, dword ptr [rbp+16]
+      mov _rbx_, dword ptr [rbx+8]
+[ ] Symbol shadowing
+[ ] Review type compatibility (esp. w.r.t. derivation & unification)
+[ ] Check that fn impl and var init are semantically valid
 
 [ ] Abysmal error recovery
 [-] AST is not abstract

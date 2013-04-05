@@ -17,16 +17,16 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-static operand emitterBOP (emitterCtx* ctx, ast* Node);
-static operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node);
-static operand emitterUOP (emitterCtx* ctx, ast* Node);
-static operand emitterTOP (emitterCtx* ctx, ast* Node);
-static operand emitterIndex (emitterCtx* ctx, ast* Node);
-static operand emitterCall (emitterCtx* ctx, ast* Node);
-static operand emitterSymbol (emitterCtx* ctx, ast* Node);
-static operand emitterLiteral (emitterCtx* ctx, ast* Node);
+static operand emitterBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterUOP (emitterCtx* ctx, const ast* Node);
+static operand emitterTOP (emitterCtx* ctx, const ast* Node);
+static operand emitterIndex (emitterCtx* ctx, const ast* Node);
+static operand emitterCall (emitterCtx* ctx, const ast* Node);
+static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
+static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 
-operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
+operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     operand Value;
 
     /*Calculate the value*/
@@ -40,21 +40,21 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
     else if (Node->class == astTOP)
         Value = emitterTOP(ctx, Node);
 
+    else if (Node->class == astIndex)
+        Value = emitterIndex(ctx, Node);
+
     else if (Node->class == astCall)
         Value = emitterCall(ctx, Node);
 
-    else if (Node->class == astIndex)
-        Value = emitterIndex(ctx, Node);
+    else if (Node->class == astCast)
+        Value = emitterValue(ctx, Node->r, Dest);
 
     else if (Node->class == astLiteral) {
         if (Node->litClass == literalIdent)
             Value = emitterSymbol(ctx, Node);
 
-        else if (Node->litClass == literalInt || Node->litClass == literalBool)
-            Value = emitterLiteral(ctx, Node);
-
         else
-            debugErrorUnhandled("emitterValue", "literal class", literalClassGetStr(Node->litClass));
+            Value = emitterLiteral(ctx, Node);
 
     } else
         debugErrorUnhandled("emitterValue", "AST class", astClassGetStr(Node->class));
@@ -142,17 +142,17 @@ operand emitterValue (emitterCtx* ctx, ast* Node, operand Dest) {
     return Dest;
 }
 
-operand emitterBOP (emitterCtx* ctx, ast* Node) {
+operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("BOP");
 
     operand L;
     operand R;
     operand Value;
 
-    if (!strcmp(Node->o, "=") ||
-        !strcmp(Node->o, "+=") ||
-        !strcmp(Node->o, "-=") ||
-        !strcmp(Node->o, "*="))
+    if (   !strcmp(Node->o, "=")
+        || !strcmp(Node->o, "+=")
+        || !strcmp(Node->o, "-=")
+        || !strcmp(Node->o, "*="))
         Value = emitterAssignmentBOP(ctx, Node);
 
     else if (!strcmp(Node->o, ".")) {
@@ -170,39 +170,38 @@ operand emitterBOP (emitterCtx* ctx, ast* Node) {
 
         Value = operandCreateMem(L.reg, Node->symbol->offset, typeGetSize(Node->dt));
 
-    } else {
+    } else if (   !strcmp(Node->o, "==")
+               || !strcmp(Node->o, "!=")
+               || !strcmp(Node->o, "<")
+               || !strcmp(Node->o, "<=")
+               || !strcmp(Node->o, ">" )
+               || !strcmp(Node->o, ">=")) {
         asmEnter(ctx->Asm);
-        L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
+        L = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
         R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
 
-        if (!strcmp(Node->o, "==") ||
-            !strcmp(Node->o, "!=") ||
-            !strcmp(Node->o, "<") ||
-            !strcmp(Node->o, "<=") ||
-            !strcmp(Node->o, ">" ) ||
-            !strcmp(Node->o, ">=")) {
-            Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
-            asmBOP(ctx->Asm, bopCmp, L, R);
-            operandFree(L);
+        Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
+        asmBOP(ctx->Asm, bopCmp, L, R);
+        operandFree(L);
 
-        } else {
-            Value = L;
+    } else {
+        asmEnter(ctx->Asm);
+        Value = L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
+        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
 
-            if (!strcmp(Node->o, "+"))
-                asmBOP(ctx->Asm, bopAdd, L, R);
+        if (!strcmp(Node->o, "+"))
+            asmBOP(ctx->Asm, bopAdd, L, R);
 
-            else if (!strcmp(Node->o, "-"))
-                asmBOP(ctx->Asm, bopSub, L, R);
+        else if (!strcmp(Node->o, "-"))
+            asmBOP(ctx->Asm, bopSub, L, R);
 
-            else if (!strcmp(Node->o, "*"))
-                asmBOP(ctx->Asm, bopMul, L, R);
+        else if (!strcmp(Node->o, "*"))
+            asmBOP(ctx->Asm, bopMul, L, R);
 
-            else
-                debugErrorUnhandled("emitterBOP", "operator", Node->o);
-        }
-
-        operandFree(R);
+        else
+            debugErrorUnhandled("emitterBOP", "operator", Node->o);
     }
 
     debugLeave();
@@ -210,7 +209,7 @@ operand emitterBOP (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node) {
+operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     asmEnter(ctx->Asm);
     operand L = emitterValue(ctx, Node->l, operandCreate(operandMem));;
     operand R;
@@ -258,7 +257,7 @@ operand emitterAssignmentBOP (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterUOP (emitterCtx* ctx, ast* Node) {
+operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("UOP");
 
     operand Value;
@@ -278,6 +277,13 @@ operand emitterUOP (emitterCtx* ctx, ast* Node) {
 
         else /*if (!strcmp(Node->o, "--"))*/
             asmUOP(ctx->Asm, uopDec, R);
+
+    } else if (!strcmp(Node->o, "-")) {
+        asmEnter(ctx->Asm);
+        Value = R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
+        asmLeave(ctx->Asm);
+
+        asmUOP(ctx->Asm, uopNeg, R);
 
     } else if (!strcmp(Node->o, "*")) {
         asmEnter(ctx->Asm);
@@ -300,15 +306,17 @@ operand emitterUOP (emitterCtx* ctx, ast* Node) {
 
         asmEvalAddress(ctx->Asm, Value, R);
 
-    } else
+    } else {
         debugErrorUnhandled("emitterUOP", "operator", Node->o);
+        Value = operandCreateInvalid();
+    }
 
     debugLeave();
 
     return Value;
 }
 
-operand emitterTOP (emitterCtx* ctx, ast* Node) {
+operand emitterTOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("TOP");
 
     operand ElseLabel = labelCreate(labelUndefined);
@@ -337,7 +345,7 @@ operand emitterTOP (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterIndex (emitterCtx* ctx, ast* Node) {
+operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     debugEnter("Index");
 
     operand Value;
@@ -393,7 +401,7 @@ operand emitterIndex (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterCall (emitterCtx* ctx, ast* Node) {
+operand emitterCall (emitterCtx* ctx, const ast* Node) {
     debugEnter("Call");
 
     operand Value;
@@ -441,7 +449,7 @@ operand emitterCall (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterSymbol (emitterCtx* ctx, ast* Node) {
+operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
     (void) ctx;
 
     debugEnter("Symbol");
@@ -457,7 +465,6 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
 
         else
             Value = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
-
     }
 
     debugLeave();
@@ -465,7 +472,7 @@ operand emitterSymbol (emitterCtx* ctx, ast* Node) {
     return Value;
 }
 
-operand emitterLiteral (emitterCtx* ctx, ast* Node) {
+operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
     (void) ctx;
 
     debugEnter("Literal");
@@ -478,8 +485,15 @@ operand emitterLiteral (emitterCtx* ctx, ast* Node) {
     else if (Node->litClass == literalBool)
         Value = operandCreateLiteral(*(char*) Node->literal);
 
-    else
+    else if (Node->litClass == literalStr) {
+        operand ConstLabel = labelCreate(labelROData);
+        asmStringConstant(ctx->Asm, ConstLabel, (char*) Node->literal);
+        Value = operandCreateLabelOffset(ConstLabel);
+
+    } else {
         debugErrorUnhandled("emitterLiteral", "literal class", literalClassGetStr(Node->litClass));
+        Value = operandCreateInvalid();
+    }
 
     debugLeave();
 

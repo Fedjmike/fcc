@@ -1,25 +1,9 @@
 #include "../std/std.h"
 #include "../std/stdlib.h"
 
+#include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-
-//int EXIT_FAILURE = 1;
-//int EXIT_SUCCESS = 0;
-
-int SEEK_SET = 0;
-int SEEK_CUR = 1;
-int SEEK_END = 2;
-
-/* ::::CAST REPLACEMENTS:::: */
-
-int ctoi (char Char) {
-    return (int) Char;
-}
-
-int* vptoip (void* Ptr) {
-    return (int*) Ptr;
-}
 
 /* ::::STRING.H REPLACEMENTS:::: */
 
@@ -133,16 +117,28 @@ char tolower (char Char) {
         return Char;
 }*/
 
-/* ::::MISC:::: s*/
+/* ::::MISC:::: */
 
-/*Modify a file names extension*/
-char* filext (char* Name, char* Extension) {
-    /*Location of the first '.' (if any)*/
-    int Index = (int)(strchr(Name, (int) ".")-Name);
+char* filext (const char* name, const char* extension) {
+    /*Location of the last '.' (if any)*/
+    int index = (int)(strrchr(name, (int) '.') - name);
 
-    if (Index < 0)
-        return strcat(strcat(strcpy(malloc(strlen(Name)+5), Name), "."), Extension);
+    char* ret = malloc(strlen(name)+strlen(extension)+2);
+
+    if (index < 0)
+        sprintf(ret, "%s.%s", name, extension);
 
     else
-        return strcat(memcpy(malloc(strlen(Name)+4), Name, Index+1), Extension);
+        sprintf(ret, "%.*s.%s", index, name, extension);
+
+    return ret;
+}
+
+int logi (int x, int base) {
+    int n;
+
+    for (n = 0; x >= base; n++)
+        x /= base;
+
+    return n;
 }

@@ -1,5 +1,5 @@
 int factRecursive (int n) {
-	if n <= 1
+	if (n <= 1)
 		return 1;
 		
 	else
@@ -9,7 +9,7 @@ int factRecursive (int n) {
 int factLoop (int n) {
 	int ret = 1;
 
-	while n > 1
+	while (n > 1)
 		ret = ret*n--;
 
 	return ret;

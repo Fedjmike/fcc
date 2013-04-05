@@ -21,7 +21,7 @@ typedef struct  {
     int length;
 } lexerCtx;
 
-lexerCtx* lexerInit (char* File);
+lexerCtx* lexerInit (const char* File);
 void lexerEnd (lexerCtx* ctx);
 
 void lexerNext (lexerCtx* ctx);

@@ -24,6 +24,11 @@ debugMode debugSetMode (debugMode nmode) {
     return old;
 }
 
+void debugWait () {
+    if (mode <= debugMinimal)
+        getchar();
+}
+
 void debugEnter (const char* str) {
     if (mode <= debugCompressed) {
         debugMsg("+ %s", str);
@@ -65,9 +70,11 @@ void debugVarMsg (const char* format, va_list args) {
 void debugAssert (const char* functionName,
                   const char* testName,
                   bool result) {
-    if (!result)
+    if (!result) {
         debugMsg("internal error(%s): %s assertion failed",
                  functionName, testName);
+        debugWait();
+    }
 }
 
 void debugErrorUnhandled (const char* functionName,
@@ -75,6 +82,7 @@ void debugErrorUnhandled (const char* functionName,
                           const char* classStr) {
     debugMsg("internal error(%s): unhandled %s: '%s'",
              functionName, className, classStr);
+    debugWait();
 }
 
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
@@ -145,7 +153,7 @@ void reportSymbol (const sym* Symbol) {
     if (   (   Symbol->class == symId
             || Symbol->class == symParam)
         && Symbol->dt != 0) {
-        if (typeIsArray(Symbol->dt))
+        if (Symbol->dt->class == typeArray)
             fprintf(logFile, "size: %dx%d   ",
                     typeGetSize(Symbol->dt->base),
                     Symbol->dt->array);

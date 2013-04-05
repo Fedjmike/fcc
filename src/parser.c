@@ -16,14 +16,6 @@
 static ast* parserModule (parserCtx* ctx);
 static ast* parserModuleLine (parserCtx* ctx);
 
-/*static ast* parserSymDef (parserCtx* ctx);
-
-static type* parserType (parserCtx* ctx);
-
-static ast* parserFunction (parserCtx* ctx, type* DT, char* ident, storageClass storage);
-static ast* parserVariable (parserCtx* ctx, type* DT, char* ident, storageClass storage);
-static ast* parserArray (parserCtx* ctx, type* DT, char* ident, storageClass storage);*/
-
 static ast* parserLine (parserCtx* ctx);
 
 static ast* parserIf (parserCtx* ctx);
@@ -31,7 +23,7 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx* parserInit (char* File, sym* Global) {
+static parserCtx* parserInit (const char* File, sym* Global) {
     parserCtx* ctx = malloc(sizeof(parserCtx));
 
     ctx->lexer = lexerInit(File);
@@ -54,7 +46,7 @@ static void parserEnd (parserCtx* ctx) {
     free(ctx);
 }
 
-parserResult parser (char* File, sym* Global) {
+parserResult parser (const char* File, sym* Global) {
     parserCtx* ctx = parserInit(File, Global);
 
     ast* Module = parserModule(ctx);
@@ -99,7 +91,7 @@ static ast* parserModuleLine (parserCtx* ctx) {
 
     debugLeave();
 
-    //getchar();
+    //debugWait();
 
     return Node;
 }
@@ -172,7 +164,7 @@ static ast* parserLine (parserCtx* ctx) {
 
         /*Allow empty lines, ";"*/
         } else if (tokenIs(ctx, ";"))
-            ;
+            Node = astCreateEmpty(ctx->location);
 
         else if (tokenIsDecl(ctx))
             Node = parserDecl(ctx);
@@ -185,13 +177,13 @@ static ast* parserLine (parserCtx* ctx) {
 
     debugLeave();
 
-    //getchar();
+    //debugWait();
 
     return Node;
 }
 
 /**
- * If = "if" Value Code [ "else" Code ]
+ * If = "if" "(" Value ")" Code [ "else" Code ]
  */
 static ast* parserIf (parserCtx* ctx) {
     debugEnter("If");
@@ -199,7 +191,9 @@ static ast* parserIf (parserCtx* ctx) {
     ast* Node = astCreate(astBranch, ctx->location);
 
     tokenMatchStr(ctx, "if");
+    tokenMatchStr(ctx, "(");
     astAddChild(Node, parserValue(ctx));
+    tokenMatchStr(ctx, ")");
 
     Node->l = parserCode(ctx);
 
@@ -212,7 +206,7 @@ static ast* parserIf (parserCtx* ctx) {
 }
 
 /**
- * While = "while" Value Code
+ * While = "while" "(" Value ")" Code
  */
 static ast* parserWhile (parserCtx* ctx) {
     debugEnter("While");
@@ -220,7 +214,9 @@ static ast* parserWhile (parserCtx* ctx) {
     ast* Node = astCreate(astLoop, ctx->location);
 
     tokenMatchStr(ctx, "while");
+    tokenMatchStr(ctx, "(");
     Node->l = parserValue(ctx);
+    tokenMatchStr(ctx, ")");
 
     ctx->breakLevel++;
     Node->r = parserCode(ctx);
@@ -232,7 +228,7 @@ static ast* parserWhile (parserCtx* ctx) {
 }
 
 /**
- * DoWhile = "do" Code "while" Value ";"
+ * DoWhile = "do" Code "while" "(" Value ")" ";"
  */
 static ast* parserDoWhile (parserCtx* ctx) {
     debugEnter("DoWhile");
@@ -246,7 +242,9 @@ static ast* parserDoWhile (parserCtx* ctx) {
     ctx->breakLevel--;
 
     tokenMatchStr(ctx, "while");
+    tokenMatchStr(ctx, "(");
     Node->r = parserValue(ctx);
+    tokenMatchStr(ctx, ")");
     tokenMatchStr(ctx, ";");
 
     debugLeave();
@@ -255,7 +253,7 @@ static ast* parserDoWhile (parserCtx* ctx) {
 }
 
 /**
- * For := "for" [ "(" ] [ SymDef | Value ] ";" [ Value ] ";" [ Value ] [ ")" ] Code
+ * For := "for" "(" [ SymDef | Value ] ";" [ Value ] ";" [ Value ] ")" Code
  */
 static ast* parserFor (parserCtx* ctx) {
     debugEnter("For");
@@ -263,22 +261,18 @@ static ast* parserFor (parserCtx* ctx) {
     ast* Node = astCreate(astIter, ctx->location);
 
     tokenMatchStr(ctx, "for");
-    bool parens = tokenTryMatchStr(ctx, "(");
+    tokenMatchStr(ctx, "(");
 
     /*Initializer*/
     if (!tokenIs(ctx, ";")) {
-        sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
-
-        /*Expression or symdef?*/
-        if (  (Symbol && Symbol->class == symType)
-            || tokenIs(ctx, "struct"))
+        if (tokenIsDecl(ctx))
             astAddChild(Node, parserDecl(ctx));
 
         else
             astAddChild(Node, parserValue(ctx));
 
     } else
-        astAddChild(Node, astCreateInvalid(ctx->location));
+        astAddChild(Node, astCreateEmpty(ctx->location));
 
     tokenMatchStr(ctx, ";");
 
@@ -287,7 +281,7 @@ static ast* parserFor (parserCtx* ctx) {
         astAddChild(Node, parserValue(ctx));
 
     else
-        astAddChild(Node, astCreateInvalid(ctx->location));
+        astAddChild(Node, astCreateEmpty(ctx->location));
 
     tokenMatchStr(ctx, ";");
 
@@ -296,10 +290,9 @@ static ast* parserFor (parserCtx* ctx) {
         astAddChild(Node, parserValue(ctx));
 
     else
-        astAddChild(Node, astCreateInvalid(ctx->location));
+        astAddChild(Node, astCreateEmpty(ctx->location));
 
-    if (parens)
-        tokenMatchStr(ctx, ")");
+    tokenMatchStr(ctx, ")");
 
     ctx->breakLevel++;
     Node->l = parserCode(ctx);

@@ -9,18 +9,6 @@
 
 static type* typeCreate ();
 
-/**
- * Returns (int) floor(log((double) x) / log((double) base))
- */
-static int logi (int x, int base) {
-    int n = 0;
-
-    for (; x >= base; n++)
-        x /= base;
-
-    return n;
-}
-
 /*:::: TYPE CTORS/DTOR ::::*/
 
 static type* typeCreate (typeClass class) {
@@ -90,31 +78,32 @@ void typeDestroy (type* DT) {
     free(DT);
 }
 
-type* typeDeepDuplicate (const type* Old) {
-    debugAssert("typeDeepDuplicate", "null parameter", Old != 0);
+type* typeDeepDuplicate (const type* DT) {
+    debugAssert("typeDeepDuplicate", "null parameter", DT != 0);
 
-    if (typeIsInvalid(Old))
+    if (typeIsInvalid(DT))
         return typeCreateInvalid();
 
-    else {
-        /*Plain copy of type*/
+    else if (typeIsBasic(DT))
+        return typeCreateBasic(DT->basic);
 
-        type* New = malloc(sizeof(type));
-        memcpy(New, Old, sizeof(type));
+    else if (typeIsPtr(DT))
+        return typeCreatePtr(typeDeepDuplicate(DT->base));
 
-        /*Recursively duplicate subtypes*/
+    else if (typeIsArray(DT))
+        return typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
 
-        if (typeIsPtr(New) || typeIsArray(New))
-            New->base = typeDeepDuplicate(New->base);
+    else if (typeIsFunction(DT)) {
+        type** paramTypes = calloc(DT->params, sizeof(type*));
 
-        else if (typeIsFunction(New)) {
-            New->returnType = typeDeepDuplicate(New->returnType);
+        for (int i = 0; i < DT->params; i++)
+            paramTypes[i] = typeDeepDuplicate(DT->paramTypes[i]);
 
-            for (int i = 0; i < New->params; i++)
-                New->paramTypes[i] = typeDeepDuplicate(New->paramTypes[i]);
-        }
+        return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params);
 
-        return New;
+    } else {
+        debugErrorUnhandled("typeDeepDuplicate", "type class", typeClassGetStr(DT->class));
+        return typeCreateInvalid();
     }
 }
 
@@ -315,10 +304,10 @@ const char* typeClassGetStr (typeClass class) {
         return "typeInvalid";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("typeClassGetStr", "type class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("typeClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }
@@ -338,19 +327,20 @@ int typeGetSize (const type* DT) {
 }
 
 char* typeToStr (const type* DT, const char* embedded) {
-    if (typeIsInvalid(DT))
-        return strdup("<invalid>");
+    /*Basic type or invalid*/
+    if (typeIsInvalid(DT) || typeIsBasic(DT)) {
+        char* basicStr = typeIsInvalid(DT)
+                            ? "<invalid>"
+                            : DT->basic->ident;
 
-    /*Basic type*/
-    else if (typeIsBasic(DT)) {
         if (embedded[0] == 0)
-            return strdup(DT->basic->ident);
+            return strdup(basicStr);
 
         else {
             char* ret = malloc(strlen(embedded) +
-                               strlen(DT->basic->ident)+2);
+                               strlen(basicStr)+2);
 
-            sprintf(ret, "%s %s", DT->basic->ident, embedded);
+            sprintf(ret, "%s %s", basicStr, embedded);
             return ret;
         }
 

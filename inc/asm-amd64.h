@@ -13,7 +13,8 @@ typedef enum {
 typedef enum {
 	uopUndefined,
 	uopInc,
-	uopDec
+	uopDec,
+	uopNeg
 } uoperation;
 
 /**
@@ -29,12 +30,17 @@ void asmFileEpilogue (struct asmCtx* ctx);
 /**
  * Emit the prologue to a function
  */
-void asmFnPrologue (struct asmCtx* ctx, char* Name, int LocalSize);
+void asmFnPrologue (struct asmCtx* ctx, operand Name, int LocalSize);
 
 /**
  * Emit the epilogue to a function
  */
-void asmFnEpilogue (struct asmCtx* ctx, char* EndLabel);
+void asmFnEpilogue (struct asmCtx* ctx, operand EndLabel);
+
+/**
+ * Place a string constant in the rodata section with the given label
+ */
+void asmStringConstant (struct asmCtx* ctx, operand label, char* str);
 
 /**
  * Place a previously named label in the output
@@ -77,7 +83,7 @@ void asmBOP (struct asmCtx* ctx, boperation Op, operand L, operand R);
 /**
  * Perform a unary operation (e.g. not, neg)
  */
-void asmUOP (struct asmCtx* ctx, uoperation Op, operand L);
+void asmUOP (struct asmCtx* ctx, uoperation Op, operand R);
 
 /**
  * Call a function with the arguments currently on the stack

@@ -9,16 +9,12 @@
 
 char* Conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
 
-int labelUndefined = 0;
-int labelReturn = 1;
-int labelBreak = 2;
-
 char* labels[1024] = {"undefined"};
 int labelNo = 1;
 
-operand operandCreate (operandClass Class) {
+operand operandCreate (operandClass class) {
     operand ret;
-    ret.class = Class;
+    ret.class = class;
     ret.reg = regUndefined;
     ret.index = regUndefined;
     ret.factor = 0;
@@ -29,6 +25,10 @@ operand operandCreate (operandClass Class) {
     ret.label = 0;
 
     return ret;
+}
+
+operand operandCreateInvalid () {
+    return operandCreate(operandInvalid);
 }
 
 operand operandCreateFlags (conditionClass Condition) {
@@ -81,6 +81,13 @@ operand operandCreateLabel (int Label) {
     return ret;
 }
 
+operand operandCreateLabelOffset (operand label) {
+    operand ret = operandCreate(operandLabelOffset);
+    ret.label = label.label;
+
+    return ret;
+}
+
 int operandGetSize (operand Value) {
     if (Value.class == operandReg)
         return 8;
@@ -91,8 +98,11 @@ int operandGetSize (operand Value) {
     else if (Value.class == operandLiteral)
         return 1;
 
+    else if (Value.class == operandLabelOffset)
+        return 8;
+
     else
-        printf("operandGetSize(): unhandled operand class, %d.\n", Value.class);
+        debugErrorUnhandled("operandGetSize", "operand class", operandClassGetStr(Value.class));
 
     return 0;
 }
@@ -102,29 +112,24 @@ char* operandToStr (operand Value) {
     ret[0] = 0;
 
     if (Value.class == operandFlags)
-        strcat(ret, Conditions[Value.condition]);
+        strncpy(ret, Conditions[Value.condition], 32);
 
     else if (Value.class == operandReg)
-        strcat(ret, regToStr(Value.reg));
+        strncpy(ret, regToStr(Value.reg), 32);
 
     else if (Value.class == operandMem || Value.class == operandMemRef) {
         char* Size;
 
         if (Value.size == 1)
             Size = "byte";
-
         else if (Value.size == 2)
             Size = "word";
-
         else if (Value.size == 4)
             Size = "dword";
-
         else if (Value.size == 8)
             Size = "qword";
-
         else if (Value.size == 16)
             Size = "oword";
-
         else
             Size = "undefined";
 
@@ -141,13 +146,16 @@ char* operandToStr (operand Value) {
                                                             Value.offset);
 
     } else if (Value.class == operandLiteral)
-        sprintf(ret, "%d", Value.literal);
+        snprintf(ret, 32, "%d", Value.literal);
 
     else if (Value.class == operandLabel)
-        strcat(ret, labelGet(Value));
+        strncpy(ret, labelGet(Value), 32);
+
+    else if (Value.class == operandLabelOffset)
+        snprintf(ret, 32, "offset %s", labelGet(Value));
 
     else
-        printf("operandToStr(): unknown operand class, %d.\n", Value.class);
+        debugErrorUnhandled("operandToStr", "operand class", operandClassGetStr(Value.class));
 
     return ret;
 }
@@ -156,13 +164,21 @@ void operandFree (operand Value) {
     if (Value.class == operandReg)
         regFree(Value.reg);
 
-    if (Value.class == operandMem) {
+    else if (Value.class == operandMem || Value.class == operandMemRef) {
         if (Value.reg != regUndefined)
             regFree(Value.reg);
 
         if (Value.index != regUndefined)
             regFree(Value.index);
-    }
+
+    } else if (   Value.class == operandUndefined || Value.class == operandInvalid
+               || Value.class == operandFlags || Value.class == operandLiteral
+               || Value.class == operandLabel || Value.class == operandLabelOffset
+               || Value.class == operandStack)
+        /*Nothing to do*/;
+
+    else
+        debugErrorUnhandled("operandFree", "operand class", operandClassGetStr(Value.class));
 }
 
 const char* operandClassGetStr (operandClass class) {
@@ -180,14 +196,16 @@ const char* operandClassGetStr (operandClass class) {
         return "operandLiteral";
     else if (class == operandLabel)
         return "operandLabel";
+    else if (class == operandLabelOffset)
+        return "operandLabelOffset";
     else if (class == operandStack)
         return "operandStack";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("operandClassGetStr", "operand class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("operandClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }
@@ -230,32 +248,34 @@ int conditionNegate (int Condition) {
 
 /* ::::LABELS:::: */
 
-operand labelCreate (int Class) {
-    static int Labels = 0;
+operand labelCreate (int class) {
+    char* label = malloc(12);
 
-    char* Label = malloc(12);
+    if (class == labelReturn)
+        sprintf(label, "ret%08d", labelNo);
 
-    if (Class == labelReturn)
-        sprintf(Label, "ret%08d", Labels++);
+    else if (class == labelBreak)
+        sprintf(label, "brk%08d", labelNo);
 
-    else if (Class == labelBreak)
-        sprintf(Label, "brk%08d", Labels++);
+    else if (class == labelROData)
+        sprintf(label, "rod%08d", labelNo);
 
     else
-        sprintf(Label, "_%08i", Labels++);
+        sprintf(label, "_%08i", labelNo);
 
-    labels[labelNo] = Label;
+    labels[labelNo] = label;
 
     return operandCreateLabel(labelNo++);
 }
 
-operand labelNamed (char* Name) {
-    labels[labelNo] = strcat(strcpy(malloc(strlen(Name)+2), "_"), Name);
+operand labelNamed (const char* Name) {
+    labels[labelNo] = malloc(strlen(Name)+2);
+    sprintf(labels[labelNo], "_%s", Name);
     return operandCreateLabel(labelNo++);
 }
 
-char* labelGet (operand Label) {
-    if (Label.class == operandLabel)
+const char* labelGet (operand Label) {
+    if (Label.class == operandLabel || Label.class == operandLabelOffset)
         return labels[Label.label];
 
     else {

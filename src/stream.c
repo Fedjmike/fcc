@@ -11,7 +11,7 @@ char streamChar = 0;
 int lineNo = 1;
 int lineCharNo = 0;
 
-streamCtx* streamInit (char* File) {
+streamCtx* streamInit (const char* File) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
     ctx->filename = strdup(File);
     ctx->file = fopen(File, "r");

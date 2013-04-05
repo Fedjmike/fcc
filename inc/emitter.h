@@ -12,4 +12,4 @@ typedef struct emitterCtx {
     operand labelBreakTo;
 } emitterCtx;
 
-void emitter (struct ast* Tree, FILE* File);
+void emitter (const struct ast* Tree, FILE* File);

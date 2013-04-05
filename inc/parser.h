@@ -29,6 +29,6 @@ typedef struct {
     int warnings;
 } parserResult;
 
-parserResult parser (char* File, struct sym* Global);
+parserResult parser (const char* File, struct sym* Global);
 
 struct ast* parserCode (parserCtx* ctx);

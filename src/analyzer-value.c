@@ -6,6 +6,7 @@
 #include "../inc/sym.h"
 
 #include "../inc/analyzer.h"
+#include "../inc/analyzer-decl.h"
 
 #include "string.h"
 
@@ -17,6 +18,8 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerTernary (analyzerCtx* ctx, ast* Node);
 static const type* analyzerIndex (analyzerCtx* ctx, ast* Node);
 static const type* analyzerCall (analyzerCtx* ctx, ast* Node);
+static const type* analyzerCast (analyzerCtx* ctx, ast* Node);
+static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static const type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node);
 
@@ -113,6 +116,12 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
     else if (Node->class == astCall)
         return analyzerCall(ctx, Node);
 
+    else if (Node->class == astCast)
+        return analyzerCast(ctx, Node);
+
+    else if (Node->class == astSizeof)
+        return analyzerSizeof(ctx, Node);
+
     else if (Node->class == astLiteral) {
         if (Node->litClass == literalArray)
             return analyzerArrayLiteral(ctx, Node);
@@ -121,6 +130,7 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
             return analyzerLiteral(ctx, Node);
 
     } else if (Node->class == astInvalid) {
+        debugMsg("Invalid");
         return Node->dt = typeCreateInvalid();
 
     } else {
@@ -195,15 +205,14 @@ static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
                             !typeIsEquality(L) ? Node->l : Node->r,
                             !typeIsEquality(L) ? L : R);
 
-    /*Result*/
-
-    if (typeIsCompatible(L, R))
-        Node->dt = typeDeriveFromTwo(L, R);
-
-    else {
+    if (!typeIsCompatible(L, R)) {
         analyzerErrorMismatch(ctx, Node, Node->o, L, R);
         Node->dt = typeCreateInvalid();
     }
+
+    /*Result*/
+
+    Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
     debugLeave();
 
@@ -222,7 +231,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
         if (!typeIsPtr(L))
             analyzerErrorOp(ctx, Node->o, "pointer", Node->l, L);
 
-        else if (!typeIsRecord(L->base))
+        else if (!typeIsInvalid(L) && !typeIsRecord(L->base))
             analyzerErrorOp(ctx, Node->o, "structure pointer", Node->l, L);
 
     /* . */
@@ -232,19 +241,23 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Return type: the field*/
 
-    if (typeIsBasic(L))
-        Node->symbol = symChild(L->basic, (char*) Node->r->literal);
+    if (!typeIsInvalid(L) && !(typeIsPtr(L) && typeIsInvalid(L->base))) {
+        if (typeIsBasic(L))
+            Node->symbol = symChild(L->basic, (char*) Node->r->literal);
 
-    else if (typeIsPtr(L) && typeIsBasic(L->base))
-        Node->symbol = symChild(L->base->basic, (char*) Node->r->literal);
+        else if (typeIsPtr(L) && typeIsBasic(L->base))
+            Node->symbol = symChild(L->base->basic, (char*) Node->r->literal);
 
-    if (Node->symbol)
-        Node->dt = typeDeepDuplicate(Node->symbol->dt);
+        if (Node->symbol)
+            Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
-    else {
-        analyzerErrorMember(ctx, Node->o, Node->r, L);
+        else {
+            analyzerErrorMember(ctx, Node->o, Node->r, L);
+            Node->dt = typeCreateInvalid();
+        }
+
+    } else
         Node->dt = typeCreateInvalid();
-    }
 
     debugLeave();
 
@@ -387,38 +400,76 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     /*Callable*/
     if (!typeIsCallable(L)) {
-        analyzerErrorOp(ctx, "()", "function", Node->firstChild, Node->symbol->dt);
+        analyzerErrorOp(ctx, "()", "function", Node->firstChild, L);
         Node->dt = typeCreateInvalid();
 
-    } else {
+    } else if (typeIsInvalid(L))
+        Node->dt = typeCreateInvalid();
+
+    else {
         /*If callable, then a result type can be derived,
           regardless of parameter matches*/
-        Node->dt = typeDeepDuplicate(typeDeriveReturn(Node->symbol->dt));
+        Node->dt = typeDeepDuplicate(typeDeriveReturn(L));
 
         /*Right number of params?*/
         if ((typeIsPtr(L) ? L->base->params : L->params) != Node->children)
-            analyzerErrorDegree(ctx, Node, "parameters",
+            analyzerErrorDegree(ctx, Node, "parameter(s)",
                                 typeIsPtr(L) ? L->base->params : L->params, Node->children,
                                 Node->symbol->ident);
 
         /*Do the parameter types match?*/
         else {
-            ast* cNode;
-            sym* cParam;
+            ast* Current;
+            type** paramTypes = typeIsPtr(L) ? L->base->paramTypes : L->paramTypes;
             int n;
 
-            /*Traverse down both lists at once, checking types, leaving
-              once either ends (we already know they have the same length)*/
-            for (cNode = Node->firstChild, cParam = Node->symbol->firstChild, n = 0;
-                 cNode && cParam;
-                 cNode = cNode->nextSibling, cParam = cParam->nextSibling, n++) {
-                const type* Param = analyzerValue(ctx, cNode);
+            /*Traverse down the node list and params array at the same
+              time, checking types*/
+            for (Current = Node->firstChild, n = 0;
+                 Current;
+                 Current = Current->nextSibling, n++) {
+                const type* Param = analyzerValue(ctx, Current);
 
-                if (!typeIsCompatible(Param, cParam->dt))
-                    analyzerErrorParamMismatch(ctx, Node, n, cParam->dt, Param);
+                if (!typeIsCompatible(Param, paramTypes[n]))
+                    analyzerErrorParamMismatch(ctx, Node, n, paramTypes[n], Param);
             }
         }
     }
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static const type* analyzerCast (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Cast");
+
+    const type* L = analyzerType(ctx, Node->l);
+    const type* R = analyzerValue(ctx, Node->r);
+
+    /*TODO: Verify compatibility. What exactly are the rules? All numerics
+            cast to each other and nothing more?*/
+
+    Node->dt = typeDeepDuplicate(L);
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Sizeof");
+
+    /*Hand it off to the relevant function, but there's no analysis
+      to be done here*/
+
+    if (Node->r->class == astType)
+        analyzerType(ctx, Node->r);
+
+    else
+        analyzerValue(ctx, Node->r);
+
+    Node->dt = typeCreateBasic(ctx->types[builtinInt]);
 
     debugLeave();
 
@@ -434,11 +485,15 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     else if (Node->litClass == literalBool)
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
+    else if (Node->litClass == literalStr)
+        /* char* */
+        Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
+
     else if (Node->litClass == literalIdent)
         Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
     else {
-        debugErrorUnhandled("analyzerLiteral", "AST class", astClassGetStr(Node->class));
+        debugErrorUnhandled("analyzerLiteral", "literal class", literalClassGetStr(Node->litClass));
         Node->dt = typeCreateInvalid();
     }
 
@@ -452,7 +507,7 @@ static const type* analyzerArrayLiteral (analyzerCtx* ctx, ast* Node) {
 
     /*Allowed?*/
 
-    /*TODO: Check element types match*/
+    /*TODO: Check element types match eachother*/
 
     /*Return type*/
 

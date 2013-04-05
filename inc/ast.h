@@ -23,12 +23,13 @@ typedef enum {
     astIter,
     astReturn,
     astBreak,
-    astBOP = 20,
+    astBOP,
     astUOP,
     astTOP,
     astIndex,
     astCall,
     astCast,
+    astSizeof,
     astLiteral,
 } astClass;
 
@@ -37,6 +38,7 @@ typedef enum {
     literalIdent,
     literalInt,
     literalBool,
+    literalStr,
     literalArray
 } literalClass;
 
@@ -66,6 +68,8 @@ typedef struct ast {
 } ast;
 
 ast* astCreate (astClass class, tokenLocation location);
+void astDestroy (ast* Node);
+
 ast* astCreateInvalid (tokenLocation location);
 ast* astCreateEmpty (tokenLocation location);
 
@@ -82,10 +86,9 @@ ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
 ast* astCreateCast (tokenLocation location, ast* result);
+ast* astCreateSizeof (tokenLocation location, ast* r);
 ast* astCreateLiteral (tokenLocation location, literalClass litClass);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
-
-void astDestroy (ast* Node);
 
 void astAddChild (ast* Parent, ast* Child);
 

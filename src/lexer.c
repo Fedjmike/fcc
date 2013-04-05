@@ -7,12 +7,12 @@
 #include "stdlib.h"
 #include "ctype.h"
 
-lexerCtx* lexerInit (char* File) {
+lexerCtx* lexerInit (const char* File) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
     ctx->stream = streamInit(File);
     ctx->token = tokenUndefined;
     ctx->bufferSize = 64;
-    ctx->buffer = malloc(ctx->bufferSize);
+    ctx->buffer = malloc(sizeof(char)*ctx->bufferSize);
     lexerNext(ctx);
     return ctx;
 }
@@ -93,26 +93,6 @@ static void lexerEat (lexerCtx* ctx, char c) {
     ctx->buffer[ctx->length++] = c;
 }
 
-static void lexerLexEscape (lexerCtx* ctx) {
-    if (ctx->stream->current == 'n')
-        lexerEat(ctx, '\n');
-
-    else if (ctx->stream->current == 'r')
-        lexerEat(ctx, '\r');
-
-    else if (ctx->stream->current == 't')
-        lexerEat(ctx, '\t');
-
-    else if (   ctx->stream->current == '\''
-             || ctx->stream->current == '"'
-             || ctx->stream->current == '\\')
-        lexerEat(ctx, ctx->stream->current);
-
-    else if (   ctx->stream->current == '\n'
-             || ctx->stream->current == '\r')
-        streamNext(ctx->stream);
-}
-
 void lexerNext (lexerCtx* ctx) {
     if (ctx->token == tokenEOF)
         return;
@@ -147,20 +127,28 @@ void lexerNext (lexerCtx* ctx) {
     /*String*/
     } else if (ctx->stream->current == '"') {
         ctx->token = tokenStr;
-        streamNext(ctx->stream);
+        lexerEat(ctx, streamNext(ctx->stream));
 
-        while (ctx->stream->current != '"')
+        while (ctx->stream->current != '"') {
+            if (ctx->stream->current == '\\')
+                lexerEat(ctx, streamNext(ctx->stream));
+
             lexerEat(ctx, streamNext(ctx->stream));
+        }
 
-        streamNext(ctx->stream);
+        lexerEat(ctx, streamNext(ctx->stream));
 
     /*Character*/
     } else if (ctx->stream->current == '\'') {
         ctx->token = tokenChar;
         lexerEat(ctx, streamNext(ctx->stream));
 
-        while (!ctx->stream->current == '\'')
+        while (!ctx->stream->current == '\'') {
+            if (ctx->stream->current == '\\')
+                lexerEat(ctx, streamNext(ctx->stream));
+
             lexerEat(ctx, streamNext(ctx->stream));
+        }
 
         lexerEat(ctx, streamNext(ctx->stream));
 
@@ -171,21 +159,37 @@ void lexerNext (lexerCtx* ctx) {
 
         /*If it is a double char operator like != or ->, combine them*/
 
-        /* != == */
+        /* == !=  += -= *= /= %=  &= |= ^= */
         if (   (   (   ctx->buffer[0] == '=' || ctx->buffer[0] == '!'
                     || ctx->buffer[0] == '+' || ctx->buffer[0] == '-'
-                    || ctx->buffer[0] == '*' || ctx->buffer[0] == '/')
+                    || ctx->buffer[0] == '*' || ctx->buffer[0] == '/'
+                    || ctx->buffer[0] == '%'
+                    || ctx->buffer[0] == '&' || ctx->buffer[0] == '|'
+                    || ctx->buffer[0] == '^')
                 && ctx->stream->current == '=')
-        /* -> -- */
+        /* -> */
             || (ctx->buffer[0] == '-'
                 && (ctx->stream->current == '>' || ctx->stream->current == '-'))
-        /* ++ */
-            || (ctx->buffer[0] == '+'
-                && ctx->stream->current == '+')
+        /* && || ++ --*/
+            || (   (   ctx->buffer[0] == '&' || ctx->buffer[0] == '|'
+                    || ctx->buffer[0] == '+' || ctx->buffer[0] == '-')
+                && ctx->stream->current == ctx->buffer[0])
         /* >= <= */
             || ((ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
                 && ctx->stream->current == '='))
             lexerEat(ctx, streamNext(ctx->stream));
+
+        /*Possible triple char operator*/
+
+        /* >> << */
+        if (   (ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
+            && (ctx->stream->current == ctx->buffer[0])) {
+            lexerEat(ctx, streamNext(ctx->stream));
+
+            /* >>= <<=*/
+            if (ctx->stream->current == '=')
+                lexerEat(ctx, streamNext(ctx->stream));
+        }
     }
 
     lexerEat(ctx, 0);

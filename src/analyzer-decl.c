@@ -19,13 +19,13 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
  * Handles any node class that parserDeclExpr may produce by passing it
  * off to one of the following specialized handlers.
  */
-static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base);
+static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base);
 
-static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* base);
-static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, type* base);
-static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnType);
-static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base);
-static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base);
+static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base);
+static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base);
+static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType);
+static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base);
+static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const type* base);
 
 void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
     debugEnter("DeclStruct");
@@ -47,17 +47,34 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        analyzerDeclNode(ctx, Current, typeDeepDuplicate(BasicDT));
+        const type* DT = analyzerDeclNode(ctx, Current, BasicDT);
+
+        if (Current->symbol)
+            reportSymbol(Current->symbol);
+
+        else
+            reportType(DT);
     }
 
     debugLeave();
+}
+
+const type* analyzerType (struct analyzerCtx* ctx, struct ast* Node) {
+    debugEnter("Type");
+
+    const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
+    Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, BasicDT));
+
+    debugLeave();
+
+    return Node->dt;
 }
 
 static void analyzerDeclParam (analyzerCtx* ctx, ast* Node) {
     debugEnter("DeclParam");
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
-    Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, typeDeepDuplicate(BasicDT)));
+    Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, BasicDT));
 
     debugLeave();
 }
@@ -86,8 +103,15 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base) {
-    if (Node->class == astBOP) {
+static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
+    if (Node->class == astInvalid) {
+        debugMsg("Invalid");
+        return Node->dt = typeCreateInvalid();
+
+    } else if (Node->class == astEmpty)
+        return Node->dt = typeDeepDuplicate(base);
+
+    else if (Node->class == astBOP) {
         if (!strcmp(Node->o, "="))
             return analyzerDeclAssignBOP(ctx, Node, base);
 
@@ -126,7 +150,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base) {
     }
 }
 
-static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* base) {
+static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base) {
     debugEnter("DeclAssignBOP");
 
     const type* L = analyzerDeclNode(ctx, Node->l, base);
@@ -144,23 +168,23 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
     return L;
 }
 
-static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, type* base) {
+static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base) {
     debugEnter("DeclPtrUOP");
 
-    Node->dt = typeCreatePtr(base);
-    const type* DT = analyzerDeclNode(ctx, Node->r, typeDeepDuplicate(Node->dt));
+    Node->dt = typeCreatePtr(typeDeepDuplicate(base));
+    const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
 
     debugLeave();
 
     return DT;
 }
 
-static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnType) {
+static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType) {
     debugEnter("DeclCall");
 
     /*Param types*/
 
-    type** paramTypes = calloc(Node->children, sizeof(type*));
+    type** paramTypes = malloc(Node->children*sizeof(type*));
 
     int i = 0;
 
@@ -168,24 +192,24 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnTy
          Current;
          Current = Current->nextSibling) {
         analyzerDeclParam(ctx, Current);
-        paramTypes[i++] = Current->dt;
+        paramTypes[i++] = typeDeepDuplicate(Current->dt);
     }
 
     /* */
 
-    Node->dt = typeCreateFunction(returnType, paramTypes, Node->children);
-    const type* DT = analyzerDeclNode(ctx, Node->l, typeDeepDuplicate(Node->dt));
+    Node->dt = typeCreateFunction(typeDeepDuplicate(returnType), paramTypes, Node->children);
+    const type* DT = analyzerDeclNode(ctx, Node->l, Node->dt);
 
     debugLeave();
 
     return DT;
 }
 
-static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base) {
+static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base) {
     debugEnter("DeclIndex");
 
     if (Node->r->class == astEmpty)
-        Node->dt = typeCreatePtr(base);
+        Node->dt = typeCreatePtr(typeDeepDuplicate(base));
 
     else {
         /*!!!*/
@@ -195,17 +219,17 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base) {
                    ? *(int*) Node->r->literal
                    : 10; //lol
 
-        Node->dt = typeCreateArray(base, size);
+        Node->dt = typeCreateArray(typeDeepDuplicate(base), size);
     }
 
-    const type* DT = analyzerDeclNode(ctx, Node->l, typeDeepDuplicate(Node->dt));
+    const type* DT = analyzerDeclNode(ctx, Node->l, Node->dt);
 
     debugLeave();
 
     return DT;
 }
 
-static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base) {
+static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const type* base) {
     (void) ctx;
 
     debugEnter("DeclIdentLiteral");

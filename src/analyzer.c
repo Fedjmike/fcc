@@ -72,8 +72,8 @@ void analyzerErrorMismatch (analyzerCtx* ctx, const ast* Node, const char* o, co
 }
 
 void analyzerErrorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expected, int found, const char* where) {
-    analyzerError(ctx, Node, "%d %s expected, %d given to %s",
-                  expected, thing, found, where);
+    analyzerError(ctx, Node, "%s expected %d %s, %d given",
+                  where, expected, thing, found);
 }
 
 void analyzerErrorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* Expected, const type* Found) {
@@ -124,8 +124,10 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
 
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling)
+         Current = Current->nextSibling) {
         analyzerNode(ctx, Current);
+        debugWait();
+    }
 
     debugLeave();
 }

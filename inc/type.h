@@ -53,7 +53,7 @@ type* typeCreateInvalid ();
 
 void typeDestroy (type* DT);
 
-type* typeDeepDuplicate (const type* Old);
+type* typeDeepDuplicate (const type* DT);
 
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);

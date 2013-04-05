@@ -31,6 +31,28 @@ ast* astCreate (astClass class, tokenLocation location) {
     return Node;
 }
 
+void astDestroy (ast* Node) {
+    debugAssert("astDestroy", "null param", Node != 0);
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling)
+        astDestroy(Current);
+
+    if (Node->l)
+        astDestroy(Node->l);
+
+    if (Node->r)
+        astDestroy(Node->r);
+
+    if (Node->dt)
+        typeDestroy(Node->dt);
+
+    free(Node->o);
+    free(Node->literal);
+    free(Node);
+}
+
 ast* astCreateInvalid (tokenLocation location) {
     return astCreate(astInvalid, location);
 }
@@ -105,13 +127,18 @@ ast* astCreateIndex (tokenLocation location, ast* base, ast* index) {
 ast* astCreateCall (tokenLocation location, ast* function) {
     ast* Node = astCreate(astCall, location);
     Node->l = function;
-    Node->symbol = Node->l->symbol;
     return Node;
 }
 
 ast* astCreateCast (tokenLocation location, ast* result) {
     ast* Node = astCreate(astCast, location);
     Node->l = result;
+    return Node;
+}
+
+ast* astCreateSizeof (tokenLocation location, ast* r) {
+    ast* Node = astCreate(astSizeof, location);
+    Node->r = r;
     return Node;
 }
 
@@ -125,26 +152,6 @@ ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
     ast* Node = astCreateLiteral(location, literalIdent);
     Node->literal = (void*) ident;
     return Node;
-}
-
-void astDestroy (ast* Node) {
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling)
-        astDestroy(Current);
-
-    if (Node->l)
-        astDestroy(Node->l);
-
-    if (Node->r)
-        astDestroy(Node->r);
-
-    if (Node->dt)
-        typeDestroy(Node->dt);
-
-    free(Node->o);
-    free(Node->literal);
-    free(Node);
 }
 
 void astAddChild (ast* Parent, ast* Child) {
@@ -170,7 +177,7 @@ void astAddChild (ast* Parent, ast* Child) {
 int astIsValueClass (astClass class) {
     return    class == astBOP || class == astUOP || class == astTOP
            || class == astCall || class == astIndex || class == astCast
-           || class == astLiteral;
+           || class == astSizeof || class == astLiteral;
 }
 
 const char* astClassGetStr (astClass class) {
@@ -216,14 +223,16 @@ const char* astClassGetStr (astClass class) {
         return "astCall";
     else if (class == astCast)
         return "astCast";
+    else if (class == astSizeof)
+        return "astSizeof";
     else if (class == astLiteral)
         return "astLiteral";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("astClassGetStr", "AST class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("astClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }
@@ -235,16 +244,18 @@ const char* literalClassGetStr (literalClass class) {
         return "literalIdent";
     else if (class == literalInt)
         return "literalInt";
+    else if (class == literalStr)
+        return "literalStr";
     else if (class == literalBool)
         return "literalBool";
     else if (class == literalArray)
         return "literalArray";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("literalClassGetStr", "literal class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("literalClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }

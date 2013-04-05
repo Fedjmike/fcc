@@ -8,8 +8,9 @@
 #include "stdlib.h"
 
 static sym* symCreate (symClass class, sym* Parent);
-static void symAddChild (sym* Parent, sym* Child);
 static void symDestroy (sym* Symbol);
+
+static void symAddChild (sym* Parent, sym* Child);
 
 sym* symInit () {
     return symCreate(symScope, 0);
@@ -36,12 +37,25 @@ static sym* symCreate (symClass class, sym* Parent) {
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
 
-    //Symbol->params = 0;
-
     Symbol->label = operandCreateLabel(0);
     Symbol->offset = 0;
 
     return Symbol;
+}
+
+static void symDestroy (sym* Symbol) {
+    free(Symbol->ident);
+
+    if (Symbol->firstChild)
+        symDestroy(Symbol->firstChild);
+
+    if (Symbol->nextSibling)
+        symDestroy(Symbol->nextSibling);
+
+    if (Symbol->dt)
+        typeDestroy(Symbol->dt);
+
+    free(Symbol);
 }
 
 sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
@@ -62,6 +76,7 @@ sym* symCreateStruct (sym* Parent, char* ident) {
 sym* symCreateId (sym* Parent, char* ident) {
     sym* Symbol = symCreate(symId, Parent);
     Symbol->ident = strdup(ident);
+    Symbol->proto = true;
     return Symbol;
 }
 
@@ -93,27 +108,9 @@ static void symAddChild (sym* Parent, sym* Child) {
     }
 
     Child->parent = Parent;
-
-    //if (Child->class == symParam)
-    //    Parent->params++;
 }
 
-static void symDestroy (sym* Symbol) {
-    free(Symbol->ident);
-
-    if (Symbol->firstChild)
-        symDestroy(Symbol->firstChild);
-
-    if (Symbol->nextSibling)
-        symDestroy(Symbol->nextSibling);
-
-    if (Symbol->dt)
-        typeDestroy(Symbol->dt);
-
-    free(Symbol);
-}
-
-sym* symChild (sym* Scope, char* Look) {
+sym* symChild (const sym* Scope, const char* Look) {
     //printf("searching: %s\n", Scope->ident);
 
     for (sym* Current = Scope->firstChild;
@@ -137,7 +134,7 @@ sym* symChild (sym* Scope, char* Look) {
     return 0;
 }
 
-sym* symFind (sym* Scope, char* Look) {
+sym* symFind (const sym* Scope, const char* Look) {
     //printf("look: %s\n", Look);
 
     /*Search the current namespace and all its ancestors*/
@@ -176,10 +173,10 @@ const char* symClassGetStr (symClass class) {
         return "symParam";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("symClassGetStr", "symbol class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("symClassGetStr", "symbol class", str);
+        free(str);
         return "unhandled";
     }
 }
@@ -197,10 +194,10 @@ const char* storageClassGetStr (storageClass class) {
         return "storageExtern";
 
     else {
-        char* Str = malloc(class+1);
-        sprintf(Str, "%d", class);
-        debugErrorUnhandled("storageClassGetStr", "storage class", Str);
-        free(Str);
+        char* str = malloc(logi(class, 10)+2);
+        sprintf(str, "%d", class);
+        debugErrorUnhandled("storageClassGetStr", "symbol class", str);
+        free(str);
         return "undefined";
     }
 }

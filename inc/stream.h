@@ -14,7 +14,7 @@ typedef struct {
     int lineChar;
 } streamCtx;
 
-streamCtx* streamInit (char* File);
+streamCtx* streamInit (const char* File);
 void streamEnd (streamCtx* ctx);
 
 /**

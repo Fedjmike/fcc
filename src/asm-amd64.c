@@ -24,11 +24,11 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, char* Name, int LocalSize) {
+void asmFnPrologue (asmCtx* ctx, operand Name, int LocalSize) {
     /*Symbol, linkage and alignment*/
     asmOutLn(ctx, ".balign 16");
-    asmOutLn(ctx, ".globl %s", Name);
-    asmOutLn(ctx, "%s:", Name);
+    asmOutLn(ctx, ".globl %s", labelGet(Name));
+    asmOutLn(ctx, "%s:", labelGet(Name));
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
@@ -39,12 +39,19 @@ void asmFnPrologue (asmCtx* ctx, char* Name, int LocalSize) {
         asmOutLn(ctx, "sub rsp, %d", LocalSize);
 }
 
-void asmFnEpilogue (asmCtx* ctx, char* EndLabel) {
+void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
     /*Exit stack frame*/
-    asmOutLn(ctx, "%s:", EndLabel);
+    asmOutLn(ctx, "%s:", labelGet(EndLabel));
     asmOutLn(ctx, "mov rsp, rbp");
     asmOutLn(ctx, "pop rbp");
     asmOutLn(ctx, "ret");
+}
+
+void asmStringConstant (struct asmCtx* ctx, operand label, char* str) {
+    asmOutLn(ctx, ".section .rodata");
+    asmOutLn(ctx, "%s:", labelGet(label));
+    asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
+    asmOutLn(ctx, ".section .text");
 }
 
 void asmLabel (asmCtx* ctx, operand L) {
@@ -84,70 +91,93 @@ void asmPopN (asmCtx* ctx, int n) {
 }
 
 void asmMove (asmCtx* ctx, operand L, operand R) {
-    reportRegs();
+    if (L.class == operandMem && R.class == operandMem) {
+        operand intermediate = operandCreateReg(regAllocGeneral());
+        asmMove(ctx, intermediate, R);
+        asmMove(ctx, L, intermediate);
+        operandFree(intermediate);
 
-    char* LStr = operandToStr(L);
-    char* RStr = operandToStr(R);
+    } else {
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
 
-    if (operandGetSize(L) > operandGetSize(R) &&
-        R.class != operandLiteral)
-        asmOutLn(ctx, "movzx %s, %s", LStr, RStr);
+        if (operandGetSize(L) > operandGetSize(R) &&
+            R.class != operandLiteral)
+            asmOutLn(ctx, "movzx %s, %s", LStr, RStr);
 
-    else
-        asmOutLn(ctx, "mov %s, %s", LStr, RStr);
+        else
+            asmOutLn(ctx, "mov %s, %s", LStr, RStr);
 
-    free(LStr);
-    free(RStr);
+        free(LStr);
+        free(RStr);
+    }
 }
 
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
-    reportRegs();
+    if (L.class == operandMem && R.class == operandMem) {
+        operand intermediate = operandCreateReg(regAllocGeneral());
+        asmEvalAddress(ctx, intermediate, R);
+        asmMove(ctx, L, intermediate);
+        operandFree(intermediate);
 
-    char* LStr = operandToStr(L);
-    char* RStr = operandToStr(R);
-    asmOutLn(ctx, "lea %s, %s", LStr, RStr);
-    free(LStr);
-    free(RStr);
+    } else {
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
+        asmOutLn(ctx, "lea %s, %s", LStr, RStr);
+        free(LStr);
+        free(RStr);
+    }
 }
 
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
-    reportRegs();
+    if (L.class == operandMem && R.class == operandMem) {
+        /*Unlike lea, perform the op after the move. This is because these
+          ops affect the flags (particularly cmp)*/
+        operand intermediate = operandCreateReg(regAllocGeneral());
+        asmMove(ctx, intermediate, R);
+        asmBOP(ctx, Op, L, intermediate);
+        operandFree(intermediate);
 
-    char* LStr = operandToStr(L);
-    char* RStr = operandToStr(R);
+    } else {
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
 
-    if (Op == bopCmp)
-        asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        if (Op == bopCmp)
+            asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
 
-    else if (Op == bopMul)
-        asmOutLn(ctx, "imul %s, %s", LStr, RStr);
+        else if (Op == bopMul)
+            asmOutLn(ctx, "imul %s, %s", LStr, RStr);
 
-    else if (Op == bopAdd)
-        asmOutLn(ctx, "add %s, %s", LStr, RStr);
+        else if (Op == bopAdd)
+            asmOutLn(ctx, "add %s, %s", LStr, RStr);
 
-    else if (Op == bopSub)
-        asmOutLn(ctx, "sub %s, %s", LStr, RStr);
+        else if (Op == bopSub)
+            asmOutLn(ctx, "sub %s, %s", LStr, RStr);
 
-    else
-        printf("asmBOP(): unhandled operator '%d'\n", Op);
+        else
+            printf("asmBOP(): unhandled operator '%d'\n", Op);
 
-    free(LStr);
-    free(RStr);
+        free(LStr);
+        free(RStr);
+    }
 }
 
-void asmUOP (asmCtx* ctx, uoperation Op, operand L) {
-    char* LStr = operandToStr(L);
+void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
+    char* RStr = operandToStr(R);
 
     if (Op == uopInc)
-        asmOutLn(ctx, "add %s, 1", LStr);
+        asmOutLn(ctx, "add %s, 1", RStr);
 
     else if (Op == uopDec)
-        asmOutLn(ctx, "sub %s, 1", LStr);
+        asmOutLn(ctx, "sub %s, 1", RStr);
+
+    else if (Op == uopNeg)
+        asmOutLn(ctx, "neg %s", RStr);
 
     else
         printf("asmUOP(): unhandled operator class, %d", Op);
 
-    free(LStr);
+    free(RStr);
 }
 
 void asmCall (asmCtx* ctx, operand L) {

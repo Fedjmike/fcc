@@ -3,9 +3,9 @@ int main () {
 	
 	do
 		i++;
-	while i < 10;
+	while (i < 10);
 	
-	while i
+	while (i)
 		i--;
 		
 	return i;

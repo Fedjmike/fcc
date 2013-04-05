@@ -2,18 +2,24 @@
 
 #include "lexer.h"
 
+struct sym;
+
 struct parserCtx;
+
+struct sym* scopeSet (struct parserCtx* ctx, struct sym* Scope);
 
 void errorExpected (struct parserCtx* ctx, const char* Expected);
 void errorUndefSym (struct parserCtx* ctx);
 void errorIllegalBreak (struct parserCtx* ctx);
 void errorIdentOutsideDecl (struct parserCtx* ctx);
 void errorDuplicateSym (struct parserCtx* ctx);
+void errorRedeclaredSym (struct parserCtx* ctx);
 
-bool tokenIs (struct parserCtx* ctx, const char* Match);
-bool tokenIsIdent (struct parserCtx* ctx);
-bool tokenIsInt (struct parserCtx* ctx);
-bool tokenIsDecl (struct parserCtx* ctx);
+bool tokenIs (const struct parserCtx* ctx, const char* Match);
+bool tokenIsIdent (const struct parserCtx* ctx);
+bool tokenIsInt (const struct parserCtx* ctx);
+bool tokenIsString (const struct parserCtx* ctx);
+bool tokenIsDecl (const struct parserCtx* ctx);
 
 void tokenNext (struct parserCtx* ctx);
 
