@@ -31,10 +31,11 @@ static void analyzerError (analyzerCtx* ctx, const ast* Node, const char* format
     putchar('\n');
 
     ctx->errors++;
+
+    debugWait();
 }
 
 void analyzerErrorExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* Expected, const type* Found) {
-
     char* FoundStr = typeToStr(Found, "");
 
     analyzerError(ctx, Node, "%s expected %s, found %s",
@@ -80,8 +81,8 @@ void analyzerErrorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const
     char* ExpectedStr = typeToStr(Expected, "");
     char* FoundStr = typeToStr(Found, "");
 
-    analyzerError(ctx, Node, "type mismatch at parameter %d of %s: expected %s, found %s",
-                  n, Node->symbol->ident, ExpectedStr, FoundStr);
+    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s",
+                  n+1, ExpectedStr, FoundStr);
 
     free(ExpectedStr);
     free(FoundStr);
@@ -94,6 +95,23 @@ void analyzerErrorMember (analyzerCtx* ctx, const char* o, const ast* Node, cons
                   o, RecordStr, Node->literal);
 
     free(RecordStr);
+}
+
+void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* Found) {
+    char* ExpectedStr = typeToStr(Symbol->dt, Symbol->ident);
+    char* FoundStr = typeToStr(Found, "");
+
+    analyzerError(ctx, Node, "%s redeclared as conflicting type %s",
+                  ExpectedStr, FoundStr);
+
+    for (int n = 0; n < Symbol->decls.length; n++) {
+        const ast* Current = (ast*) Symbol->decls.buffer[n];
+
+        printf("     (%d:%d): also declared here\n",
+               Current->location.line, Current->location.lineChar);
+    }
+
+    free(FoundStr);
 }
 
 static analyzerCtx* analyzerInit (sym** Types) {
@@ -126,7 +144,7 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
          Current;
          Current = Current->nextSibling) {
         analyzerNode(ctx, Current);
-        debugWait();
+        //debugWait();
     }
 
     debugLeave();

@@ -5,7 +5,7 @@
 struct sym;
 
 /**
- * @see type @see type::class
+ * @see type @see type::tag
  */
 typedef enum {
     typeBasic,
@@ -13,13 +13,13 @@ typedef enum {
     typeArray,
     typeFunction,
     typeInvalid
-} typeClass;
+} typeTag;
 
 /**
  *
  */
 typedef struct type {
-    typeClass class;
+    typeTag tag;
 
     //bool const;
 
@@ -82,7 +82,7 @@ bool typeIsCondition (const type* DT);
 bool typeIsCompatible (const type* DT, const type* Model);
 bool typeIsEqual (const type* L, const type* R);
 
-const char* typeClassGetStr (typeClass class);
+const char* typeTagGetStr (typeTag tag);
 
 int typeGetSize (const type* DT);
 char* typeToStr (const type* DT, const char* embedded);

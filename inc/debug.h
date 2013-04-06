@@ -30,8 +30,8 @@ void debugAssert (const char* functionName,
                   bool result);
 
 void debugErrorUnhandled (const char* functionName,
-                          const char* className,
-                          const char* classStr);
+                          const char* tagName,
+                          const char* tagStr);
 
 void report (const char* str);
 void reportType (const struct type* DT);

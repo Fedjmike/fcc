@@ -1,8 +1,11 @@
 #pragma once
 
+#include "vector.h"
+
 #include "operand.h"
 
 struct type;
+struct ast;
 
 /**
  * Indices of certain built in symbols for arrays passed between
@@ -17,8 +20,8 @@ typedef enum {
 } builtinTypeIndex;
 
 /**
- * Symbol classes
- * @see sym @see sym::class
+ * Symbol tags
+ * @see sym @see sym::tag
  */
 typedef enum {
     symUndefined,
@@ -28,10 +31,10 @@ typedef enum {
     symEnum,
     symId,
     symParam
-} symClass;
+} symTag;
 
 /**
- * Storage classes for a symbol, defining their linkage and lifetime
+ * Storage tags for a symbol, defining their linkage and lifetime
  */
 typedef enum {
     storageUndefined,
@@ -39,7 +42,7 @@ typedef enum {
     storageRegister,
     storageStatic,
     storageExtern
-} storageClass;
+} storageTag;
 
 /**
  * Bitmask attributes for types and structs defining their operations
@@ -72,13 +75,15 @@ typedef enum {
  * @see symInit @see symEnd
  */
 typedef struct sym {
-    symClass class;
+    symTag tag;
     char* ident;
 
-    bool proto;  ///Has only a prototype been declared so far?
+    vector/*<const ast* >*/ decls;  ///Vector of AST nodes for each declaration (inc. definitions)
+    const struct ast* def;  ///Definition (or null if not defined)
+                            ///Points to the FnImpl, DeclStruct or BOP(=), whichever relevant
 
     /*Functions, params, vars only*/
-    storageClass storage;
+    storageTag storage;
     struct type* dt;  ///In the case of functions, the return type
 
     /*Types and structs only*/
@@ -109,6 +114,7 @@ sym* symInit ();
  */
 void symEnd (sym* Global);
 
+sym* symCreateScope (sym* Parent);
 sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask);
 sym* symCreateStruct (sym* Parent, char* ident);
 sym* symCreateId (sym* Parent, char* ident);
@@ -128,5 +134,5 @@ sym* symChild (const sym* Scope, const char* Look);
  */
 sym* symFind (const sym* Scope, const char* Look);
 
-const char* symClassGetStr (symClass class);
-const char* storageClassGetStr (storageClass class);
+const char* symTagGetStr (symTag tag);
+const char* storageTagGetStr (storageTag tag);

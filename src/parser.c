@@ -86,6 +86,9 @@ static ast* parserModuleLine (parserCtx* ctx) {
     if (tokenIs(ctx, "struct"))
         Node = parserDeclStruct(ctx);
 
+    else if (tokenTryMatchStr(ctx, ";"))
+        Node = astCreateEmpty(ctx->location);
+
     else
         Node = parserModuleDecl(ctx);
 
@@ -103,10 +106,10 @@ ast* parserCode (parserCtx* ctx) {
     debugEnter("Code");
 
     ast* Node = astCreate(astCode, ctx->location);
+    Node->symbol = symCreateScope(ctx->scope);
+    sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    if (tokenIs(ctx, "{")) {
-        tokenMatch(ctx);
-
+    if (tokenTryMatchStr(ctx, "{")) {
         while (!tokenIs(ctx, "}"))
             astAddChild(Node, parserLine(ctx));
 
@@ -114,6 +117,8 @@ ast* parserCode (parserCtx* ctx) {
 
     } else
         astAddChild(Node, parserLine(ctx));
+
+    ctx->scope = OldScope;
 
     debugLeave();
 
@@ -145,9 +150,7 @@ static ast* parserLine (parserCtx* ctx) {
 
     /*Statements (that which require ';')*/
     else {
-        if (tokenIs(ctx, "return")) {
-            tokenMatch(ctx);
-
+        if (tokenTryMatchStr(ctx, "return")) {
             Node = astCreate(astReturn, ctx->location);
 
             if (!tokenIs(ctx, ";"))
@@ -155,7 +158,7 @@ static ast* parserLine (parserCtx* ctx) {
 
         } else if (tokenIs(ctx, "break")) {
             if (ctx->breakLevel == 0)
-                errorIllegalBreak(ctx);
+                errorIllegalOutside(ctx, "break", "a loop");
 
             else
                 tokenMatch(ctx);
@@ -263,6 +266,9 @@ static ast* parserFor (parserCtx* ctx) {
     tokenMatchStr(ctx, "for");
     tokenMatchStr(ctx, "(");
 
+    Node->symbol = symCreateScope(ctx->scope);
+    sym* OldScope = scopeSet(ctx, Node->symbol);
+
     /*Initializer*/
     if (!tokenIs(ctx, ";")) {
         if (tokenIsDecl(ctx))
@@ -297,6 +303,8 @@ static ast* parserFor (parserCtx* ctx) {
     ctx->breakLevel++;
     Node->l = parserCode(ctx);
     ctx->breakLevel--;
+
+    ctx->scope = OldScope;
 
     debugLeave();
 

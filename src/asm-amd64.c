@@ -91,7 +91,7 @@ void asmPopN (asmCtx* ctx, int n) {
 }
 
 void asmMove (asmCtx* ctx, operand L, operand R) {
-    if (L.class == operandMem && R.class == operandMem) {
+    if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAllocGeneral());
         asmMove(ctx, intermediate, R);
         asmMove(ctx, L, intermediate);
@@ -102,7 +102,7 @@ void asmMove (asmCtx* ctx, operand L, operand R) {
         char* RStr = operandToStr(R);
 
         if (operandGetSize(L) > operandGetSize(R) &&
-            R.class != operandLiteral)
+            R.tag != operandLiteral)
             asmOutLn(ctx, "movzx %s, %s", LStr, RStr);
 
         else
@@ -114,7 +114,7 @@ void asmMove (asmCtx* ctx, operand L, operand R) {
 }
 
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
-    if (L.class == operandMem && R.class == operandMem) {
+    if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAllocGeneral());
         asmEvalAddress(ctx, intermediate, R);
         asmMove(ctx, L, intermediate);
@@ -130,7 +130,7 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
 }
 
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
-    if (L.class == operandMem && R.class == operandMem) {
+    if (L.tag == operandMem && R.tag == operandMem) {
         /*Unlike lea, perform the op after the move. This is because these
           ops affect the flags (particularly cmp)*/
         operand intermediate = operandCreateReg(regAllocGeneral());
@@ -175,7 +175,7 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
         asmOutLn(ctx, "neg %s", RStr);
 
     else
-        printf("asmUOP(): unhandled operator class, %d", Op);
+        printf("asmUOP(): unhandled operator tag, %d", Op);
 
     free(RStr);
 }

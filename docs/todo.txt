@@ -14,7 +14,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] Type system
     - By val -> By ref (grr)
     - Wrap types in modifiers: ptr, array, fn
-    - Match-all class for error handling
+    - Match-all tag for error handling
     [ ] Unique ptrs?
     [ ] Lvalues
     [ ] Narrowing/widening (careful with function rets)
@@ -82,7 +82,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Check constness of array sizes, enum values etc
 [x] Move type assignment stuff to analyzer? Could solve some of the above
 [x] Filext
-[ ] class -> tag
+[x] tag -> tag
 [ ] Array size detection (basic x[] = {...})
 [ ] Lvalues
 [ ] Free operands before use, so can do things like:
@@ -102,5 +102,5 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Arch specifics are a bit magic value-y
 [x] Type system overly simple
 [-] Lack of comments, esp. interface documentation
-[ ] Assumption of operand class permutations required
+[ ] Assumption of operand tag permutations required
 [ ] Unit tests?

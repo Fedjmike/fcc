@@ -2,6 +2,7 @@
 
 #include "../inc/debug.h"
 #include "../inc/sym.h"
+#include "../inc/ast.h"
 
 #include "../inc/parser.h"
 
@@ -43,20 +44,19 @@ void errorUndefSym (parserCtx* ctx) {
     error(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
 }
 
-void errorIllegalBreak (parserCtx* ctx) {
-    error(ctx, "cannot break when not in loop or switch");
-}
-
-void errorIdentOutsideDecl (parserCtx* ctx) {
-    error(ctx, "identifier given outside declaration");
+void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
+    error(ctx, "illegal %s outside of %s", what, where);
 }
 
 void errorDuplicateSym (parserCtx* ctx) {
     error(ctx, "duplicated identifier '%s'", ctx->lexer->buffer);
 }
 
-void errorRedeclaredSym (struct parserCtx* ctx) {
-    error(ctx, "identifier '%s' redeclared as a different kind of symbol", ctx->lexer->buffer);
+void errorRedefinedSym (struct parserCtx* ctx, sym* Symbol) {
+    error(ctx, "'%s' redefined.\n"
+               "     (%d:%d): first definition here",
+               Symbol->ident,
+               Symbol->def->location.line, Symbol->def->location.lineChar);
 }
 
 /*:::: TOKEN HANDLING ::::*/

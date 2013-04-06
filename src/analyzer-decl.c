@@ -234,7 +234,14 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const 
 
     debugEnter("DeclIdentLiteral");
 
-    Node->symbol->dt = typeDeepDuplicate(base);
+    Node->dt = typeDeepDuplicate(base);
+
+    if (!Node->symbol->dt)
+        Node->symbol->dt = Node->dt;
+
+    /*Not the first declaration of this symbol, check type matches*/
+    else if (!typeIsEqual(Node->symbol->dt, base))
+        errorConflictingDeclarations(ctx, Node, Node->symbol, Node->dt);
 
     debugLeave();
 

@@ -21,29 +21,29 @@ typedef enum {
     regRBP,
     regRSP,
     regMax
-} regClass;
+} regTag;
 
 /**
  * Check if a register is in use
  */
-bool regIsUsed (regClass reg);
+bool regIsUsed (regTag reg);
 
 /**
  * Attempt a lock on a register
  * Returns zero on success, the register itself elsewise
  */
-regClass regRequest (regClass reg);
+regTag regRequest (regTag reg);
 
-void regFree (regClass reg);
+void regFree (regTag reg);
 
 void regFreeAll ();
 
 /**
  * Attempt to allocate a general register, returning its index if successful.
  */
-regClass regAllocGeneral ();
+regTag regAllocGeneral ();
 
 /**
  * Return the name of a register as it would be called in assembler source code
  */
-char* regToStr (regClass Reg);
+char* regToStr (regTag Reg);

@@ -31,7 +31,7 @@ typedef enum {
     astCast,
     astSizeof,
     astLiteral,
-} astClass;
+} astTag;
 
 typedef enum {
     literalUndefined,
@@ -40,10 +40,10 @@ typedef enum {
     literalBool,
     literalStr,
     literalArray
-} literalClass;
+} literalTag;
 
 typedef struct ast {
-    astClass class;
+    astTag tag;
 
     tokenLocation location;
 
@@ -63,17 +63,17 @@ typedef struct ast {
     struct sym* symbol;
 
     /*Literals*/
-    literalClass litClass;
+    literalTag litTag;
     void* literal;
 } ast;
 
-ast* astCreate (astClass class, tokenLocation location);
+ast* astCreate (astTag tag, tokenLocation location);
 void astDestroy (ast* Node);
 
 ast* astCreateInvalid (tokenLocation location);
 ast* astCreateEmpty (tokenLocation location);
 
-ast* astCreateFnImpl (tokenLocation location, ast* decl, ast* impl);
+ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
 ast* astCreateDeclStruct (tokenLocation location, ast* name);
 ast* astCreateDecl (tokenLocation location, ast* basic);
@@ -87,18 +87,18 @@ ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
 ast* astCreateCast (tokenLocation location, ast* result);
 ast* astCreateSizeof (tokenLocation location, ast* r);
-ast* astCreateLiteral (tokenLocation location, literalClass litClass);
+ast* astCreateLiteral (tokenLocation location, literalTag litTag);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
 
 void astAddChild (ast* Parent, ast* Child);
 
-int astIsValueClass (astClass class);
+int astIsValueTag (astTag tag);
 
 /**
- * Return the string associated with an AST class
+ * Return the string associated with an AST tag
  *
  * Does not allocate a new string, so no need to free it.
  */
-const char* astClassGetStr (astClass class);
+const char* astTagGetStr (astTag tag);
 
-const char* literalClassGetStr (literalClass class);
+const char* literalTagGetStr (literalTag tag);

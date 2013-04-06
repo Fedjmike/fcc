@@ -61,10 +61,9 @@ ast* astCreateEmpty (tokenLocation location) {
     return astCreate(astEmpty, location);
 }
 
-ast* astCreateFnImpl (tokenLocation location, ast* decl, ast* impl) {
+ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     ast* Node = astCreate(astFnImpl, location);
     Node->l = decl;
-    Node->r = impl;
     return Node;
 }
 

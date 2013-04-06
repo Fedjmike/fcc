@@ -10,12 +10,12 @@ typedef enum {
     tokenInt,
     tokenStr,
     tokenChar
-} tokenClass;
+} tokenTag;
 
 typedef struct  {
     streamCtx* stream;
 
-    tokenClass token;
+    tokenTag token;
     char* buffer;
     int bufferSize;
     int length;

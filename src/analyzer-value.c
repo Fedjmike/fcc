@@ -415,7 +415,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
         if ((typeIsPtr(L) ? L->base->params : L->params) != Node->children)
             analyzerErrorDegree(ctx, Node, "parameter(s)",
                                 typeIsPtr(L) ? L->base->params : L->params, Node->children,
-                                Node->symbol->ident);
+                                Node->l->symbol ? Node->l->symbol->ident : "function");
 
         /*Do the parameter types match?*/
         else {

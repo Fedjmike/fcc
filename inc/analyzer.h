@@ -31,15 +31,15 @@ typedef struct {
  * Attaches types to AST nodes and symbols and validates their semantics.
  *
  * Assumes a well formed AST in terms of fields filled and constraints on
- * what fills them upheld. For example, the children of a value class are
- * assumed to all be value classes themselves. The o string in a BOP is
+ * what fills them upheld. For example, the children of a value tag are
+ * assumed to all be value tags themselves. The o string in a BOP is
  * assumed to be a valid operator. A full description of these constraints
  * is in ast.h.
  */
 analyzerResult analyzer (struct ast* Tree, struct sym** Types);
 
 /**
- * Handles any node class by passing it off to one of the following
+ * Handles any node tag by passing it off to one of the following
  * specialized handlers.
  */
 void analyzerNode (analyzerCtx* ctx, struct ast* Node);
@@ -57,3 +57,5 @@ void analyzerErrorDegree (analyzerCtx* ctx, const struct ast* Node, const char* 
 void analyzerErrorMember (analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* Record);
 
 void analyzerErrorParamMismatch (analyzerCtx* ctx, const struct ast* Node, int n, const struct type* Expected, const struct type* Found);
+
+void errorConflictingDeclarations (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol, const struct type* Found);

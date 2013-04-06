@@ -25,7 +25,8 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->tag = tag;
     Symbol->ident = 0;
 
-    Symbol->proto = false;
+    Symbol->decls = vectorCreate(2);
+    Symbol->def = 0;
 
     Symbol->storage = storageAuto;
     Symbol->dt = 0;
@@ -46,6 +47,8 @@ static sym* symCreate (symTag tag, sym* Parent) {
 static void symDestroy (sym* Symbol) {
     free(Symbol->ident);
 
+    vectorDestroy(&Symbol->decls);
+
     if (Symbol->firstChild)
         symDestroy(Symbol->firstChild);
 
@@ -56,6 +59,10 @@ static void symDestroy (sym* Symbol) {
         typeDestroy(Symbol->dt);
 
     free(Symbol);
+}
+
+sym* symCreateScope (sym* Parent) {
+    return symCreate(symScope, Parent);
 }
 
 sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
@@ -76,7 +83,6 @@ sym* symCreateStruct (sym* Parent, char* ident) {
 sym* symCreateId (sym* Parent, char* ident) {
     sym* Symbol = symCreate(symId, Parent);
     Symbol->ident = strdup(ident);
-    Symbol->proto = true;
     return Symbol;
 }
 
@@ -94,7 +100,7 @@ static void symAddChild (sym* Parent, sym* Child) {
 
     } else if (!Child || !Parent) {
         printf("symAddChild(): null %s given.\n",
-               !Parent ? "parent" : "child");
+               Child ? "parent" : "child");
         return;
     }
 

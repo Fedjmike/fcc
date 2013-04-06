@@ -162,8 +162,13 @@ type* typeDeriveReturn (const type* DT) {
         return typeCreateInvalid();
 
     else {
-        debugAssert("typeDeriveReturn", "function", typeIsFunction(DT));
-        return typeDeepDuplicate(DT->returnType);
+        debugAssert("typeDeriveReturn", "callable param", typeIsCallable(DT));
+
+        if (typeIsPtr(DT))
+            return typeDeriveReturn(DT->base);
+
+        else
+            return typeDeepDuplicate(DT->returnType);
     }
 }
 
@@ -251,10 +256,14 @@ bool typeIsCompatible (const type* DT, const type* Model) {
         return typeIsEqual(DT->returnType,
                            Model->returnType);
 
-    /*If pointer requested, allow pointers or arrays (of matching type)*/
+    /*If pointer requested, allow pointers and arrays of matching type
+      and basic numeric types
+      If void*, accept all arrays and pointers*/
     } else if (typeIsPtr(Model))
-        return    (typeIsPtr(DT) || typeIsArray(DT))
-               && typeIsCompatible(DT->base, Model->base);
+        return    (   (typeIsPtr(DT) || typeIsArray(DT))
+                   && (   typeIsVoid(Model->base)
+                       || typeIsCompatible(DT->base, Model->base)))
+               || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
     else if (typeIsArray(Model))
@@ -263,9 +272,13 @@ bool typeIsCompatible (const type* DT, const type* Model) {
                && typeIsCompatible(DT->base, Model->base);
 
     /*Basic type*/
-    else
-        return    !typeIsPtr(DT) && !typeIsArray(DT)
-               && (DT->basic == Model->basic);
+    else {
+        if (typeIsPtr(DT))
+            return Model->basic->typeMask & typeNumeric;
+
+        else
+            return !typeIsArray(DT) && DT->basic == Model->basic
+    }
 }
 
 bool typeIsEqual (const type* L, const type* R) {
@@ -285,7 +298,7 @@ bool typeIsEqual (const type* L, const type* R) {
         return    L->array == R->array
                && typeIsEqual(L->base, R->base);
 
-    else
+    else /*(typeIsBasic(L))*/
         return L->basic == R->basic;
 }
 
@@ -378,8 +391,8 @@ char* typeToStr (const type* DT, const char* embedded) {
         /* */
 
         char* format = malloc(strlen(embedded) +
-                              strlen(params)+6);
-        sprintf(format, "(*%s)(%s)", embedded, params);
+                              strlen(params)+5);
+        sprintf(format, "(%s)(%s)", embedded, params);
         free(params);
         char* ret = typeToStr(DT->returnType, format);
         free(format);
