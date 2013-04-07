@@ -245,7 +245,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
 
     /*If function requested, match params and return*/
     else if (typeIsFunction(Model)) {
-        if (Model->params != DT->params)
+        if (!typeIsFunction(DT) || Model->params != DT->params)
             return false;
 
         for (int i = 0; i < Model->params; i++)
@@ -277,7 +277,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
             return Model->basic->typeMask & typeNumeric;
 
         else
-            return !typeIsArray(DT) && DT->basic == Model->basic
+            return !typeIsArray(DT) && DT->basic == Model->basic;
     }
 }
 
@@ -392,7 +392,13 @@ char* typeToStr (const type* DT, const char* embedded) {
 
         char* format = malloc(strlen(embedded) +
                               strlen(params)+5);
-        sprintf(format, "(%s)(%s)", embedded, params);
+
+        if (embedded[0] == 0)
+            sprintf(format, "()(%s)", params);
+
+        else
+            sprintf(format, "%s(%s)", embedded, params);
+
         free(params);
         char* ret = typeToStr(DT->returnType, format);
         free(format);
@@ -403,8 +409,13 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* format = 0;
 
         if (typeIsPtr(DT)) {
-            format = malloc(strlen(embedded)+2);
-            sprintf(format, "*%s", embedded);
+            format = malloc(strlen(embedded)+4);
+
+            if (DT->base->tag == typeFunction)
+                sprintf(format, "(*%s)", embedded);
+
+            else
+                sprintf(format, "*%s", embedded);
 
         } else /*if (typeIsArray(DT))*/ {
             format = malloc(strlen(embedded) +
