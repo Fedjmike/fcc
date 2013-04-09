@@ -5,11 +5,6 @@
 struct ast;
 struct sym;
 
-typedef struct {
-    int line;
-    int lineChar;
-} tokenLocation;
-
 typedef struct parserCtx {
     lexerCtx* lexer;
     tokenLocation location;

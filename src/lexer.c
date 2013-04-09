@@ -93,11 +93,15 @@ static void lexerEat (lexerCtx* ctx, char c) {
     ctx->buffer[ctx->length++] = c;
 }
 
-void lexerNext (lexerCtx* ctx) {
-    if (ctx->token == tokenEOF)
-        return;
+tokenLocation lexerNext (lexerCtx* ctx) {
+    if (ctx->token == tokenEOF) {
+        tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
+        return loc;
+    }
 
     lexerSkipInsignificants(ctx);
+
+    tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
 
     ctx->length = 0;
 
@@ -195,4 +199,6 @@ void lexerNext (lexerCtx* ctx) {
     lexerEat(ctx, 0);
 
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
+
+    return loc;
 }

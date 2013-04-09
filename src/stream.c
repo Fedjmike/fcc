@@ -6,11 +6,6 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-char* streamFilename;
-char streamChar = 0;
-int lineNo = 1;
-int lineCharNo = 0;
-
 streamCtx* streamInit (const char* File) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
     ctx->filename = strdup(File);
@@ -47,7 +42,7 @@ char streamNext (streamCtx* ctx) {
 
     if (old == '\n') {
         ctx->line++;
-        ctx->lineChar = 0;
+        ctx->lineChar = 1;
 
     } else if (old == '\t')
         ctx->lineChar += 3;

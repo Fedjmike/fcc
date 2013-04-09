@@ -12,6 +12,11 @@ typedef enum {
     tokenChar
 } tokenTag;
 
+typedef struct {
+    int line;
+    int lineChar;
+} tokenLocation;
+
 typedef struct  {
     streamCtx* stream;
 
@@ -24,4 +29,4 @@ typedef struct  {
 lexerCtx* lexerInit (const char* File);
 void lexerEnd (lexerCtx* ctx);
 
-void lexerNext (lexerCtx* ctx);
+tokenLocation lexerNext (lexerCtx* ctx);

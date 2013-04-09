@@ -87,10 +87,7 @@ bool tokenIsDecl (const parserCtx* ctx) {
 }
 
 void tokenNext (parserCtx* ctx) {
-    lexerNext(ctx->lexer);
-
-    ctx->location.line = ctx->lexer->stream->line;
-    ctx->location.lineChar = ctx->lexer->stream->lineChar;
+    ctx->location = lexerNext(ctx->lexer);
 }
 
 void tokenMatch (parserCtx* ctx) {
