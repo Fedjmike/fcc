@@ -164,6 +164,7 @@ static ast* parserDeclParam (parserCtx* ctx, bool inDecl) {
     ast* basic = parserDeclBasic(ctx);
     ast* expr = parserDeclExpr(ctx, inDecl, true);
     ast* Node = astCreateDeclParam(loc, basic, expr);
+    Node->symbol = Node->r->symbol;
 
     debugLeave();
 
@@ -363,6 +364,7 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam) {
                     else
                         Node->symbol = symCreateId(ctx->scope, (char*) Node->literal);
 
+                    vectorAdd(&Node->symbol->decls, Node);
                 }
             }
 

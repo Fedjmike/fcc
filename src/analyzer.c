@@ -107,8 +107,9 @@ void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym*
     for (int n = 0; n < Symbol->decls.length; n++) {
         const ast* Current = (ast*) Symbol->decls.buffer[n];
 
-        printf("     (%d:%d): also declared here\n",
-               Current->location.line, Current->location.lineChar);
+        if (Current->location.line != Node->location.line)
+            printf("     (%d:%d): also declared here\n",
+                   Current->location.line, Current->location.lineChar);
     }
 
     free(FoundStr);

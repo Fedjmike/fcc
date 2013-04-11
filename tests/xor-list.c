@@ -18,7 +18,7 @@ struct list_node {
 };
 
 list_node* list_init (int array[], int length);
-list_node* node_init (int* item, int xor_ptr);
+list_node* node_init (int item, int xor_ptr);
 list_node* get_last (list_node* first);
 bool node_is_last (list_node* previous, list_node* current);
 void advance (list_node** previous, list_node** current);

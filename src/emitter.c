@@ -100,15 +100,27 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     }
 
     lastOffset = 0;
+    sym* Scope = Symbol;
 
     /*And then the local variables which follow directly*/
     for (;
          Symbol;
          Symbol = Symbol->nextSibling) {
+        if (Symbol->tag == symScope) {
+            Scope = Symbol;
+            Symbol = Scope->firstChild;
+            continue;
+        }
+
         lastOffset -= typeGetSize(Symbol->dt);
         Symbol->offset = lastOffset;
 
         reportSymbol(Symbol);
+
+        if (!Symbol->nextSibling && Scope) {
+            Symbol = Scope;
+            Scope = Symbol->parent->tag != symId ? Symbol->parent : 0;
+        }
     }
 
     /*Label to jump to from returns*/
@@ -119,6 +131,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
                   Node->symbol->label,
                   Node->symbol->lastChild && Node->symbol->lastChild->tag != symParam
                         ? -Node->symbol->lastChild->offset : 0);
+
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, EndLabel);
 

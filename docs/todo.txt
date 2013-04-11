@@ -55,6 +55,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] CRT support
 [-] sizeof
 [x] break
+[ ] continue
 [ ] main
     [ ] Args
     [ ] Conformance

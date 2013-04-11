@@ -36,6 +36,8 @@ void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
         analyzerDecl(ctx, Current);
     }
 
+    /*TODO: check compatiblity*/
+
     debugLeave();
 }
 
@@ -49,10 +51,16 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
          Current = Current->nextSibling) {
         const type* DT = analyzerDeclNode(ctx, Current, BasicDT);
 
-        if (Current->symbol)
-            reportSymbol(Current->symbol);
+        if (Current->symbol) {
+            if (!Current->symbol->dt) {
+                Current->symbol->dt = typeDeepDuplicate(DT);
+                reportSymbol(Current->symbol);
 
-        else
+            /*Not the first declaration of this symbol, check type matches*/
+            } else if (!typeIsEqual(Current->symbol->dt, DT))
+                errorConflictingDeclarations(ctx, Current, Current->symbol, DT);
+
+       } else
             reportType(DT);
     }
 
@@ -75,6 +83,11 @@ static void analyzerDeclParam (analyzerCtx* ctx, ast* Node) {
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
     Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, BasicDT));
+
+    /*Don't bother checking types if already assigned
+      Any conflicts will be reported by the function itself*/
+    if (Node->symbol && !Node->symbol->dt)
+        Node->symbol->dt = typeDeepDuplicate(Node->dt);
 
     debugLeave();
 }
@@ -236,14 +249,7 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const 
 
     Node->dt = typeDeepDuplicate(base);
 
-    if (!Node->symbol->dt)
-        Node->symbol->dt = Node->dt;
-
-    /*Not the first declaration of this symbol, check type matches*/
-    else if (!typeIsEqual(Node->symbol->dt, base))
-        errorConflictingDeclarations(ctx, Node, Node->symbol, Node->dt);
-
     debugLeave();
 
-    return Node->symbol->dt;
+    return Node->dt;
 }
