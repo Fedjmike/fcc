@@ -18,11 +18,14 @@
 #include "stdlib.h"
 
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+
 static operand emitterUOP (emitterCtx* ctx, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, const ast* Node);
 static operand emitterIndex (emitterCtx* ctx, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, const ast* Node);
+static operand emitterSizeof (emitterCtx* ctx, const ast* Node);
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 
@@ -31,10 +34,22 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
 
     /*Calculate the value*/
 
-    if (Node->tag == astBOP)
-        Value = emitterBOP(ctx, Node);
+    if (Node->tag == astBOP) {
+        if (   !strcmp(Node->o, "=")
+            || !strcmp(Node->o, "+=") || !strcmp(Node->o, "-=")
+            || !strcmp(Node->o, "*=")
+            || !strcmp(Node->o, "&=") || !strcmp(Node->o, "|=")
+            || !strcmp(Node->o, "^=")
+            || !strcmp(Node->o, ">>=") || !strcmp(Node->o, "<<="))
+            Value = emitterAssignmentBOP(ctx, Node);
 
-    else if (Node->tag == astUOP)
+        else if (!strcmp(Node->o, "&&") || !strcmp(Node->o, "||"))
+            Value = emitterLogicalBOP(ctx, Node);
+
+        else
+            Value = emitterBOP(ctx, Node);
+
+    } else if (Node->tag == astUOP)
         Value = emitterUOP(ctx, Node);
 
     else if (Node->tag == astTOP)
@@ -49,6 +64,9 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     else if (Node->tag == astCast)
         Value = emitterValue(ctx, Node->r, Dest);
 
+    else if (Node->tag == astSizeof)
+        Value = emitterSizeof(ctx, Node);
+
     else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             Value = emitterSymbol(ctx, Node);
@@ -56,8 +74,10 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
         else
             Value = emitterLiteral(ctx, Node);
 
-    } else
+    } else {
         debugErrorUnhandled("emitterValue", "AST tag", astTagGetStr(Node->tag));
+        return Dest;
+    }
 
     /*Put it where requested*/
 
@@ -65,7 +85,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
       then they're unaware it's held as a reference at all
       so make it a plain ol' value*/
     if (Value.tag == operandMemRef && Dest.tag != operandMem) {
-        operand nValue = operandCreateReg(regAllocGeneral());
+        operand nValue = operandCreateReg(regAlloc());
         asmEvalAddress(ctx->Asm, nValue, Value);
         operandFree(Value);
         Value = nValue;
@@ -82,7 +102,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
             } else if (Dest.tag == operandReg) {
                 /*If a specific register wasn't requested, allocate one*/
                 if (Dest.reg == regUndefined)
-                    Dest.reg = regAllocGeneral();
+                    Dest.reg = regAlloc();
 
                 asmMove(ctx->Asm, Dest, Value);
                 operandFree(Value);
@@ -93,7 +113,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
                     Dest.tag = operandMem;
 
                 } else
-                    printf("emitterValue(): unable to convert non lvalue operand tag, %d.\n", Value.tag);
+                    printf("emitterValue(): unable to convert non lvalue operand tag, %s.\n", operandTagGetStr(Value.tag));
 
             } else if (Dest.tag == operandStack) {
                 /*Larger than a word?*/
@@ -126,10 +146,9 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
                 debugErrorUnhandled("emitterValue", "operand tag", operandTagGetStr(Dest.tag));
             }
 
-        } else if (Dest.tag == operandReg && Dest.reg != Value.reg) {
-            if (Dest.reg == regUndefined)
-                Dest.reg = regAllocGeneral();
-
+        } else if (   Dest.tag == operandReg
+                   && Dest.reg != Value.reg
+                   && Dest.reg != regUndefined) {
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
 
@@ -142,20 +161,12 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     return Dest;
 }
 
-operand emitterBOP (emitterCtx* ctx, const ast* Node) {
+static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("BOP");
 
-    operand L;
-    operand R;
-    operand Value;
+    operand L, R, Value;
 
-    if (   !strcmp(Node->o, "=")
-        || !strcmp(Node->o, "+=")
-        || !strcmp(Node->o, "-=")
-        || !strcmp(Node->o, "*="))
-        Value = emitterAssignmentBOP(ctx, Node);
-
-    else if (!strcmp(Node->o, ".")) {
+    if (!strcmp(Node->o, ".")) {
         asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, operandCreate(operandMem));
         asmLeave(ctx->Asm);
@@ -200,8 +211,25 @@ operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         else if (!strcmp(Node->o, "*"))
             asmBOP(ctx->Asm, bopMul, L, R);
 
+        else if (!strcmp(Node->o, "&"))
+            asmBOP(ctx->Asm, bopBitAnd, L, R);
+
+        else if (!strcmp(Node->o, "|"))
+            asmBOP(ctx->Asm, bopBitOr, L, R);
+
+        else if (!strcmp(Node->o, "^"))
+            asmBOP(ctx->Asm, bopBitXor, L, R);
+
+        else if (!strcmp(Node->o, ">>"))
+            asmBOP(ctx->Asm, bopShR, L, R);
+
+        else if (!strcmp(Node->o, "<<"))
+            asmBOP(ctx->Asm, bopShL, L, R);
+
         else
             debugErrorUnhandled("emitterBOP", "operator", Node->o);
+
+        operandFree(R);
     }
 
     debugLeave();
@@ -209,13 +237,52 @@ operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
+static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("LogicalBOP");
+
+    operand L, R, Value = operandCreateReg(regAlloc());
+
+    /*Set up the short circuit value*/
+    asmMove(ctx->Asm, Value, operandCreateLiteral(
+                !strcmp(Node->o, "&&") ? 0 : 1));
+
+    /*Label to jump to if circuit gets shorted*/
+    operand ShortLabel = labelCreate(labelUndefined);
+
+    /*Left*/
     asmEnter(ctx->Asm);
-    operand L = emitterValue(ctx, Node->l, operandCreate(operandMem));;
-    operand R;
+    L = emitterValue(ctx, Node->l, operandCreate(operandFlags));
     asmLeave(ctx->Asm);
 
-    operand Value;
+    /*Check initial condition*/
+
+    if (!strcmp(Node->o, "||"))
+        L.condition = conditionNegate(L.condition);
+
+    asmBranch(ctx->Asm, L, ShortLabel);
+
+    /*Right*/
+    asmEnter(ctx->Asm);
+    R = emitterValue(ctx, Node->r, operandCreate(operandFlags));
+    asmLeave(ctx->Asm);
+
+    if (!strcmp(Node->o, "&&"))
+        R.condition = conditionNegate(R.condition);
+
+    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(1));
+    asmLabel(ctx->Asm, ShortLabel);
+
+    debugLeave();
+
+    return Value;
+}
+
+static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("AssignnentBOP");
+
+    asmEnter(ctx->Asm);
+    operand Value, R, L = emitterValue(ctx, Node->l, operandCreate(operandMem));
+    asmLeave(ctx->Asm);
 
     if (!strcmp(Node->o, "*=")) {
         /*imul m64, r/imm64 isnt a thing
@@ -247,6 +314,24 @@ operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
         else if (!strcmp(Node->o, "-="))
             asmBOP(ctx->Asm, bopSub, L, R);
 
+        else if (!strcmp(Node->o, "*="))
+            asmBOP(ctx->Asm, bopMul, L, R);
+
+        else if (!strcmp(Node->o, "&="))
+            asmBOP(ctx->Asm, bopBitAnd, L, R);
+
+        else if (!strcmp(Node->o, "|="))
+            asmBOP(ctx->Asm, bopBitOr, L, R);
+
+        else if (!strcmp(Node->o, "^="))
+            asmBOP(ctx->Asm, bopBitXor, L, R);
+
+        else if (!strcmp(Node->o, ">>="))
+            asmBOP(ctx->Asm, bopShR, L, R);
+
+        else if (!strcmp(Node->o, "<<="))
+            asmBOP(ctx->Asm, bopShL, L, R);
+
         else
             debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
     }
@@ -254,14 +339,15 @@ operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     Value = R;
     operandFree(L);
 
+    debugLeave();
+
     return Value;
 }
 
-operand emitterUOP (emitterCtx* ctx, const ast* Node) {
+static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("UOP");
 
-    operand Value;
-    operand R;
+    operand R, Value;
 
     if (   !strcmp(Node->o, "++")
         || !strcmp(Node->o, "--")) {
@@ -286,15 +372,8 @@ operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         asmUOP(ctx->Asm, uopNeg, R);
 
     } else if (!strcmp(Node->o, "*")) {
-        asmEnter(ctx->Asm);
         operand Ptr = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
-        asmLeave(ctx->Asm);
-
-        R = operandCreateMem(Ptr.reg, 0, typeGetSize(Node->dt));
-        Value = operandCreateReg(regAllocGeneral());
-
-        asmMove(ctx->Asm, Value, R);
-        operandFree(R);
+        Value = operandCreateMem(Ptr.reg, 0, typeGetSize(Node->dt));
 
     } else if (!strcmp(Node->o, "&")) {
         asmEnter(ctx->Asm);
@@ -302,7 +381,7 @@ operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         R.size = 8;
         asmLeave(ctx->Asm);
 
-        Value = operandCreateReg(regAllocGeneral());
+        Value = operandCreateReg(regAlloc());
 
         asmEvalAddress(ctx->Asm, Value, R);
 
@@ -316,12 +395,12 @@ operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-operand emitterTOP (emitterCtx* ctx, const ast* Node) {
+static operand emitterTOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("TOP");
 
     operand ElseLabel = labelCreate(labelUndefined);
     operand EndLabel = labelCreate(labelUndefined);
-    operand Value = operandCreateReg(regAllocGeneral());
+    operand Value = operandCreateReg(regAlloc());
 
     asmBranch(ctx->Asm,
               emitterValue(ctx,
@@ -345,13 +424,10 @@ operand emitterTOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-operand emitterIndex (emitterCtx* ctx, const ast* Node) {
+static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     debugEnter("Index");
 
-    operand Value;
-
-    operand L;
-    operand R;
+    operand L, R, Value;
 
     /*Is it an array? Are we directly offsetting the address*/
     if (typeIsArray(Node->l->dt)) {
@@ -370,7 +446,7 @@ operand emitterIndex (emitterCtx* ctx, const ast* Node) {
             Value.factor = typeGetSize(Node->l->dt->base);
 
         } else {
-            operand index = operandCreateReg(regAllocGeneral());
+            operand index = operandCreateReg(regAlloc());
             asmMove(ctx->Asm, index, R);
             operandFree(R);
 
@@ -401,15 +477,15 @@ operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-operand emitterCall (emitterCtx* ctx, const ast* Node) {
+static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     debugEnter("Call");
 
     operand Value;
 
     /*Save the general registers in use*/
-    for (int reg = regRAX; reg <= regR15; reg++)
-        if (regIsUsed(reg))
-            asmPush(ctx->Asm, operandCreateReg(reg));
+    for (int r = regRAX; r <= regR15; r++)
+        if (regIsUsed(r))
+            asmPush(ctx->Asm, operandCreateReg(&regs[r]));
 
     int argSize = 0;
 
@@ -428,28 +504,41 @@ operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
     /*If RAX is already in use (currently backed up to the stack), relocate the
       return value to another free reg before RAXs value is restored.*/
-    if (regRequest(regRAX))
-        asmMove(ctx->Asm,
-                operandCreateReg(regAllocGeneral()),
-                operandCreateReg(regRAX));
+    if (regIsUsed(regRAX)) {
+        Value = operandCreateReg(regAlloc());
+        asmMove(ctx->Asm, Value, operandCreateReg(&regs[regRAX]));
 
-    Value = operandCreateReg(regRAX);
+    } else
+        Value = operandCreateReg(regRequest(regRAX));
 
     /*Pop the args*/
     asmPopN(ctx->Asm, argSize/8);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
-    for (regTag reg = regR15; reg >= regRAX; reg--)
+    for (regIndex r = regR15; r >= regRAX; r--)
         //Attempt to restore all but the one we just allocated for the ret value
-        if (regIsUsed(reg) && reg != Value.reg)
-            asmPop(ctx->Asm, operandCreateReg(reg));
+        if (regIsUsed(r) && &regs[r] != Value.reg)
+            asmPop(ctx->Asm, operandCreateReg(&regs[r]));
 
     debugLeave();
 
     return Value;
 }
 
-operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
+static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
+    (void) ctx;
+
+    debugEnter("Sizeof");
+
+    const type* DT = Node->r->dt;
+    operand Value = operandCreateLiteral(typeGetSize(DT));
+
+    debugLeave();
+
+    return Value;
+}
+
+static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
     (void) ctx;
 
     debugEnter("Symbol");
@@ -461,10 +550,10 @@ operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
 
     else /*var or param*/ {
         if (typeIsArray(Node->symbol->dt))
-            Value = operandCreateMemRef(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt->base));
+            Value = operandCreateMemRef(&regs[regRBP], Node->symbol->offset, typeGetSize(Node->symbol->dt->base));
 
         else
-            Value = operandCreateMem(regRBP, Node->symbol->offset, typeGetSize(Node->symbol->dt));
+            Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, typeGetSize(Node->symbol->dt));
     }
 
     debugLeave();
@@ -472,7 +561,7 @@ operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
+static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
     (void) ctx;
 
     debugEnter("Literal");

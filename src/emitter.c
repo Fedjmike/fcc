@@ -12,6 +12,7 @@
 #include "../inc/reg.h"
 
 #include "../inc/emitter-value.h"
+#include "../inc/emitter-decl.h"
 
 #include "string.h"
 #include "stdio.h"
@@ -20,11 +21,6 @@
 static void emitterModule (emitterCtx* ctx, const ast* Tree);
 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
-static void emitterDeclStruct (emitterCtx* ctx, ast* Node);
-
-static void emitterDecl (emitterCtx* ctx, const ast* Node);
-static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Symbol);
-
 static void emitterCode (emitterCtx* ctx, const ast* Node);
 static void emitterLine (emitterCtx* ctx, const ast* Node);
 
@@ -107,8 +103,10 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
          Symbol;
          Symbol = Symbol->nextSibling) {
         if (Symbol->tag == symScope) {
-            Scope = Symbol;
-            Symbol = Scope->firstChild;
+            if (Symbol->firstChild) {
+                Scope = Symbol;
+                Symbol = Scope->firstChild;
+            }
             continue;
         }
 
@@ -134,77 +132,6 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
 
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, EndLabel);
-
-    debugLeave();
-}
-
-static void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
-    (void) ctx;
-
-    debugEnter("DeclStruct");
-
-    for (sym* Current = Node->symbol->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-
-        Current->offset = Node->symbol->size;
-        /*Add the size of this field, rounded up to the nearest word boundary*/
-        Node->symbol->size += ((typeGetSize(Current->dt) - 1)/8)*8 + 8;
-        reportSymbol(Current);
-    }
-
-    reportSymbol(Node->symbol);
-
-    debugLeave();
-}
-
-static void emitterDecl (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
-    debugEnter("Decl");
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        /*Initial assignment*/
-        if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
-            /*Array*/
-            if (Current->r->tag == astLiteral && Current->r->litTag == literalArray)
-                emitterArrayLiteral(ctx, Current->r, Current->symbol);
-
-            else if (Current->symbol->storage == storageAuto) {
-                asmEnter(ctx->Asm);
-                operand L = operandCreateMem(regRBP, Current->symbol->offset, typeGetSize(Current->symbol->dt));
-                operand R = emitterValue(ctx, Current->r, operandCreate(operandUndefined));
-                asmLeave(ctx->Asm);
-                asmMove(ctx->Asm, L, R);
-                operandFree(R);
-
-            } else
-                debugErrorUnhandled("emitterDecl", "storage tag", storageTagGetStr(Node->symbol->storage));
-        }
-    }
-
-    debugLeave();
-}
-
-static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Symbol) {
-    debugEnter("ArrayLiteral");
-
-    int n = 0;
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling, n++) {
-        asmEnter(ctx->Asm);
-        operand L = operandCreateMem(regRBP,
-                                     Symbol->offset + typeGetSize(Symbol->dt->base)*n,
-                                     typeGetSize(Symbol->dt->base));
-        operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
-        asmLeave(ctx->Asm);
-        asmMove(ctx->Asm, L, R);
-        operandFree(R);
-    }
 
     debugLeave();
 }
@@ -236,7 +163,18 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
         emitterIter(ctx, Node);
 
     else if (Node->tag == astReturn) {
-        emitterValue(ctx, Node->r, operandCreateReg(regRAX));
+        operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        reg* rax;
+
+        if ((rax = regRequest(regRAX)) != 0) {
+            asmMove(ctx->Asm, operandCreateReg(rax), Ret);
+            regFree(rax);
+
+        } else if (Ret.reg != &regs[regRAX])
+            debugError("emitterLine", "unable to allocate RAX for return");
+
+        operandFree(Ret);
+
         asmJump(ctx->Asm, ctx->labelReturnTo);
 
     } else if (Node->tag == astBreak)

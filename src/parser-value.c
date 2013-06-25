@@ -211,7 +211,7 @@ static ast* parserTerm (parserCtx* ctx) {
 }
 
 /**
- * Unary = ( "!" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
+ * Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
  */
 static ast* parserUnary (parserCtx* ctx) {
     /* Interestingly, this function makes extensive use of itself */

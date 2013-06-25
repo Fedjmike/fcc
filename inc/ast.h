@@ -31,6 +31,7 @@ typedef enum {
     astCast,
     astSizeof,
     astLiteral,
+    astEllipsis
 } astTag;
 
 typedef enum {
@@ -89,6 +90,8 @@ ast* astCreateCast (tokenLocation location, ast* result);
 ast* astCreateSizeof (tokenLocation location, ast* r);
 ast* astCreateLiteral (tokenLocation location, literalTag litTag);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
+
+ast* astCreateEllipsis (tokenLocation location);
 
 void astAddChild (ast* Parent, ast* Child);
 

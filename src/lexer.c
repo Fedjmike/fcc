@@ -93,6 +93,10 @@ static void lexerEat (lexerCtx* ctx, char c) {
     ctx->buffer[ctx->length++] = c;
 }
 
+static void lexerEatNext (lexerCtx* ctx) {
+    lexerEat(ctx, streamNext(ctx->stream));
+}
+
 tokenLocation lexerNext (lexerCtx* ctx) {
     if (ctx->token == tokenEOF) {
         tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
@@ -114,11 +118,11 @@ tokenLocation lexerNext (lexerCtx* ctx) {
     else if (   isalpha(ctx->stream->current)
              || ctx->stream->current == '_') {
         ctx->token = tokenIdent;
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
         while (   isalnum(ctx->stream->current)
                || ctx->stream->current == '_')
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
 
     }
     /*Number*/
@@ -126,43 +130,42 @@ tokenLocation lexerNext (lexerCtx* ctx) {
         ctx->token = tokenInt;
 
         while (isdigit(ctx->stream->current))
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
 
     /*String*/
     } else if (ctx->stream->current == '"') {
         ctx->token = tokenStr;
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
         while (ctx->stream->current != '"') {
             if (ctx->stream->current == '\\')
-                lexerEat(ctx, streamNext(ctx->stream));
+                lexerEatNext(ctx);
 
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
         }
 
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
     /*Character*/
     } else if (ctx->stream->current == '\'') {
         ctx->token = tokenChar;
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
         while (!ctx->stream->current == '\'') {
             if (ctx->stream->current == '\\')
-                lexerEat(ctx, streamNext(ctx->stream));
+                lexerEatNext(ctx);
 
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
         }
 
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
     /*Other symbol. Operators come into this category*/
     } else {
         ctx->token = tokenOther;
-        lexerEat(ctx, streamNext(ctx->stream));
+        lexerEatNext(ctx);
 
         /*If it is a double char operator like != or ->, combine them*/
-
         /* == !=  += -= *= /= %=  &= |= ^= */
         if (   (   (   ctx->buffer[0] == '=' || ctx->buffer[0] == '!'
                     || ctx->buffer[0] == '+' || ctx->buffer[0] == '-'
@@ -181,18 +184,30 @@ tokenLocation lexerNext (lexerCtx* ctx) {
         /* >= <= */
             || ((ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
                 && ctx->stream->current == '='))
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
 
         /*Possible triple char operator*/
-
         /* >> << */
-        if (   (ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
+        else if (   (ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
             && (ctx->stream->current == ctx->buffer[0])) {
-            lexerEat(ctx, streamNext(ctx->stream));
+            lexerEatNext(ctx);
 
             /* >>= <<=*/
             if (ctx->stream->current == '=')
-                lexerEat(ctx, streamNext(ctx->stream));
+                lexerEatNext(ctx);
+
+        /* ... */
+        } else if (ctx->buffer[0] == '.' && ctx->stream->current == '.') {
+            lexerEatNext(ctx);
+
+            if (ctx->stream->current == '.')
+                lexerEatNext(ctx);
+
+            //Oops, it's just two dots, backtrack
+            else {
+                streamPrev(ctx->stream);
+                ctx->length--;
+            }
         }
     }
 

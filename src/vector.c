@@ -17,7 +17,7 @@ void vectorDestroy (vector* v) {
 
 void vectorDestroyObjs (vector* v, dtorType dtor) {
     /*This will mess up the vector, watevs*/
-    vectorMap((mapType) dtor, v);
+    vectorMap(v, v, (mapType) dtor);
     vectorDestroy(v);
 }
 
@@ -28,7 +28,7 @@ void vectorAdd (vector* v, void* item) {
     v->buffer[v->length++] = item;
 }
 
-void vectorMap (mapType f, vector* v) {
-    for (int n = 0; n < v->length; n++)
-        v->buffer[n] = f(v->buffer[n]);
+void vectorMap (vector* dest, vector* src, mapType f) {
+    for (int n = 0; n < src->length; n++)
+        dest->buffer[n] = f(src->buffer[n]);
 }

@@ -12,4 +12,10 @@ void vectorDestroyObjs (vector* v, void (*dtor)(void*));
 
 void vectorAdd (vector* v, void* item);
 
-void vectorMap (void* (*f)(void*), vector* v);
+/**
+ * Maps dest[n] to f(src[n]) for n in src->length.
+ *
+ * src and dest can match. Lengths not checked.
+ * @see mapType
+ */
+void vectorMap (vector* dest, vector* src, void* (*f)(void*));

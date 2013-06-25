@@ -11,6 +11,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Control pretty printing
 [ ] Modules
     - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
+[ ] CRT support
 [-] Type system
     - By val -> By ref (grr)
     - Wrap types in modifiers: ptr, array, fn
@@ -52,7 +53,6 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Functions
 [ ] extern
 [ ] Global variables
-[ ] CRT support
 [-] sizeof
 [x] break
 [ ] continue
@@ -92,6 +92,12 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Symbol shadowing
 [ ] Review type compatibility (esp. w.r.t. derivation & unification)
 [ ] Check that fn impl and var init are semantically valid
+[ ] Get rid of &regs[] use outside reg.c
+    - Make stack operations
+    - Differentiate between top and base operands
+[ ] Short circuit ops optimization
+    - If flag condition is the same, just return flags :D
+      This chains well
 
 [ ] Abysmal error recovery
 [-] AST is not abstract

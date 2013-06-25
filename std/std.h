@@ -25,7 +25,9 @@ char tolower (char Char);*/
 char* filext (const char* name, const char* extension);
 
 /**
- * Returns (int) floor(log((double) x) / log((double) base))
+ * Returns the floor of the log of x, in a given base
+ *
+ * (int) floor(log((double) x) / log((double) base))
  */
 int logi (int x, int base);
 

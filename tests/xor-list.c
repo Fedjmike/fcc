@@ -5,7 +5,7 @@
 void* malloc (int);
 void free (void*);
 
-int printf (char*);
+int printf (char*, ...);
 int puts (char*);
 
 //import(stdlib)
@@ -109,8 +109,8 @@ void advance (list_node** previous, list_node** current) {
 /**
  * Insert an element between two nodes
  *
- * If either previous or last is null, start/finish of list assumed
- * Returns new node
+ * If either previous or last is null, beginning/end of list assumed
+ * Returns the new node
  */
 list_node* insert_between (list_node* previous, list_node* next, int item) {
 	//Insert into empty list

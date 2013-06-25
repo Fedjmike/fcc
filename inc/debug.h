@@ -25,6 +25,9 @@ void debugLeave ();
 void debugMsg (const char* format, ...);
 void debugVarMsg (const char* format, va_list args);
 
+void debugError (const char* functionName,
+                 const char* format, ...);
+
 void debugAssert (const char* functionName,
                   const char* testName,
                   bool result);
@@ -32,6 +35,10 @@ void debugAssert (const char* functionName,
 void debugErrorUnhandled (const char* functionName,
                           const char* tagName,
                           const char* tagStr);
+
+void debugErrorUnhandledInt (const char* functionName,
+                             const char* className,
+                             int classInt);
 
 void report (const char* str);
 void reportType (const struct type* DT);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "reg.h"
+struct reg;
 
 typedef enum {
     operandUndefined,
@@ -35,8 +35,8 @@ typedef enum {
 typedef struct {
     operandTag tag;
 
-    regTag reg;
-    regTag index;
+    struct reg* reg;
+    struct reg* index;
     int factor;
     int offset;
     int size; 		/*In bytes, for mem operands*/
@@ -48,38 +48,38 @@ typedef struct {
     int label; 		/*Global label index*/
 } operand;
 
-extern char* Conditions[];
+extern const char const* conditions[];
 
 operand operandCreate (operandTag tag);
 operand operandCreateInvalid ();
-operand operandCreateFlags (conditionTag Condition);
-operand operandCreateReg (regTag Reg);
-operand operandCreateMem (int Reg, int Offset, int Size);
-operand operandCreateMemRef (int Reg, int Offset, int Size);
-operand operandCreateLiteral (int Literal);
-operand operandCreateLabel (int Label);
+operand operandCreateFlags (conditionTag cond);
+operand operandCreateReg (struct reg* r);
+operand operandCreateMem (struct reg* r, int offset, int size);
+operand operandCreateMemRef (struct reg* r, int offset, int size);
+operand operandCreateLiteral (int literal);
+operand operandCreateLabel (int label);
 operand operandCreateLabelOffset (operand label);
+
+void operandFree (operand Value);
 
 int operandGetSize (operand Value);
 
 char* operandToStr (operand Value);
 
-void operandFree (operand Value);
-
 const char* operandTagGetStr (operandTag tag);
 
 /* ::::CONDITIONS:::: */
 
-int conditionFromStr (char* Condition);
+int conditionFromStr (char* cond);
 
-int conditionNegate (int Condition);
+int conditionNegate (int cond);
 
 /* ::::LABELS:::: */
 
 operand labelCreate (int tag);
 
-operand labelNamed (const char* Name);
+operand labelNamed (const char* name);
 
-const char* labelGet (operand Label);
+const char* labelGet (operand label);
 
 void labelFreeAll ();

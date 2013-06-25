@@ -5,9 +5,14 @@ struct asmCtx;
 typedef enum {
 	bopUndefined,
 	bopCmp,
-	bopMul,
 	bopAdd,
 	bopSub,
+	bopMul,
+	bopBitAnd,
+	bopBitOr,
+	bopBitXor,
+	bopShR,
+	bopShL
 } boperation;
 
 typedef enum {
@@ -72,7 +77,10 @@ void asmPop (struct asmCtx* ctx, operand L);
  */
 void asmPopN (struct asmCtx* ctx, int n);
 
-void asmMove (struct asmCtx* ctx, operand L, operand R);
+void asmMove (struct asmCtx* ctx, operand Dest, operand Src);
+
+void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src);
+
 void asmEvalAddress (struct asmCtx* ctx, operand L, operand R);
 
 /**

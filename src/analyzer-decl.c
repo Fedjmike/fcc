@@ -174,11 +174,14 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
 
     //const type* DT;
 
+    //TODO: is assignable?
     //if (typeIs)
+
+    Node->dt = typeDeepDuplicate(L);
 
     debugLeave();
 
-    return L;
+    return Node->dt;
 }
 
 static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base) {
@@ -197,20 +200,29 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
 
     /*Param types*/
 
+    bool variadic = false;
     type** paramTypes = malloc(Node->children*sizeof(type*));
+    ast* Current;
+    int i;
 
-    int i = 0;
-
-    for (ast* Current = Node->firstChild;
+    for (Current = Node->firstChild, i = 0;
          Current;
          Current = Current->nextSibling) {
-        analyzerDeclParam(ctx, Current);
-        paramTypes[i++] = typeDeepDuplicate(Current->dt);
+        if (Current->tag == astEllipsis) {
+            variadic = true;
+            debugMsg("Ellipsis");
+
+        } else if (Current->tag == astDeclParam) {
+            analyzerDeclParam(ctx, Current);
+            paramTypes[i++] = typeDeepDuplicate(Current->dt);
+
+        } else
+            debugErrorUnhandled("analyzerDeclCall", "AST tag", astTagGetStr(Current->tag));
     }
 
     /* */
 
-    Node->dt = typeCreateFunction(typeDeepDuplicate(returnType), paramTypes, Node->children);
+    Node->dt = typeCreateFunction(typeDeepDuplicate(returnType), paramTypes, i, variadic);
     const type* DT = analyzerDeclNode(ctx, Node->l, Node->dt);
 
     debugLeave();

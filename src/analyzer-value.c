@@ -12,8 +12,10 @@
 
 static const type* analyzerBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
+static const type* analyzerLogicalBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node);
+
 static const type* analyzerUOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerTernary (analyzerCtx* ctx, ast* Node);
 static const type* analyzerIndex (analyzerCtx* ctx, ast* Node);
@@ -64,6 +66,10 @@ static bool isAssignmentBOP (char* o) {
            || !strcmp(o, "<<=") || !strcmp(o, ">>=");
 }
 
+static bool isLogicalBOP (char* o) {
+    return !strcmp(o, "&&") || !strcmp(o, "||");
+}
+
 /**
  * Does this operator access struct/class members of its LHS?
  */
@@ -92,6 +98,9 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
 
         else if (isOrdinalBOP(Node->o) || isEqualityBOP(Node->o))
             return analyzerComparisonBOP(ctx, Node);
+
+        else if (isLogicalBOP(Node->o))
+            return analyzerLogicalBOP(ctx, Node);
 
         else if (isMemberBOP(Node->o))
             return analyzerMemberBOP(ctx, Node);
@@ -212,6 +221,27 @@ static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Result*/
 
+    Node->dt = typeCreateBasic(ctx->types[builtinBool]);
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static const type* analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Logical");
+
+    const type* L = analyzerValue(ctx, Node->l);
+    const type* R = analyzerValue(ctx, Node->r);
+
+    /*Allowed*/
+
+    if (!typeIsCondition(L) || !typeIsCondition(R))
+        analyzerErrorOp(ctx, Node->o, "condition",
+                        !typeIsCondition(L) ? Node->l : Node->r,
+                        !typeIsCondition(L) ? L : R);
+
+    /*Result: bool*/
     Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
     debugLeave();
@@ -411,28 +441,37 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
           regardless of parameter matches*/
         Node->dt = typeDeepDuplicate(typeDeriveReturn(L));
 
+        const type* fn = typeIsPtr(L) ? L->base : L;
+
         /*Right number of params?*/
-        if ((typeIsPtr(L) ? L->base->params : L->params) != Node->children)
+        if (fn->variadic ? fn->params > Node->children :
+                           fn->params != Node->children)
             analyzerErrorDegree(ctx, Node, "parameter(s)",
-                                typeIsPtr(L) ? L->base->params : L->params, Node->children,
+                                fn->params, Node->children,
                                 Node->l->symbol ? Node->l->symbol->ident : "function");
 
         /*Do the parameter types match?*/
         else {
-            ast* Current;
             type** paramTypes = typeIsPtr(L) ? L->base->paramTypes : L->paramTypes;
+            int params = typeIsPtr(L) ? L->base->params : L->params;
+            ast* Current;
             int n;
 
             /*Traverse down the node list and params array at the same
               time, checking types*/
             for (Current = Node->firstChild, n = 0;
-                 Current;
+                 Current && n < params;
                  Current = Current->nextSibling, n++) {
                 const type* Param = analyzerValue(ctx, Current);
 
                 if (!typeIsCompatible(Param, paramTypes[n]))
                     analyzerErrorParamMismatch(ctx, Node, n, paramTypes[n], Param);
             }
+
+            /*Analyze the rest of the given params even if there were
+              fewer params in the prototype (as in a variadic fn).*/
+            for (; Current; Current = Current->nextSibling)
+                analyzerValue(ctx, Current);
         }
     }
 
@@ -445,7 +484,7 @@ static const type* analyzerCast (analyzerCtx* ctx, ast* Node) {
     debugEnter("Cast");
 
     const type* L = analyzerType(ctx, Node->l);
-    const type* R = analyzerValue(ctx, Node->r);
+    /*const type* R =*/ analyzerValue(ctx, Node->r);
 
     /*TODO: Verify compatibility. What exactly are the rules? All numerics
             cast to each other and nothing more?*/

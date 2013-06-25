@@ -41,6 +41,7 @@ typedef struct type {
             struct type* returnType;
             struct type** paramTypes;
             int params;
+            bool variadic;
         };
     };
 } type;
@@ -48,7 +49,7 @@ typedef struct type {
 type* typeCreateBasic (struct sym* basic);
 type* typeCreatePtr (type* base);
 type* typeCreateArray (type* base, int size);
-type* typeCreateFunction (type* returnType, type** paramTypes, int params);
+type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool variadic);
 type* typeCreateInvalid ();
 
 void typeDestroy (type* DT);

@@ -153,6 +153,10 @@ ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
     return Node;
 }
 
+ast* astCreateEllipsis (tokenLocation location) {
+    return astCreate(astEllipsis, location);
+}
+
 void astAddChild (ast* Parent, ast* Child) {
     if (!Child || !Parent) {
         printf("astAddChild(): null %s given.\n",
@@ -226,6 +230,8 @@ const char* astTagGetStr (astTag tag) {
         return "astSizeof";
     else if (tag == astLiteral)
         return "astLiteral";
+    else if (tag == astEllipsis)
+        return "astEllipsis";
 
     else {
         char* str = malloc(logi(tag, 10)+2);

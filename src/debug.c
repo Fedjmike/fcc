@@ -3,6 +3,7 @@
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+#include "../inc/reg.h"
 
 #include "stdlib.h"
 #include "stdarg.h"
@@ -67,22 +68,35 @@ void debugVarMsg (const char* format, va_list args) {
 
 /*:::: INTERNAL ERRORS ::::*/
 
+void debugError (const char* functionName,
+                 const char* format, ...) {
+    debugMsg("internal error(%s): ", functionName);
+
+    va_list args;
+    va_start(args, format);
+    debugVarMsg(format, args);
+    va_end(args);
+
+    debugWait();
+}
+
 void debugAssert (const char* functionName,
                   const char* testName,
                   bool result) {
-    if (!result) {
-        debugMsg("internal error(%s): %s assertion failed",
-                 functionName, testName);
-        debugWait();
-    }
+    if (!result)
+        debugError(functionName, "%s assertion failed", testName);
 }
 
 void debugErrorUnhandled (const char* functionName,
                           const char* className,
                           const char* classStr) {
-    debugMsg("internal error(%s): unhandled %s: '%s'",
-             functionName, className, classStr);
-    debugWait();
+    debugError(functionName, "unhandled %s: '%s'", className, classStr);
+}
+
+void debugErrorUnhandledInt (const char* functionName,
+                             const char* className,
+                             int classInt) {
+    debugError(functionName, "unhandled %s: %d", className, classInt);
 }
 
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
@@ -199,9 +213,9 @@ void reportNode (const ast* Node) {
 void reportRegs () {
     fprintf(logFile, "[ ");
 
-    for (int i = 0; i < regMax; i++)
-        if (regIsUsed(i))
-            fprintf(logFile, "%s ", regToStr(i));
+    for (regIndex r = 0; r < regMax; r++)
+        if (regIsUsed(r))
+            fprintf(logFile, "%s ", regToStr(&regs[r]));
 
     fprintf(logFile, "]\n");
 }

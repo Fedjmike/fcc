@@ -45,11 +45,12 @@ type* typeCreateArray (type* base, int size) {
     return DT;
 }
 
-type* typeCreateFunction (type* returnType, type** paramTypes, int params) {
+type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool variadic) {
     type* DT = typeCreate(typeFunction);
     DT->returnType = returnType;
     DT->paramTypes = paramTypes;
     DT->params = params;
+    DT->variadic = variadic;
     return DT;
 }
 
@@ -99,7 +100,7 @@ type* typeDeepDuplicate (const type* DT) {
         for (int i = 0; i < DT->params; i++)
             paramTypes[i] = typeDeepDuplicate(DT->paramTypes[i]);
 
-        return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params);
+        return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params, DT->variadic);
 
     } else {
         debugErrorUnhandled("typeDeepDuplicate", "type tag", typeTagGetStr(DT->tag));
@@ -256,13 +257,9 @@ bool typeIsCompatible (const type* DT, const type* Model) {
         return typeIsEqual(DT->returnType,
                            Model->returnType);
 
-    /*If pointer requested, allow pointers and arrays of matching type
-      and basic numeric types
-      If void*, accept all arrays and pointers*/
+    /*If pointer requested, allow pointers and arrays and basic numeric types*/
     } else if (typeIsPtr(Model))
-        return    (   (typeIsPtr(DT) || typeIsArray(DT))
-                   && (   typeIsVoid(Model->base)
-                       || typeIsCompatible(DT->base, Model->base)))
+        return    typeIsPtr(DT) || typeIsArray(DT)
                || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
@@ -379,11 +376,14 @@ char* typeToStr (const type* DT, const char* embedded) {
 
             int charno = 0;
 
-            for (int i = 0; i < DT->params-1; i++)
+            for (int i = 0; i < DT->params-1; i++) {
                 charno += sprintf(params+charno, "%s, ", paramStrs[i]);
+                free(paramStrs[i]);
+            }
 
             /*Cat the final one, sans the delimiting comma*/
             sprintf(params+charno, "%s", paramStrs[DT->params-1]);
+            free(paramStrs[DT->params-1]);
 
         } else
             params = strdup("void");

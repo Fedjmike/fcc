@@ -6,6 +6,7 @@
 
 #include "../inc/debug.h"
 #include "../inc/asm.h"
+#include "../inc/reg.h"
 
 void asmComment (asmCtx* ctx, char* format, ...) {
     asmOutLn(ctx, ";");
@@ -90,32 +91,43 @@ void asmPopN (asmCtx* ctx, int n) {
     asmOutLn(ctx, "add rsp, %d", n*8);
 }
 
-void asmMove (asmCtx* ctx, operand L, operand R) {
-    if (L.tag == operandMem && R.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAllocGeneral());
-        asmMove(ctx, intermediate, R);
-        asmMove(ctx, L, intermediate);
+void asmMove (asmCtx* ctx, operand Dest, operand Src) {
+    if (Dest.tag == operandMem && Src.tag == operandMem) {
+        operand intermediate = operandCreateReg(regAlloc());
+        asmMove(ctx, intermediate, Src);
+        asmMove(ctx, Dest, intermediate);
         operandFree(intermediate);
 
-    } else {
-        char* LStr = operandToStr(L);
-        char* RStr = operandToStr(R);
+    } else if (Src.tag == operandFlags) {
+        asmMove(ctx, Dest, operandCreateLiteral(1));
+        asmConditionalMove(ctx, Src, Dest, operandCreateLiteral(0));
 
-        if (operandGetSize(L) > operandGetSize(R) &&
-            R.tag != operandLiteral)
-            asmOutLn(ctx, "movzx %s, %s", LStr, RStr);
+    } else {
+        char* DestStr = operandToStr(Dest);
+        char* SrcStr = operandToStr(Src);
+
+        if (operandGetSize(Dest) > operandGetSize(Src) &&
+            Src.tag != operandLiteral)
+            asmOutLn(ctx, "movzx %s, %s", DestStr, SrcStr);
 
         else
-            asmOutLn(ctx, "mov %s, %s", LStr, RStr);
+            asmOutLn(ctx, "mov %s, %s", DestStr, SrcStr);
 
-        free(LStr);
-        free(RStr);
+        free(DestStr);
+        free(SrcStr);
     }
+}
+
+void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src) {
+    operand FalseLabel = labelCreate(labelUndefined);
+    asmBranch(ctx, operandCreateFlags(conditionNegate(Cond.condition)), FalseLabel);
+    asmMove(ctx, Dest, Src);
+    asmLabel(ctx, FalseLabel);
 }
 
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAllocGeneral());
+        operand intermediate = operandCreateReg(regAlloc());
         asmEvalAddress(ctx, intermediate, R);
         asmMove(ctx, L, intermediate);
         operandFree(intermediate);
@@ -133,7 +145,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         /*Unlike lea, perform the op after the move. This is because these
           ops affect the flags (particularly cmp)*/
-        operand intermediate = operandCreateReg(regAllocGeneral());
+        operand intermediate = operandCreateReg(regAlloc());
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
         operandFree(intermediate);
@@ -145,14 +157,29 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         if (Op == bopCmp)
             asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
 
-        else if (Op == bopMul)
-            asmOutLn(ctx, "imul %s, %s", LStr, RStr);
-
         else if (Op == bopAdd)
             asmOutLn(ctx, "add %s, %s", LStr, RStr);
 
         else if (Op == bopSub)
             asmOutLn(ctx, "sub %s, %s", LStr, RStr);
+
+        else if (Op == bopMul)
+            asmOutLn(ctx, "imul %s, %s", LStr, RStr);
+
+        else if (Op == bopBitAnd)
+            asmOutLn(ctx, "and %s, %s", LStr, RStr);
+
+        else if (Op == bopBitOr)
+            asmOutLn(ctx, "or %s, %s", LStr, RStr);
+
+        else if (Op == bopBitXor)
+            asmOutLn(ctx, "xor %s, %s", LStr, RStr);
+
+        else if (Op == bopShR)
+            asmOutLn(ctx, "sar %s, %s", LStr, RStr);
+
+        else if (Op == bopShL)
+            asmOutLn(ctx, "sal %s, %s", LStr, RStr);
 
         else
             printf("asmBOP(): unhandled operator '%d'\n", Op);

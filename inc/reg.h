@@ -2,6 +2,12 @@
 
 #include "../std/std.h"
 
+typedef struct reg {
+    int size; /*Minimum size in bytes*/
+    const char* names[4]; /*Name when a byte, word, dword and qword*/
+    int allocatedAs; /*If unused, 0, else the size allocated as in bytes*/
+} reg;
+
 typedef enum {
     regUndefined,
     regRAX, /*It is important that every register between RAX and R15 are general registers*/
@@ -21,29 +27,32 @@ typedef enum {
     regRBP,
     regRSP,
     regMax
-} regTag;
+} regIndex;
+
+extern reg regs[];
 
 /**
  * Check if a register is in use
  */
-bool regIsUsed (regTag reg);
+bool regIsUsed (regIndex r);
 
 /**
  * Attempt a lock on a register
- * Returns zero on success, the register itself elsewise
+ * Returns the register on success, 0 elsewise
  */
-regTag regRequest (regTag reg);
+reg* regRequest (regIndex r);
 
-void regFree (regTag reg);
-
-void regFreeAll ();
+void regFree (reg* r);
 
 /**
- * Attempt to allocate a general register, returning its index if successful.
+ * Attempt to allocate a register, returning it if successful.
  */
-regTag regAllocGeneral ();
+reg* regAlloc ();
+
+reg* regAllocSize (int size);
 
 /**
- * Return the name of a register as it would be called in assembler source code
+ * Return the name of a register at a certain size in bytes as it would
+ * be called in assembler source code
  */
-char* regToStr (regTag Reg);
+const char* regToStr (reg* r);

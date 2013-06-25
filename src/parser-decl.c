@@ -313,7 +313,14 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* 
     sym* OldScope = scopeSet(ctx, atom->symbol);
 
     if (!tokenIs(ctx, ")")) do {
-        astAddChild(Node, parserDeclParam(ctx, inDecl));
+        if (tokenIs(ctx, "...")) {
+            astAddChild(Node, astCreateEllipsis(ctx->location));
+            tokenMatch(ctx);
+            break;
+
+        } else
+            astAddChild(Node, parserDeclParam(ctx, inDecl));
+
     } while (tokenTryMatchStr(ctx, ","));
 
     ctx->scope = OldScope;
