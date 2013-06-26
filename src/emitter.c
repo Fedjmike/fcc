@@ -28,11 +28,13 @@ static void emitterBranch (emitterCtx* ctx, const ast* Node);
 static void emitterLoop (emitterCtx* ctx, const ast* Node);
 static void emitterIter (emitterCtx* ctx, const ast* Node);
 
-static emitterCtx* emitterInit (FILE* File) {
+static emitterCtx* emitterInit (FILE* File, const architecture* arch) {
     emitterCtx* ctx = malloc(sizeof(emitterCtx));
-    ctx->Asm = asmInit(File);
+    ctx->Asm = asmInit(File, arch);
+    ctx->arch = arch;
     ctx->labelReturnTo = operandCreate(operandUndefined);
     ctx->labelBreakTo = operandCreate(operandUndefined);
+
     return ctx;
 }
 
@@ -41,8 +43,8 @@ static void emitterEnd (emitterCtx* ctx) {
     free(ctx);
 }
 
-void emitter (const ast* Tree, FILE* File) {
-    emitterCtx* ctx = emitterInit(File);
+void emitter (const ast* Tree, FILE* File, const architecture* arch) {
+    emitterCtx* ctx = emitterInit(File, arch);
     asmFilePrologue(ctx->Asm);
 
     emitterModule(ctx, Tree);
@@ -82,7 +84,9 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
 
     Node->symbol->label = labelNamed(Node->symbol->ident);
 
-    int lastOffset = 16;
+    /*Two words already on the stack:
+      return ptr and saved base pointer*/
+    int lastOffset = 2*ctx->arch->wordsize;
     sym* Symbol;
 
     /*Asign offsets to all the parameters*/
@@ -90,7 +94,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
          Symbol && Symbol->tag == symParam;
          Symbol = Symbol->nextSibling) {
         Symbol->offset = lastOffset;
-        lastOffset += typeGetSize(Symbol->dt);
+        lastOffset += typeGetSize(ctx->arch, Symbol->dt);
 
         reportSymbol(Symbol);
     }
@@ -110,7 +114,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
             continue;
         }
 
-        lastOffset -= typeGetSize(Symbol->dt);
+        lastOffset -= typeGetSize(ctx->arch, Symbol->dt);
         Symbol->offset = lastOffset;
 
         reportSymbol(Symbol);
@@ -166,7 +170,7 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
         operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
         reg* rax;
 
-        if ((rax = regRequest(regRAX)) != 0) {
+        if ((rax = regRequest(regRAX, typeGetSize(ctx->arch, Node->r->dt))) != 0) {
             asmMove(ctx->Asm, operandCreateReg(rax), Ret);
             regFree(rax);
 

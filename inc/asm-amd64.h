@@ -35,7 +35,7 @@ void asmFileEpilogue (struct asmCtx* ctx);
 /**
  * Emit the prologue to a function
  */
-void asmFnPrologue (struct asmCtx* ctx, operand Name, int LocalSize);
+void asmFnPrologue (struct asmCtx* ctx, operand Name, int localSize);
 
 /**
  * Emit the epilogue to a function

@@ -164,7 +164,7 @@ void reportSymbol (const sym* Symbol) {
 
     /*Size*/
 
-    if (   (   Symbol->tag == symId
+    /*if (   (   Symbol->tag == symId
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         if (Symbol->dt->tag == typeArray)
@@ -178,7 +178,7 @@ void reportSymbol (const sym* Symbol) {
 
     } else if (Symbol->tag == symStruct)
         fprintf(logFile, "size:   %d   ",
-                Symbol->size);
+                Symbol->size);*/
 
     /*Offset*/
 

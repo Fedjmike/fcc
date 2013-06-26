@@ -1,7 +1,11 @@
 #pragma once
 
+#include "operand.h"
+
 #include "stdarg.h"
 #include "stdio.h"
+
+struct architecture;
 
 /**
  * Assembly output context
@@ -16,6 +20,13 @@ typedef struct asmCtx {
     FILE* file;
     ///Indentation depth level
     int depth;
+
+    const struct architecture* arch;
+
+    ///(Top of) stack pointer - RSP
+    operand stackPtr;
+    ///Base (of stack) pointer - RBP
+    operand basePtr;
 } asmCtx;
 
 /**
@@ -25,7 +36,7 @@ typedef struct asmCtx {
  *              automatically closed
  * @see asmEnd()
  */
-asmCtx* asmInit (FILE* File);
+asmCtx* asmInit (FILE* File, const struct architecture* arch);
 
 /**
  * Destroy and free an asmCtx

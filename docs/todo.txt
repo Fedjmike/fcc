@@ -11,7 +11,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Control pretty printing
 [ ] Modules
     - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
-[ ] CRT support
+[-] CRT support
 [-] Type system
     - By val -> By ref (grr)
     - Wrap types in modifiers: ptr, array, fn
@@ -26,7 +26,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Literals
 [-] enum
 	[ ] Cray-cray anonymous struct in anonymous enum in struct things
-[-] Block scope
+[x] Block scope
 [x] Casts
     - (type) value
     - Differentiate between this and (value) by symbol lookup
@@ -53,7 +53,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Functions
 [ ] extern
 [ ] Global variables
-[-] sizeof
+[x] sizeof
 [x] break
 [ ] continue
 [ ] main
@@ -72,7 +72,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [-] Assertions
 [ ] Clean up value moving code
 [x] Const correctness
-[ ] Make sure prototypes and implementation match exactly (static)
+[-] Make sure prototypes and implementation match exactly (static)
 [ ] Use a cond field of ??? AST ???
 [ ] Do analyzerArrayLiteral lits properly
 [ ] File names in error messages
@@ -98,6 +98,9 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
+[ ] Merge operand size and reg size?
+[ ] Extra layer between emitter and assembly? Expand operand?
+[ ] Add symbol size back to debug output
 
 [ ] Abysmal error recovery
 [-] AST is not abstract
@@ -106,8 +109,8 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     - When in doubt, reject *semantically*
       This means the parser fucks up less.
 [ ] Dealing with operands in the emitter is cumbersome
-[ ] Arch specifics are a bit magic value-y
+[x] Arch specifics are a bit magic value-y
 [x] Type system overly simple
 [-] Lack of comments, esp. interface documentation
-[ ] Assumption of operand tag permutations required
+[-] Assumption of operand tag permutations required
 [ ] Unit tests?

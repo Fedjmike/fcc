@@ -1,15 +1,20 @@
 #include "../inc/asm.h"
 
 #include "../inc/debug.h"
+#include "../inc/architecture.h"
+#include "../inc/reg.h"
 
 #include "stdlib.h"
 #include "stdio.h"
 #include "stdarg.h"
 
-asmCtx* asmInit (FILE* File) {
+asmCtx* asmInit (FILE* File, const architecture* arch) {
     asmCtx* ctx = malloc(sizeof(asmCtx));
     ctx->file = File;
     ctx->depth = 0;
+    ctx->arch = arch;
+    ctx->stackPtr = operandCreateReg(regRequest(regRSP, arch->wordsize));
+    ctx->basePtr = operandCreateReg(regRequest(regRBP, arch->wordsize));
     return ctx;
 }
 

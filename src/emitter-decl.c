@@ -44,7 +44,8 @@ void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
          Current = Current->nextSibling) {
         Current->offset = Node->symbol->size;
         /*Add the size of this field, rounded up to the nearest word boundary*/
-        Node->symbol->size += ((typeGetSize(Current->dt) - 1)/8)*8 + 8;
+        int alignment = ctx->arch->wordsize;
+        Node->symbol->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
         reportSymbol(Current);
     }
 
@@ -105,7 +106,10 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     else {
         if (Node->symbol->storage == storageAuto) {
             asmEnter(ctx->Asm);
-            operand L = operandCreateMem(&regs[regRBP], Node->symbol->offset, typeGetSize(Node->symbol->dt));
+            operand L = operandCreateMem(&regs[regRBP],
+                                         Node->symbol->offset,
+                                         typeGetSize(ctx->arch,
+                                                     Node->symbol->dt));
             operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
             asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
@@ -140,8 +144,8 @@ static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Sy
          Current = Current->nextSibling, n++) {
         asmEnter(ctx->Asm);
         operand L = operandCreateMem(&regs[regRBP],
-                                     Symbol->offset + typeGetSize(Symbol->dt->base)*n,
-                                     typeGetSize(Symbol->dt->base));
+                                     Symbol->offset + typeGetSize(ctx->arch, Symbol->dt->base)*n,
+                                     typeGetSize(ctx->arch, Symbol->dt->base));
         operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
         asmMove(ctx->Asm, L, R);

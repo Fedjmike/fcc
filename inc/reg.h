@@ -40,16 +40,14 @@ bool regIsUsed (regIndex r);
  * Attempt a lock on a register
  * Returns the register on success, 0 elsewise
  */
-reg* regRequest (regIndex r);
+reg* regRequest (regIndex r, int size);
 
 void regFree (reg* r);
 
 /**
  * Attempt to allocate a register, returning it if successful.
  */
-reg* regAlloc ();
-
-reg* regAllocSize (int size);
+reg* regAlloc (int size);
 
 /**
  * Return the name of a register at a certain size in bytes as it would

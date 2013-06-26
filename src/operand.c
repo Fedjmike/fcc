@@ -5,6 +5,7 @@
 #include "stdio.h"
 
 #include "../inc/debug.h"
+#include "../inc/architecture.h"
 #include "../inc/reg.h"
 
 const char const* conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
@@ -28,6 +29,10 @@ operand operandCreate (operandTag tag) {
 
 operand operandCreateInvalid () {
     return operandCreate(operandInvalid);
+}
+
+operand operandCreateVoid () {
+    return operandCreate(operandVoid);
 }
 
 operand operandCreateFlags (conditionTag cond) {
@@ -92,17 +97,21 @@ void operandFree (operand Value) {
             regFree(Value.index);
 
     } else if (   Value.tag == operandUndefined || Value.tag == operandInvalid
-               || Value.tag == operandFlags || Value.tag == operandLiteral
-               || Value.tag == operandLabel || Value.tag == operandLabelOffset
-               || Value.tag == operandStack)
+               || Value.tag == operandVoid || Value.tag == operandFlags
+               || Value.tag == operandLiteral || Value.tag == operandLabel
+               || Value.tag == operandLabelOffset || Value.tag == operandStack)
         /*Nothing to do*/;
 
     else
         debugErrorUnhandled("operandFree", "operand tag", operandTagGetStr(Value.tag));
 }
 
-int operandGetSize (operand Value) {
-    if (Value.tag == operandReg)
+int operandGetSize (const architecture* arch, operand Value) {
+    if (   Value.tag == operandUndefined
+        || Value.tag == operandInvalid || Value.tag == operandVoid)
+        return 0;
+
+    else if (Value.tag == operandReg)
         return Value.reg->allocatedAs;
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef)
@@ -112,7 +121,7 @@ int operandGetSize (operand Value) {
         return 1;
 
     else if (Value.tag == operandLabelOffset)
-        return 8;
+        return arch->wordsize;
 
     else
         debugErrorUnhandled("operandGetSize", "operand tag", operandTagGetStr(Value.tag));
@@ -124,7 +133,16 @@ char* operandToStr (operand Value) {
     char* ret = malloc(32);
     ret[0] = 0;
 
-    if (Value.tag == operandFlags)
+    if (Value.tag == operandUndefined)
+        return strcpy(ret, "<undefined>");
+
+    else if (Value.tag == operandInvalid)
+        return strcpy(ret, "<invalid>");
+
+    else if (Value.tag == operandVoid)
+        return strcpy(ret, "<void>");
+
+    else if (Value.tag == operandFlags)
         strncpy(ret, conditions[Value.condition], 32);
 
     else if (Value.tag == operandReg)
@@ -176,6 +194,10 @@ char* operandToStr (operand Value) {
 const char* operandTagGetStr (operandTag tag) {
     if (tag == operandUndefined)
         return "operandUndefined";
+    else if (tag == operandInvalid)
+        return "operandInvalid";
+    else if (tag == operandVoid)
+        return "operandVoid";
     else if (tag == operandFlags)
         return "operandFlags";
     else if (tag == operandReg)

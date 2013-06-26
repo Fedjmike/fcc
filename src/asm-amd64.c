@@ -1,12 +1,13 @@
 #include "../inc/asm-amd64.h"
 
+#include "../inc/debug.h"
+#include "../inc/architecture.h"
+#include "../inc/asm.h"
+#include "../inc/reg.h"
+
 #include "stdlib.h"
 #include "stdarg.h"
 #include "stdio.h"
-
-#include "../inc/debug.h"
-#include "../inc/asm.h"
-#include "../inc/reg.h"
 
 void asmComment (asmCtx* ctx, char* format, ...) {
     asmOutLn(ctx, ";");
@@ -25,7 +26,7 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, operand Name, int LocalSize) {
+void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     /*Symbol, linkage and alignment*/
     asmOutLn(ctx, ".balign 16");
     asmOutLn(ctx, ".globl %s", labelGet(Name));
@@ -33,18 +34,18 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int LocalSize) {
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
-    asmOutLn(ctx, "push rbp");
-    asmOutLn(ctx, "mov rbp, rsp");
+    asmPush(ctx, ctx->basePtr);
+    asmMove(ctx, ctx->basePtr, ctx->stackPtr);
 
-    if (LocalSize != 0)
-        asmOutLn(ctx, "sub rsp, %d", LocalSize);
+    if (localSize != 0)
+        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 }
 
 void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
     /*Exit stack frame*/
     asmOutLn(ctx, "%s:", labelGet(EndLabel));
-    asmOutLn(ctx, "mov rsp, rbp");
-    asmOutLn(ctx, "pop rbp");
+    asmMove(ctx, ctx->stackPtr, ctx->basePtr);
+    asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
 }
 
@@ -88,12 +89,12 @@ void asmPop (asmCtx* ctx, operand L) {
 }
 
 void asmPopN (asmCtx* ctx, int n) {
-    asmOutLn(ctx, "add rsp, %d", n*8);
+    asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {
     if (Dest.tag == operandMem && Src.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAlloc());
+        operand intermediate = operandCreateReg(regAlloc(Dest.size > Src.size ? Dest.size : Src.size));
         asmMove(ctx, intermediate, Src);
         asmMove(ctx, Dest, intermediate);
         operandFree(intermediate);
@@ -106,7 +107,7 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
         char* DestStr = operandToStr(Dest);
         char* SrcStr = operandToStr(Src);
 
-        if (operandGetSize(Dest) > operandGetSize(Src) &&
+        if (operandGetSize(ctx->arch, Dest) > operandGetSize(ctx->arch, Src) &&
             Src.tag != operandLiteral)
             asmOutLn(ctx, "movzx %s, %s", DestStr, SrcStr);
 
@@ -127,7 +128,7 @@ void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand
 
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAlloc());
+        operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
         asmEvalAddress(ctx, intermediate, R);
         asmMove(ctx, L, intermediate);
         operandFree(intermediate);
@@ -145,7 +146,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         /*Unlike lea, perform the op after the move. This is because these
           ops affect the flags (particularly cmp)*/
-        operand intermediate = operandCreateReg(regAlloc());
+        operand intermediate = operandCreateReg(regAlloc(L.size > R.size ? L.size : R.size));
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
         operandFree(intermediate);

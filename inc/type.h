@@ -3,6 +3,7 @@
 #include "../std/std.h"
 
 struct sym;
+struct architecture;
 
 /**
  * @see type @see type::tag
@@ -64,6 +65,12 @@ type* typeDerivePtr (const type* base);
 type* typeDeriveArray (const type* base, int size);
 type* typeDeriveReturn (const type* fn);
 
+/*All the following typeIsXXX respond positively when given a
+  typeInvalid, so that one error doesn't cascade. If it is important
+  to know the actual tag of a type (e.g. directly accessing a field)
+  first check for typeInvalid then continue. See impl. of typeIsEqual
+  and others.*/
+
 bool typeIsBasic (const type* DT);
 bool typeIsPtr (const type* DT);
 bool typeIsArray (const type* DT);
@@ -85,5 +92,5 @@ bool typeIsEqual (const type* L, const type* R);
 
 const char* typeTagGetStr (typeTag tag);
 
-int typeGetSize (const type* DT);
+int typeGetSize (const struct architecture* arch, const type* DT);
 char* typeToStr (const type* DT, const char* embedded);

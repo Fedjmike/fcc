@@ -3,6 +3,8 @@
 #include "../inc/debug.h"
 #include "../inc/sym.h"
 
+#include "../inc/architecture.h"
+
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
@@ -198,7 +200,7 @@ bool typeIsInvalid (const type* DT) {
 bool typeIsVoid (const type* DT) {
     /*Is it a built in type of size zero (void)*/
     return    (   (DT->tag == typeBasic && DT->basic->tag == symType)
-               && typeGetSize(DT) == 0)
+               && DT->basic->size == 0)
            || typeIsInvalid(DT);
 }
 
@@ -322,15 +324,15 @@ const char* typeTagGetStr (typeTag tag) {
     }
 }
 
-int typeGetSize (const type* DT) {
+int typeGetSize (const architecture* arch, const type* DT) {
     if (typeIsInvalid(DT))
         return 0;
 
     else if (typeIsArray(DT))
-        return DT->array * typeGetSize(DT->base);
+        return DT->array * typeGetSize(arch, DT->base);
 
     else if (typeIsPtr(DT) || typeIsFunction(DT))
-        return 8; //yummy magic number
+        return arch->wordsize;
 
     else /*if (typeIsBasic(DT))*/
         return DT->basic->size;

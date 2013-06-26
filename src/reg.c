@@ -20,17 +20,17 @@ reg regs[regMax] = {
     {8, {0, 0, 0, "r13"}, 0},
     {8, {0, 0, 0, "r14"}, 0},
     {8, {0, 0, 0, "r15"}, 0},
-    {2, {0, "bp", "ebp", "rbp"}, 8},
-    {2, {0, "sp", "esp", "rsp"}, 8}
+    {2, {0, "bp", "ebp", "rbp"}, 0},
+    {2, {0, "sp", "esp", "rsp"}, 0}
 };
 
 bool regIsUsed (regIndex r) {
     return regs[r].allocatedAs != 0;
 }
 
-reg* regRequest (regIndex r) {
-    if (regs[r].allocatedAs == 0) {
-        regs[r].allocatedAs = 8;
+reg* regRequest (regIndex r, int size) {
+    if (regs[r].allocatedAs == 0 && regs[r].size <= size) {
+        regs[r].allocatedAs = size;
         return &regs[r];
 
     } else
@@ -41,21 +41,16 @@ void regFree (reg* r) {
     r->allocatedAs = false;
 }
 
-reg* regAlloc () {
+reg* regAlloc (int size) {
+    if (size == 0)
+        return 0;
+
     /*Bugger RAX. Functions put their rets in there, so its just a hassle*/
     for (regIndex r = regRBX; r <= regR15; r++)
-        if (regRequest(r) != 0)
+        if (regRequest(r, size) != 0)
             return &regs[r];
 
-    return regRequest(regRAX);
-}
-
-reg* regAllocSize (int size) {
-    for (regIndex r = regRBX; r <= regR15; r++)
-        if (regs[r].size <= size && regRequest(r) != 0)
-            return &regs[r];
-
-    return regRequest(regRAX);
+    return regRequest(regRAX, size);
 }
 
 const char* regToStr (reg* r) {

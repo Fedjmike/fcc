@@ -1,10 +1,12 @@
 #pragma once
 
 struct reg;
+struct architecture;
 
 typedef enum {
     operandUndefined,
     operandInvalid,
+    operandVoid,
     operandFlags,
     operandReg,
     operandMem,
@@ -52,6 +54,7 @@ extern const char const* conditions[];
 
 operand operandCreate (operandTag tag);
 operand operandCreateInvalid ();
+operand operandCreateVoid ();
 operand operandCreateFlags (conditionTag cond);
 operand operandCreateReg (struct reg* r);
 operand operandCreateMem (struct reg* r, int offset, int size);
@@ -62,7 +65,7 @@ operand operandCreateLabelOffset (operand label);
 
 void operandFree (operand Value);
 
-int operandGetSize (operand Value);
+int operandGetSize (const struct architecture* arch, operand Value);
 
 char* operandToStr (operand Value);
 

@@ -38,14 +38,18 @@ int main (int argc, char** argv) {
         exit(EXIT_FAILURE);
     }
 
+    /* */
+
+    architecture arch = {4};
+
     /*Initialize symbol "table",
       make new built in data types and add them to the global namespace*/
     sym* Global = symInit();
-    sym* Types[5];
+    sym* Types[4];
     Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", 1, typeEquality | typeAssignment | typeCondition);
+    Types[builtinBool] = symCreateType(Global, "bool", arch.wordsize, typeEquality | typeAssignment | typeCondition);
     Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
-    Types[builtinInt] = symCreateType(Global, "int", 8, typeIntegral);
+    Types[builtinInt] = symCreateType(Global, "int", arch.wordsize, typeIntegral);
 
     int errors = 0;
     int warnings = 0;
@@ -85,7 +89,7 @@ int main (int argc, char** argv) {
     if (!fail) {
         debugWait();
         debugMsg("Emitting");
-        emitter(Tree, File);
+        emitter(Tree, File, &arch);
         debugMsg("");
     }
 
