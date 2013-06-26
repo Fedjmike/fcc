@@ -26,8 +26,10 @@ debugMode debugSetMode (debugMode nmode) {
 }
 
 void debugWait () {
+    #ifdef FCC_DEBUGMODE
     if (mode <= debugMinimal)
         getchar();
+    #endif
 }
 
 void debugEnter (const char* str) {
@@ -53,6 +55,11 @@ void debugMsg (const char* format, ...) {
 }
 
 void debugVarMsg (const char* format, va_list args) {
+    (void) args;
+    (void) format;
+
+    #ifdef FCC_DEBUGMODE
+
     if (mode == debugSilent)
         return;
 
@@ -64,6 +71,8 @@ void debugVarMsg (const char* format, va_list args) {
     vfprintf(logFile, format, args);
 
     fputc('\n', logFile);
+
+    #endif
 }
 
 /*:::: INTERNAL ERRORS ::::*/
@@ -74,8 +83,10 @@ void debugError (const char* functionName,
 
     va_list args;
     va_start(args, format);
-    debugVarMsg(format, args);
+    vfprintf(logFile, format, args);
     va_end(args);
+
+    fputc('\n', logFile);
 
     debugWait();
 }
@@ -102,55 +113,50 @@ void debugErrorUnhandledInt (const char* functionName,
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
 void report (const char* str) {
-    fputs(str, logFile);
+    debugMsg("%s\n", str);
 }
 
 void reportType (const type* DT) {
-    fprintf(logFile, "type: %p   ",
-            (void*) DT);
+    debugMsg("type: %p   ", (void*) DT);
 
     if (DT != 0) {
         /*Tag*/
 
-        fprintf(logFile, "tag: %s   ",
-                typeTagGetStr(DT->tag));
+        debugMsg("tag: %s   ", typeTagGetStr(DT->tag));
 
         /*Base type*/
 
         if (typeIsPtr(DT) || typeIsArray(DT))
-            fprintf(logFile, "base: %p   ",
-                    (void*) DT->base);
+            debugMsg("base: %p   ", (void*) DT->base);
 
         /*String form*/
 
         if (!typeIsInvalid(DT)) {
             char* Str = typeToStr(DT, "");
-            fprintf(logFile, "str: %s   ", Str);
+            debugMsg("str: %s   ", Str);
             free(Str);
         }
     }
 
-    fputc('\n', logFile);
+    debugMsg("\n");
 }
 
 void reportSymbol (const sym* Symbol) {
     /*Tag*/
 
-    fprintf(logFile, "tag: %s   ",
-            symTagGetStr(Symbol->tag));
+    debugMsg("tag: %s   ", symTagGetStr(Symbol->tag));
 
     /*Symbol name*/
 
     if (Symbol->tag != symScope)
-        fprintf(logFile, "symbol: %s   ",
-                Symbol->ident);
+        debugMsg("symbol: %s   ", Symbol->ident);
 
     /*Parent*/
 
     if (   Symbol->tag != symType
         && Symbol->tag != symStruct)
-        fprintf(logFile, "parent: %s   ",
-                Symbol->parent ? Symbol->parent->ident : "undefined");
+        debugMsg("parent: %s   ",
+                 Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
 
@@ -158,7 +164,7 @@ void reportSymbol (const sym* Symbol) {
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         char* Str = typeToStr(Symbol->dt, "");
-        fprintf(logFile, "type: %s   ", Str);
+        debugMsg("type: %s   ", Str);
         free(Str);
     }
 
@@ -168,54 +174,48 @@ void reportSymbol (const sym* Symbol) {
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         if (Symbol->dt->tag == typeArray)
-            fprintf(logFile, "size: %dx%d   ",
-                    typeGetSize(Symbol->dt->base),
-                    Symbol->dt->array);
+            debugMsg("size: %dx%d   ",
+                     typeGetSize(Symbol->dt->base),
+                     Symbol->dt->array);
 
         else
-            fprintf(logFile, "size:   %d   ",
-                    typeGetSize(Symbol->dt));
+            debugMsg("size:   %d   ", typeGetSize(Symbol->dt));
 
     } else if (Symbol->tag == symStruct)
-        fprintf(logFile, "size:   %d   ",
-                Symbol->size);*/
+        debugMsg("size:   %d   ", Symbol->size);*/
 
     /*Offset*/
 
     if (   Symbol->tag == symId
         || Symbol->tag == symParam)
-        fprintf(logFile, "offset: %d",
-                Symbol->offset);
+        debugMsg("offset: %d", Symbol->offset);
 
-    fputc('\n', logFile);
+    debugMsg("\n");
 }
 
 void reportNode (const ast* Node) {
-    fprintf(logFile, "node: %p   tag: %s   ",
-            (void*) Node,
-            astTagGetStr(Node->tag));
+    debugMsg("node: %p   tag: %s   ",
+             (void*) Node,
+             astTagGetStr(Node->tag));
 
     if (Node->nextSibling)
-        fprintf(logFile, "next: %p   ",
-                (void*) Node->nextSibling);
+        debugMsg("next: %p   ", (void*) Node->nextSibling);
 
     if (Node->firstChild)
-        fprintf(logFile, "fc: %p   ",
-                (void*) Node->firstChild);
+        debugMsg("fc: %p   ", (void*) Node->firstChild);
 
     if (Node->l)
-        fprintf(logFile, "l: %p",
-                (void*) Node->l);
+        debugMsg("l: %p", (void*) Node->l);
 
-    fputc('\n', logFile);
+    debugMsg("\n");
 }
 
 void reportRegs () {
-    fprintf(logFile, "[ ");
+    debugMsg("[ ");
 
     for (regIndex r = 0; r < regMax; r++)
         if (regIsUsed(r))
-            fprintf(logFile, "%s ", regToStr(&regs[r]));
+            debugMsg("%s ", regToStr(&regs[r]));
 
-    fprintf(logFile, "]\n");
+    debugMsg(" ]\n");
 }
