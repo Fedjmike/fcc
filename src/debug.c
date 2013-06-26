@@ -70,7 +70,7 @@ void debugVarMsg (const char* format, va_list args) {
 
 void debugError (const char* functionName,
                  const char* format, ...) {
-    debugMsg("internal error(%s): ", functionName);
+    fprintf(logFile, "internal error(%s): ", functionName);
 
     va_list args;
     va_start(args, format);
