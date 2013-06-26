@@ -3,26 +3,26 @@ These are the ABI conventions for 64 bit Windows and Linux. Where there is varia
 http://www.agner.org/optimize/calling_conventions.pdf
 
 Todo:
-	o Type sizes
-	o Alignment (in and out of structures, stack)
-	o Red zone/shadow space
-	o Structure param passing/returning
-	o Mangling
-	o Exceptions
-	o Static constructors
+- Type sizes
+- Alignment (in and out of structures, stack)
+- Red zone/shadow space
+- Structure param passing/returning
+- Mangling
+- Exceptions
+- Static constructors
 
 Callee save
-	w: rbx, rbp, r12-15, rsi, rdi
-	l: rbx, rbp, r12-15
+- w: rbx, rbp, r12-15, rsi, rdi
+- l: rbx, rbp, r12-15
 	
 Params (in order)
-	w: rcx, rdx
-	l: rdi, rsi, rdx, rcx, r8, r9
+- w: rcx, rdx
+- l: rdi, rsi, rdx, rcx, r8, r9
 
 Return
-	w: rax
-	l: rax, rdx (!!WHAT DOES THIS MEAN!!)
-	
+- w: rax
+- l: rax, rdx (!!WHAT DOES THIS MEAN!!)
+
 Caller stack cleanup
 
 Right to left param order
