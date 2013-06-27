@@ -61,7 +61,7 @@ struct ast* parserDeclStruct (parserCtx* ctx) {
 }
 
 /**
- * Type = DeclBasic DeclExpr*
+ * Type = DeclBasic DeclExpr#
  *
  * DeclExpr is told not to allow identifiers or initiations, and not
  * to create symbols.
@@ -80,11 +80,10 @@ struct ast* parserDeclStruct (parserCtx* ctx) {
 }
 
 /**
- * Decl = DeclBasic DeclExpr# [{ "," DeclExpr# }]#
+ * Decl = DeclBasic DeclExpr# [{ "," DeclExpr# }]
  *
- * DeclExpr is told to require identifiers and to create symbols.
- * Initiations are allowed, and a function implementation is allowed
- * (as the first and only DeclExpr, in that case).
+ * DeclExpr is told to require identifiers, allow initiations and
+ * create symbols.
  */
 ast* parserDecl (parserCtx* ctx) {
     debugEnter("Decl");
@@ -104,6 +103,9 @@ ast* parserDecl (parserCtx* ctx) {
 /**
  * ModuleDecl = DeclBasic DeclExpr#   ( "{" Code "}" )
  *                                  | ( [{ "," DeclExpr# }] ";" )
+ *
+ * DeclExpr is told to require identifiers, allow initations and
+ * create symbols.
  */
 ast* parserModuleDecl (parserCtx* ctx) {
     debugEnter("ModuleDecl");
