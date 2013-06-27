@@ -79,6 +79,24 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
     debugLeave();
 }
 
+static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset) {
+    for (sym* Symbol = Scope->firstChild;
+         Symbol;
+         Symbol = Symbol->nextSibling) {
+        if (Symbol->tag == symScope)
+            offset = emitterScopeAssignOffsets(arch, Symbol, offset);
+
+        else if (Symbol->tag == symId) {
+            offset -= typeGetSize(arch, Symbol->dt);
+            Symbol->offset = offset;
+            reportSymbol(Symbol);
+
+        } else {}
+    }
+
+    return offset;
+}
+
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
@@ -99,40 +117,13 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
         reportSymbol(Symbol);
     }
 
-    lastOffset = 0;
-    sym* Scope = Symbol;
-
-    /*And then the local variables which follow directly*/
-    for (;
-         Symbol;
-         Symbol = Symbol->nextSibling) {
-        if (Symbol->tag == symScope) {
-            if (Symbol->firstChild) {
-                Scope = Symbol;
-                Symbol = Scope->firstChild;
-            }
-            continue;
-        }
-
-        lastOffset -= typeGetSize(ctx->arch, Symbol->dt);
-        Symbol->offset = lastOffset;
-
-        reportSymbol(Symbol);
-
-        if (!Symbol->nextSibling && Scope) {
-            Symbol = Scope;
-            Scope = Symbol->parent->tag != symId ? Symbol->parent : 0;
-        }
-    }
+    int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /*Label to jump to from returns*/
     operand EndLabel = ctx->labelReturnTo = labelCreate(labelReturn);
 
     asmComment(ctx->Asm, "");
-    asmFnPrologue(ctx->Asm,
-                  Node->symbol->label,
-                  Node->symbol->lastChild && Node->symbol->lastChild->tag != symParam
-                        ? -Node->symbol->lastChild->offset : 0);
+    asmFnPrologue(ctx->Asm, Node->symbol->label, stacksize);
 
     emitterCode(ctx, Node->r);
     asmFnEpilogue(ctx->Asm, EndLabel);
