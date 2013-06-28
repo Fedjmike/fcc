@@ -24,6 +24,8 @@ void debugEnter (const char* str);
 void debugLeave ();
 void debugMsg (const char* format, ...);
 void debugVarMsg (const char* format, va_list args);
+void debugOut (const char* format, ...);
+void debugVarOut (const char* format, va_list args);
 
 void debugError (const char* functionName,
                  const char* format, ...);

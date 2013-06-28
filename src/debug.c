@@ -55,6 +55,21 @@ void debugMsg (const char* format, ...) {
 }
 
 void debugVarMsg (const char* format, va_list args) {
+    for (int i = 0; i < depth; i++)
+        debugOut("| ");
+
+    debugVarOut(format, args);
+    debugOut("\n");
+}
+
+void debugOut (const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    debugVarOut(format, args);
+    va_end(args);
+}
+
+void debugVarOut (const char* format, va_list args) {
     (void) args;
     (void) format;
 
@@ -63,14 +78,7 @@ void debugVarMsg (const char* format, va_list args) {
     if (mode == debugSilent)
         return;
 
-    for (int i = 0; i < depth; i++) {
-        fputc('|', logFile);
-        fputc(' ', logFile);
-    }
-
     vfprintf(logFile, format, args);
-
-    fputc('\n', logFile);
 
     #endif
 }
@@ -113,49 +121,49 @@ void debugErrorUnhandledInt (const char* functionName,
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
 void report (const char* str) {
-    debugMsg("%s\n", str);
+    debugOut("%s\n", str);
 }
 
 void reportType (const type* DT) {
-    debugMsg("type: %p   ", (void*) DT);
+    debugOut("type: %p   ", (void*) DT);
 
     if (DT != 0) {
         /*Tag*/
 
-        debugMsg("tag: %s   ", typeTagGetStr(DT->tag));
+        debugOut("tag: %s   ", typeTagGetStr(DT->tag));
 
         /*Base type*/
 
         if (typeIsPtr(DT) || typeIsArray(DT))
-            debugMsg("base: %p   ", (void*) DT->base);
+            debugOut("base: %p   ", (void*) DT->base);
 
         /*String form*/
 
         if (!typeIsInvalid(DT)) {
             char* Str = typeToStr(DT, "");
-            debugMsg("str: %s   ", Str);
+            debugOut("str: %s   ", Str);
             free(Str);
         }
     }
 
-    debugMsg("\n");
+    debugOut("\n");
 }
 
 void reportSymbol (const sym* Symbol) {
     /*Tag*/
 
-    debugMsg("tag: %s   ", symTagGetStr(Symbol->tag));
+    debugOut("tag: %s   ", symTagGetStr(Symbol->tag));
 
     /*Symbol name*/
 
     if (Symbol->tag != symScope)
-        debugMsg("symbol: %s   ", Symbol->ident);
+        debugOut("symbol: %s   ", Symbol->ident);
 
     /*Parent*/
 
     if (   Symbol->tag != symType
         && Symbol->tag != symStruct)
-        debugMsg("parent: %s   ",
+        debugOut("parent: %s   ",
                  Symbol->parent ? Symbol->parent->ident : "undefined");
 
     /*Type*/
@@ -164,7 +172,7 @@ void reportSymbol (const sym* Symbol) {
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         char* Str = typeToStr(Symbol->dt, "");
-        debugMsg("type: %s   ", Str);
+        debugOut("type: %s   ", Str);
         free(Str);
     }
 
@@ -174,48 +182,48 @@ void reportSymbol (const sym* Symbol) {
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
         if (Symbol->dt->tag == typeArray)
-            debugMsg("size: %dx%d   ",
+            debugOut("size: %dx%d   ",
                      typeGetSize(Symbol->dt->base),
                      Symbol->dt->array);
 
         else
-            debugMsg("size:   %d   ", typeGetSize(Symbol->dt));
+            debugOut("size:   %d   ", typeGetSize(Symbol->dt));
 
     } else if (Symbol->tag == symStruct)
-        debugMsg("size:   %d   ", Symbol->size);*/
+        debugOut("size:   %d   ", Symbol->size);*/
 
     /*Offset*/
 
     if (   Symbol->tag == symId
         || Symbol->tag == symParam)
-        debugMsg("offset: %d", Symbol->offset);
+        debugOut("offset: %d", Symbol->offset);
 
-    debugMsg("\n");
+    debugOut("\n");
 }
 
 void reportNode (const ast* Node) {
-    debugMsg("node: %p   tag: %s   ",
+    debugOut("node: %p   tag: %s   ",
              (void*) Node,
              astTagGetStr(Node->tag));
 
     if (Node->nextSibling)
-        debugMsg("next: %p   ", (void*) Node->nextSibling);
+        debugOut("next: %p   ", (void*) Node->nextSibling);
 
     if (Node->firstChild)
-        debugMsg("fc: %p   ", (void*) Node->firstChild);
+        debugOut("fc: %p   ", (void*) Node->firstChild);
 
     if (Node->l)
-        debugMsg("l: %p", (void*) Node->l);
+        debugOut("l: %p", (void*) Node->l);
 
-    debugMsg("\n");
+    debugOut("\n");
 }
 
 void reportRegs () {
-    debugMsg("[ ");
+    debugOut("[ ");
 
     for (regIndex r = 0; r < regMax; r++)
         if (regIsUsed(r))
-            debugMsg("%s ", regToStr(&regs[r]));
+            debugOut("%s ", regToStr(&regs[r]));
 
-    debugMsg(" ]\n");
+    debugOut(" ]\n");
 }
