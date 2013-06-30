@@ -21,24 +21,25 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [ ] Narrowing/widening (careful with function rets)
 [ ] Error handling
     [ ] Skipping
-[ ] Operator table
 [-] struct
     [ ] Literals
+[ ] union
+    [ ] Cray-cray anonymous struct in anonymous union in struct things
 [-] enum
-	[ ] Cray-cray anonymous struct in anonymous enum in struct things
+[ ] typedef
 [x] Block scope
 [x] Casts
     - (type) value
     - Differentiate between this and (value) by symbol lookup
 [-] Operators
     [x] Pointers
-    [ ] Boolean
-    [ ] Bitwise
-    [ ] Shifts
-    [ ] Modulo
-    [ ] Division
+    [x] Logical
+    [x] Bitwise
+    [x] Shifts
+    [-] Modulo
+    [-] Division
     [x] Ternary if
-    [ ] Comma
+    [-] Comma
 [ ] const
 [ ] string
 [x] bool
@@ -99,8 +100,14 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     - If flag condition is the same, just return flags :D
       This chains well
 [ ] Merge operand size and reg size?
-[ ] Extra layer between emitter and assembly? Expand operand?
+[ ] Extra layer between emitter and assembly?
+    - Expand operand?
+    - Maybe: have a layer that takes expressions and an operation,
+      sends them off to emitterValue, handles operands and reg
+      placement.
 [ ] Add symbol size back to debug output
+[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
+[ ] Get tokenMatch to guess whether to skip based on similarity of tokens
 
 [ ] Abysmal error recovery
 [-] AST is not abstract

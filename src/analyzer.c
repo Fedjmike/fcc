@@ -97,22 +97,41 @@ void analyzerErrorMember (analyzerCtx* ctx, const char* o, const ast* Node, cons
     free(RecordStr);
 }
 
-void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* Found) {
+void analyzerErrorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* Found) {
     char* ExpectedStr = typeToStr(Symbol->dt, Symbol->ident);
     char* FoundStr = typeToStr(Found, "");
 
     analyzerError(ctx, Node, "%s redeclared as conflicting type %s",
                   ExpectedStr, FoundStr);
 
+    free(ExpectedStr);
+    free(FoundStr);
+
     for (int n = 0; n < Symbol->decls.length; n++) {
-        const ast* Current = (ast*) Symbol->decls.buffer[n];
+        const ast* Current = (const ast*) vectorGet(&Symbol->decls, n);
 
         if (Current->location.line != Node->location.line)
             printf("     (%d:%d): also declared here\n",
                    Current->location.line, Current->location.lineChar);
     }
+}
 
-    free(FoundStr);
+void analyzerErrorRedeclaredVar (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
+    char* symStr = typeToStr(Symbol->dt, Symbol->ident);
+    analyzerError(ctx, Node, "%s redeclared", symStr);
+    free(symStr);
+
+    for (int n = 0; n < Symbol->decls.length; n++) {
+        const ast* Current = (ast*) vectorGet(&Symbol->decls, n);
+
+        if (Current->location.line != Node->location.line)
+            printf("     (%d:%d): also declared here\n",
+                   Current->location.line, Current->location.lineChar);
+    }
+}
+
+void analyzerErrorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
+    analyzerError(ctx, Node, "cannot use a %s as a value", symTagGetStr(Symbol->tag));
 }
 
 static analyzerCtx* analyzerInit (sym** Types) {
@@ -196,10 +215,20 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
     debugEnter("FnImpl");
 
+    /*Analyze the prototype*/
+
     analyzerDecl(ctx, Node->l);
 
-    ctx->returnType = Node->symbol->dt->returnType;
+    if (!typeIsFunction(Node->l->firstChild->dt))
+        analyzerErrorExpected(ctx, Node, "implementation", "function", Node->symbol->dt);
+
+    /*Analyze the implementation*/
+
+    ctx->returnType = typeDeriveReturn(Node->symbol->dt);
+
     analyzerNode(ctx, Node->r);
+
+    typeDestroy(ctx->returnType);
     ctx->returnType = 0;
 
     debugLeave();

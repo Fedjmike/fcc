@@ -18,8 +18,7 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserDeclObject (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* atom);
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam);
-
-static ast* parserName (parserCtx* ctx);
+static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
 /**
  * DeclStruct = "struct" Name# [ "{" [{ DeclField ";" }] "}" ] ";"
@@ -31,18 +30,17 @@ struct ast* parserDeclStruct (parserCtx* ctx) {
 
     tokenMatchStr(ctx, "struct");
 
-    ast* Node = astCreateDeclStruct(ctx->location, parserName(ctx));
-    Node->symbol = symCreateStruct(ctx->scope, (char*) Node->l->literal);
-
+    ast* Node = astCreateDeclStruct(ctx->location, parserName(ctx, true, symStruct));
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
     /*Body?*/
     if (tokenTryMatchStr(ctx, "{")) {
-        if (Node->symbol->def)
-            errorRedefinedSym(ctx, Node->symbol);
+        /*Only error if not already errored for wrong tag*/
+        if (Node->l->symbol->impl && Node->l->symbol->tag == symStruct)
+            errorReimplementedSym(ctx, Node->l->symbol);
 
         else
-            Node->symbol->def = Node;
+            Node->l->symbol->impl = Node;
 
         /*Eat fields*/
         while (!tokenIs(ctx, "}")) {
@@ -122,11 +120,11 @@ ast* parserModuleDecl (parserCtx* ctx) {
         Node = astCreateFnImpl(loc, Node);
         Node->symbol = Node->l->firstChild->symbol;
 
-        if (Node->symbol->def)
-            errorRedefinedSym(ctx, Node->symbol);
+        if (Node->symbol->impl)
+            errorReimplementedSym(ctx, Node->symbol);
 
         else
-            Node->symbol->def = Node;
+            Node->symbol->impl = Node;
 
         sym* OldScope = scopeSet(ctx, Node->symbol);
         Node->r = parserCode(ctx);
@@ -152,7 +150,8 @@ static ast* parserDeclField (parserCtx* ctx) {
     /*!!!CHANGEZ MOI!!!
       To what?
       Differences: not allowed to assign values, not allowed to decl
-                   functions, certainly not implement them (fine)*/
+                   functions, certainly not implement them (fine)
+      Decling fns is an issue for the analyzer*/
 }
 
 /**
@@ -224,12 +223,6 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, bool inParam) {
             char* o = tokenDupMatch(ctx);
             Node = astCreateBOP(loc, Node, o, parserAssignValue(ctx));
             Node->symbol = Node->l->symbol;
-
-            if (Node->symbol->def)
-                errorRedefinedSym(ctx, Node->symbol);
-
-            else
-                Node->symbol->def = Node;
 
         } else {
             errorIllegalOutside(ctx, "initializer", "a declaration");
@@ -354,32 +347,10 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam) {
         tokenMatchStr(ctx, ")");
 
     } else if (tokenIsIdent(ctx)) {
-        if (inDecl || inParam) {
-            Node = parserName(ctx);
+        if (inDecl || inParam)
+            Node = parserName(ctx, inDecl, inParam ? symParam : symId);
 
-            /*Check for a collision only in this scope, will shadow any
-              other declarations elsewhere.*/
-            sym* Symbol = symChild(ctx->scope, (char*) Node->literal);
-
-            if (Symbol) {
-                /*Can't tell whether this is a duplicate declaration
-                  or a (matching) redefinition*/
-                vectorAdd(&Symbol->decls, Node);
-                Node->symbol = Symbol;
-
-            } else {
-                if (inDecl) {
-                    if (inParam)
-                        Node->symbol = symCreateParam(ctx->scope, (char*) Node->literal);
-
-                    else
-                        Node->symbol = symCreateId(ctx->scope, (char*) Node->literal);
-
-                    vectorAdd(&Node->symbol->decls, Node);
-                }
-            }
-
-        } else {
+        else {
             Node = astCreateInvalid(ctx->location);
             errorIllegalOutside(ctx, "identifier", "a declaration");
             tokenNext(ctx);
@@ -403,15 +374,32 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam) {
  * If inDecl, creates a symbol, adding it to the list of declarations
  * if already created.
  */
-static ast* parserName (parserCtx* ctx) {
+static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("Name");
 
     ast* Node = 0;
 
-    if (tokenIsIdent(ctx))
+    if (tokenIsIdent(ctx)) {
         Node = astCreateLiteralIdent(ctx->location, tokenDupMatch(ctx));
 
-    else {
+        /*Check for a collision only in this scope, will shadow any
+          other declarations elsewhere.*/
+        sym* Symbol = symChild(ctx->scope, (char*) Node->literal);
+
+        if (Symbol) {
+            Node->symbol = Symbol;
+
+            if (Node->symbol->tag != tag)
+                errorRedeclaredSymAs(ctx, Node->symbol, tag);
+
+        } else if (inDecl)
+            Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
+
+        /*Can't tell whether this is a duplicate declaration
+          or a (matching) redefinition*/
+        vectorAdd(&Node->symbol->decls, Node);
+
+    } else {
         errorExpected(ctx, "name");
         Node = astCreateInvalid(ctx->location);
         Node->literal = strdup("");

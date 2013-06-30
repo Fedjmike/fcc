@@ -11,7 +11,7 @@ typedef struct analyzerCtx {
     struct sym** types;
 
     ///Return type of the function currently in
-    const struct type* returnType;
+    struct type* returnType;
 
     int errors;
     int warnings;
@@ -58,4 +58,8 @@ void analyzerErrorMember (analyzerCtx* ctx, const char* o, const struct ast* Nod
 
 void analyzerErrorParamMismatch (analyzerCtx* ctx, const struct ast* Node, int n, const struct type* Expected, const struct type* Found);
 
-void errorConflictingDeclarations (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol, const struct type* Found);
+void analyzerErrorConflictingDeclarations (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol, const struct type* Found);
+
+void analyzerErrorRedeclaredVar (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);
+
+void analyzerErrorIllegalSymAsValue (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);

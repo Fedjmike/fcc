@@ -1,18 +1,17 @@
 #include "../std/std.h"
 
+#include "sym.h"
 #include "lexer.h"
-
-struct sym;
 
 struct parserCtx;
 
-struct sym* scopeSet (struct parserCtx* ctx, struct sym* Scope);
+sym* scopeSet (struct parserCtx* ctx, sym* Scope);
 
 void errorExpected (struct parserCtx* ctx, const char* Expected);
 void errorUndefSym (struct parserCtx* ctx);
 void errorIllegalOutside (struct parserCtx* ctx, const char* what, const char* where);
-void errorDuplicateSym (struct parserCtx* ctx);
-void errorRedefinedSym (struct parserCtx* ctx, struct sym* Symbol);
+void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag);
+void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol);
 
 bool tokenIs (const struct parserCtx* ctx, const char* Match);
 bool tokenIsIdent (const struct parserCtx* ctx);

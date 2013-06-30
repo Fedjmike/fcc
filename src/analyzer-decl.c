@@ -52,15 +52,21 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
         const type* DT = analyzerDeclNode(ctx, Current, BasicDT);
 
         if (Current->symbol) {
+            /*Assign the type*/
             if (!Current->symbol->dt) {
                 Current->symbol->dt = typeDeepDuplicate(DT);
                 reportSymbol(Current->symbol);
 
             /*Not the first declaration of this symbol, check type matches*/
             } else if (!typeIsEqual(Current->symbol->dt, DT))
-                errorConflictingDeclarations(ctx, Current, Current->symbol, DT);
+                analyzerErrorConflictingDeclarations(ctx, Current, Current->symbol, DT);
 
-       } else
+            /*Even if types match, not allowed to be redeclared unless a
+              function*/
+            else if (!typeIsFunction(DT))
+                analyzerErrorRedeclaredVar(ctx, Node, Current->symbol);
+
+        } else
             reportType(DT);
     }
 

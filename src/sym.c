@@ -26,7 +26,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->ident = 0;
 
     Symbol->decls = vectorCreate(2);
-    Symbol->def = 0;
+    Symbol->impl = 0;
 
     Symbol->storage = storageAuto;
     Symbol->dt = 0;
@@ -65,7 +65,7 @@ sym* symCreateScope (sym* Parent) {
     return symCreate(symScope, Parent);
 }
 
-sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
+sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask) {
     sym* Symbol = symCreate(symType, Parent);
     Symbol->ident = strdup(ident);
     Symbol->size = size;
@@ -73,22 +73,13 @@ sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask) {
     return Symbol;
 }
 
-sym* symCreateStruct (sym* Parent, char* ident) {
-    sym* Symbol = symCreate(symStruct, Parent);
+sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
+    sym* Symbol = symCreate(tag, Parent);
     Symbol->ident = strdup(ident);
-    Symbol->typeMask = typeAssignment;
-    return Symbol;
-}
 
-sym* symCreateId (sym* Parent, char* ident) {
-    sym* Symbol = symCreate(symId, Parent);
-    Symbol->ident = strdup(ident);
-    return Symbol;
-}
+    if (tag == symStruct)
+        Symbol->typeMask = typeAssignment;
 
-sym* symCreateParam (sym* Parent, char* ident) {
-    sym* Symbol = symCreate(symParam, Parent);
-    Symbol->ident = strdup(ident);
     return Symbol;
 }
 
@@ -164,19 +155,19 @@ sym* symFind (const sym* Scope, const char* Look) {
 
 const char* symTagGetStr (symTag tag) {
     if (tag == symUndefined)
-        return "symUndefined";
+        return "undefined";
     else if (tag == symScope)
-        return "symScope";
+        return "scope";
     else if (tag == symType)
-        return "symType";
+        return "type";
     else if (tag == symStruct)
-        return "symStruct";
+        return "struct";
     else if (tag == symEnum)
-        return "symEnum";
+        return "enum";
     else if (tag == symId)
-        return "symId";
+        return "id";
     else if (tag == symParam)
-        return "symParam";
+        return "parameter";
 
     else {
         char* str = malloc(logi(tag, 10)+2);

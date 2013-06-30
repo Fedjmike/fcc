@@ -48,15 +48,21 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
     error(ctx, "illegal %s outside of %s", what, where);
 }
 
-void errorDuplicateSym (parserCtx* ctx) {
-    error(ctx, "duplicated identifier '%s'", ctx->lexer->buffer);
+void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag) {
+    const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
+
+    error(ctx, "'%s' redeclared as %s.\n"
+               "     (%d:%d): first declaration here as %s",
+               Symbol->ident, symTagGetStr(tag),
+               first->location.line, first->location.lineChar,
+               symTagGetStr(Symbol->tag));
 }
 
-void errorRedefinedSym (struct parserCtx* ctx, sym* Symbol) {
-    error(ctx, "'%s' redefined.\n"
-               "     (%d:%d): first definition here",
-               Symbol->ident,
-               Symbol->def->location.line, Symbol->def->location.lineChar);
+void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol) {
+    error(ctx, "%s '%s' reimplemented.\n"
+               "     (%d:%d): first implementation here",
+               Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident,
+               Symbol->impl->location.line, Symbol->impl->location.lineChar);
 }
 
 /*:::: TOKEN HANDLING ::::*/

@@ -78,9 +78,9 @@ typedef struct sym {
     symTag tag;
     char* ident;
 
-    vector/*<const ast* >*/ decls;  ///Vector of AST nodes for each declaration (inc. definitions)
-    const struct ast* def;  ///Definition (or null if not defined)
-                            ///Points to the FnImpl, DeclStruct or BOP(=), whichever relevant
+    vector/*<const ast* >*/ decls;  ///Vector of AST nodes for each declaration (inc. impls)
+    const struct ast* impl;  ///Implementation
+                             ///Points to the FnImpl, DeclStruct etc, whichever relevant if any
 
     /*Functions, params, vars only*/
     storageTag storage;
@@ -115,10 +115,8 @@ sym* symInit ();
 void symEnd (sym* Global);
 
 sym* symCreateScope (sym* Parent);
-sym* symCreateType (sym* Parent, char* ident, int size, symTypeMask typeMask);
-sym* symCreateStruct (sym* Parent, char* ident);
-sym* symCreateId (sym* Parent, char* ident);
-sym* symCreateParam (sym* Parent, char* ident);
+sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask);
+sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search
