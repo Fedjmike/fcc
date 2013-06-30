@@ -44,6 +44,10 @@ void errorUndefSym (parserCtx* ctx) {
     error(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
 }
 
+void errorUndefType (parserCtx* ctx) {
+    error(ctx, "undefined symbol '%s', expected type", ctx->lexer->buffer);
+}
+
 void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
     error(ctx, "illegal %s outside of %s", what, where);
 }

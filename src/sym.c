@@ -107,7 +107,10 @@ static void symAddChild (sym* Parent, sym* Child) {
     Child->parent = Parent;
 }
 
-sym* symChild (const sym* Scope, const char* Look) {
+sym* symChild (const sym* Scope, const char* look) {
+    debugAssert("symChild", "null scope", Scope != 0);
+    debugAssert("symChild", "null string", look != 0);
+
     //printf("searching: %s\n", Scope->ident);
 
     for (sym* Current = Scope->firstChild;
@@ -116,12 +119,12 @@ sym* symChild (const sym* Scope, const char* Look) {
         //reportSymbol(Current);
         //getchar();
 
-        if (Current->ident && !strcmp(Current->ident, Look))
+        if (Current->ident && !strcmp(Current->ident, look))
             return Current;
 
         /*Children of enums are visible from their parents scope*/
         if (Current->tag == symEnum) {
-            sym* Found = symChild(Current, Look);
+            sym* Found = symChild(Current, look);
 
             if (Found)
                 return Found;
@@ -131,14 +134,17 @@ sym* symChild (const sym* Scope, const char* Look) {
     return 0;
 }
 
-sym* symFind (const sym* Scope, const char* Look) {
-    //printf("look: %s\n", Look);
+sym* symFind (const sym* Scope, const char* look) {
+    debugAssert("symFind", "null scope", Scope != 0);
+    debugAssert("symFind", "null string", look != 0);
+
+    //printf("look: %s\n", look);
 
     /*Search the current namespace and all its ancestors*/
     for (;
          Scope;
          Scope = Scope->parent) {
-        sym* Found = symChild(Scope, Look);
+        sym* Found = symChild(Scope, look);
 
         if (Found) {
             //printf("found: %s\n", Found->ident);

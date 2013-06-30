@@ -123,14 +123,14 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
  * inside contained enums, anon. unions but will not look at parent scopes.
  * @return Symbol, or null on failure.
  */
-sym* symChild (const sym* Scope, const char* Look);
+sym* symChild (const sym* Scope, const char* look);
 
 /**
  * Attempt to find a symbol visible from a scope. Will recurse up parent
  * scopes.
  * @return Symbol, or null on failure
  */
-sym* symFind (const sym* Scope, const char* Look);
+sym* symFind (const sym* Scope, const char* look);
 
 const char* symTagGetStr (symTag tag);
 const char* storageTagGetStr (storageTag tag);

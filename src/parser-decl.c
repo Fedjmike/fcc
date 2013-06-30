@@ -31,16 +31,17 @@ struct ast* parserDeclStruct (parserCtx* ctx) {
     tokenMatchStr(ctx, "struct");
 
     ast* Node = astCreateDeclStruct(ctx->location, parserName(ctx, true, symStruct));
+    Node->symbol = Node->l->symbol;
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
     /*Body?*/
     if (tokenTryMatchStr(ctx, "{")) {
         /*Only error if not already errored for wrong tag*/
-        if (Node->l->symbol->impl && Node->l->symbol->tag == symStruct)
-            errorReimplementedSym(ctx, Node->l->symbol);
+        if (Node->symbol->impl && Node->symbol->tag == symStruct)
+            errorReimplementedSym(ctx, Node->symbol);
 
         else
-            Node->l->symbol->impl = Node;
+            Node->symbol->impl = Node;
 
         /*Eat fields*/
         while (!tokenIs(ctx, "}")) {
@@ -190,7 +191,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
     } else {
         if (tokenIsIdent(ctx))
-            errorUndefSym(ctx);
+            errorUndefType(ctx);
 
         else
             errorExpected(ctx, "type name");

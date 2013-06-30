@@ -9,6 +9,7 @@ sym* scopeSet (struct parserCtx* ctx, sym* Scope);
 
 void errorExpected (struct parserCtx* ctx, const char* Expected);
 void errorUndefSym (struct parserCtx* ctx);
+void errorUndefType (struct parserCtx* ctx);
 void errorIllegalOutside (struct parserCtx* ctx, const char* what, const char* where);
 void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag);
 void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol);
