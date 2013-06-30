@@ -528,10 +528,16 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
         /* char* */
         Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
 
-    else if (Node->litTag == literalIdent)
-        Node->dt = typeDeepDuplicate(Node->symbol->dt);
+    else if (Node->litTag == literalIdent) {
+        if (Node->symbol->tag == symId || Node->symbol->tag == symParam)
+            Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
-    else {
+        else {
+            analyzerErrorIllegalSymAsValue(ctx, Node, Node->symbol);
+            Node->dt = typeCreateInvalid();
+        }
+
+    } else {
         debugErrorUnhandled("analyzerLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Node->dt = typeCreateInvalid();
     }
