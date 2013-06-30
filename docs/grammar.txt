@@ -1,49 +1,48 @@
-Module := [ Shebang ] { Using } { ModuleLine }
+Module = [{ ModuleLine }]
+ModuleLine = Struct | ModuleDecl
+Code = ( "{" [{ Line }] "}" ) | Line
+Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | SymDef | Value ] ";"
+If = "if" "(" Value ")" Code [ "else" Code ]
+While = "while" "(" Value ")" Code
+DoWhile = "do" Code "while" "(" Value ")" ";"
+For := "for" "(" [ SymDef | Value ] ";" [ Value ] ";" [ Value ] ")" Code
 
-Shebang := "#!" <File>
-Using := "using" <String>
-ModuleLine := TypeDef | SymDef | ( Struct ";" )
+Value = Comma
+AssignValue = Assign
+Comma = Assign [{ "," Assign }]
+Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "^=" Assign ]
+Ternary = Bool [ "?" Ternary ":" Ternary ]
+Bool = Equality [{ "&&" | "||" | "&" | "|" | "^" Equality }]
+Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
+Shift = Expr [{ ">>" | "<<" Expr }]
+Expr = Term [{ "+" | "-" Term }]
+Term = Unary [{ "*" | "/" | "%" Unary }]
+Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
+Object = Factor [{   ( "[" Value "]" )
+                   | ( "(" [ AssignValue [{ "," AssignValue }] ] ")" )
+                   | ( "." <Ident> )
+                   | ( "->" <Ident> ) }]
+Factor =   ( "(" Value ")" )
+         | ( "(" Type ")" Unary )
+         | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
+         | ( "sizeof" ( "(" Type | Value ")" ) | Value
+         | <Int>
+         | <Bool>
+         | <Str>
+         | <Ident>
 
-TypeDef := "typedef" Type <Ident> ";"
-SymDef := [ "static" ] Type <Ident> Function | ( Variable ";" )
+DeclStruct = "struct" Name# [ "{" [{ DeclField ";" }] "}" ] ";"
+Type = DeclBasic DeclExpr#
+Decl = DeclBasic DeclExpr# [{ "," DeclExpr# }]
+ModuleDecl = DeclBasic DeclExpr#   ( "{" Code "}" )
+                                 | ( [{ "," DeclExpr# }] ";" )
+DeclField = Decl
+DeclParam = DeclBasic DeclExpr#
 
-Type := <Datatype> | <Ident> | Struct [ "*" ]
-Struct := "struct" <Ident> | ( "{" { Type <Ident> Variable ";" } "}" )
-
-Function := "(" [ Type Variable [{ "," Type Variable }] ] ")" Code | ";"
-Variable :=  Array | ( "=" Value )
-Array := "[" [ <Int> ] "]" [ "=" "{" Value [{ "," Value }] "}" ]
-
-Code := Line | ( "{" { Line } "}" )
-Line :=   If
-		| While
-		| For
-		| ( ( "return" [ Value ] )
-		    | ( "break" )
-		    | SymDef
-		    | Assign
-		    | .
-			";" )
-
-If := "if" Value Code [ "else" Code ]
-While := "while" Value Code
-For := "for" [ "(" ] [ SymDef | Value ] ";" [ Value ] ";" [ Value ] [ ")" ] Code
-
-Decl := Type Variable
-
-Value := Bool
-Assign := Bool [ "=" | "+=" | "-=" | "*=" | "/=" Bool ]
-Bool := Equality [{ "&&" | "||" Equality }]
-Equality := Rel [{ "==" | "!=" Rel }]
-Rel := Expr [{ ">" | ">=" | "<" | "<=" Expr }]
-Expr := Term [{ "+" | "-"  Term }]
-Term := Object [{ "*" | "/"  Object }]
-Unary := [{ "!" | "-" | "*" | "&" | "++" | "--" }] Object [{ "++" | "--" }]
-Object := Factor [{   ( "[" Value "]" )
-					| ( "(" Value [{ "," Value }] ")" )
-					| ( "." | "->" <Ident> ) }]
-Factor :=   ( "sizeof" "(" Object | Type ")" )
-		  | ( "(" Value ")" )
-		  | <String>
-		  | <Int>
-		  | <Ident>
+DeclBasic = <Ident>
+DeclExpr = DeclUnary [ "=" AssignValue ]
+DeclUnary = ( "*" DeclUnary ) | DeclObject
+DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
+DeclFunction = "(" [ ( DeclParam [{ "," DeclParam }] [ "," "..." ] ) | "..." ]  ")"
+TypeAtom = [ ( "(" DeclExpr ")" ) | Name ]
+Name = <UnqualifiedIdent>

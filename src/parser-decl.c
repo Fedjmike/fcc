@@ -22,7 +22,9 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserName (parserCtx* ctx);
 
 /**
- * DeclStruct = "struct" Name [ "{" [{ DeclField ";" }] "}" ] ";"
+ * DeclStruct = "struct" Name# [ "{" [{ DeclField ";" }] "}" ] ";"
+ *
+ * Name is told to create a symbol.
  */
 struct ast* parserDeclStruct (parserCtx* ctx) {
     debugEnter("Struct");
@@ -299,7 +301,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, bool inParam) {
 }
 
 /**
- * DeclFunction = "(" [ DeclParam [{ "," DeclParam }] ] ")"
+ * DeclFunction = "(" [ ( DeclParam [{ "," DeclParam }] [ "," "..." ] ) | "..." ]  ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* atom) {
     (void) inParam;
@@ -397,6 +399,9 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam) {
 
 /**
  * Name = <UnqualifiedIdent>
+ *
+ * If inDecl, creates a symbol, adding it to the list of declarations
+ * if already created.
  */
 static ast* parserName (parserCtx* ctx) {
     debugEnter("Name");
