@@ -219,7 +219,7 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
 
     analyzerDecl(ctx, Node->l);
 
-    if (!typeIsFunction(Node->l->firstChild->dt))
+    if (!typeIsFunction(Node->l->firstChild->symbol->dt))
         analyzerErrorExpected(ctx, Node, "implementation", "function", Node->symbol->dt);
 
     /*Analyze the implementation*/
