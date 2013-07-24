@@ -346,7 +346,7 @@ static ast* parserFactor (parserCtx* ctx) {
             tokenMatchStr(ctx, ")");
 
         } else
-            Node = parserValue(ctx);
+            Node = parserUnary(ctx);
 
         Node = astCreateSizeof(ctx->location, Node);
 

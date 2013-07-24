@@ -25,7 +25,7 @@ Object = Factor [{   ( "[" Value "]" )
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
          | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
-         | ( "sizeof" ( "(" Type | Value ")" ) | Value
+         | ( "sizeof" ( "(" Type | Value ")" ) | Unary
          | <Int>
          | <Bool>
          | <Str>

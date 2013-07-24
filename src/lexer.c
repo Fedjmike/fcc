@@ -151,7 +151,7 @@ tokenLocation lexerNext (lexerCtx* ctx) {
         ctx->token = tokenChar;
         lexerEatNext(ctx);
 
-        while (!ctx->stream->current == '\'') {
+        while (ctx->stream->current != '\'') {
             if (ctx->stream->current == '\\')
                 lexerEatNext(ctx);
 
