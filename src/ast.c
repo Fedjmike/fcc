@@ -73,6 +73,12 @@ ast* astCreateDeclStruct (tokenLocation location, ast* name) {
     return Node;
 }
 
+ast* astCreateDeclUnion (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astDeclUnion, location);
+    Node->l = name;
+    return Node;
+}
+
 ast* astCreateDecl (tokenLocation location, ast* basic) {
     ast* Node = astCreate(astDecl, location);
     Node->l = basic;
@@ -196,6 +202,8 @@ const char* astTagGetStr (astTag tag) {
         return "astFnImpl";
     else if (tag == astDeclStruct)
         return "astDeclStruct";
+    else if (tag == astDeclUnion)
+        return "astDeclUnion";
     else if (tag == astDecl)
         return "astDecl";
     else if (tag == astDeclParam)

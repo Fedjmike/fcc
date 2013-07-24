@@ -205,7 +205,9 @@ bool typeIsVoid (const type* DT) {
 }
 
 bool typeIsRecord (const type* DT) {
-    return    (DT->tag == typeBasic && DT->basic->tag == symStruct)
+    return    (   DT->tag == typeBasic
+               && (   DT->basic->tag == symStruct
+                   || DT->basic->tag == symUnion))
            || typeIsInvalid(DT);
 }
 

@@ -36,7 +36,20 @@ void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
         analyzerDecl(ctx, Current);
     }
 
-    /*TODO: check compatiblity*/
+    /*TODO: check compatiblity
+            of? redecls or something?*/
+
+    debugLeave();
+}
+
+void analyzerDeclUnion (analyzerCtx* ctx, ast* Node) {
+    debugEnter("DeclUnion");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        analyzerDecl(ctx, Current);
+    }
 
     debugLeave();
 }

@@ -168,6 +168,8 @@ const char* symTagGetStr (symTag tag) {
         return "type";
     else if (tag == symStruct)
         return "struct";
+    else if (tag == symUnion)
+        return "union";
     else if (tag == symEnum)
         return "enum";
     else if (tag == symId)

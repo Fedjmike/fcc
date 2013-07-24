@@ -108,6 +108,10 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Add symbol size back to debug output
 [ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
+[ ] Shadowing
+    - Warning? Error?
+[ ] Param name clash
+[ ] Line that starts with undeclared ident... assume decl?
 
 [ ] Abysmal error recovery
 [-] AST is not abstract

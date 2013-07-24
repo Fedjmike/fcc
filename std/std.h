@@ -31,6 +31,8 @@ char* filext (const char* name, const char* extension);
  */
 int logi (int x, int base);
 
+#define max(x, y) ((x) > (y) ? (x) : (y))
+
 typedef enum {false = 0, true = 1} bool;
 
 #endif

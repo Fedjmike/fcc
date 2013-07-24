@@ -183,6 +183,9 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
     else if (Node->tag == astDeclStruct)
         analyzerDeclStruct(ctx, Node);
 
+    else if (Node->tag == astDeclUnion)
+        analyzerDeclUnion(ctx, Node);
+
     else if (Node->tag == astDecl)
         analyzerDecl(ctx, Node);
 

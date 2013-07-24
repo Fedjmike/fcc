@@ -14,6 +14,7 @@ typedef enum {
     astModule,
     astFnImpl,
     astDeclStruct,
+    astDeclUnion,
     astDecl,
     astDeclParam,
     astType,
@@ -77,6 +78,7 @@ ast* astCreateEmpty (tokenLocation location);
 ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
 ast* astCreateDeclStruct (tokenLocation location, ast* name);
+ast* astCreateDeclUnion (tokenLocation location, ast* name);
 ast* astCreateDecl (tokenLocation location, ast* basic);
 ast* astCreateDeclParam (tokenLocation location, ast* basic, ast* declExpr);
 ast* astCreateType (tokenLocation location, ast* basic, ast* expr);

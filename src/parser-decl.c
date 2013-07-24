@@ -21,23 +21,28 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
 /**
- * DeclStruct = "struct" Name# [ "{" [{ DeclField ";" }] "}" ] ";"
+ * DeclStructOrUnion = "struct" | "union" Name#
+ *                     [ "{" [{ DeclField ";" }] "}" ] ";"
  *
- * Name is told to create a symbol.
+ * Name is told to create a symbol of the tag indicated by the first
+ * token.
  */
-struct ast* parserDeclStruct (parserCtx* ctx) {
-    debugEnter("Struct");
+struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
+    debugEnter("DeclStructOrUnion");
 
-    tokenMatchStr(ctx, "struct");
+    symTag tag =   tokenTryMatchStr(ctx, "struct")
+                 ? symStruct
+                 : (tokenMatchStr(ctx, "union"), symUnion);
 
-    ast* Node = astCreateDeclStruct(ctx->location, parserName(ctx, true, symStruct));
+    ast* Node = (tag == symStruct ? astCreateDeclStruct : astCreateDeclUnion)
+                (ctx->location, parserName(ctx, true, tag));
     Node->symbol = Node->l->symbol;
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
     /*Body?*/
     if (tokenTryMatchStr(ctx, "{")) {
         /*Only error if not already errored for wrong tag*/
-        if (Node->symbol->impl && Node->symbol->tag == symStruct)
+        if (Node->symbol->impl && Node->symbol->tag == tag)
             errorReimplementedSym(ctx, Node->symbol);
 
         else
@@ -105,7 +110,7 @@ ast* parserDecl (parserCtx* ctx) {
  * ModuleDecl = DeclBasic DeclExpr#   ( "{" Code "}" )
  *                                  | ( [{ "," DeclExpr# }] ";" )
  *
- * DeclExpr is told to require identifiers, allow initations and
+ * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
  */
 ast* parserModuleDecl (parserCtx* ctx) {
@@ -404,6 +409,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
         errorExpected(ctx, "name");
         Node = astCreateInvalid(ctx->location);
         Node->literal = strdup("");
+        Node->symbol = symCreateNamed(tag, ctx->scope, "");
     }
 
     debugLeave();

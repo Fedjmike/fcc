@@ -262,12 +262,12 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
             analyzerErrorOp(ctx, Node->o, "pointer", Node->l, L);
 
         else if (!typeIsInvalid(L) && !typeIsRecord(L->base))
-            analyzerErrorOp(ctx, Node->o, "structure pointer", Node->l, L);
+            analyzerErrorOp(ctx, Node->o, "structure or union pointer", Node->l, L);
 
     /* . */
     } else
         if (!typeIsRecord(L))
-            analyzerErrorOp(ctx, Node->o, "structure type", Node->l, L);
+            analyzerErrorOp(ctx, Node->o, "structure or union type", Node->l, L);
 
     /*Return type: the field*/
 

@@ -1,5 +1,5 @@
 Module = [{ ModuleLine }]
-ModuleLine = Struct | ModuleDecl
+ModuleLine = DeclStructOrUnion | ModuleDecl
 Code = ( "{" [{ Line }] "}" ) | Line
 Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | SymDef | Value ] ";"
 If = "if" "(" Value ")" Code [ "else" Code ]
@@ -31,7 +31,8 @@ Factor =   ( "(" Value ")" )
          | <Str>
          | <Ident>
 
-DeclStruct = "struct" Name# [ "{" [{ DeclField ";" }] "}" ] ";"
+DeclStructOrUnion = "struct" | "union" Name#
+                    [ "{" [{ DeclField ";" }] "}" ] ";"
 Type = DeclBasic DeclExpr#
 Decl = DeclBasic DeclExpr# [{ "," DeclExpr# }]
 ModuleDecl = DeclBasic DeclExpr#   ( "{" Code "}" )

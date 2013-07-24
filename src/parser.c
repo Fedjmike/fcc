@@ -76,15 +76,15 @@ static ast* parserModule (parserCtx* ctx) {
 }
 
 /**
- * ModuleLine = Struct | ModuleDecl
+ * ModuleLine = DeclStructOrUnion | ModuleDecl
  */
 static ast* parserModuleLine (parserCtx* ctx) {
     debugEnter("ModuleLine");
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "struct"))
-        Node = parserDeclStruct(ctx);
+    if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
+        Node = parserDeclStructOrUnion(ctx);
 
     else if (tokenTryMatchStr(ctx, ";"))
         Node = astCreateEmpty(ctx->location);

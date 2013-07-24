@@ -21,19 +21,6 @@ static void emitterDeclCall (emitterCtx* ctx, const ast* Node);
 
 static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Symbol);
 
-void emitterDecl (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
-    debugEnter("Decl");
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling)
-        emitterDeclNode(ctx, Current);
-
-    debugLeave();
-}
-
 void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
     (void) ctx;
 
@@ -50,6 +37,37 @@ void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
     }
 
     reportSymbol(Node->symbol);
+
+    debugLeave();
+}
+
+void emitterDeclUnion (emitterCtx* ctx, ast* Node) {
+    (void) ctx;
+
+    debugEnter("DeclUnion");
+
+    for (sym* Current = Node->symbol->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        Current->offset = 0;
+        Node->symbol->size = max(Node->symbol->size, typeGetSize(ctx->arch, Current->dt));
+        reportSymbol(Current);
+    }
+
+    reportSymbol(Node->symbol);
+
+    debugLeave();
+}
+
+void emitterDecl (emitterCtx* ctx, const ast* Node) {
+    (void) ctx;
+
+    debugEnter("Decl");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling)
+        emitterDeclNode(ctx, Current);
 
     debugLeave();
 }

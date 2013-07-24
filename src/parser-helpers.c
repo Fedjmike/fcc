@@ -92,6 +92,7 @@ bool tokenIsDecl (const parserCtx* ctx) {
 
     return    (Symbol && (   Symbol->tag == symType
                           || Symbol->tag == symStruct
+                          || Symbol->tag == symUnion
                           || Symbol->tag == symEnum))
            || tokenIs(ctx, "const");
 }
