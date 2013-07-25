@@ -14,7 +14,6 @@
 #include "string.h"
 
 static ast* parserModule (parserCtx* ctx);
-static ast* parserModuleLine (parserCtx* ctx);
 
 static ast* parserLine (parserCtx* ctx);
 
@@ -59,7 +58,7 @@ parserResult parser (const char* File, sym* Global) {
 }
 
 /**
- * Module = [{ ModuleLine }]
+ * Module = [{ ModuleDecl | ";" }]
  */
 static ast* parserModule (parserCtx* ctx) {
     debugEnter("Module");
@@ -67,36 +66,19 @@ static ast* parserModule (parserCtx* ctx) {
     ast* Module = astCreate(astModule, ctx->location);
     Module->symbol = ctx->scope;
 
-    while (ctx->lexer->token != tokenEOF)
-        astAddChild(Module, parserModuleLine(ctx));
+    while (ctx->lexer->token != tokenEOF) {
+        if (tokenTryMatchStr(ctx, ";"))
+            astAddChild(Module, astCreateEmpty(ctx->location));
+
+        else
+            astAddChild(Module, parserModuleDecl(ctx));
+
+        debugWait();
+    }
 
     debugLeave();
 
     return Module;
-}
-
-/**
- * ModuleLine = DeclStructOrUnion | ModuleDecl
- */
-static ast* parserModuleLine (parserCtx* ctx) {
-    debugEnter("ModuleLine");
-
-    ast* Node = 0;
-
-    if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
-        Node = parserDeclStructOrUnion(ctx);
-
-    else if (tokenTryMatchStr(ctx, ";"))
-        Node = astCreateEmpty(ctx->location);
-
-    else
-        Node = parserModuleDecl(ctx);
-
-    debugLeave();
-
-    //debugWait();
-
-    return Node;
 }
 
 /**
@@ -126,7 +108,7 @@ ast* parserCode (parserCtx* ctx) {
 }
 
 /**
- * Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | SymDef | Value ] ";"
+ * Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | Decl | Value ] ";"
  */
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
@@ -256,7 +238,7 @@ static ast* parserDoWhile (parserCtx* ctx) {
 }
 
 /**
- * For := "for" "(" [ SymDef | Value ] ";" [ Value ] ";" [ Value ] ")" Code
+ * For := "for" "(" [ Decl | Value ] ";" [ Value ] ";" [ Value ] ")" Code
  */
 static ast* parserFor (parserCtx* ctx) {
     debugEnter("For");

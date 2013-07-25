@@ -66,12 +66,6 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
         if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
-        else if (Current->tag == astDeclStruct)
-            emitterDeclStruct(ctx, Current);
-
-        else if (Current->tag == astDeclUnion)
-            emitterDeclUnion(ctx, Current);
-
         else if (Current->tag == astDecl)
             emitterDecl(ctx, Current);
 

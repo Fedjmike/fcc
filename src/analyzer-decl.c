@@ -14,6 +14,8 @@
 static void analyzerDeclParam (analyzerCtx* ctx, ast* Node);
 
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
+static void analyzerDeclStruct (analyzerCtx* ctx, ast* Node);
+static void analyzerDeclUnion (analyzerCtx* ctx, ast* Node);
 
 /**
  * Handles any node tag that parserDeclExpr may produce by passing it
@@ -26,33 +28,6 @@ static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* 
 static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType);
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base);
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const type* base);
-
-void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
-    debugEnter("DeclStruct");
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        analyzerDecl(ctx, Current);
-    }
-
-    /*TODO: check compatiblity
-            of? redecls or something?*/
-
-    debugLeave();
-}
-
-void analyzerDeclUnion (analyzerCtx* ctx, ast* Node) {
-    debugEnter("DeclUnion");
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        analyzerDecl(ctx, Current);
-    }
-
-    debugLeave();
-}
 
 void analyzerDecl (analyzerCtx* ctx, ast* Node) {
     debugEnter("Decl");
@@ -116,7 +91,13 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
 
     debugEnter("DeclBasic");
 
-    if (Node->tag == astLiteral) {
+    if (Node->tag == astDeclStruct)
+        analyzerDeclStruct(ctx, Node);
+
+    else if (Node->tag == astDeclUnion)
+        analyzerDeclUnion(ctx, Node);
+
+    else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             Node->dt = typeCreateBasic(Node->symbol);
 
@@ -126,13 +107,42 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
         }
 
     } else {
-        debugErrorUnhandled("analyzerDeclBasic", "AST tag", astTagGetStr(Node->tag));
+        if (Node->tag != astInvalid)
+            debugErrorUnhandled("analyzerDeclBasic", "AST tag", astTagGetStr(Node->tag));
+
         Node->dt = typeCreateInvalid();
     }
 
     debugLeave();
 
     return Node->dt;
+}
+
+static void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
+    debugEnter("DeclStruct");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        analyzerDecl(ctx, Current);
+    }
+
+    /*TODO: check compatiblity
+            of? redecls or something?*/
+
+    debugLeave();
+}
+
+static void analyzerDeclUnion (analyzerCtx* ctx, ast* Node) {
+    debugEnter("DeclUnion");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        analyzerDecl(ctx, Current);
+    }
+
+    debugLeave();
 }
 
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {

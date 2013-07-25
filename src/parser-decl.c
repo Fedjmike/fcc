@@ -12,6 +12,7 @@ static ast* parserDeclField (parserCtx* ctx);
 static ast* parserDeclParam (parserCtx* ctx, bool inDecl);
 
 static ast* parserDeclBasic (parserCtx* ctx);
+static ast* parserDeclStructOrUnion (parserCtx* ctx);
 
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, bool inParam);
@@ -19,52 +20,6 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* atom);
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
-
-/**
- * DeclStructOrUnion = "struct" | "union" Name#
- *                     [ "{" [{ DeclField ";" }] "}" ] ";"
- *
- * Name is told to create a symbol of the tag indicated by the first
- * token.
- */
-struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
-    debugEnter("DeclStructOrUnion");
-
-    symTag tag =   tokenTryMatchStr(ctx, "struct")
-                 ? symStruct
-                 : (tokenMatchStr(ctx, "union"), symUnion);
-
-    ast* Node = (tag == symStruct ? astCreateDeclStruct : astCreateDeclUnion)
-                (ctx->location, parserName(ctx, true, tag));
-    Node->symbol = Node->l->symbol;
-    sym* OldScope = scopeSet(ctx, Node->symbol);
-
-    /*Body?*/
-    if (tokenTryMatchStr(ctx, "{")) {
-        /*Only error if not already errored for wrong tag*/
-        if (Node->symbol->impl && Node->symbol->tag == tag)
-            errorReimplementedSym(ctx, Node->symbol);
-
-        else
-            Node->symbol->impl = Node;
-
-        /*Eat fields*/
-        while (!tokenIs(ctx, "}")) {
-            astAddChild(Node, parserDeclField(ctx));
-            tokenMatchStr(ctx, ";");
-        }
-
-        tokenMatchStr(ctx, "}");
-    }
-
-    tokenMatchStr(ctx, ";");
-
-    ctx->scope = OldScope;
-
-    debugLeave();
-
-    return Node;
-}
 
 /**
  * Type = DeclBasic DeclExpr#
@@ -86,29 +41,9 @@ struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
 }
 
 /**
- * Decl = DeclBasic DeclExpr# [{ "," DeclExpr# }]
- *
- * DeclExpr is told to require identifiers, allow initiations and
- * create symbols.
- */
-ast* parserDecl (parserCtx* ctx) {
-    debugEnter("Decl");
-
-    tokenLocation loc = ctx->location;
-    ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
-
-    do {
-        astAddChild(Node, parserDeclExpr(ctx, true, false));
-    } while (tokenTryMatchStr(ctx, ","));
-
-    debugLeave();
-
-    return Node;
-}
-
-/**
- * ModuleDecl = DeclBasic DeclExpr#   ( "{" Code "}" )
- *                                  | ( [{ "," DeclExpr# }] ";" )
+ * ModuleDecl = DeclBasic DeclExpr#   (   ( "{" Code "}" )
+ *                                      | ( [{ "," DeclExpr# }] ";" ) )
+ *                                  | ";"
  *
  * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
@@ -119,29 +54,56 @@ ast* parserModuleDecl (parserCtx* ctx) {
     tokenLocation loc = ctx->location;
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
-    astAddChild(Node, parserDeclExpr(ctx, true, false));
+    if (tokenTryMatchStr(ctx, ";"))
+        ;
 
-    if (tokenIs(ctx, "{")) {
-        loc = ctx->location;
-        Node = astCreateFnImpl(loc, Node);
-        Node->symbol = Node->l->firstChild->symbol;
+    else {
+        astAddChild(Node, parserDeclExpr(ctx, true, false));
 
-        if (Node->symbol->impl)
-            errorReimplementedSym(ctx, Node->symbol);
+        if (tokenIs(ctx, "{")) {
+            loc = ctx->location;
+            Node = astCreateFnImpl(loc, Node);
+            Node->symbol = Node->l->firstChild->symbol;
 
-        else
-            Node->symbol->impl = Node;
+            if (Node->symbol->impl)
+                errorReimplementedSym(ctx, Node->symbol);
 
-        sym* OldScope = scopeSet(ctx, Node->symbol);
-        Node->r = parserCode(ctx);
-        ctx->scope = OldScope;
+            else
+                Node->symbol->impl = Node;
 
-    } else {
-        while (tokenTryMatchStr(ctx, ","))
-            astAddChild(Node, parserDeclExpr(ctx, true, false));
+            sym* OldScope = scopeSet(ctx, Node->symbol);
+            Node->r = parserCode(ctx);
+            ctx->scope = OldScope;
 
-        tokenMatchStr(ctx, ";");
+        } else {
+            while (tokenTryMatchStr(ctx, ","))
+                astAddChild(Node, parserDeclExpr(ctx, true, false));
+
+            tokenMatchStr(ctx, ";");
+        }
     }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Decl = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ]
+ *
+ * DeclExpr is told to require identifiers, allow initiations and
+ * create symbols.
+ * Assumes that a Decl will always be followed by a semicolon.
+ */
+ast* parserDecl (parserCtx* ctx) {
+    debugEnter("Decl");
+
+    tokenLocation loc = ctx->location;
+    ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
+
+    if (!tokenIs(ctx, ";")) do {
+        astAddChild(Node, parserDeclExpr(ctx, true, false));
+    } while (tokenTryMatchStr(ctx, ","));
 
     debugLeave();
 
@@ -181,28 +143,78 @@ static ast* parserDeclParam (parserCtx* ctx, bool inDecl) {
 }
 
 /**
- * DeclBasic = <Ident>
+ * DeclBasic = <Ident> | DeclStructUnion
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
 
     ast* Node = 0;
 
-    sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
+    if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
+        Node = parserDeclStructOrUnion(ctx);
 
-    if (Symbol) {
-        Node = astCreateLiteralIdent(ctx->location, tokenDupMatch(ctx));
-        Node->symbol = Symbol;
+    else {
+        sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
-    } else {
-        if (tokenIsIdent(ctx))
-            errorUndefType(ctx);
+        if (Symbol) {
+            Node = astCreateLiteralIdent(ctx->location, tokenDupMatch(ctx));
+            Node->symbol = Symbol;
+
+        } else {
+            if (tokenIsIdent(ctx))
+                errorUndefType(ctx);
+
+            else
+                errorExpected(ctx, "type name");
+
+            Node = astCreateInvalid(ctx->location);
+            tokenNext(ctx);
+        }
+    }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * DeclStructOrUnion = "struct" | "union" [ Name# ]
+ *                     [ "{" [{ DeclField ";" }] "}" ]
+ *
+ * Name is told to create a symbol of the tag indicated by the first
+ * token.
+ */
+static struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
+    debugEnter("DeclStructOrUnion");
+
+    symTag tag =   tokenTryMatchStr(ctx, "struct")
+                 ? symStruct
+                 : (tokenMatchStr(ctx, "union"), symUnion);
+
+    ast* Node = (tag == symStruct ? astCreateDeclStruct : astCreateDeclUnion)
+                (ctx->location, parserName(ctx, true, tag));
+    Node->symbol = Node->l->symbol;
+    sym* OldScope = scopeSet(ctx, Node->symbol);
+
+    /*Body?*/
+    if (tokenTryMatchStr(ctx, "{")) {
+        /*Only error if not already errored for wrong tag*/
+        if (Node->symbol->impl && Node->symbol->tag == tag)
+            errorReimplementedSym(ctx, Node->symbol);
 
         else
-            errorExpected(ctx, "type name");
+            Node->symbol->impl = Node;
 
-        tokenNext(ctx);
+        /*Eat fields*/
+        while (!tokenIs(ctx, "}")) {
+            astAddChild(Node, parserDeclField(ctx));
+            tokenMatchStr(ctx, ";");
+        }
+
+        tokenMatchStr(ctx, "}");
     }
+
+    ctx->scope = OldScope;
 
     debugLeave();
 

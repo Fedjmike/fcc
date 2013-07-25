@@ -242,8 +242,7 @@ static ast* parserUnary (parserCtx* ctx) {
 /**
  * Object = Factor [{   ( "[" Value "]" )
  *                    | ( "(" [ AssignValue [{ "," AssignValue }] ] ")" )
- *                    | ( "." <Ident> )
- *                    | ( "->" <Ident> ) }]
+ *                    | ( "." | "->" <Ident> ) }]
  */
 static ast* parserObject (parserCtx* ctx) {
     debugEnter("Object");
