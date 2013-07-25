@@ -8,8 +8,8 @@ void free (void*);
 int printf (char*, ...);
 int puts (char*);
 
-//import(stdlib)
-//import(stdio)
+//using(stdlib);
+//using(stdio);
 
 struct list_node {
     int item;

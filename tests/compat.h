@@ -1,4 +1,3 @@
-#define import(x)
-#define struct typedef struct
+#define using(x)
 
 typedef enum {false = 0, true = 1} bool;
