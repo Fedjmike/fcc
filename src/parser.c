@@ -108,7 +108,7 @@ ast* parserCode (parserCtx* ctx) {
 }
 
 /**
- * Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | Decl | Value ] ";"
+ * Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Decl | Value ] ";" )
  */
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
