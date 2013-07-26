@@ -67,14 +67,21 @@ ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     return Node;
 }
 
+ast* astCreateTypedef (tokenLocation location, ast* basic, ast* expr) {
+    ast* Node = astCreate(astParam, location);
+    Node->l = basic;
+    Node->r = expr;
+    return Node;
+}
+
 ast* astCreateDecl (tokenLocation location, ast* basic) {
     ast* Node = astCreate(astDecl, location);
     Node->l = basic;
     return Node;
 }
 
-ast* astCreateDeclParam (tokenLocation location, ast* basic, ast* expr) {
-    ast* Node = astCreate(astDeclParam, location);
+ast* astCreateParam (tokenLocation location, ast* basic, ast* expr) {
+    ast* Node = astCreate(astParam, location);
     Node->l = basic;
     Node->r = expr;
     return Node;

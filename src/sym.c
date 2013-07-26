@@ -166,6 +166,8 @@ const char* symTagGetStr (symTag tag) {
         return "scope";
     else if (tag == symType)
         return "type";
+    else if (tag == symTypedef)
+        return "typedef";
     else if (tag == symStruct)
         return "struct";
     else if (tag == symUnion)

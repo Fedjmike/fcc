@@ -27,6 +27,7 @@ typedef enum {
     symUndefined,
     symScope,
     symType,
+    symTypedef,
     symStruct,
     symUnion,
     symEnum,
