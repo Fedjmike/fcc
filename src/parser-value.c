@@ -214,8 +214,6 @@ static ast* parserTerm (parserCtx* ctx) {
  * Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
  */
 static ast* parserUnary (parserCtx* ctx) {
-    /* Interestingly, this function makes extensive use of itself */
-
     debugEnter("Unary");
 
     ast* Node = 0;
@@ -229,6 +227,7 @@ static ast* parserUnary (parserCtx* ctx) {
         Node = astCreateUOP(ctx->location, o, parserUnary(ctx));
 
     } else
+        /*Interestingly, this call to parserObject parses itself*/
         Node = parserObject(ctx);
 
     while (tokenIs(ctx, "++") || tokenIs(ctx, "--"))
