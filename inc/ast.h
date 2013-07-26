@@ -77,7 +77,7 @@ ast* astCreateEmpty (tokenLocation location);
 
 ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
-ast* astCreateTypedef (tokenLocation location, ast* basic, ast* expr)
+ast* astCreateTypedef (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateDecl (tokenLocation location, ast* basic);
 ast* astCreateParam (tokenLocation location, ast* basic, ast* declExpr);
 ast* astCreateType (tokenLocation location, ast* basic, ast* expr);
