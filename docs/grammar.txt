@@ -1,6 +1,6 @@
 Module = [{ ModuleDecl | Typedef | ";" }]
 Code = ( "{" [{ Line }] "}" ) | Line
-Line = If | While | DoWhile | For | Code | [ ( "return" Value ) | "break" | Typedef | Decl | Value ] ";"
+Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Typedef | Decl | Value ] ";" )
 If = "if" "(" Value ")" Code [ "else" Code ]
 While = "while" "(" Value ")" Code
 DoWhile = "do" Code "while" "(" Value ")" ";"

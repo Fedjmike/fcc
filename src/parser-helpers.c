@@ -151,7 +151,7 @@ void tokenMatchStr (parserCtx* ctx, const char* Match) {
         tokenMatch(ctx);
 
     else {
-        char* expectedInQuotes = malloc(strlen(Match)+2);
+        char* expectedInQuotes = malloc(strlen(Match)+3);
         sprintf(expectedInQuotes, "'%s'", Match);
         errorExpected(ctx, expectedInQuotes);
         free(expectedInQuotes);
