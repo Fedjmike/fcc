@@ -35,16 +35,16 @@ ModuleDecl = DeclBasic   ( DeclExpr#   ( "{" Code "}" )
 					   | ";"
 Decl = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ]
 
-DeclField = Decl
-DeclParam = DeclBasic DeclExpr#
+Field = Decl
+Param = DeclBasic DeclExpr#
 
-DeclBasic = <Ident> | DeclStructOrUnion
-DeclStructOrUnion = "struct" | "union" [ Name# ]
-                    [ "{" [{ DeclField ";" }] "}" ]
+DeclBasic = <Ident> | StructOrUnion
+StructOrUnion = "struct" | "union" [ Name# ]
+                [ "{" [{ Field ";" }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( DeclParam [{ "," DeclParam }] [ "," "..." ] ) | "..." ]  ")"
+DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
 TypeAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

@@ -11,11 +11,11 @@
 #include "stdlib.h"
 #include "string.h"
 
-static void analyzerDeclParam (analyzerCtx* ctx, ast* Node);
+static void analyzerParam (analyzerCtx* ctx, ast* Node);
 
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
-static void analyzerDeclStruct (analyzerCtx* ctx, ast* Node);
-static void analyzerDeclUnion (analyzerCtx* ctx, ast* Node);
+static void analyzerStruct (analyzerCtx* ctx, ast* Node);
+static void analyzerUnion (analyzerCtx* ctx, ast* Node);
 
 /**
  * Handles any node tag that parserDeclExpr may produce by passing it
@@ -72,8 +72,8 @@ const type* analyzerType (struct analyzerCtx* ctx, struct ast* Node) {
     return Node->dt;
 }
 
-static void analyzerDeclParam (analyzerCtx* ctx, ast* Node) {
-    debugEnter("DeclParam");
+static void analyzerParam (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Param");
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
     Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, BasicDT));
@@ -91,11 +91,11 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
 
     debugEnter("DeclBasic");
 
-    if (Node->tag == astDeclStruct)
-        analyzerDeclStruct(ctx, Node);
+    if (Node->tag == astStruct)
+        analyzerStruct(ctx, Node);
 
-    else if (Node->tag == astDeclUnion)
-        analyzerDeclUnion(ctx, Node);
+    else if (Node->tag == astUnion)
+        analyzerUnion(ctx, Node);
 
     else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
@@ -118,8 +118,8 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-static void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
-    debugEnter("DeclStruct");
+static void analyzerStruct (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Struct");
 
     for (ast* Current = Node->firstChild;
          Current;
@@ -133,8 +133,8 @@ static void analyzerDeclStruct (analyzerCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-static void analyzerDeclUnion (analyzerCtx* ctx, ast* Node) {
-    debugEnter("DeclUnion");
+static void analyzerUnion (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Union");
 
     for (ast* Current = Node->firstChild;
          Current;
@@ -241,8 +241,8 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
             variadic = true;
             debugMsg("Ellipsis");
 
-        } else if (Current->tag == astDeclParam) {
-            analyzerDeclParam(ctx, Current);
+        } else if (Current->tag == astParam) {
+            analyzerParam(ctx, Current);
             paramTypes[i++] = typeDeepDuplicate(Current->dt);
 
         } else

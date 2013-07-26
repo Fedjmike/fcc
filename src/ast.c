@@ -67,18 +67,6 @@ ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     return Node;
 }
 
-ast* astCreateDeclStruct (tokenLocation location, ast* name) {
-    ast* Node = astCreate(astDeclStruct, location);
-    Node->l = name;
-    return Node;
-}
-
-ast* astCreateDeclUnion (tokenLocation location, ast* name) {
-    ast* Node = astCreate(astDeclUnion, location);
-    Node->l = name;
-    return Node;
-}
-
 ast* astCreateDecl (tokenLocation location, ast* basic) {
     ast* Node = astCreate(astDecl, location);
     Node->l = basic;
@@ -96,6 +84,18 @@ ast* astCreateType (tokenLocation location, ast* basic, ast* expr) {
     ast* Node = astCreate(astType, location);
     Node->l = basic;
     Node->r = expr;
+    return Node;
+}
+
+ast* astCreateStruct (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astStruct, location);
+    Node->l = name;
+    return Node;
+}
+
+ast* astCreateUnion (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astUnion, location);
+    Node->l = name;
     return Node;
 }
 
@@ -200,14 +200,14 @@ const char* astTagGetStr (astTag tag) {
         return "astModule";
     else if (tag == astFnImpl)
         return "astFnImpl";
-    else if (tag == astDeclStruct)
-        return "astDeclStruct";
-    else if (tag == astDeclUnion)
-        return "astDeclUnion";
+    else if (tag == astStruct)
+        return "astStruct";
+    else if (tag == astUnion)
+        return "astUnion";
     else if (tag == astDecl)
         return "astDecl";
-    else if (tag == astDeclParam)
-        return "astDeclParam";
+    else if (tag == astParam)
+        return "astParam";
     else if (tag == astType)
         return "astType";
     else if (tag == astCode)

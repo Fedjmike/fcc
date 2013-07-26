@@ -8,11 +8,11 @@
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
 
-static ast* parserDeclField (parserCtx* ctx);
-static ast* parserDeclParam (parserCtx* ctx, bool inDecl);
+static ast* parserField (parserCtx* ctx);
+static ast* parserParam (parserCtx* ctx, bool inDecl);
 
 static ast* parserDeclBasic (parserCtx* ctx);
-static ast* parserDeclStructOrUnion (parserCtx* ctx);
+static ast* parserStructOrUnion (parserCtx* ctx);
 
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, bool inParam);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, bool inParam);
@@ -111,9 +111,9 @@ ast* parserDecl (parserCtx* ctx) {
 }
 
 /**
- * DeclField = Decl
+ * Field = Decl
  */
-static ast* parserDeclField (parserCtx* ctx) {
+static ast* parserField (parserCtx* ctx) {
     return parserDecl(ctx);
     /*!!!CHANGEZ MOI!!!
       To what?
@@ -123,18 +123,18 @@ static ast* parserDeclField (parserCtx* ctx) {
 }
 
 /**
- * DeclParam = DeclBasic DeclExpr#
+ * Param = DeclBasic DeclExpr#
  *
  * DeclExpr is told to accept but not require identifiers and symbol
  * creation if and only if inDecl is true.
  */
-static ast* parserDeclParam (parserCtx* ctx, bool inDecl) {
-    debugEnter("DeclParam");
+static ast* parserParam (parserCtx* ctx, bool inDecl) {
+    debugEnter("Param");
 
     tokenLocation loc = ctx->location;
     ast* basic = parserDeclBasic(ctx);
     ast* expr = parserDeclExpr(ctx, inDecl, true);
-    ast* Node = astCreateDeclParam(loc, basic, expr);
+    ast* Node = astCreateParam(loc, basic, expr);
     Node->symbol = Node->r->symbol;
 
     debugLeave();
@@ -143,7 +143,7 @@ static ast* parserDeclParam (parserCtx* ctx, bool inDecl) {
 }
 
 /**
- * DeclBasic = <Ident> | DeclStructUnion
+ * DeclBasic = <Ident> | StructUnion
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
@@ -151,7 +151,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
     ast* Node = 0;
 
     if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
-        Node = parserDeclStructOrUnion(ctx);
+        Node = parserStructOrUnion(ctx);
 
     else {
         sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
@@ -178,20 +178,20 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 }
 
 /**
- * DeclStructOrUnion = "struct" | "union" [ Name# ]
- *                     [ "{" [{ DeclField ";" }] "}" ]
+ * StructOrUnion = "struct" | "union" [ Name# ]
+ *                 [ "{" [{ Field ";" }] "}" ]
  *
  * Name is told to create a symbol of the tag indicated by the first
  * token.
  */
-static struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
-    debugEnter("DeclStructOrUnion");
+static struct ast* parserStructOrUnion (parserCtx* ctx) {
+    debugEnter("StructOrUnion");
 
     symTag tag =   tokenTryMatchStr(ctx, "struct")
                  ? symStruct
                  : (tokenMatchStr(ctx, "union"), symUnion);
 
-    ast* Node = (tag == symStruct ? astCreateDeclStruct : astCreateDeclUnion)
+    ast* Node = (tag == symStruct ? astCreateStruct : astCreateUnion)
                 (ctx->location, parserName(ctx, true, tag));
     Node->symbol = Node->l->symbol;
     sym* OldScope = scopeSet(ctx, Node->symbol);
@@ -207,7 +207,7 @@ static struct ast* parserDeclStructOrUnion (parserCtx* ctx) {
 
         /*Eat fields*/
         while (!tokenIs(ctx, "}")) {
-            astAddChild(Node, parserDeclField(ctx));
+            astAddChild(Node, parserField(ctx));
             tokenMatchStr(ctx, ";");
         }
 
@@ -312,7 +312,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, bool inParam) {
 }
 
 /**
- * DeclFunction = "(" [ ( DeclParam [{ "," DeclParam }] [ "," "..." ] ) | "..." ]  ")"
+ * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* atom) {
     (void) inParam;
@@ -334,7 +334,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, bool inParam, ast* 
             break;
 
         } else
-            astAddChild(Node, parserDeclParam(ctx, inDecl));
+            astAddChild(Node, parserParam(ctx, inDecl));
 
     } while (tokenTryMatchStr(ctx, ","));
 
