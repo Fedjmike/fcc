@@ -254,40 +254,35 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     const type* L = analyzerValue(ctx, Node->l);
 
-    /*Operator allowed?*/
-
-    /* -> */
-    if (isDerefBOP(Node->o)) {
-        if (!typeIsPtr(L))
-            analyzerErrorOp(ctx, Node->o, "pointer", Node->l, L);
-
-        else if (!typeIsInvalid(L) && !typeIsRecord(L->base))
+    if (!typeIsRecord(L)) {
+        if (isDerefBOP(Node->o))
             analyzerErrorOp(ctx, Node->o, "structure or union pointer", Node->l, L);
 
-    /* . */
-    } else
-        if (!typeIsRecord(L))
+        else
             analyzerErrorOp(ctx, Node->o, "structure or union type", Node->l, L);
 
-    /*Return type: the field*/
-
-    if (!typeIsInvalid(L) && !(typeIsPtr(L) && typeIsInvalid(L->base))) {
-        if (typeIsBasic(L))
-            Node->symbol = symChild(L->basic, (char*) Node->r->literal);
-
-        else if (typeIsPtr(L) && typeIsBasic(L->base))
-            Node->symbol = symChild(L->base->basic, (char*) Node->r->literal);
-
-        if (Node->symbol)
-            Node->dt = typeDeepDuplicate(Node->symbol->dt);
-
-        else {
-            analyzerErrorMember(ctx, Node->o, Node->r, L);
-            Node->dt = typeCreateInvalid();
-        }
-
-    } else
         Node->dt = typeCreateInvalid();
+
+    } else {
+        if (isDerefBOP(Node->o) && !typeIsPtr(L))
+            analyzerErrorOp(ctx, Node->o, "pointer", Node->l, L);
+
+        sym* recordSym = typeGetRecordSym(L);
+
+        if (recordSym) {
+            Node->symbol = symChild(recordSym, (char*) Node->r->literal);
+
+            if (Node->symbol)
+                Node->dt = typeDeepDuplicate(Node->symbol->dt);
+
+            else {
+                analyzerErrorMember(ctx, Node->o, Node->r, L);
+                Node->dt = typeCreateInvalid();
+            }
+
+        } else
+            Node->dt = typeCreateInvalid();
+    }
 
     debugLeave();
 
@@ -297,22 +292,12 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("CommaBOP");
 
+    analyzerValue(ctx, Node->l);
     const type* R = analyzerValue(ctx, Node->r);
-
-    /*typeXXX functions always respond positively when provided with
-      invalids. As this is one of the rare times when a negative response
-      is desired, specifically let invalids through.*/
-    if (!typeIsVoid(R) || typeIsInvalid(R))
-        Node->dt = typeDeepDuplicate(R);
-
-    else {
-        analyzerErrorOp(ctx, Node->o, "non-void", Node->r, R);
-        Node->dt = typeCreateInvalid();
-    }
 
     debugLeave();
 
-    return Node->dt;
+    return Node->dt = typeDeepDuplicate(R);
 }
 
 static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {

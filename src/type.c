@@ -110,6 +110,23 @@ type* typeDeepDuplicate (const type* DT) {
     }
 }
 
+/*:::: TYPE INTERNAL GETTERS ::::*/
+
+sym* typeGetRecordSym (const type* record) {
+    if (typeIsInvalid(record))
+        return 0;
+
+    else {
+        debugAssert("typeGetRecordSym", "record param", typeIsRecord(record));
+
+        if (typeIsPtr(record))
+            return record->base->basic;
+
+        else
+            return record->basic;
+    }
+}
+
 /*:::: TYPE DERIVATION ::::*/
 
 type* typeDeriveFrom (const type* DT) {
@@ -160,18 +177,18 @@ type* typeDeriveArray (const type* base, int size) {
     return typeCreateArray(typeDeepDuplicate(base), size);
 }
 
-type* typeDeriveReturn (const type* DT) {
-    if (typeIsInvalid(DT))
+type* typeDeriveReturn (const type* fn) {
+    if (typeIsInvalid(fn))
         return typeCreateInvalid();
 
     else {
-        debugAssert("typeDeriveReturn", "callable param", typeIsCallable(DT));
+        debugAssert("typeDeriveReturn", "callable param", typeIsCallable(fn));
 
-        if (typeIsPtr(DT))
-            return typeDeriveReturn(DT->base);
+        if (typeIsPtr(fn))
+            return typeDeriveReturn(fn->base);
 
         else
-            return typeDeepDuplicate(DT->returnType);
+            return typeDeepDuplicate(fn->returnType);
     }
 }
 
@@ -208,6 +225,7 @@ bool typeIsRecord (const type* DT) {
     return    (   DT->tag == typeBasic
                && (   DT->basic->tag == symStruct
                    || DT->basic->tag == symUnion))
+           || (DT->tag == typePtr && typeIsRecord(DT->base))
            || typeIsInvalid(DT);
 }
 
@@ -341,6 +359,12 @@ int typeGetSize (const architecture* arch, const type* DT) {
 }
 
 char* typeToStr (const type* DT, const char* embedded) {
+    /*TODO: Jump through typedefs and offer akas
+            Three modes: print as normal, print jumping through typedefs,
+                         print both forms with akas at the correct positions
+            Even when directed to, it is to the discretion of this function
+            as to whether it is sensible to reprint types*/
+
     /*Basic type or invalid*/
     if (typeIsInvalid(DT) || typeIsBasic(DT)) {
         char* basicStr = typeIsInvalid(DT)

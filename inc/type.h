@@ -57,6 +57,8 @@ void typeDestroy (type* DT);
 
 type* typeDeepDuplicate (const type* DT);
 
+struct sym* typeGetRecordSym (const type* record);
+
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);
 type* typeDeriveUnified (const type* L, const type* R);
