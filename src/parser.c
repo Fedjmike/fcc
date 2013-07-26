@@ -58,7 +58,7 @@ parserResult parser (const char* File, sym* Global) {
 }
 
 /**
- * Module = [{ ModuleDecl | ";" }]
+ * Module = [{ ModuleDecl | Typedef | ";" }]
  */
 static ast* parserModule (parserCtx* ctx) {
     debugEnter("Module");
@@ -67,7 +67,10 @@ static ast* parserModule (parserCtx* ctx) {
     Module->symbol = ctx->scope;
 
     while (ctx->lexer->token != tokenEOF) {
-        if (tokenTryMatchStr(ctx, ";"))
+        if (tokenIs(ctx, "typedef"))
+            astAddChild(Module, parserTypedef(ctx));
+
+        else if (tokenTryMatchStr(ctx, ";"))
             astAddChild(Module, astCreateEmpty(ctx->location));
 
         else
@@ -108,7 +111,7 @@ ast* parserCode (parserCtx* ctx) {
 }
 
 /**
- * Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Decl | Value ] ";" )
+ * Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Typedef | Decl | Value ] ";" )
  */
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
@@ -150,6 +153,9 @@ static ast* parserLine (parserCtx* ctx) {
         /*Allow empty lines, ";"*/
         } else if (tokenIs(ctx, ";"))
             Node = astCreateEmpty(ctx->location);
+
+        else if (tokenIs(ctx, "typedef"))
+            Node = parserTypedef(ctx);
 
         else if (tokenIsDecl(ctx))
             Node = parserDecl(ctx);

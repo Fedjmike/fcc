@@ -1,6 +1,6 @@
-Module = [{ ModuleDecl | ";" }]
+Module = [{ ModuleDecl | Typedef | ";" }]
 Code = ( "{" [{ Line }] "}" ) | Line
-Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Decl | Value ] ";" )
+Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Typedef | Decl | Value ] ";" )
 If = "if" "(" Value ")" Code [ "else" Code ]
 While = "while" "(" Value ")" Code
 DoWhile = "do" Code "while" "(" Value ")" ";"
@@ -29,22 +29,24 @@ Factor =   ( "(" Value ")" )
          | <Str>
          | <Ident>
 
+Typedef = "typedef" Decl ";"
+
 Type = DeclBasic DeclExpr#
 ModuleDecl = DeclBasic   ( DeclExpr#   ( "{" Code "}" )
                                      | ( [{ "," DeclExpr# }] ";" ) )
 					   | ";"
 Decl = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ]
 
-DeclField = Decl
-DeclParam = DeclBasic DeclExpr#
+Field = Decl
+Param = DeclBasic DeclExpr#
 
-DeclBasic = <Ident> | DeclStructOrUnion
-DeclStructOrUnion = "struct" | "union" [ Name# ]
-                    [ "{" [{ DeclField ";" }] "}" ]
+DeclBasic = <Ident> | StructOrUnion
+StructOrUnion = "struct" | "union" [ Name# ]
+                [ "{" [{ Field ";" }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( DeclParam [{ "," DeclParam }] [ "," "..." ] ) | "..." ]  ")"
+DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
 TypeAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

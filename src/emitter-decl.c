@@ -16,8 +16,8 @@
 #include "string.h"
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
-static void emitterDeclStruct (emitterCtx* ctx, ast* Node);
-static void emitterDeclUnion (emitterCtx* ctx, ast* Node);
+static void emitterStruct (emitterCtx* ctx, ast* Node);
+static void emitterUnion (emitterCtx* ctx, ast* Node);
 
 static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
@@ -41,11 +41,11 @@ void emitterDecl (emitterCtx* ctx, const ast* Node) {
 }
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
-    if (Node->tag == astDeclStruct)
-        emitterDeclStruct(ctx, Node);
+    if (Node->tag == astStruct)
+        emitterStruct(ctx, Node);
 
-    else if (Node->tag == astDeclUnion)
-        emitterDeclUnion(ctx, Node);
+    else if (Node->tag == astUnion)
+        emitterUnion(ctx, Node);
 
     else if (Node->tag == astLiteral)
         ;
@@ -54,10 +54,10 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
         debugErrorUnhandled("emitterDeclBasic", "AST tag", astTagGetStr(Node->tag));
 }
 
-static void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
+static void emitterStruct (emitterCtx* ctx, ast* Node) {
     (void) ctx;
 
-    debugEnter("DeclStruct");
+    debugEnter("Struct");
 
     for (sym* Current = Node->symbol->firstChild;
          Current;
@@ -74,10 +74,10 @@ static void emitterDeclStruct (emitterCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-static void emitterDeclUnion (emitterCtx* ctx, ast* Node) {
+static void emitterUnion (emitterCtx* ctx, ast* Node) {
     (void) ctx;
 
-    debugEnter("DeclUnion");
+    debugEnter("Union");
 
     for (sym* Current = Node->symbol->firstChild;
          Current;

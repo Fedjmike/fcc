@@ -90,10 +90,7 @@ bool tokenIsString (const parserCtx* ctx) {
 bool tokenIsDecl (const parserCtx* ctx) {
     sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
-    return    (Symbol && (   Symbol->tag == symType
-                          || Symbol->tag == symStruct
-                          || Symbol->tag == symUnion
-                          || Symbol->tag == symEnum))
+    return    (Symbol && Symbol->tag != symId)
            || tokenIs(ctx, "const");
 }
 
