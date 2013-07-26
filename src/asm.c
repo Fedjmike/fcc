@@ -19,6 +19,8 @@ asmCtx* asmInit (FILE* File, const architecture* arch) {
 }
 
 void asmEnd (asmCtx* ctx) {
+    operandFree(ctx->stackPtr);
+    operandFree(ctx->basePtr);
     free(ctx);
 }
 
