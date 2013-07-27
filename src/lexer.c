@@ -88,7 +88,7 @@ static void lexerSkipInsignificants (lexerCtx* ctx) {
 static void lexerEat (lexerCtx* ctx, char c) {
     /*Buffer full? Double the size*/
     if (ctx->length+1 == ctx->bufferSize)
-        realloc(ctx->buffer, ctx->bufferSize *= 2);
+        ctx->buffer = realloc(ctx->buffer, ctx->bufferSize *= 2);
 
     ctx->buffer[ctx->length++] = c;
 }

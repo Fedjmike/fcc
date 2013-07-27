@@ -8,7 +8,7 @@
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
-const char const* conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
+const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
 
 char* labels[1024] = {"undefined"};
 int labelNo = 1;

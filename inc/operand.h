@@ -50,7 +50,7 @@ typedef struct {
     int label; 		/*Global label index*/
 } operand;
 
-extern const char const* conditions[];
+extern const char *const conditions[];
 
 operand operandCreate (operandTag tag);
 operand operandCreateInvalid ();
