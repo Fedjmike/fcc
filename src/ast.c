@@ -36,8 +36,11 @@ void astDestroy (ast* Node) {
 
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling)
+         ) {
+        ast* Next = Current->nextSibling;
         astDestroy(Current);
+        Current = Next;
+    }
 
     if (Node->l)
         astDestroy(Node->l);
