@@ -424,7 +424,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
     else {
         /*If callable, then a result type can be derived,
           regardless of parameter matches*/
-        Node->dt = typeDeepDuplicate(typeDeriveReturn(L));
+        Node->dt = typeDeriveReturn(L);
 
         const type* fn = typeIsPtr(L) ? L->base : L;
 

@@ -326,13 +326,17 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
 
     /*Return type, if any, matches?*/
 
-    const type* R = typeCreateInvalid();
+    if (Node->r) {
+        const type* R = analyzerValue(ctx, Node->r);
 
-    if (Node->r)
-        R = analyzerValue(ctx, Node->r);
+        if (!typeIsCompatible(R, ctx->returnType))
+            analyzerErrorExpectedType(ctx, Node->r, "return", ctx->returnType, R);
 
-    if (!typeIsCompatible(R, ctx->returnType))
-        analyzerErrorExpectedType(ctx, Node->r, "return", ctx->returnType, R);
+    } else if (!typeIsVoid(ctx->returnType)) {
+        type* tmp = typeCreateBasic(ctx->types[builtinVoid]);
+        analyzerErrorExpectedType(ctx, Node, "return statement", ctx->returnType, tmp);
+        typeDestroy(tmp);
+    }
 
     debugLeave();
 }
