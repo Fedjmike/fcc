@@ -37,8 +37,11 @@ void asmOutLn (asmCtx* ctx, char* format, ...) {
 }
 
 void asmVarOut (asmCtx* ctx, char* format, va_list args) {
+    va_list argscpy;
+    va_copy(argscpy, args);
     debugVarMsg(format, args);
-    vfprintf(ctx->file, format, args);
+    vfprintf(ctx->file, format, argscpy);
+    va_end(argscpy);
 }
 
 void asmEnter (asmCtx* ctx) {
