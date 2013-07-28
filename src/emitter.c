@@ -15,7 +15,6 @@
 #include "../inc/emitter-decl.h"
 
 #include "string.h"
-#include "stdio.h"
 #include "stdlib.h"
 
 static void emitterModule (emitterCtx* ctx, const ast* Tree);
@@ -28,9 +27,9 @@ static void emitterBranch (emitterCtx* ctx, const ast* Node);
 static void emitterLoop (emitterCtx* ctx, const ast* Node);
 static void emitterIter (emitterCtx* ctx, const ast* Node);
 
-static emitterCtx* emitterInit (FILE* File, const architecture* arch) {
+static emitterCtx* emitterInit (const char* output, const architecture* arch) {
     emitterCtx* ctx = malloc(sizeof(emitterCtx));
-    ctx->Asm = asmInit(File, arch);
+    ctx->Asm = asmInit(output, arch);
     ctx->arch = arch;
     ctx->labelReturnTo = operandCreate(operandUndefined);
     ctx->labelBreakTo = operandCreate(operandUndefined);
@@ -43,8 +42,8 @@ static void emitterEnd (emitterCtx* ctx) {
     free(ctx);
 }
 
-void emitter (const ast* Tree, FILE* File, const architecture* arch) {
-    emitterCtx* ctx = emitterInit(File, arch);
+void emitter (const ast* Tree, const char* output, const architecture* arch) {
+    emitterCtx* ctx = emitterInit(output, arch);
     asmFilePrologue(ctx->Asm);
 
     emitterModule(ctx, Tree);

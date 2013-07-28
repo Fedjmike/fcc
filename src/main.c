@@ -1,11 +1,8 @@
 #include "../std/std.h"
 
 #include "../inc/debug.h"
-#include "../inc/ast.h"
-#include "../inc/sym.h"
-#include "../inc/parser.h"
-#include "../inc/analyzer.h"
-#include "../inc/emitter.h"
+#include "../inc/options.h"
+#include "../inc/compiler.h"
 
 #include "string.h"
 #include "stdlib.h"
@@ -14,100 +11,73 @@
 int main (int argc, char** argv) {
     debugInit(stdout);
 
-    char* Input;
-    char* Output;
-
-    if (argc <= 1) {
-        puts("No input file");
-        return 1;
-    }
-
-    Input = strdup(argv[1]);
-
-    /*No output file*/
-    if (argc <= 2)
-        Output = filext(Input, "asm");
-
-    else
-        Output = strdup(argv[2]);
-
-    FILE* File = fopen(Output, "w");
-
-    if (File == 0) {
-        printf("Error opening file, '%s'.\n", argv[2]);
-        exit(EXIT_FAILURE);
-    }
-
-    /* */
-
-    architecture arch = {4};
-
-    /*Initialize symbol "table",
-      make new built in data types and add them to the global namespace*/
-    sym* Global = symInit();
-    sym* Types[4];
-    Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", arch.wordsize, typeEquality | typeAssignment | typeCondition);
-    Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
-    Types[builtinInt] = symCreateType(Global, "int", arch.wordsize, typeIntegral);
-
-    int errors = 0;
-    int warnings = 0;
-    /*Has compilation failed? We could be in a mode where warnings are
-      treated as errors, so this isn't completely obvious from errors
-      and warnings.*/
     bool fail = false;
-    ast* Tree = 0;
 
-    /*Parse the module*/
+    config conf = configCreate();
+    optionsParse(&conf, argc, argv);
 
-    {
-        debugSetMode(debugCompressed);
-        debugMsg("Parsing");
-        parserResult res = parser(Input, Global);
-        debugSetMode(debugFull);
-        debugMsg("");
-        errors += res.errors;
-        warnings += res.warnings;
-        Tree = res.tree;
+    if (conf.fail)
+        fail = true;
+
+    else if (conf.mode == modeVersion) {
+        puts("Fedjmike's C Compiler (fcc) v0.01b");
+        puts("Copyright 2013 Sam Nipps.");
+        puts("This is free software; see the source for copying conditions.  There is NO");
+        puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
+
+    } else if (conf.mode == modeHelp) {
+        puts("Usage: fcc [--version] [--help] [-cS] [-o <file>] <files...>");
+        puts("Options:");
+        puts("  -c         Compile and assemble only, do not link");
+        puts("  --help     Display command line information");
+        puts("  -o <file>  Output into a specific file");
+        puts("  -S         Compile only, do not assemble or link");
+        puts("  --version  Display version information");
+
+    } else {
+        int errors = 0, warnings = 0;
+
+        /*Compile each of the inputs to assembly*/
+        for (int i = 0; i < conf.inputs.length; i++) {
+            compilerResult result = compiler(vectorGet(&conf.inputs, i),
+                                             vectorGet(&conf.intermediates, i));
+            errors += result.errors;
+            warnings += result.warnings;
+        }
+
+        if (errors != 0 || warnings != 0)
+            printf("Compilation complete with %d errors and %d warnings\n", errors, warnings);
+
+        if (conf.mode != modeNoAssemble) {
+            /*Produce a string list of all the intermediates*/
+            char* intermediates = 0; {
+                int length = 0;
+
+                for (int i = 0; i < conf.intermediates.length; i++)
+                    length += 1+strlen((char*) vectorGet(&conf.intermediates, i));
+
+                intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
+                int charno = strlen(intermediates);
+
+                for (int i = 1; i < conf.intermediates.length; i++)
+                    sprintf(intermediates+charno, " %s", vectorGet(&conf.intermediates, i));
+            }
+
+            if (conf.mode == modeNoLink)
+                vsystem("gcc %s", intermediates);
+
+            else {
+                vsystem("gcc %s -o %s", intermediates, conf.output);
+                vsystem("rm %s", intermediates);
+            }
+
+            free(intermediates);
+        }
+
+        fail = errors != 0;
     }
 
-    /*Semantic analysis*/
-
-    {
-        debugMsg("Analyzing");
-        analyzerResult res = analyzer(Tree, Types);
-        debugMsg("");
-        errors += res.errors;
-        warnings += res.warnings;
-    }
-
-    fail = errors != 0;
-
-    /*Emit the assembly*/
-
-    if (!fail) {
-        debugWait();
-        debugMsg("Emitting");
-        emitter(Tree, File, &arch);
-        debugMsg("");
-    }
-
-    /*Clean up*/
-
-    astDestroy(Tree);
-    symEnd(Global);
-
-    fclose(File);
-
-    free(Input);
-    free(Output);
-
-    if (fail)
-        puts("Compilation unsuccessful.");
-
-    else
-        puts("Compilation successful.");
+    configDestroy(conf);
 
     return fail;
 }

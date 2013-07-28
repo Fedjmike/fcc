@@ -125,11 +125,15 @@ char* filext (const char* name, const char* extension) {
 
     char* ret = malloc(strlen(name)+strlen(extension)+2);
 
-    if (index < 0)
-        sprintf(ret, "%s.%s", name, extension);
+    if (extension[0] != 0) {
+        if (index < 0)
+            sprintf(ret, "%s.%s", name, extension);
 
-    else
-        sprintf(ret, "%.*s.%s", index, name, extension);
+        else
+            sprintf(ret, "%.*s.%s", index, name, extension);
+
+    } else
+        sprintf(ret, "%.*s", index, name);
 
     return ret;
 }
@@ -141,4 +145,41 @@ int logi (int x, int base) {
         x /= base;
 
     return n;
+}
+
+bool fexists (const char* filename) {
+    FILE* file = fopen(filename, "r");
+
+    if (file) {
+        fclose(file);
+        return true;
+
+    } else
+        return false;
+}
+
+bool strprefix (const char* str, const char* prefix) {
+    return !strncmp(str, prefix, strlen(prefix));
+}
+
+int vsystem (const char* format, ...) {
+    int size = 128;
+    char* command = malloc(size);
+
+    va_list args;
+    va_start(args, format);
+
+    int length = vsnprintf(command, size, format, args);
+
+    if (length < 0 || length >= size) {
+        free(command);
+        command = malloc(size = length+1);
+        vsnprintf(command, size, format, args);
+    }
+
+    va_end(args);
+
+    int ret = system(command);
+    free(command);
+    return ret;
 }

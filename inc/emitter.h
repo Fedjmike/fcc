@@ -2,8 +2,6 @@
 #include "operand.h"
 #include "asm.h"
 
-#include "stdio.h"
-
 struct ast;
 
 typedef struct emitterCtx {
@@ -14,4 +12,4 @@ typedef struct emitterCtx {
     operand labelBreakTo;
 } emitterCtx;
 
-void emitter (const struct ast* Tree, FILE* File, const architecture* arch);
+void emitter (const struct ast* Tree, const char* output, const architecture* arch);

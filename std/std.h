@@ -19,6 +19,8 @@ char tolower (char Char);*/
 
 /*Non standard (mine)*/
 
+typedef enum {false = 0, true = 1} bool;
+
 /**
  * Modify a file names extension
  */
@@ -31,8 +33,12 @@ char* filext (const char* name, const char* extension);
  */
 int logi (int x, int base);
 
-#define max(x, y) ((x) > (y) ? (x) : (y))
+bool fexists (const char* filename);
 
-typedef enum {false = 0, true = 1} bool;
+bool strprefix (const char* str, const char* prefix);
+
+int vsystem (const char* format, ...);
+
+#define max(x, y) ((x) > (y) ? (x) : (y))
 
 #endif

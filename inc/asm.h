@@ -31,12 +31,9 @@ typedef struct asmCtx {
 
 /**
  * Allocate and initialize an asmCtx
- *
- * @param File  The file handle. Ownership not taken, file never
- *              automatically closed
  * @see asmEnd()
  */
-asmCtx* asmInit (FILE* File, const struct architecture* arch);
+asmCtx* asmInit (const char* output, const struct architecture* arch);
 
 /**
  * Destroy and free an asmCtx

@@ -8,9 +8,9 @@
 #include "stdio.h"
 #include "stdarg.h"
 
-asmCtx* asmInit (FILE* File, const architecture* arch) {
+asmCtx* asmInit (const char* output, const architecture* arch) {
     asmCtx* ctx = malloc(sizeof(asmCtx));
-    ctx->file = File;
+    ctx->file = fopen(output, "w");
     ctx->depth = 0;
     ctx->arch = arch;
     ctx->stackPtr = operandCreateReg(regRequest(regRSP, arch->wordsize));
@@ -19,6 +19,7 @@ asmCtx* asmInit (FILE* File, const architecture* arch) {
 }
 
 void asmEnd (asmCtx* ctx) {
+    fclose(ctx->file);
     operandFree(ctx->stackPtr);
     operandFree(ctx->basePtr);
     free(ctx);

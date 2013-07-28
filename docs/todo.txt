@@ -112,6 +112,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     - Warning? Error?
 [ ] Param name clash
 [ ] Line that starts with undeclared ident... assume decl?
+[ ] Incomplete types and all that shizzle
 
 [ ] Abysmal error recovery
 [-] AST is not abstract
