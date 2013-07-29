@@ -13,3 +13,22 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
 
 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+
+Building
+--------
+
+Building the compiler is simple, just call make in the root directory:
+
+```bash
+cd <fcc>
+make CONFIG=release
+```
+
+Makefile options (all optional):
+- `CONFIG=[debug profiling release]`, default: `debug`
+- `CC=[path to C11 compiler]`, default: `gcc`
+
+Makefile targets:
+- `all clean print`
+
+This puts an fcc binary in `<fcc>/bin/$CONFIG`
