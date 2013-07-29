@@ -19,6 +19,7 @@ config configCreate () {
     config conf;
     conf.fail = false;
     conf.mode = modeDefault;
+    conf.deleteAsm = true;
     conf.inputs = vectorCreate(32);
     conf.intermediates = vectorCreate(32);
     conf.output = 0;
@@ -63,6 +64,9 @@ static void optionsParseMicro (config* conf, optionsState* state, const char* op
 
         else if (suboption == 'S')
             configSetMode(conf, modeNoAssemble, asStr);
+
+        else if (suboption == 's')
+            conf->deleteAsm = false;
 
         else if (suboption == 'o')
             state->expectOutput = true;

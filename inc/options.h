@@ -13,6 +13,7 @@ typedef enum {
 typedef struct {
     bool fail;
     configMode mode;
+    bool deleteAsm;
 
     vector/*<char*>*/ inputs, intermediates;
     char* output;

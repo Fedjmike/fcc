@@ -8,6 +8,54 @@
 #include "stdlib.h"
 #include "stdio.h"
 
+static int driver (config conf);
+
+static int driver (config conf) {
+    int errors = 0, warnings = 0;
+
+    /*Compile each of the inputs to assembly*/
+    for (int i = 0; i < conf.inputs.length; i++) {
+        compilerResult result = compiler(vectorGet(&conf.inputs, i),
+                                         vectorGet(&conf.intermediates, i));
+        errors += result.errors;
+        warnings += result.warnings;
+    }
+
+    if (errors != 0 || warnings != 0)
+        printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
+
+    /*Assemble/link?*/
+    if (conf.mode != modeNoAssemble) {
+        /*Produce a string list of all the intermediates*/
+        char* intermediates = 0; {
+            int length = 0;
+
+            for (int i = 0; i < conf.intermediates.length; i++)
+                length += 1+strlen((char*) vectorGet(&conf.intermediates, i));
+
+            intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
+            int charno = strlen(intermediates);
+
+            for (int i = 1; i < conf.intermediates.length; i++)
+                sprintf(intermediates+charno, " %s", vectorGet(&conf.intermediates, i));
+        }
+
+        if (conf.mode == modeNoLink)
+            vsystem("gcc %s", intermediates);
+
+        else {
+            vsystem("gcc %s -o %s", intermediates, conf.output);
+
+            if (conf.deleteAsm)
+                vsystem("rm %s", intermediates);
+        }
+
+        free(intermediates);
+    }
+
+    return errors != 0;
+}
+
 int main (int argc, char** argv) {
     debugInit(stdout);
 
@@ -34,48 +82,8 @@ int main (int argc, char** argv) {
         puts("  -S         Compile only, do not assemble or link");
         puts("  --version  Display version information");
 
-    } else {
-        int errors = 0, warnings = 0;
-
-        /*Compile each of the inputs to assembly*/
-        for (int i = 0; i < conf.inputs.length; i++) {
-            compilerResult result = compiler(vectorGet(&conf.inputs, i),
-                                             vectorGet(&conf.intermediates, i));
-            errors += result.errors;
-            warnings += result.warnings;
-        }
-
-        if (errors != 0 || warnings != 0)
-            printf("Compilation complete with %d errors and %d warnings\n", errors, warnings);
-
-        if (conf.mode != modeNoAssemble) {
-            /*Produce a string list of all the intermediates*/
-            char* intermediates = 0; {
-                int length = 0;
-
-                for (int i = 0; i < conf.intermediates.length; i++)
-                    length += 1+strlen((char*) vectorGet(&conf.intermediates, i));
-
-                intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
-                int charno = strlen(intermediates);
-
-                for (int i = 1; i < conf.intermediates.length; i++)
-                    sprintf(intermediates+charno, " %s", vectorGet(&conf.intermediates, i));
-            }
-
-            if (conf.mode == modeNoLink)
-                vsystem("gcc %s", intermediates);
-
-            else {
-                vsystem("gcc %s -o %s", intermediates, conf.output);
-                vsystem("rm %s", intermediates);
-            }
-
-            free(intermediates);
-        }
-
-        fail = errors != 0;
-    }
+    } else
+        fail = driver(conf);
 
     configDestroy(conf);
 
