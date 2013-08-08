@@ -293,11 +293,8 @@ static ast* parserObject (parserCtx* ctx) {
  * Factor =   ( "(" Value ")" )
  *          | ( "(" Type ")" Unary )
  *          | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
- *          | ( "sizeof" ( "(" Type | Value ")" ) | Value
- *          | <Int>
- *          | <Bool>
- *          | <Str>
- *          | <Ident>
+ *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
+ *          | <Int> | <Bool> | <Str> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");

@@ -23,11 +23,8 @@ Object = Factor [{   ( "[" Value "]" )
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
          | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
-         | ( "sizeof" ( "(" Type | Value ")" ) | Unary
-         | <Int>
-         | <Bool>
-         | <Str>
-         | <Ident>
+         | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
+         | <Int> | <Bool> | <Str> | <Ident>
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
