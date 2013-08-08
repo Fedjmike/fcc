@@ -70,13 +70,6 @@ ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     return Node;
 }
 
-ast* astCreateTypedef (tokenLocation location, ast* basic, ast* expr) {
-    ast* Node = astCreate(astTypedef, location);
-    Node->l = basic;
-    Node->r = expr;
-    return Node;
-}
-
 ast* astCreateDecl (tokenLocation location, ast* basic) {
     ast* Node = astCreate(astDecl, location);
     Node->l = basic;
@@ -212,8 +205,6 @@ const char* astTagGetStr (astTag tag) {
         return "astFnImpl";
     else if (tag == astDecl)
         return "astDecl";
-    else if (tag == astTypedef)
-        return "astTypedef";
     else if (tag == astParam)
         return "astParam";
     else if (tag == astStruct)

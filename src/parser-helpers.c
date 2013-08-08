@@ -92,6 +92,8 @@ bool tokenIsDecl (const parserCtx* ctx) {
 
     return    (Symbol && Symbol->tag != symId
                       && Symbol->tag != symParam)
+           || tokenIs(ctx, "typedef") || tokenIs(ctx, "static")
+           || tokenIs(ctx, "extern")
            || tokenIs(ctx, "const");
 }
 

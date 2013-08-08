@@ -11,11 +11,11 @@ int puts (char*);
 //using(stdlib);
 //using(stdio);
 
-struct list_node {
+typedef struct list_node {
     int item;
     //Simply next or previous for first and last nodes
     int xor_ptr;
-};
+} list_node;
 
 list_node* list_init (int array[], int length);
 list_node* node_init (int item, int xor_ptr);

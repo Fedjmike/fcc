@@ -58,7 +58,7 @@ parserResult parser (const char* File, sym* Global) {
 }
 
 /**
- * Module = [{ ModuleDecl | Typedef | ";" }]
+ * Module = [{ Decl# | ";" }]
  */
 static ast* parserModule (parserCtx* ctx) {
     debugEnter("Module");
@@ -67,14 +67,11 @@ static ast* parserModule (parserCtx* ctx) {
     Module->symbol = ctx->scope;
 
     while (ctx->lexer->token != tokenEOF) {
-        if (tokenIs(ctx, "typedef"))
-            astAddChild(Module, parserTypedef(ctx));
-
-        else if (tokenTryMatchStr(ctx, ";"))
+        if (tokenTryMatchStr(ctx, ";"))
             astAddChild(Module, astCreateEmpty(ctx->location));
 
         else
-            astAddChild(Module, parserModuleDecl(ctx));
+            astAddChild(Module, parserDecl(ctx, true));
 
         debugWait();
     }
@@ -111,7 +108,7 @@ ast* parserCode (parserCtx* ctx) {
 }
 
 /**
- * Line = If | While | DoWhile | For | Code | ( [ ( "return" Value ) | "break" | Typedef | Decl | Value ] ";" )
+ * Line = If | While | DoWhile | For | Code | Decl# | ( [ ( "return" Value ) | "break" | Value ] ";" )
  */
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
@@ -133,6 +130,9 @@ static ast* parserLine (parserCtx* ctx) {
     else if (tokenIs(ctx, "{"))
         Node = parserCode(ctx);
 
+    else if (tokenIsDecl(ctx))
+        Node = parserDecl(ctx, false);
+
     /*Statements (that which require ';')*/
     else {
         if (tokenTryMatchStr(ctx, "return")) {
@@ -153,12 +153,6 @@ static ast* parserLine (parserCtx* ctx) {
         /*Allow empty lines, ";"*/
         } else if (tokenIs(ctx, ";"))
             Node = astCreateEmpty(ctx->location);
-
-        else if (tokenIs(ctx, "typedef"))
-            Node = parserTypedef(ctx);
-
-        else if (tokenIsDecl(ctx))
-            Node = parserDecl(ctx);
 
         else
             Node = parserValue(ctx);
@@ -244,7 +238,7 @@ static ast* parserDoWhile (parserCtx* ctx) {
 }
 
 /**
- * For := "for" "(" [ Decl | Value ] ";" [ Value ] ";" [ Value ] ")" Code
+ * For := "for" "(" Decl# | ( [ Value ] ";" ) [ Value ] ";" [ Value ] ")" Code
  */
 static ast* parserFor (parserCtx* ctx) {
     debugEnter("For");
@@ -258,17 +252,18 @@ static ast* parserFor (parserCtx* ctx) {
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
     /*Initializer*/
-    if (!tokenIs(ctx, ";")) {
-        if (tokenIsDecl(ctx))
-            astAddChild(Node, parserDecl(ctx));
+    if (tokenIsDecl(ctx))
+        astAddChild(Node, parserDecl(ctx, false));
 
-        else
+    else {
+        if (!tokenIs(ctx, ";"))
             astAddChild(Node, parserValue(ctx));
 
-    } else
-        astAddChild(Node, astCreateEmpty(ctx->location));
+        else
+            astAddChild(Node, astCreateEmpty(ctx->location));
 
-    tokenMatchStr(ctx, ";");
+        tokenMatchStr(ctx, ";");
+    }
 
     /*Condition*/
     if (!tokenIs(ctx, ";"))

@@ -13,7 +13,6 @@ typedef enum {
     astEmpty,
     astModule,
     astFnImpl,
-    astTypedef,
     astDecl,
     astParam,
     astStruct,

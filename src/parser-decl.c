@@ -11,6 +11,7 @@
 static ast* parserField (parserCtx* ctx);
 static ast* parserParam (parserCtx* ctx, bool inDecl);
 
+static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
 
@@ -20,26 +21,6 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* atom);
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
-
-/**
- * Typedef = "typedef" DeclBasic DeclExpr# ";"
- */
-ast* parserTypedef (parserCtx* ctx) {
-    debugEnter("Typedef");
-
-    tokenMatchStr(ctx, "typedef");
-
-    tokenLocation loc = ctx->location;
-    ast* basic = parserDeclBasic(ctx);
-    ast* expr = parserDeclExpr(ctx, true, symTypedef);
-    ast* Node = astCreateTypedef(loc, basic, expr);
-
-    tokenMatchStr(ctx, ";");
-
-    debugLeave();
-
-    return Node;
-}
 
 /**
  * Type = DeclBasic DeclExpr#
@@ -61,35 +42,43 @@ ast* parserTypedef (parserCtx* ctx) {
 }
 
 /**
- * ModuleDecl = DeclBasic DeclExpr#   (   ( "{" Code "}" )
- *                                      | ( [{ "," DeclExpr# }] ";" ) )
- *                                  | ";"
+ * Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
+ *                                            | ( "{" Code "}" ) )
  *
  * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
  */
-ast* parserModuleDecl (parserCtx* ctx) {
-    debugEnter("ModuleDecl");
+ast* parserDecl (parserCtx* ctx, bool module) {
+    debugEnter("Decl");
 
     tokenLocation loc = ctx->location;
+    storageTag storage = parserStorage(ctx);
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
     if (tokenTryMatchStr(ctx, ";"))
         ;
 
     else {
-        astAddChild(Node, parserDeclExpr(ctx, true, symId));
+        /*Grammatically, typedef is a storage class, but semantically
+          a symbol tag.*/
+        astAddChild(Node, parserDeclExpr(ctx, true,   storage == storageTypedef
+                                                    ? symTypedef
+                                                    : symId));
 
         if (tokenIs(ctx, "{")) {
             loc = ctx->location;
             Node = astCreateFnImpl(loc, Node);
             Node->symbol = Node->l->firstChild->symbol;
+            Node->symbol->storage = storage;
 
             if (Node->symbol->impl)
                 errorReimplementedSym(ctx, Node->symbol);
 
             else
                 Node->symbol->impl = Node;
+
+            if (!module)
+                errorIllegalOutside(ctx, "function implementation", "module level code");
 
             sym* OldScope = scopeSet(ctx, Node->symbol);
             Node->r = parserCode(ctx);
@@ -109,36 +98,14 @@ ast* parserModuleDecl (parserCtx* ctx) {
 }
 
 /**
- * Decl = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ]
- *
- * DeclExpr is told to require identifiers, allow initiations and
- * create symbols.
- * Assumes that a Decl will always be followed by a semicolon.
- */
-ast* parserDecl (parserCtx* ctx) {
-    debugEnter("Decl");
-
-    tokenLocation loc = ctx->location;
-    ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
-
-    if (!tokenIs(ctx, ";")) do {
-        astAddChild(Node, parserDeclExpr(ctx, true, symId));
-    } while (tokenTryMatchStr(ctx, ","));
-
-    debugLeave();
-
-    return Node;
-}
-
-/**
- * Field = Decl
+ * Field = Decl#
  */
 static ast* parserField (parserCtx* ctx) {
-    return parserDecl(ctx);
+    return parserDecl(ctx, false);
     /*!!!CHANGEZ MOI!!!
       To what?
       Differences: not allowed to assign values, not allowed to decl
-                   functions, certainly not implement them (fine)
+                   functions, certainly not implement them
       Decling fns is an issue for the analyzer*/
 }
 
@@ -160,6 +127,38 @@ static ast* parserParam (parserCtx* ctx, bool inDecl) {
     debugLeave();
 
     return Node;
+}
+
+/**
+ * Storage = [ "auto" | "static" | "extern" | "typedef" ]
+ */
+static storageTag parserStorage (parserCtx* ctx) {
+    debugEnter("Storage");
+
+    storageTag storage = storageAuto;
+
+    if (tokenIs(ctx, "auto")) {
+        storage = storageAuto;
+        tokenMatch(ctx);
+
+    } else if (tokenIs(ctx, "static")) {
+        storage = storageStatic;
+        tokenMatch(ctx);
+
+    } else if (tokenIs(ctx, "extern")) {
+        storage = storageExtern;
+        tokenMatch(ctx);
+
+    } else if (tokenIs(ctx, "typedef")) {
+        storage = storageTypedef;
+        tokenMatch(ctx);
+
+    } else
+        ;
+
+    debugLeave();
+
+    return storage;
 }
 
 /**
@@ -199,7 +198,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
 /**
  * StructOrUnion = "struct" | "union" [ Name# ]
- *                 [ "{" [{ Field ";" }] "}" ]
+ *                 [ "{" [{ Field }] "}" ]
  *
  * Name is told to create a symbol of the tag indicated by the first
  * token.
@@ -226,10 +225,8 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
             Node->symbol->impl = Node;
 
         /*Eat fields*/
-        while (!tokenIs(ctx, "}")) {
+        while (!tokenIs(ctx, "}"))
             astAddChild(Node, parserField(ctx));
-            tokenMatchStr(ctx, ";");
-        }
 
         tokenMatchStr(ctx, "}");
     }

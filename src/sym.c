@@ -199,6 +199,8 @@ const char* storageTagGetStr (storageTag tag) {
         return "storageStatic";
     else if (tag == storageExtern)
         return "storageExtern";
+    else if (tag == storageTypedef)
+        return "storageTypedef";
 
     else {
         char* str = malloc(logi(tag, 10)+2);

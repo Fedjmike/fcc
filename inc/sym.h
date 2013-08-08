@@ -43,7 +43,8 @@ typedef enum {
     storageAuto,
     storageRegister,
     storageStatic,
-    storageExtern
+    storageExtern,
+    storageTypedef
 } storageTag;
 
 /**

@@ -127,6 +127,8 @@ static void analyzerStruct (analyzerCtx* ctx, ast* Node) {
         analyzerDecl(ctx, Current);
     }
 
+    Node->dt = typeCreateBasic(Node->symbol);
+
     /*TODO: check compatiblity
             of? redecls or something?*/
 
@@ -141,6 +143,8 @@ static void analyzerUnion (analyzerCtx* ctx, ast* Node) {
          Current = Current->nextSibling) {
         analyzerDecl(ctx, Current);
     }
+
+    Node->dt = typeCreateBasic(Node->symbol);
 
     debugLeave();
 }
