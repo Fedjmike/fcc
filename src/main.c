@@ -44,9 +44,9 @@ static int driver (config conf) {
             vsystem("gcc %s", intermediates);
 
         else {
-            vsystem("gcc %s -o %s", intermediates, conf.output);
+            int linkfail = vsystem("gcc %s -o %s", intermediates, conf.output);
 
-            if (conf.deleteAsm)
+            if (conf.deleteAsm && !linkfail)
                 vsystem("rm %s", intermediates);
         }
 
