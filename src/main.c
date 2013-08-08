@@ -25,7 +25,7 @@ static int driver (config conf) {
         printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
 
     /*Assemble/link?*/
-    if (conf.mode != modeNoAssemble) {
+    else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
         char* intermediates = 0; {
             int length = 0;
