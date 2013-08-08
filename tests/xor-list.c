@@ -14,11 +14,11 @@ int puts (char*);
 typedef struct list_node {
     int item;
     //Simply next or previous for first and last nodes
-    int xor_ptr;
+    intptr_t xor_ptr;
 } list_node;
 
 list_node* list_init (int array[], int length);
-list_node* node_init (int item, int xor_ptr);
+list_node* node_init (int item, intptr_t xor_ptr);
 list_node* get_last (list_node* first);
 bool node_is_last (list_node* previous, list_node* current);
 void advance (list_node** previous, list_node** current);
@@ -49,7 +49,7 @@ list_node* list_init (int array[], int length) {
 /**
  * Create a new node with specified fields
  */
-list_node* node_init (int item, int xor_ptr) {
+list_node* node_init (int item, intptr_t xor_ptr) {
     list_node* node = malloc(sizeof(list_node));
     node->item = item;
     node->xor_ptr = xor_ptr;
@@ -99,7 +99,7 @@ void advance (list_node** previous, list_node** current) {
         *previous = 0;
 
     else {
-        list_node* next = (list_node*) ((*current)->xor_ptr ^ (int) *previous);
+        list_node* next = (list_node*) ((*current)->xor_ptr ^ (intptr_t) *previous);
 
         *previous = *current;
         *current = next;
@@ -119,24 +119,24 @@ list_node* insert_between (list_node* previous, list_node* next, int item) {
 
     //Insert before first
     else if (previous == 0) {
-        list_node* node = node_init(item, (int) next);
+        list_node* node = node_init(item, (intptr_t) next);
         //The old first's xor_ptr is simply the old second
         //So simply xor in the new first
-        next->xor_ptr ^= (int) node;
+        next->xor_ptr ^= (intptr_t) node;
         return node;
 
     //Insert after last
     } else if (next == 0) {
-        list_node* node = node_init(item, (int) previous);
-        previous->xor_ptr ^= (int) node;
+        list_node* node = node_init(item, (intptr_t) previous);
+        previous->xor_ptr ^= (intptr_t) node;
         return node;
 
     //Insert between two elements
     } else {
-        list_node* node = node_init(item, (int) previous ^ (int) next);
+        list_node* node = node_init(item, (intptr_t) previous ^ (intptr_t) next);
         //xor out one pointer, xor in another
-        previous->xor_ptr ^= (int) next ^ (int) node;
-        next->xor_ptr ^= (int) previous ^ (int) node;
+        previous->xor_ptr ^= (intptr_t) next ^ (intptr_t) node;
+        next->xor_ptr ^= (intptr_t) previous ^ (intptr_t) node;
         return node;
     }
 }
@@ -147,10 +147,10 @@ list_node* insert_between (list_node* previous, list_node* next, int item) {
  * Middle is the node to be deleted, previous is either neighbour
  */
 void node_delete (list_node* previous, list_node* middle) {
-    list_node* next = (list_node*) (middle->xor_ptr ^ (int) previous);
+    list_node* next = (list_node*) (middle->xor_ptr ^ (intptr_t) previous);
     //Swap out the list_node to be deleted, the new couple in
-    previous->xor_ptr ^= (int) middle ^ (int) next;
-    next->xor_ptr ^= (int) middle ^ (int) previous;
+    previous->xor_ptr ^= (intptr_t) middle ^ (intptr_t) next;
+    next->xor_ptr ^= (intptr_t) middle ^ (intptr_t) previous;
 
     free(middle);
 }

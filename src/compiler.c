@@ -14,12 +14,21 @@ compilerResult compiler (const char* input, const char* output) {
 
     /*Initialize symbol "table",
       make new built in data types and add them to the global namespace*/
+
     sym* Global = symInit();
     sym* Types[4];
     Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", arch.wordsize, typeEquality | typeAssignment | typeCondition);
+    Types[builtinBool] = symCreateType(Global, "bool", 4, typeEquality | typeAssignment | typeCondition);
     Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
-    Types[builtinInt] = symCreateType(Global, "int", arch.wordsize, typeIntegral);
+    Types[builtinInt] = symCreateType(Global, "int", 4, typeIntegral);
+
+    symCreateType(Global, "int8_t", 1, typeIntegral);
+    symCreateType(Global, "int16_t", 2, typeIntegral);
+    symCreateType(Global, "int32_t", 4, typeIntegral);
+    symCreateType(Global, "intptr_t", arch.wordsize, typeIntegral);
+
+    if (arch.wordsize >= 8)
+        symCreateType(Global, "uint64_t", arch.wordsize, typeIntegral);
 
     int errors = 0, warnings = 0;
 
