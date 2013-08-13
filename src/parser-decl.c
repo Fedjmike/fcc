@@ -391,11 +391,10 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag) {
             tokenNext(ctx);
         }
 
-    } else if (inDecl && tag != symParam) {
-        Node = astCreateInvalid(ctx->location);
-        errorExpected(ctx, "name");
+    } else if (inDecl && tag != symParam)
+        Node = parserName(ctx, inDecl, tag);
 
-    } else
+    else
         Node = astCreateEmpty(ctx->location);
 
     debugLeave();
