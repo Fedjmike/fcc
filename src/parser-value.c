@@ -200,7 +200,7 @@ static ast* parserTerm (parserCtx* ctx) {
     ast* Node = parserUnary(ctx);
 
     while (   tokenIs(ctx, "*") || tokenIs(ctx, "/")
-           || tokenIs(ctx, "/")) {
+           || tokenIs(ctx, "%")) {
         char* o = tokenDupMatch(ctx);
         Node = astCreateBOP(ctx->location, Node, o, parserUnary(ctx));
     }
