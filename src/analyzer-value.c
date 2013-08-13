@@ -308,7 +308,6 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
     /*Numeric operator*/
     if (   !strcmp(Node->o, "+") || !strcmp(Node->o, "-")
         || !strcmp(Node->o, "++") || !strcmp(Node->o, "--")
-        || !strcmp(Node->o, "!")
         || !strcmp(Node->o, "~")) {
         if (!typeIsNumeric(R)) {
             analyzerErrorOp(ctx, Node->o, "numeric type", Node->r, R);
@@ -327,6 +326,12 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
 
         } else
             Node->dt = typeDeriveFrom(R);
+
+    } else if (!strcmp(Node->o, "!")) {
+        if (!typeIsCondition(R))
+            analyzerErrorOp(ctx, Node->o, "condition", Node->r, R);
+
+        Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
     /*Dereferencing a pointer*/
     } else if (!strcmp(Node->o, "*")) {
