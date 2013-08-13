@@ -197,6 +197,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
         asmBOP(ctx->Asm, bopCmp, L, R);
         operandFree(L);
+        operandFree(R);
 
     } else {
         asmEnter(ctx->Asm);
@@ -366,6 +367,8 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         else /*if (!strcmp(Node->o, "--"))*/
             asmUOP(ctx->Asm, uopDec, R);
 
+        operandFree(R);
+
     } else if (!strcmp(Node->o, "-")) {
         asmEnter(ctx->Asm);
         Value = R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
@@ -386,6 +389,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
         asmEvalAddress(ctx->Asm, Value, R);
+        //TODO: free R?
 
     } else {
         debugErrorUnhandled("emitterUOP", "operator", Node->o);
