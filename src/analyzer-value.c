@@ -327,7 +327,6 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
         } else
             Node->dt = typeDeriveFrom(R);
 
-    /*Logical negation*/
     } else if (!strcmp(Node->o, "!")) {
         if (!typeIsCondition(R))
             analyzerErrorOp(ctx, Node->o, "condition", Node->r, R);
