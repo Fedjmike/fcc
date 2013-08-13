@@ -91,13 +91,11 @@ ast* parserCode (parserCtx* ctx) {
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    if (tokenTryMatchStr(ctx, "{")) {
-        while (!tokenIs(ctx, "}"))
+    if (tokenTryMatchStr(ctx, "{"))
+        while (!tokenTryMatchStr(ctx, "}") && ctx->lexer->token != tokenEOF)
             astAddChild(Node, parserLine(ctx));
 
-        tokenMatch(ctx);
-
-    } else
+    else
         astAddChild(Node, parserLine(ctx));
 
     ctx->scope = OldScope;
