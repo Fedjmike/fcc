@@ -221,12 +221,14 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
 
     /*Analyze the implementation*/
 
+    /*Save the old one, functions may be (illegally) nested*/
+    type* oldReturn = ctx->returnType;
     ctx->returnType = typeDeriveReturn(Node->symbol->dt);
 
     analyzerNode(ctx, Node->r);
 
     typeDestroy(ctx->returnType);
-    ctx->returnType = 0;
+    ctx->returnType = oldReturn;
 
     debugLeave();
 }
