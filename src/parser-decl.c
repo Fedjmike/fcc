@@ -180,14 +180,14 @@ static ast* parserDeclBasic (parserCtx* ctx) {
             Node->symbol = Symbol;
 
         } else {
-            if (tokenIsIdent(ctx))
+            if (tokenIsIdent(ctx)) {
                 errorUndefType(ctx);
+                tokenNext(ctx);
 
-            else
+            } else
                 errorExpected(ctx, "type name");
 
             Node = astCreateInvalid(ctx->location);
-            tokenNext(ctx);
         }
     }
 

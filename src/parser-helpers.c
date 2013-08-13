@@ -101,6 +101,11 @@ void tokenNext (parserCtx* ctx) {
     ctx->location = lexerNext(ctx->lexer);
 }
 
+void tokenSkipMaybe (parserCtx* ctx) {
+    if (!tokenIs(ctx, ")") && !tokenIs(ctx, "]") && !tokenIs(ctx, "}"))
+        tokenNext(ctx);
+}
+
 void tokenMatch (parserCtx* ctx) {
     debugMsg("matched(%d:%d): '%s'",
              ctx->location.line,
@@ -145,7 +150,7 @@ void tokenMatchToken (parserCtx* ctx, tokenTag Match) {
 
     else {
         errorExpected(ctx, tokenTagGetStr(Match));
-        lexerNext(ctx->lexer);
+        tokenSkipMaybe(ctx);
     }
 }
 
@@ -159,7 +164,7 @@ void tokenMatchStr (parserCtx* ctx, const char* Match) {
         errorExpected(ctx, expectedInQuotes);
         free(expectedInQuotes);
 
-        lexerNext(ctx->lexer);
+        tokenSkipMaybe(ctx);
     }
 }
 

@@ -21,6 +21,7 @@ bool tokenIsString (const struct parserCtx* ctx);
 bool tokenIsDecl (const struct parserCtx* ctx);
 
 void tokenNext (struct parserCtx* ctx);
+void tokenSkipMaybe (struct parserCtx* ctx);
 
 void tokenMatch (struct parserCtx* ctx);
 char* tokenDupMatch (struct parserCtx* ctx);

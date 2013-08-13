@@ -277,10 +277,8 @@ static ast* parserObject (parserCtx* ctx) {
             if (tokenIsIdent(ctx))
                 tokenMatch(ctx);
 
-            else {
+            else
                 errorExpected(ctx, "field name");
-                tokenNext(ctx);
-            }
         }
     }
 
