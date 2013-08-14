@@ -43,7 +43,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
 /**
  * Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
- *                                            | ( "{" Code "}" ) )
+ *                                            | Code# )
  *
  * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
@@ -154,7 +154,7 @@ static storageTag parserStorage (parserCtx* ctx) {
         tokenMatch(ctx);
 
     } else
-        ;
+        {}
 
     debugLeave();
 

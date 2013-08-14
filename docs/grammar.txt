@@ -28,7 +28,7 @@ Factor =   ( "(" Value ")" )
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
-									       | ( "{" Code "}" ) )
+									       | Code# )
 
 Field = Decl#
 Param = DeclBasic DeclExpr#
