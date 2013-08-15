@@ -22,7 +22,7 @@ Object = Factor [{   ( "[" Value "]" )
                    | ( "." | "->" <Ident> ) }]
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
-         | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
+         | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
          | <Int> | <Bool> | <Str> | <Ident>
 

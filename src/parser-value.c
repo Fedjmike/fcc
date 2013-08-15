@@ -290,7 +290,7 @@ static ast* parserObject (parserCtx* ctx) {
 /**
  * Factor =   ( "(" Value ")" )
  *          | ( "(" Type ")" Unary )
- *          | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
+ *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
  *          | <Int> | <Bool> | <Str> | <Ident>
  */
@@ -299,15 +299,28 @@ static ast* parserFactor (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    /*Cast or parenthesized expression*/
+    /*Cast, compound literal or parenthesized expression*/
     if (tokenTryMatchStr(ctx, "(")) {
-        /*Cast*/
+        /*Cast or compound literal*/
         if (tokenIsDecl(ctx)) {
-            debugMode old = debugSetMode(debugFull);
-            Node = astCreateCast(ctx->location, parserType(ctx));
-            debugSetMode(old);
+            Node = parserType(ctx);
             tokenMatchStr(ctx, ")");
-            Node->r = parserUnary(ctx);
+
+            /*Compound literal*/
+            if (tokenTryMatchStr(ctx, "{")) {
+                ast* tmp = Node;
+                Node = astCreateLiteral(ctx->location, literalCompound);
+                (ast*) Node->literal = tmp;
+
+                do {
+                    astAddChild(Node, parserAssignValue(ctx));
+                } while (tokenTryMatchStr(ctx, ","));
+
+                tokenMatchStr(ctx, "}");
+
+            /*Cast*/
+            } else
+                Node = astCreateCast(ctx->location, Node, parserUnary(ctx));
 
         /*Expression*/
         } else {
@@ -315,9 +328,9 @@ static ast* parserFactor (parserCtx* ctx) {
             tokenMatchStr(ctx, ")");
         }
 
-    /*Struct/array literal*/
+    /*Struct/array initializer*/
     } else if (tokenTryMatchStr(ctx, "{")) {
-        Node = astCreateLiteral(ctx->location, literalArray);
+        Node = astCreateLiteral(ctx->location, literalInit);
 
         do {
             astAddChild(Node, parserAssignValue(ctx));
@@ -397,7 +410,7 @@ static ast* parserFactor (parserCtx* ctx) {
         /*Valid symbol?*/
         if (Symbol) {
             Node = astCreateLiteral(ctx->location, literalIdent);
-            Node->literal = (void*) tokenDupMatch(ctx);
+            (char*) Node->literal = tokenDupMatch(ctx);
             Node->symbol = Symbol;
 
         } else {

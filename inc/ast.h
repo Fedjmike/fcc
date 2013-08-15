@@ -41,7 +41,8 @@ typedef enum {
     literalInt,
     literalBool,
     literalStr,
-    literalArray
+    literalCompound,
+    literalInit
 } literalTag;
 
 typedef struct ast {
