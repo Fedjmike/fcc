@@ -294,8 +294,7 @@ static valueResult analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    /*Commas return rvalues in C, whereas they return whatever they got in C++*/
-    return (valueResult) {Node->dt = typeDeepDuplicate(R.dt), false};
+    return (valueResult) {Node->dt = typeDeepDuplicate(R.dt), R.lvalue};
 }
 
 static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
