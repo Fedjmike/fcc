@@ -61,6 +61,10 @@ void analyzerErrorOp (analyzerCtx* ctx, const char* o, const char* desc, const a
     free(DTStr);
 }
 
+void analyzerErrorLvalue (analyzerCtx* ctx, const char* o, const struct ast* Operand) {
+    analyzerError(ctx, Operand, "%s requires lvalue", o);
+}
+
 void analyzerErrorMismatch (analyzerCtx* ctx, const ast* Node, const char* o, const type* L, const type* R) {
     char* LStr = typeToStr(L, "");
     char* RStr = typeToStr(R, "");
@@ -250,10 +254,10 @@ static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
     /*Is the condition a valid condition?*/
 
     ast* cond = Node->firstChild;
-    const type* condDT = analyzerValue(ctx, cond);
+    valueResult condRes = analyzerValue(ctx, cond);
 
-    if (!typeIsCondition(condDT))
-        analyzerErrorExpected(ctx, cond, "if", "condition", condDT);
+    if (!typeIsCondition(condRes.dt))
+        analyzerErrorExpected(ctx, cond, "if", "condition", condRes.dt);
 
     /*Code*/
 
@@ -275,10 +279,10 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
 
     /*Condition*/
 
-    const type* condDT = analyzerValue(ctx, cond);
+    valueResult condRes = analyzerValue(ctx, cond);
 
-    if (!typeIsCondition(condDT))
-        analyzerErrorExpected(ctx, cond, "do loop", "condition", condDT);
+    if (!typeIsCondition(condRes.dt))
+        analyzerErrorExpected(ctx, cond, "do loop", "condition", condRes.dt);
 
     /*Code*/
 
@@ -305,10 +309,10 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
     /*Condition*/
 
     if (cond->tag != astEmpty) {
-        const type* condDT = analyzerValue(ctx, cond);
+        valueResult condRes = analyzerValue(ctx, cond);
 
-        if (!typeIsCondition(condDT))
-            analyzerErrorExpected(ctx, cond, "for loop", "condition", condDT);
+        if (!typeIsCondition(condRes.dt))
+            analyzerErrorExpected(ctx, cond, "for loop", "condition", condRes.dt);
     }
 
     /*Iterator*/
@@ -329,10 +333,10 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
     /*Return type, if any, matches?*/
 
     if (Node->r) {
-        const type* R = analyzerValue(ctx, Node->r);
+        valueResult R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R, ctx->returnType))
-            analyzerErrorExpectedType(ctx, Node->r, "return", ctx->returnType, R);
+        if (!typeIsCompatible(R.dt, ctx->returnType))
+            analyzerErrorExpectedType(ctx, Node->r, "return", ctx->returnType, R.dt);
 
     } else if (!typeIsVoid(ctx->returnType)) {
         type* tmp = typeCreateBasic(ctx->types[builtinVoid]);

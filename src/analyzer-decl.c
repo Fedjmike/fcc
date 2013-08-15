@@ -200,10 +200,10 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     debugEnter("DeclAssignBOP");
 
     const type* L = analyzerDeclNode(ctx, Node->l, base);
-    const type* R = analyzerValue(ctx, Node->r);
+    valueResult R = analyzerValue(ctx, Node->r);
 
-    if (!typeIsCompatible(R, L))
-        analyzerErrorExpectedType(ctx, Node->r, "variable initialization", L, R);
+    if (!typeIsCompatible(R.dt, L))
+        analyzerErrorExpectedType(ctx, Node->r, "variable initialization", L, R.dt);
 
     //const type* DT;
 
