@@ -326,7 +326,7 @@ static ast* parserFactor (parserCtx* ctx) {
         tokenMatchStr(ctx, "}");
 
     /*Sizeof*/
-    } else if (tokenTryMatchStr(ctx, "sizeof")) {
+    } else if (tokenTryMatchKeyword(ctx, keywordSizeof)) {
         /*Even if an lparen is encountered, it could still be a
           parenthesized expression*/
         if (tokenTryMatchStr(ctx, "(")) {
@@ -350,7 +350,7 @@ static ast* parserFactor (parserCtx* ctx) {
         *(int*) Node->literal = tokenMatchInt(ctx);
 
     /*Boolean literal*/
-    } else if (tokenIs(ctx, "true") || tokenIs(ctx, "false")) {
+    } else if (tokenIsKeyword(ctx, keywordTrue) || tokenIsKeyword(ctx, keywordFalse)) {
         Node = astCreateLiteral(ctx->location, literalBool);
         Node->literal = malloc(sizeof(char));
         *(char*) Node->literal = tokenIs(ctx, "true") ? 1 : 0;

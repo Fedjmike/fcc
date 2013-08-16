@@ -137,19 +137,19 @@ static storageTag parserStorage (parserCtx* ctx) {
 
     storageTag storage = storageAuto;
 
-    if (tokenIs(ctx, "auto")) {
+    if (tokenIsKeyword(ctx, keywordAuto)) {
         storage = storageAuto;
         tokenMatch(ctx);
 
-    } else if (tokenIs(ctx, "static")) {
+    } else if (tokenIsKeyword(ctx, keywordStatic)) {
         storage = storageStatic;
         tokenMatch(ctx);
 
-    } else if (tokenIs(ctx, "extern")) {
+    } else if (tokenIsKeyword(ctx, keywordExtern)) {
         storage = storageExtern;
         tokenMatch(ctx);
 
-    } else if (tokenIs(ctx, "typedef")) {
+    } else if (tokenIsKeyword(ctx, keywordTypedef)) {
         storage = storageTypedef;
         tokenMatch(ctx);
 
@@ -169,7 +169,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
+    if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
         Node = parserStructOrUnion(ctx);
 
     else {
@@ -206,9 +206,9 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 static struct ast* parserStructOrUnion (parserCtx* ctx) {
     debugEnter("StructOrUnion");
 
-    symTag tag =   tokenTryMatchStr(ctx, "struct")
+    symTag tag =   tokenTryMatchKeyword(ctx, keywordStruct)
                  ? symStruct
-                 : (tokenMatchStr(ctx, "union"), symUnion);
+                 : (tokenMatchKeyword(ctx, keywordUnion), symUnion);
 
     ast* Node = (tag == symStruct ? astCreateStruct : astCreateUnion)
                 (ctx->location, parserName(ctx, true, tag));

@@ -15,6 +15,7 @@ void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag);
 void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol);
 
 bool tokenIs (const struct parserCtx* ctx, const char* Match);
+bool tokenIsKeyword (const struct parserCtx* ctx, keywordTag keyword);
 bool tokenIsIdent (const struct parserCtx* ctx);
 bool tokenIsInt (const struct parserCtx* ctx);
 bool tokenIsString (const struct parserCtx* ctx);
@@ -25,6 +26,8 @@ void tokenSkipMaybe (struct parserCtx* ctx);
 
 void tokenMatch (struct parserCtx* ctx);
 char* tokenDupMatch (struct parserCtx* ctx);
+void tokenMatchKeyword (struct parserCtx* ctx, keywordTag keyword);
+bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword);
 void tokenMatchToken (struct parserCtx* ctx, tokenTag Match);
 void tokenMatchStr (struct parserCtx* ctx, const char* Match);
 bool tokenTryMatchStr (struct parserCtx* ctx, const char* Match);

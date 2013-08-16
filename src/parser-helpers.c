@@ -75,6 +75,11 @@ bool tokenIs (const parserCtx* ctx, const char* Match) {
     return !strcmp(ctx->lexer->buffer, Match);
 }
 
+bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword) {
+    /*Keyword is keywordUndefined if not keyword token*/
+    return ctx->lexer->keyword == keyword;
+}
+
 bool tokenIsIdent (const parserCtx* ctx) {
     return ctx->lexer->token == tokenIdent;
 }
@@ -92,9 +97,13 @@ bool tokenIsDecl (const parserCtx* ctx) {
 
     return    (Symbol && Symbol->tag != symId
                       && Symbol->tag != symParam)
-           || tokenIs(ctx, "typedef") || tokenIs(ctx, "static")
-           || tokenIs(ctx, "extern")
-           || tokenIs(ctx, "const");
+           || tokenIsKeyword(ctx, keywordConst)
+           || tokenIsKeyword(ctx, keywordAuto) || tokenIsKeyword(ctx, keywordStatic)
+           || tokenIsKeyword(ctx, keywordExtern) || tokenIsKeyword(ctx, keywordTypedef)
+           || tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion)
+           || tokenIsKeyword(ctx, keywordEnum)
+           || tokenIsKeyword(ctx, keywordVoid) || tokenIsKeyword(ctx, keywordBool)
+           || tokenIsKeyword(ctx, keywordChar) || tokenIsKeyword(ctx, keywordInt);
 }
 
 void tokenNext (parserCtx* ctx) {
@@ -142,6 +151,30 @@ static char* tokenTagGetStr (tokenTag tag) {
         free(str);
         return "unhandled";
     }
+}
+
+void tokenMatchKeyword (parserCtx* ctx, keywordTag keyword) {
+    if (tokenIsKeyword(ctx, keyword))
+        tokenMatch(ctx);
+
+    else {
+        const char* kw = keywordTagGetStr(keyword);
+        char* kwInQuotes = malloc(strlen(kw)+3);
+        sprintf(kwInQuotes, "'%s'", kw);
+        errorExpected(ctx, kwInQuotes);
+        free(kwInQuotes);
+
+        tokenSkipMaybe(ctx);
+    }
+}
+
+bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword) {
+    if (tokenIsKeyword(ctx, keyword)) {
+        tokenMatch(ctx);
+        return true;
+
+    } else
+        return false;
 }
 
 void tokenMatchToken (parserCtx* ctx, tokenTag Match) {

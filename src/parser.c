@@ -113,16 +113,16 @@ static ast* parserLine (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "if"))
+    if (tokenIsKeyword(ctx, keywordIf))
         Node = parserIf(ctx);
 
-    else if (tokenIs(ctx, "while"))
+    else if (tokenIsKeyword(ctx, keywordWhile))
         Node = parserWhile(ctx);
 
-    else if (tokenIs(ctx, "do"))
+    else if (tokenIsKeyword(ctx, keywordDo))
         Node = parserDoWhile(ctx);
 
-    else if (tokenIs(ctx, "for"))
+    else if (tokenIsKeyword(ctx, keywordFor))
         Node = parserFor(ctx);
 
     else if (tokenIs(ctx, "{"))
@@ -133,13 +133,13 @@ static ast* parserLine (parserCtx* ctx) {
 
     /*Statements (that which require ';')*/
     else {
-        if (tokenTryMatchStr(ctx, "return")) {
+        if (tokenTryMatchKeyword(ctx, keywordReturn)) {
             Node = astCreate(astReturn, ctx->location);
 
             if (!tokenIs(ctx, ";"))
                 Node->r = parserValue(ctx);
 
-        } else if (tokenIs(ctx, "break")) {
+        } else if (tokenIsKeyword(ctx, keywordBreak)) {
             if (ctx->breakLevel == 0)
                 errorIllegalOutside(ctx, "break", "a loop");
 
@@ -173,14 +173,14 @@ static ast* parserIf (parserCtx* ctx) {
 
     ast* Node = astCreate(astBranch, ctx->location);
 
-    tokenMatchStr(ctx, "if");
+    tokenMatchKeyword(ctx, keywordIf);
     tokenMatchStr(ctx, "(");
     astAddChild(Node, parserValue(ctx));
     tokenMatchStr(ctx, ")");
 
     Node->l = parserCode(ctx);
 
-    if (tokenTryMatchStr(ctx, "else"))
+    if (tokenTryMatchKeyword(ctx, keywordElse))
         Node->r = parserCode(ctx);
 
     debugLeave();
@@ -196,7 +196,7 @@ static ast* parserWhile (parserCtx* ctx) {
 
     ast* Node = astCreate(astLoop, ctx->location);
 
-    tokenMatchStr(ctx, "while");
+    tokenMatchKeyword(ctx, keywordWhile);
     tokenMatchStr(ctx, "(");
     Node->l = parserValue(ctx);
     tokenMatchStr(ctx, ")");
@@ -218,13 +218,13 @@ static ast* parserDoWhile (parserCtx* ctx) {
 
     ast* Node = astCreate(astLoop, ctx->location);
 
-    tokenMatchStr(ctx, "do");
+    tokenMatchKeyword(ctx, keywordDo);
 
     ctx->breakLevel++;
     Node->l = parserCode(ctx);
     ctx->breakLevel--;
 
-    tokenMatchStr(ctx, "while");
+    tokenMatchKeyword(ctx, keywordWhile);
     tokenMatchStr(ctx, "(");
     Node->r = parserValue(ctx);
     tokenMatchStr(ctx, ")");
@@ -243,7 +243,7 @@ static ast* parserFor (parserCtx* ctx) {
 
     ast* Node = astCreate(astIter, ctx->location);
 
-    tokenMatchStr(ctx, "for");
+    tokenMatchKeyword(ctx, keywordFor);
     tokenMatchStr(ctx, "(");
 
     Node->symbol = symCreateScope(ctx->scope);
