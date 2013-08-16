@@ -13,25 +13,9 @@ typedef enum {
     astEmpty,
     astModule,
     astFnImpl,
-    astDecl,
-    astParam,
-    astStruct,
-    astUnion,
-    astType,
-    astCode,
-    astBranch,
-    astLoop,
-    astIter,
-    astReturn,
-    astBreak,
-    astBOP,
-    astUOP,
-    astTOP,
-    astIndex,
-    astCall,
-    astCast,
-    astSizeof,
-    astLiteral,
+    astType, astDecl, astParam, astStruct, astUnion,
+    astCode, astBranch, astLoop, astIter, astReturn, astBreak,
+    astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
     astEllipsis
 } astTag;
 
@@ -77,10 +61,9 @@ ast* astCreateEmpty (tokenLocation location);
 
 ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
-ast* astCreateTypedef (tokenLocation location, ast* basic, ast* expr);
+ast* astCreateType (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateDecl (tokenLocation location, ast* basic);
 ast* astCreateParam (tokenLocation location, ast* basic, ast* declExpr);
-ast* astCreateType (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateStruct (tokenLocation location, ast* name);
 ast* astCreateUnion (tokenLocation location, ast* name);
 

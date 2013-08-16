@@ -135,21 +135,20 @@ char* tokenDupMatch (parserCtx* ctx) {
  * Return the string associated with a token tag
  */
 static char* tokenTagGetStr (tokenTag tag) {
-    if (tag == tokenOther)
-        return "other";
-    else if (tag == tokenEOF)
-        return "end of file";
-    else if (tag == tokenIdent)
-        return "identifier";
-    else if (tag == tokenInt)
-        return "int";
-
+    if (tag == tokenUndefined) return "<undefined>";
+    else if (tag == tokenOther) return "other";
+    else if (tag == tokenEOF) return "end of file";
+    else if (tag == tokenKeyword) return "keyword";
+    else if (tag == tokenIdent) return "identifier";
+    else if (tag == tokenInt) return "integer";
+    else if (tag == tokenStr) return "string";
+    else if (tag == tokenChar) return "character";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
-        debugErrorUnhandled("tokenTagGetStr", "symbol tag", str);
+        debugErrorUnhandled("tokenTagGetStr", "token tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }
 

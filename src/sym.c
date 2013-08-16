@@ -160,53 +160,36 @@ sym* symFind (const sym* Scope, const char* look) {
 }
 
 const char* symTagGetStr (symTag tag) {
-    if (tag == symUndefined)
-        return "undefined";
-    else if (tag == symScope)
-        return "scope";
-    else if (tag == symType)
-        return "type";
-    else if (tag == symTypedef)
-        return "typedef";
-    else if (tag == symStruct)
-        return "struct";
-    else if (tag == symUnion)
-        return "union";
-    else if (tag == symEnum)
-        return "enum";
-    else if (tag == symId)
-        return "id";
-    else if (tag == symParam)
-        return "parameter";
-
+    if (tag == symUndefined) return "undefined";
+    else if (tag == symScope) return "scope";
+    else if (tag == symType) return "type";
+    else if (tag == symTypedef) return "typedef";
+    else if (tag == symStruct) return "struct";
+    else if (tag == symUnion) return "union";
+    else if (tag == symEnum) return "enum";
+    else if (tag == symId) return "id";
+    else if (tag == symParam) return "parameter";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("symTagGetStr", "symbol tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }
 
 const char* storageTagGetStr (storageTag tag) {
-    if (tag == storageUndefined)
-        return "storageUndefined";
-    else if (tag == storageAuto)
-        return "storageAuto";
-    else if (tag == storageRegister)
-        return "storageRegister";
-    else if (tag == storageStatic)
-        return "storageStatic";
-    else if (tag == storageExtern)
-        return "storageExtern";
-    else if (tag == storageTypedef)
-        return "storageTypedef";
-
+    if (tag == storageUndefined) return "storageUndefined";
+    else if (tag == storageAuto) return "storageAuto";
+    else if (tag == storageRegister) return "storageRegister";
+    else if (tag == storageStatic) return "storageStatic";
+    else if (tag == storageExtern) return "storageExtern";
+    else if (tag == storageTypedef) return "storageTypedef";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
-        debugErrorUnhandled("storageTagGetStr", "symbol tag", str);
+        debugErrorUnhandled("storageTagGetStr", "storage tag", str);
         free(str);
-        return "undefined";
+        return "<undefined>";
     }
 }
