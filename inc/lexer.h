@@ -7,6 +7,7 @@ typedef enum {
     tokenOther,
     tokenEOF,
     tokenKeyword,
+    tokenPunct,
     tokenIdent,
     tokenInt,
     tokenStr,
@@ -25,6 +26,39 @@ typedef enum {
     keywordTrue, keywordFalse
 } keywordTag;
 
+typedef enum {
+    punctUndefined,
+
+    punctLBrace,
+    punctRBrace,
+    punctLParen,
+    punctRParen,
+    punctLBracket,
+    punctRBracket,
+    punctSemicolon,
+    punctPeriod, punctEllipsis,
+    punctComma,
+
+    punctAssign, punctEqual,
+    punctLogicalNot, punctNotEqual,
+    punctGreater, punctGreaterEqual, punctShr, punctShrAssign,
+    punctLess, punctLessEqual, punctShl, punctShlAssign,
+
+    punctQuestion,
+    punctColon,
+
+    punctBitwiseAnd, punctBitwiseAndAssign, punctLogicalAnd,
+    punctBitwiseOr, punctBitwiseOrAssign, punctLogicalOr,
+    punctBitwiseXor, punctBitwiseXorAssign,
+    punctBitwiseNot,
+
+    punctPlus, punctPlusAssign, punctPlusPlus,
+    punctMinus, punctMinusAssign, punctMinusMinus, punctArrow,
+    punctTimes, punctTimesAssign,
+    punctDivide, punctDivideAssign,
+    punctModulo, punctModuloAssign,
+} punctTag;
+
 typedef struct {
     int line;
     int lineChar;
@@ -35,6 +69,8 @@ typedef struct  {
 
     tokenTag token;
     keywordTag keyword;
+    punctTag punct;
+
     char* buffer;
     int bufferSize;
     int length;
@@ -46,3 +82,4 @@ void lexerEnd (lexerCtx* ctx);
 tokenLocation lexerNext (lexerCtx* ctx);
 
 const char* keywordTagGetStr (keywordTag tag);
+const char* punctTagGetStr (punctTag tag);

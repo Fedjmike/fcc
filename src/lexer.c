@@ -12,6 +12,7 @@
 static void lexerSkipInsignificants (lexerCtx* ctx);
 static void lexerEat (lexerCtx* ctx, char c);
 static void lexerEatNext (lexerCtx* ctx);
+static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
 static keywordTag lookKeyword (const char* str);
 
@@ -19,6 +20,8 @@ lexerCtx* lexerInit (const char* File) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
     ctx->stream = streamInit(File);
     ctx->token = tokenUndefined;
+    ctx->keyword = keywordUndefined;
+    ctx->punct = punctUndefined;
     ctx->bufferSize = 64;
     ctx->buffer = malloc(sizeof(char)*ctx->bufferSize);
     lexerNext(ctx);
@@ -105,6 +108,15 @@ static void lexerEatNext (lexerCtx* ctx) {
     lexerEat(ctx, streamNext(ctx->stream));
 }
 
+static bool lexerTryEatNext (lexerCtx* ctx, char c) {
+    if (ctx->stream->current == c) {
+        lexerEatNext(ctx);
+        return true;
+
+    } else
+        return false;
+}
+
 tokenLocation lexerNext (lexerCtx* ctx) {
     if (ctx->token == tokenEOF) {
         tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
@@ -116,6 +128,8 @@ tokenLocation lexerNext (lexerCtx* ctx) {
     tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
 
     ctx->length = 0;
+    ctx->keyword = keywordUndefined;
+    ctx->punct = punctUndefined;
 
     /*End of stream. Do not increment pos, as we could segfault.
       Continued calls to this function will prepare more EOF tokens.*/
@@ -174,54 +188,79 @@ tokenLocation lexerNext (lexerCtx* ctx) {
 
         lexerEatNext(ctx);
 
-    /*Other symbol. Operators come into this category*/
+    /*Other symbols or punctuation*/
     } else {
         ctx->token = tokenOther;
         lexerEatNext(ctx);
 
-        /*If it is a double char operator like != or ->, combine them*/
-        /* == !=  += -= *= /= %=  &= |= ^= */
-        if (   (   (   ctx->buffer[0] == '=' || ctx->buffer[0] == '!'
-                    || ctx->buffer[0] == '+' || ctx->buffer[0] == '-'
-                    || ctx->buffer[0] == '*' || ctx->buffer[0] == '/'
-                    || ctx->buffer[0] == '%'
-                    || ctx->buffer[0] == '&' || ctx->buffer[0] == '|'
-                    || ctx->buffer[0] == '^')
-                && ctx->stream->current == '=')
-        /* -> */
-            || (ctx->buffer[0] == '-'
-                && (ctx->stream->current == '>' || ctx->stream->current == '-'))
-        /* && || ++ --*/
-            || (   (   ctx->buffer[0] == '&' || ctx->buffer[0] == '|'
-                    || ctx->buffer[0] == '+' || ctx->buffer[0] == '-')
-                && ctx->stream->current == ctx->buffer[0])
-        /* >= <= */
-            || ((ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
-                && ctx->stream->current == '='))
-            lexerEatNext(ctx);
+        /*Assume punctuation*/
+        ctx->token = tokenPunct;
 
-        /*Possible triple char operator*/
-        /* >> << */
-        else if (   (ctx->buffer[0] == '>' || ctx->buffer[0] == '<')
-            && (ctx->stream->current == ctx->buffer[0])) {
-            lexerEatNext(ctx);
+        switch (ctx->buffer[0]) {
+        case '{': ctx->punct = punctLBrace; break;
+        case '}': ctx->punct = punctRBrace; break;
+        case '(': ctx->punct = punctLParen; break;
+        case ')': ctx->punct = punctRParen; break;
+        case '[': ctx->punct = punctLBracket; break;
+        case ']': ctx->punct = punctRBracket; break;
+        case ';': ctx->punct = punctSemicolon; break;
+        case '.':
+            ctx->punct = punctPeriod;
 
-            /* >>= <<=*/
-            if (ctx->stream->current == '=')
+            if (ctx->stream->current == '.') {
                 lexerEatNext(ctx);
 
-        /* ... */
-        } else if (ctx->buffer[0] == '.' && ctx->stream->current == '.') {
-            lexerEatNext(ctx);
+                if (ctx->stream->current == '.') {
+                    ctx->punct = punctEllipsis;
+                    lexerEatNext(ctx);
 
-            if (ctx->stream->current == '.')
-                lexerEatNext(ctx);
-
-            //Oops, it's just two dots, backtrack
-            else {
-                streamPrev(ctx->stream);
-                ctx->length--;
+                /*Oops, it's just two dots, backtrack*/
+                } else {
+                    streamPrev(ctx->stream);
+                    ctx->length--;
+                }
             }
+
+            break;
+
+        case ',': ctx->punct = punctComma; break;
+
+        case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
+        case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
+        case '>': ctx->punct = lexerTryEatNext(ctx, '=') ? punctGreaterEqual :
+                               lexerTryEatNext(ctx, '>') ?
+                                   (  lexerTryEatNext(ctx, '=')
+                                    ? punctShrAssign
+                                    : punctShr) :
+                               punctGreater; break;
+        case '<': ctx->punct = lexerTryEatNext(ctx, '=') ? punctLessEqual :
+                               lexerTryEatNext(ctx, '<') ?
+                                   (  lexerTryEatNext(ctx, '=')
+                                    ? punctShlAssign
+                                    : punctShl) :
+                               punctLess; break;
+
+        case '?': ctx->punct = punctQuestion; break;
+        case ':': ctx->punct = punctColon; break;
+
+        case '&': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign :
+                               lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
+        case '|': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign :
+                               lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
+        case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
+        case '~': ctx->punct = punctBitwiseNot;
+
+        case '+': ctx->punct = lexerTryEatNext(ctx, '=') ? punctPlusAssign :
+                               lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
+        case '-': ctx->punct = lexerTryEatNext(ctx, '=') ? punctMinusAssign :
+                               lexerTryEatNext(ctx, '-') ? punctMinusMinus :
+                               lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
+        case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
+        case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
+        case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
+
+        /*Oops, actually an unrecognised character*/
+        default: ctx->token = tokenOther;
         }
     }
 
@@ -345,6 +384,63 @@ const char* keywordTagGetStr (keywordTag tag) {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("keywordTagGetStr", "keyword tag", str);
+        free(str);
+        return "<unhandled>";
+    }
+}
+
+const char* punctTagGetStr (punctTag tag) {
+    if (tag == punctUndefined) return "<undefined>";
+    else if (tag == punctLBrace) return "{";
+    else if (tag == punctRBrace) return "}";
+    else if (tag == punctLParen) return "(";
+    else if (tag == punctRParen) return ")";
+    else if (tag == punctLBracket) return "[";
+    else if (tag == punctRBracket) return "]";
+    else if (tag == punctSemicolon) return ";";
+    else if (tag == punctPeriod) return ".";
+    else if (tag == punctEllipsis) return "...";
+    else if (tag == punctComma) return ",";
+    else if (tag == punctAssign) return "=";
+    else if (tag == punctEqual) return "==";
+    else if (tag == punctLogicalNot) return "!";
+    else if (tag == punctNotEqual) return "!=";
+    else if (tag == punctGreater) return ">";
+    else if (tag == punctGreaterEqual) return ">=";
+    else if (tag == punctShr) return ">>";
+    else if (tag == punctShrAssign) return ">>=";
+    else if (tag == punctLess) return "<";
+    else if (tag == punctLessEqual) return "<=";
+    else if (tag == punctShl) return "<<";
+    else if (tag == punctShlAssign) return "<<=";
+    else if (tag == punctQuestion) return "?";
+    else if (tag == punctColon) return ":";
+    else if (tag == punctBitwiseAnd) return "&";
+    else if (tag == punctBitwiseAndAssign) return "&=";
+    else if (tag == punctLogicalAnd) return "&&";
+    else if (tag == punctBitwiseOr) return "|";
+    else if (tag == punctBitwiseOrAssign) return "|=";
+    else if (tag == punctLogicalOr) return "||";
+    else if (tag == punctBitwiseXor) return "^";
+    else if (tag == punctBitwiseXorAssign) return "^=";
+    else if (tag == punctBitwiseNot) return "~";
+    else if (tag == punctPlus) return "+";
+    else if (tag == punctPlusAssign) return "+=";
+    else if (tag == punctPlusPlus) return "++";
+    else if (tag == punctMinus) return "-";
+    else if (tag == punctMinusAssign) return "-=";
+    else if (tag == punctMinusMinus) return "--";
+    else if (tag == punctArrow) return "->";
+    else if (tag == punctTimes) return "*";
+    else if (tag == punctTimesAssign) return "*=";
+    else if (tag == punctDivide) return "/";
+    else if (tag == punctDivideAssign) return "/=";
+    else if (tag == punctModulo) return "%";
+    else if (tag == punctModuloAssign) return "%=";
+    else {
+        char* str = malloc(logi(tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("punctTagGetStr", "punctuation tag", str);
         free(str);
         return "<unhandled>";
     }

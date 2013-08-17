@@ -71,13 +71,17 @@ void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol) {
 
 /*:::: TOKEN HANDLING ::::*/
 
-bool tokenIs (const parserCtx* ctx, const char* Match) {
+static bool tokenIs (const parserCtx* ctx, const char* Match) {
     return !strcmp(ctx->lexer->buffer, Match);
 }
 
 bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword) {
     /*Keyword is keywordUndefined if not keyword token*/
     return ctx->lexer->keyword == keyword;
+}
+
+bool tokenIsPunct (const struct parserCtx* ctx, punctTag punct) {
+    return ctx->lexer->punct == punct;
 }
 
 bool tokenIsIdent (const parserCtx* ctx) {
@@ -176,6 +180,30 @@ bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword) {
         return false;
 }
 
+void tokenMatchPunct (struct parserCtx* ctx, punctTag punct) {
+    if (tokenIsPunct(ctx, punct))
+        tokenMatch(ctx);
+
+    else {
+        const char* p = punctTagGetStr(punct);
+        char* pInQuotes = malloc(strlen(p)+3);
+        sprintf(pInQuotes, "'%s'", p);
+        errorExpected(ctx, pInQuotes);
+        free(pInQuotes);
+
+        tokenSkipMaybe(ctx);
+    }
+}
+
+bool tokenTryMatchPunct (struct parserCtx* ctx, punctTag punct) {
+    if (tokenIsPunct(ctx, punct)) {
+        tokenMatch(ctx);
+        return true;
+
+    } else
+        return false;
+}
+
 void tokenMatchToken (parserCtx* ctx, tokenTag Match) {
     if (ctx->lexer->token == Match)
         tokenMatch(ctx);
@@ -184,29 +212,6 @@ void tokenMatchToken (parserCtx* ctx, tokenTag Match) {
         errorExpected(ctx, tokenTagGetStr(Match));
         tokenSkipMaybe(ctx);
     }
-}
-
-void tokenMatchStr (parserCtx* ctx, const char* Match) {
-    if (tokenIs(ctx, Match))
-        tokenMatch(ctx);
-
-    else {
-        char* expectedInQuotes = malloc(strlen(Match)+3);
-        sprintf(expectedInQuotes, "'%s'", Match);
-        errorExpected(ctx, expectedInQuotes);
-        free(expectedInQuotes);
-
-        tokenSkipMaybe(ctx);
-    }
-}
-
-bool tokenTryMatchStr (parserCtx* ctx, const char* Match) {
-    if (tokenIs(ctx, Match)) {
-        tokenMatch(ctx);
-        return true;
-
-    } else
-        return false;
 }
 
 int tokenMatchInt (parserCtx* ctx) {

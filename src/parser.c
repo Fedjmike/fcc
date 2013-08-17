@@ -67,13 +67,13 @@ static ast* parserModule (parserCtx* ctx) {
     Module->symbol = ctx->scope;
 
     while (ctx->lexer->token != tokenEOF) {
-        if (tokenTryMatchStr(ctx, ";"))
+        if (tokenTryMatchPunct(ctx, punctSemicolon))
             astAddChild(Module, astCreateEmpty(ctx->location));
 
         else
             astAddChild(Module, parserDecl(ctx, true));
 
-        debugWait();
+        //debugWait();
     }
 
     debugLeave();
@@ -91,8 +91,8 @@ ast* parserCode (parserCtx* ctx) {
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    if (tokenTryMatchStr(ctx, "{"))
-        while (!tokenTryMatchStr(ctx, "}") && ctx->lexer->token != tokenEOF)
+    if (tokenTryMatchPunct(ctx, punctLBrace))
+        while (!tokenTryMatchPunct(ctx, punctRBrace) && ctx->lexer->token != tokenEOF)
             astAddChild(Node, parserLine(ctx));
 
     else
@@ -125,7 +125,7 @@ static ast* parserLine (parserCtx* ctx) {
     else if (tokenIsKeyword(ctx, keywordFor))
         Node = parserFor(ctx);
 
-    else if (tokenIs(ctx, "{"))
+    else if (tokenIsPunct(ctx, punctLBrace))
         Node = parserCode(ctx);
 
     else if (tokenIsDecl(ctx))
@@ -136,7 +136,7 @@ static ast* parserLine (parserCtx* ctx) {
         if (tokenTryMatchKeyword(ctx, keywordReturn)) {
             Node = astCreate(astReturn, ctx->location);
 
-            if (!tokenIs(ctx, ";"))
+            if (!tokenIsPunct(ctx, punctSemicolon))
                 Node->r = parserValue(ctx);
 
         } else if (tokenIsKeyword(ctx, keywordBreak)) {
@@ -149,13 +149,13 @@ static ast* parserLine (parserCtx* ctx) {
             Node = astCreate(astBreak, ctx->location);
 
         /*Allow empty lines, ";"*/
-        } else if (tokenIs(ctx, ";"))
+        } else if (tokenIsPunct(ctx, punctSemicolon))
             Node = astCreateEmpty(ctx->location);
 
         else
             Node = parserValue(ctx);
 
-        tokenMatchStr(ctx, ";");
+        tokenMatchPunct(ctx, punctSemicolon);
     }
 
     debugLeave();
@@ -174,9 +174,9 @@ static ast* parserIf (parserCtx* ctx) {
     ast* Node = astCreate(astBranch, ctx->location);
 
     tokenMatchKeyword(ctx, keywordIf);
-    tokenMatchStr(ctx, "(");
+    tokenMatchPunct(ctx, punctLParen);
     astAddChild(Node, parserValue(ctx));
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     Node->l = parserCode(ctx);
 
@@ -197,9 +197,9 @@ static ast* parserWhile (parserCtx* ctx) {
     ast* Node = astCreate(astLoop, ctx->location);
 
     tokenMatchKeyword(ctx, keywordWhile);
-    tokenMatchStr(ctx, "(");
+    tokenMatchPunct(ctx, punctLParen);
     Node->l = parserValue(ctx);
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     ctx->breakLevel++;
     Node->r = parserCode(ctx);
@@ -225,10 +225,10 @@ static ast* parserDoWhile (parserCtx* ctx) {
     ctx->breakLevel--;
 
     tokenMatchKeyword(ctx, keywordWhile);
-    tokenMatchStr(ctx, "(");
+    tokenMatchPunct(ctx, punctLParen);
     Node->r = parserValue(ctx);
-    tokenMatchStr(ctx, ")");
-    tokenMatchStr(ctx, ";");
+    tokenMatchPunct(ctx, punctRParen);
+    tokenMatchPunct(ctx, punctSemicolon);
 
     debugLeave();
 
@@ -244,7 +244,7 @@ static ast* parserFor (parserCtx* ctx) {
     ast* Node = astCreate(astIter, ctx->location);
 
     tokenMatchKeyword(ctx, keywordFor);
-    tokenMatchStr(ctx, "(");
+    tokenMatchPunct(ctx, punctLParen);
 
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
@@ -254,32 +254,32 @@ static ast* parserFor (parserCtx* ctx) {
         astAddChild(Node, parserDecl(ctx, false));
 
     else {
-        if (!tokenIs(ctx, ";"))
+        if (!tokenIsPunct(ctx, punctSemicolon))
             astAddChild(Node, parserValue(ctx));
 
         else
             astAddChild(Node, astCreateEmpty(ctx->location));
 
-        tokenMatchStr(ctx, ";");
+        tokenMatchPunct(ctx, punctSemicolon);
     }
 
     /*Condition*/
-    if (!tokenIs(ctx, ";"))
+    if (!tokenIsPunct(ctx, punctSemicolon))
         astAddChild(Node, parserValue(ctx));
 
     else
         astAddChild(Node, astCreateEmpty(ctx->location));
 
-    tokenMatchStr(ctx, ";");
+    tokenMatchPunct(ctx, punctSemicolon);
 
     /*Iterator*/
-    if (!tokenIs(ctx, ";"))
+    if (!tokenIsPunct(ctx, punctRParen))
         astAddChild(Node, parserValue(ctx));
 
     else
         astAddChild(Node, astCreateEmpty(ctx->location));
 
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     ctx->breakLevel++;
     Node->l = parserCode(ctx);
