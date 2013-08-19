@@ -34,13 +34,10 @@ ast* astCreate (astTag tag, tokenLocation location) {
 void astDestroy (ast* Node) {
     debugAssert("astDestroy", "null param", Node != 0);
 
-    for (ast* Current = Node->firstChild;
+    for (ast* Current = Node->firstChild, Next = Current->nextSibling;
          Current;
-         ) {
-        ast* Next = Current->nextSibling;
+         Current = Next, Next = Next->nextSibling))
         astDestroy(Current);
-        Current = Next;
-    }
 
     if (Node->l)
         astDestroy(Node->l);
