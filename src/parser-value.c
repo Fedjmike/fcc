@@ -246,8 +246,7 @@ static ast* parserObject (parserCtx* ctx) {
 
     ast* Node = parserFactor(ctx);
 
-    while (   tokenIsPunct(ctx, punctLBracket) || tokenIsPunct(ctx, punctLParen)
-           || tokenIsPunct(ctx, punctPeriod) || tokenIsPunct(ctx, punctArrow)) {
+    while (true) {
         /*Array or pointer indexing*/
         if (tokenTryMatchPunct(ctx, punctLBracket)) {
             Node = astCreateIndex(ctx->location, Node, parserValue(ctx));
@@ -265,7 +264,7 @@ static ast* parserObject (parserCtx* ctx) {
             tokenMatchPunct(ctx, punctRParen);
 
         /*struct[*] member access*/
-        } else /*if (tokenIsPunct(ctx, punctPeriod) || tokenIsPunct(ctx, punctArrow))*/ {
+        } else if (tokenIsPunct(ctx, punctPeriod) || tokenIsPunct(ctx, punctArrow)) {
             tokenLocation loc = ctx->location;
             char* o = tokenDupMatch(ctx);
             Node = astCreateBOP(loc, Node, o,
@@ -277,7 +276,9 @@ static ast* parserObject (parserCtx* ctx) {
 
             else
                 errorExpected(ctx, "field name");
-        }
+                
+        } else
+            break;
     }
 
     debugLeave();
