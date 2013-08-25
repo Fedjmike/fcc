@@ -14,6 +14,7 @@
 #include "string.h"
 
 static ast* parserModule (parserCtx* ctx);
+static ast* parserUsing (parserCtx* ctx);
 
 static ast* parserLine (parserCtx* ctx);
 
@@ -71,7 +72,7 @@ parserResult parser (const char* filename, sym* global, const vector/*<const cha
 }
 
 /**
- * Module = [{ Decl# | ";" }]
+ * Module = [{ Decl# | Using | ";" }]
  */
 static ast* parserModule (parserCtx* ctx) {
     debugEnter("Module");
@@ -83,6 +84,9 @@ static ast* parserModule (parserCtx* ctx) {
         if (tokenTryMatchPunct(ctx, punctSemicolon))
             astAddChild(Module, astCreateEmpty(ctx->location));
 
+        else if (tokenIsKeyword(ctx, keywordUsing))
+            astAddChild(Module, parserUsing(ctx));
+
         else
             astAddChild(Module, parserDecl(ctx, true));
 
@@ -92,6 +96,37 @@ static ast* parserModule (parserCtx* ctx) {
     debugLeave();
 
     return Module;
+}
+
+/**
+ * Using = "using" <Str> ";"
+ */
+static ast* parserUsing (parserCtx* ctx) {
+    debugEnter("Using");
+
+    tokenLocation loc = ctx->location;
+    tokenMatchKeyword(ctx, keywordUsing);
+
+    char* name = tokenMatchStr(ctx);
+    ast* Node = astCreateUsing(loc, name);
+
+    if (name[0] != 0) {
+        //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
+        parserResult res = parser(name, ctx->scope, ctx->searchPaths);
+
+        ctx->errors += res.errors;
+        ctx->warnings += res.warnings;
+        Node->r = res.tree;
+
+        if (res.notfound)
+            errorFileNotFound(ctx, name);
+    }
+
+    tokenMatchPunct(ctx, punctSemicolon);
+
+    debugLeave();
+
+    return Node;
 }
 
 /**

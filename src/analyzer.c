@@ -13,6 +13,7 @@
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node);
 
+static void analyzerUsing (analyzerCtx* ctx, ast* Node);
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node);
 static void analyzerCode (analyzerCtx* ctx, ast* Node);
 static void analyzerBranch (analyzerCtx* ctx, ast* Node);
@@ -154,24 +155,11 @@ static void analyzerEnd (analyzerCtx* ctx) {
 analyzerResult analyzer (ast* Tree, sym** Types) {
     analyzerCtx* ctx = analyzerInit(Types);
 
-    analyzerModule(ctx, Tree);
+    analyzerNode(ctx, Tree);
     analyzerResult result = {ctx->errors, ctx->warnings};
 
     analyzerEnd(ctx);
     return result;
-}
-
-static void analyzerModule (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Module");
-
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        analyzerNode(ctx, Current);
-        //debugWait();
-    }
-
-    debugLeave();
 }
 
 void analyzerNode (analyzerCtx* ctx, ast* Node) {
@@ -180,6 +168,12 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 
     else if (Node->tag == astInvalid)
         debugMsg("Invalid");
+
+    else if (Node->tag == astModule)
+        analyzerModule(ctx, Node);
+
+    else if (Node->tag == astUsing)
+        analyzerUsing(ctx, Node);
 
     else if (Node->tag == astFnImpl)
         analyzerFnImpl(ctx, Node);
@@ -211,6 +205,28 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 
     else
         debugErrorUnhandled("analyzerNode", "AST tag", astTagGetStr(Node->tag));
+}
+
+static void analyzerModule (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Module");
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        analyzerNode(ctx, Current);
+        //debugWait();
+    }
+
+    debugLeave();
+}
+
+static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Using");
+
+    (void) ctx, (void) Node;
+    analyzerNode(ctx, Node->r);
+
+    debugLeave();
 }
 
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {

@@ -61,6 +61,13 @@ ast* astCreateEmpty (tokenLocation location) {
     return astCreate(astEmpty, location);
 }
 
+ast* astCreateUsing (tokenLocation location, char* name) {
+    ast* Node = astCreate(astUsing, location);
+    Node->litTag = literalStr;
+    Node->literal = (void*) name;
+    return Node;
+}
+
 ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     ast* Node = astCreate(astFnImpl, location);
     Node->l = decl;
@@ -194,6 +201,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astInvalid) return "astInvalid";
     else if (tag == astEmpty) return "astEmpty";
     else if (tag == astModule) return "astModule";
+    else if (tag == astUsing) return "astUsing";
     else if (tag == astFnImpl) return "astFnImpl";
     else if (tag == astDecl) return "astDecl";
     else if (tag == astParam) return "astParam";

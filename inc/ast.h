@@ -2,7 +2,7 @@
 
 #include "../std/std.h"
 
-#include "parser.h"
+#include "lexer.h"
 
 struct type;
 struct sym;
@@ -12,6 +12,7 @@ typedef enum {
     astInvalid,
     astEmpty,
     astModule,
+    astUsing,
     astFnImpl,
     astType, astDecl, astParam, astStruct, astUnion,
     astCode, astBranch, astLoop, astIter, astReturn, astBreak,
@@ -58,6 +59,8 @@ void astDestroy (ast* Node);
 
 ast* astCreateInvalid (tokenLocation location);
 ast* astCreateEmpty (tokenLocation location);
+
+ast* astCreateUsing (tokenLocation location, char* name);
 
 ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
