@@ -510,10 +510,16 @@ static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
 
     else if (Node->litTag == literalIdent) {
-        if (Node->symbol->tag == symId || Node->symbol->tag == symParam)
-            Node->dt = typeDeepDuplicate(Node->symbol->dt);
+        if (Node->symbol->tag == symId || Node->symbol->tag == symParam) {
+            if (Node->symbol->dt)
+                Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
-        else {
+            else {
+                debugError("analyzerLiteral", "Symbol '%s' referenced without type", Node->symbol->ident);
+                Node->dt = typeCreateInvalid();
+            }
+
+        } else {
             analyzerErrorIllegalSymAsValue(ctx, Node, Node->symbol);
             Node->dt = typeCreateInvalid();
         }

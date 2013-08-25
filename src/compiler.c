@@ -53,7 +53,7 @@ compilerResult compiler (const char* input, const char* output) {
 
     /*Emit the assembly*/
 
-    if (errors == 0) {
+    if (errors == 0 && internalErrors == 0) {
         debugWait();
         emitter(Tree, output, &arch);
     }

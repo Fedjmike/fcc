@@ -24,8 +24,11 @@ static int driver (config conf) {
     if (errors != 0 || warnings != 0)
         printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
 
-    /*Assemble/link?*/
-    else if (conf.mode != modeNoAssemble) {
+    else if (conf.mode == modeNoAssemble || internalErrors)
+        ;
+
+    /*Assemble/link*/
+    else {
         /*Produce a string list of all the intermediates*/
         char* intermediates = 0; {
             int length = 0;
@@ -37,7 +40,7 @@ static int driver (config conf) {
             int charno = strlen(intermediates);
 
             for (int i = 1; i < conf.intermediates.length; i++)
-                sprintf(intermediates+charno, " %s", vectorGet(&conf.intermediates, i));
+                sprintf(intermediates+charno, " %s", (char*) vectorGet(&conf.intermediates, i));
         }
 
         if (conf.mode == modeNoLink)

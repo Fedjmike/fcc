@@ -47,3 +47,5 @@ void reportType (const struct type* DT);
 void reportSymbol (const struct sym* Symbol);
 void reportNode (const struct ast* Node);
 void reportRegs ();
+
+extern int internalErrors;

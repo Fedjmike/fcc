@@ -14,9 +14,12 @@ debugMode mode;
 //Indentation level of debug output
 int depth;
 
+int internalErrors = 0;
+
 void debugInit (FILE* nlog) {
     logFile = nlog;
     debugSetMode(debugFull);
+    internalErrors = 0;
 }
 
 debugMode debugSetMode (debugMode nmode) {
@@ -97,6 +100,7 @@ void debugError (const char* functionName,
     fputc('\n', logFile);
 
     debugWait();
+    internalErrors++;
 }
 
 void debugAssert (const char* functionName,
