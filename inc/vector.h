@@ -1,3 +1,5 @@
+#pragma once
+
 typedef struct {
     int length, capacity;
     void** buffer;
@@ -14,7 +16,8 @@ vector vectorCreate (int initialCapacity);
 void vectorDestroy (vector* v);
 void vectorDestroyObjs (vector* v, void (*dtor)(void*));
 
-void vectorAdd (vector* v, void* item);
+void vectorPush (vector* v, void* item);
+void* vectorPop (vector* v);
 
 /**
  * Returns the value, or null if out of bounds.

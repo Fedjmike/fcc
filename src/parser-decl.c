@@ -444,7 +444,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
 
         /*Can't tell whether this is a duplicate declaration
           or a (matching) redefinition*/
-        vectorAdd(&Node->symbol->decls, Node);
+        vectorPush(&Node->symbol->decls, Node);
 
     } else {
         errorExpected(ctx, "name");

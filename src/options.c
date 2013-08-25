@@ -104,8 +104,8 @@ void optionsParse (config* conf, int argc, char** argv) {
 
             } else {
                 if (fexists(option)) {
-                    vectorAdd(&conf->inputs, strdup(option));
-                    vectorAdd(&conf->intermediates, filext(option, "s"));
+                    vectorPush(&conf->inputs, strdup(option));
+                    vectorPush(&conf->intermediates, filext(option, "s"));
 
                 } else
                     printf("fcc: Input file '%s' doesn't exist\n", option);
