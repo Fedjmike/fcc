@@ -9,7 +9,7 @@
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
 
-compilerResult compiler (const char* input, const char* output) {
+compilerResult compiler (const char* input, const char* output, const vector/*<const char* const>*/ searchPaths) {
     architecture arch = {8};
 
     /*Initialize symbol "table",
@@ -37,10 +37,13 @@ compilerResult compiler (const char* input, const char* output) {
     debugSetMode(debugCompressed);
 
     ast* Tree = 0; {
-        parserResult res = parser(input, Global);
+        parserResult res = parser(input, Global, searchPaths);
         errors += res.errors;
         warnings += res.warnings;
         Tree = res.tree;
+
+        if (res.notfound)
+            printf("error: File not found, '%s'\n", input);
     }
 
     /*Semantic analysis*/

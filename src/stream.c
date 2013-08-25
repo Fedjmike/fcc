@@ -6,15 +6,10 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-streamCtx* streamInit (const char* File) {
+streamCtx* streamInit (FILE* file, const char* filename) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
-    ctx->filename = strdup(File);
-    ctx->file = fopen(File, "r");
-
-    if (ctx->file == 0) {
-        printf("Error opening file, '%s'.\n", File);
-        exit(EXIT_FAILURE);
-    }
+    ctx->filename = filename;
+    ctx->file = file;
 
     ctx->current = 0;
     ctx->line = 1;
@@ -27,7 +22,6 @@ streamCtx* streamInit (const char* File) {
 
 void streamEnd (streamCtx* ctx) {
     fclose(ctx->file);
-    free(ctx->filename);
     free(ctx);
 }
 

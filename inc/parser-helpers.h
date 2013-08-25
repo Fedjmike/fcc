@@ -13,6 +13,7 @@ void errorUndefType (struct parserCtx* ctx);
 void errorIllegalOutside (struct parserCtx* ctx, const char* what, const char* where);
 void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag);
 void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol);
+void errorFileNotFound (struct parserCtx* ctx, const char* name);
 
 /*::::*/
 

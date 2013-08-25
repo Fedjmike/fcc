@@ -22,39 +22,52 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx* parserInit (const char* File, sym* Global) {
-    parserCtx* ctx = malloc(sizeof(parserCtx));
+static parserCtx parserInit (FILE* file, const char* filename, sym* global, const vector/*<const char* const>*/ searchPaths) {
+    lexerCtx* lexer = lexerInit(file, filename);
 
-    ctx->lexer = lexerInit(File);
-
-    ctx->location.line = ctx->lexer->stream->line;
-    ctx->location.lineChar = ctx->lexer->stream->lineChar;
-
-    ctx->scope = Global;
-
-    ctx->breakLevel = 0;
-
-    ctx->errors = 0;
-    ctx->warnings = 0;
-
-    return ctx;
+    return (parserCtx) {lexer, {lexer->stream->line, lexer->stream->lineChar},
+                           searchPaths,
+                           global,
+                           0,
+                           0, 0};;
 }
 
-static void parserEnd (parserCtx* ctx) {
-    lexerEnd(ctx->lexer);
-    free(ctx);
+static void parserEnd (parserCtx ctx) {
+    lexerEnd(ctx.lexer);
 }
 
-parserResult parser (const char* File, sym* Global) {
-    parserCtx* ctx = parserInit(File, Global);
+static FILE* parserOpenFile (const char* filename, const vector/*<const char* const>*/ searchPaths) {
+    FILE* file;
+    int filenameLength = strlen(filename);
 
-    ast* Module = parserModule(ctx);
+    for (int i = 0; i < searchPaths.length; i++) {
+        const char* path = vectorGet(&searchPaths, i);
+        char* fullname = malloc(strlen(path)+1+filenameLength+1);
+        sprintf(fullname, "%s/%s", path, filename);
+        printf("Trying '%s'\n", fullname);
+        file = fopen(fullname, "r");
+        free(fullname);
 
-    parserResult result = {Module, ctx->errors, ctx->warnings};
+        if (file)
+            return file;
+    }
 
-    parserEnd(ctx);
+    return 0;
+}
 
-    return result;
+parserResult parser (const char* filename, sym* global, const vector/*<const char* const>*/ searchPaths) {
+    FILE* file = parserOpenFile(filename, searchPaths);
+
+    if (file) {
+        parserCtx ctx = parserInit(file, filename, global, searchPaths);
+        ast* Module = parserModule(&ctx);
+        parserEnd(ctx);
+
+        return (parserResult) {Module, ctx.errors, ctx.warnings, false};
+
+    } else
+        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0}),
+                               1, 0, true};
 }
 
 /**

@@ -69,6 +69,10 @@ void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol) {
                Symbol->impl->location.line, Symbol->impl->location.lineChar);
 }
 
+void errorFileNotFound (struct parserCtx* ctx, const char* name) {
+    error(ctx, "File not found, '%s'", name);
+}
+
 /*:::: TOKEN HANDLING ::::*/
 
 static bool tokenIs (const parserCtx* ctx, const char* Match) {

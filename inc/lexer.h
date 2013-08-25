@@ -77,7 +77,7 @@ typedef struct  {
     int length;
 } lexerCtx;
 
-lexerCtx* lexerInit (const char* File);
+lexerCtx* lexerInit (FILE* File, const char* filename);
 void lexerEnd (lexerCtx* ctx);
 
 tokenLocation lexerNext (lexerCtx* ctx);

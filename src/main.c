@@ -13,13 +13,22 @@ static int driver (config conf);
 static int driver (config conf) {
     int errors = 0, warnings = 0;
 
+    vector/*<char*>*/ searchPaths = vectorCreate(8);
+
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++) {
-        compilerResult result = compiler(vectorGet(&conf.inputs, i),
-                                         vectorGet(&conf.intermediates, i));
+        vectorPush(&searchPaths, fgetpath(vectorGet(&conf.inputs, i)));
+
+        compilerResult result = compiler(fgetname(vectorGet(&conf.inputs, i)),
+                                         vectorGet(&conf.intermediates, i),
+                                         searchPaths);
         errors += result.errors;
         warnings += result.warnings;
+
+        free(vectorPop(&searchPaths));
     }
+
+    vectorDestroy(&searchPaths);
 
     if (errors != 0 || warnings != 0)
         printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
