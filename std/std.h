@@ -35,6 +35,9 @@ int logi (int x, int base);
 
 bool fexists (const char* filename);
 
+char* fgetpath (const char* fullname);
+char* fgetname (const char* fullname);
+
 bool strprefix (const char* str, const char* prefix);
 
 int vsystem (const char* format, ...);

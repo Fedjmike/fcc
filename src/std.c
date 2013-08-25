@@ -159,6 +159,20 @@ bool fexists (const char* filename) {
         return false;
 }
 
+char* fgetpath (const char* fullname) {
+    int index = (int)(strrchr(fullname, (int) '/') - fullname);
+    char* ret = strncpy(malloc(index+1), fullname, index);
+    puts(ret);
+    return ret;
+}
+
+char* fgetname (const char* fullname) {
+    int index = (int)(strrchr(fullname, (int) '/') - fullname);
+    char* ret = strcpy(malloc(strlen(fullname)-index), fullname+index+1);
+    puts(ret);
+    return ret;
+}
+
 bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }
