@@ -233,3 +233,41 @@ char* tokenMatchIdent (parserCtx* ctx) {
 
     return Old;
 }
+
+char* tokenMatchStr (parserCtx* ctx) {
+    char* str = calloc(ctx->lexer->length, sizeof(char));
+
+    if (tokenIsString(ctx)) {
+        /*Iterate through the string excluding the first and last
+          characters - the quotes*/
+        for (int i = 1, length = 0; i+2 < ctx->lexer->length; i++) {
+            /*Escape sequence*/
+            if (ctx->lexer->buffer[i] == '\\') {
+                i++;
+
+                if (   ctx->lexer->buffer[i] == 'n' || ctx->lexer->buffer[i] == 'r'
+                    || ctx->lexer->buffer[i] == 't' || ctx->lexer->buffer[i] == '\\'
+                    || ctx->lexer->buffer[i] == '\'' || ctx->lexer->buffer[i] == '"') {
+                    str[length++] = '\\';
+                    str[length++] = ctx->lexer->buffer[i];
+
+                /*An actual linebreak mid string? Escaped, ignore it*/
+                } else if (   ctx->lexer->buffer[i] == '\n'
+                         || ctx->lexer->buffer[i] == '\r')
+                    i++;
+
+                /*Unrecognised escape: ignore*/
+                else
+                    i++;
+
+            } else
+                str[length++] = ctx->lexer->buffer[i];
+        }
+
+        tokenMatch(ctx);
+
+    } else
+        errorExpected(ctx, "string");
+
+    return str;
+}

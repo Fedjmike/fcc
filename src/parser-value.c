@@ -276,7 +276,7 @@ static ast* parserObject (parserCtx* ctx) {
 
             else
                 errorExpected(ctx, "field name");
-                
+
         } else
             break;
     }
@@ -359,35 +359,7 @@ static ast* parserFactor (parserCtx* ctx) {
     /*String literal*/
     } else if (tokenIsString(ctx)) {
         Node = astCreateLiteral(ctx->location, literalStr);
-        Node->literal = calloc(ctx->lexer->length, sizeof(char));
-
-        /*Iterate through the string excluding the first and last
-          characters - the quotes*/
-        for (int i = 1, length = 0; i+2 < ctx->lexer->length; i++) {
-            /*Escape sequence*/
-            if (ctx->lexer->buffer[i] == '\\') {
-                i++;
-
-                if (   ctx->lexer->buffer[i] == 'n' || ctx->lexer->buffer[i] == 'r'
-                    || ctx->lexer->buffer[i] == 't' || ctx->lexer->buffer[i] == '\\'
-                    || ctx->lexer->buffer[i] == '\'' || ctx->lexer->buffer[i] == '"') {
-                    ((char*) Node->literal)[length++] = '\\';
-                    ((char*) Node->literal)[length++] = ctx->lexer->buffer[i];
-
-                /*An actual linebreak mid string? Escaped, ignore it*/
-                } else if (   ctx->lexer->buffer[i] == '\n'
-                         || ctx->lexer->buffer[i] == '\r')
-                    i++;
-
-                /*Unrecognised escape: ignore*/
-                else
-                    i++;
-
-            } else
-                ((char*) Node->literal)[length++] = ctx->lexer->buffer[i];
-        }
-
-        tokenMatch(ctx);
+        Node->literal = (void*) tokenMatchStr(ctx);
 
     /*Identifier*/
     } else if (tokenIsIdent(ctx)) {

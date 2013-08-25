@@ -118,6 +118,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 [ ] Lexing of pp
 [ ] Empty decl warning?
 [ ] Complain about keywords as idents
+[ ] More on char and str lexing
 
 [-] Abysmal error recovery
 [ ] AST field reuse is weird and unclear

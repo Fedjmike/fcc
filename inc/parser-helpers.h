@@ -45,3 +45,5 @@ void tokenMatchToken (struct parserCtx* ctx, tokenTag Match);;
 int tokenMatchInt (struct parserCtx* ctx);
 
 char* tokenMatchIdent (struct parserCtx* ctx);
+
+char* tokenMatchStr (struct parserCtx* ctx);
