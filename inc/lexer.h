@@ -16,6 +16,7 @@ typedef enum {
 
 typedef enum {
     keywordUndefined,
+    keywordUsing,
     keywordIf, keywordElse, keywordWhile, keywordDo, keywordFor,
     keywordReturn, keywordBreak, keywordContinue,
     keywordSizeof,

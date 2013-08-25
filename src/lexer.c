@@ -281,7 +281,6 @@ static keywordTag lookKeyword (const char* str) {
     case 'a': return !strcmp(rest[0], "uto") ? keywordAuto : keywordUndefined;
     case 'd': return !strcmp(rest[0], "o") ? keywordDo : keywordUndefined;
     case 'r': return !strcmp(rest[0], "eturn") ? keywordReturn : keywordUndefined;
-    case 'u': return !strcmp(rest[0], "nion") ? keywordUnion : keywordUndefined;
     case 'v': return !strcmp(rest[0], "oid") ? keywordVoid : keywordUndefined;
     case 'w': return !strcmp(rest[0], "hile") ? keywordWhile : keywordUndefined;
 
@@ -351,12 +350,20 @@ static keywordTag lookKeyword (const char* str) {
         default: return keywordUndefined;
         }
 
+    case 'u':
+        switch (str[1]) {
+        case 'n': return !strcmp(rest[1], "ion") ? keywordUnion : keywordUndefined;
+        case 's': return !strcmp(rest[1], "ing") ? keywordUsing : keywordUndefined;
+        default: return keywordUndefined;
+        }
+
     default: return keywordUndefined;
     }
 }
 
 const char* keywordTagGetStr (keywordTag tag) {
     if (tag == keywordUndefined) return "<undefined>";
+    else if (tag == keywordUsing) return "using";
     else if (tag == keywordIf) return "if";
     else if (tag == keywordElse) return "else";
     else if (tag == keywordWhile) return "while";
