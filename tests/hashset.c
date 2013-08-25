@@ -1,16 +1,12 @@
 #include "compat.h"
+#include "stdint.h"
+#include "stdlib.h"
+#include "stdio.h"
+#include "time.h"
 
-void* malloc (int);
-void* calloc (int, int);
-void free (void*);
-
-int printf (char*, ...);
-int puts (char*);
-
-void srand (int);
-int rand ();
-
-int time (void*);
+using "stdlib.h";
+using "stdio.h";
+using "time.h";
 
 typedef struct hashset {
     int size, elements;
@@ -35,8 +31,6 @@ hashset_iter hashset_next (hashset_iter iter);
 bool hashset_is_end (hashset_iter iter);
 void* hashset_get (hashset_iter iter);
 
-#include "stdlib.h"
-
 static int hashset_hash (hashset* set, void* element);
 
 /*Slightly counterintuitively, this doesn't actually find the location
@@ -52,6 +46,7 @@ static int hashset_find (hashset* set, void* element);
 hashset hashset_create (int size) {
     return (hashset) {size, 0, calloc(size, sizeof(void*))};
 }
+
 void hashset_destroy (hashset* set) {
     free(set->buffer);
 }
@@ -137,10 +132,6 @@ void* hashset_get (hashset_iter iter) {
     return iter.set->buffer[iter.index];
 }
 
-#include "stdlib.h"
-#include "time.h"
-#include "stdio.h"
-
 int main (int argc, char** argv) {
     (void) argc, (void) argv;
 
@@ -151,7 +142,7 @@ int main (int argc, char** argv) {
     int max = 100000;
 
     for (int i = 0; i <= max; i++) {
-        int element = rand() % max;
+        intptr_t element = rand() % max;
         //printf("Adding: %d\n", element);
         hashset_add(&set, (void*) element);
     }
