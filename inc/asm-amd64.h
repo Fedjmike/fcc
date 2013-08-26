@@ -53,7 +53,7 @@ void asmStringConstant (struct asmCtx* ctx, operand label, char* str);
 void asmLabel (struct asmCtx* ctx, operand L);
 
 /**
- * Emit an unconditionally jump
+ * Emit an unconditional jump
  */
 void asmJump (struct asmCtx* ctx, operand L);
 
