@@ -185,8 +185,8 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
     else if (Op == uopDec)
         asmOutLn(ctx, "sub %s, 1", RStr);
 
-    else if (Op == uopNeg)
-        asmOutLn(ctx, "neg %s", RStr);
+    else if (Op == uopNeg || Op == uopBitwiseNot)
+        asmOutLn(ctx, "%s %s", Op == uopNeg ? "neg" : "not", RStr);
 
     else
         printf("asmUOP(): unhandled operator tag, %d", Op);

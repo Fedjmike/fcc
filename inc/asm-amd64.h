@@ -19,7 +19,8 @@ typedef enum {
 	uopUndefined,
 	uopInc,
 	uopDec,
-	uopNeg
+	uopNeg,
+	uopBitwiseNot
 } uoperation;
 
 /**
