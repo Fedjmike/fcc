@@ -155,32 +155,18 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
 
-        if (Op == bopCmp)
-            asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        const char* OpStr = Op == bopCmp ? "cmp" :
+                            Op == bopAdd ? "add" :
+                            Op == bopSub ? "sub" :
+                            Op == bopMul ? "imul" :
+                            Op == bopBitAnd ? "and" :
+                            Op == bopBitOr ? "or" :
+                            Op == bopBitXor ? "xor" :
+                            Op == bopShR ? "sar" :
+                            Op == bopShL ? "sal" : 0;
 
-        else if (Op == bopAdd)
-            asmOutLn(ctx, "add %s, %s", LStr, RStr);
-
-        else if (Op == bopSub)
-            asmOutLn(ctx, "sub %s, %s", LStr, RStr);
-
-        else if (Op == bopMul)
-            asmOutLn(ctx, "imul %s, %s", LStr, RStr);
-
-        else if (Op == bopBitAnd)
-            asmOutLn(ctx, "and %s, %s", LStr, RStr);
-
-        else if (Op == bopBitOr)
-            asmOutLn(ctx, "or %s, %s", LStr, RStr);
-
-        else if (Op == bopBitXor)
-            asmOutLn(ctx, "xor %s, %s", LStr, RStr);
-
-        else if (Op == bopShR)
-            asmOutLn(ctx, "sar %s, %s", LStr, RStr);
-
-        else if (Op == bopShL)
-            asmOutLn(ctx, "sal %s, %s", LStr, RStr);
+        if (OpStr)
+            asmOutLn(ctx, "%s %s, %s", OpStr, LStr, RStr);
 
         else
             printf("asmBOP(): unhandled operator '%d'\n", Op);
