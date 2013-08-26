@@ -16,9 +16,9 @@ static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
 static keywordTag lookKeyword (const char* str);
 
-lexerCtx* lexerInit (FILE* file, const char* filename) {
+lexerCtx* lexerInit (FILE* file) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
-    ctx->stream = streamInit(file, filename);
+    ctx->stream = streamInit(file);
 
     ctx->token = tokenUndefined;
     ctx->keyword = keywordUndefined;

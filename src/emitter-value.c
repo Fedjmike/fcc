@@ -375,12 +375,13 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
         operandFree(R);
 
-    } else if (!strcmp(Node->o, "-")) {
+    } else if (   !strcmp(Node->o, "-")
+               || !strcmp(Node->o, "~")) {
         asmEnter(ctx->Asm);
         Value = R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
         asmLeave(ctx->Asm);
 
-        asmUOP(ctx->Asm, uopNeg, R);
+        asmUOP(ctx->Asm, !strcmp(Node->o, "-") ? uopNeg : uopBitwiseNot, R);
 
     } else if (!strcmp(Node->o, "*")) {
         operand Ptr = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));

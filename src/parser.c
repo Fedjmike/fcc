@@ -24,13 +24,13 @@ static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
 static parserCtx parserInit (FILE* file, const char* filename, sym* global, const vector/*<const char* const>*/ searchPaths) {
-    lexerCtx* lexer = lexerInit(file, filename);
+    lexerCtx* lexer = lexerInit(file);
 
     return (parserCtx) {lexer, {lexer->stream->line, lexer->stream->lineChar},
-                           searchPaths,
-                           global,
-                           0,
-                           0, 0};;
+                        filename, searchPaths,
+                        global,
+                        0,
+                        0, 0};;
 }
 
 static void parserEnd (parserCtx ctx) {

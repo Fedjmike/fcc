@@ -6,9 +6,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-streamCtx* streamInit (FILE* file, const char* filename) {
+streamCtx* streamInit (FILE* file) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
-    ctx->filename = filename;
     ctx->file = file;
 
     ctx->current = 0;
