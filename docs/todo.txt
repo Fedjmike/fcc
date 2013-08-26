@@ -2,60 +2,40 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
              -  Information      o  Option
 
 [ ] Self hosting
-    [ ] Discrepancies between GCC and FCC:
+    [ ] Discrepancies between C11 and FCC:
         - struct and union decl syntax & semantics
         - Module system
         - Operator precedence
     [ ] ABI
-[ ] Command line options
-    [ ] Control pretty printing
-[ ] Modules
+[ ] Control pretty printing
+[-] Modules
     - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
-[-] CRT support
 [-] Type system
-    - By val -> By ref (grr)
-    - Wrap types in modifiers: ptr, array, fn
-    - Match-all tag for error handling
     [ ] Unique ptrs?
-    [ ] Lvalues
+    [x] Lvalues
     [ ] Narrowing/widening (careful with function rets)
 [ ] Error handling
     [ ] Skipping
 [-] struct
     [ ] Literals
-[ ] union
-    [ ] Cray-cray anonymous struct in anonymous union in struct things
-[-] enum
-[ ] typedef
-[x] Block scope
-[x] Casts
-    - (type) value
-    - Differentiate between this and (value) by symbol lookup
+[x] union
+[ ] Cray-cray anonymous struct in anonymous union in struct things
+[ ] enum
+[-] typedef
 [-] Operators
-    [x] Pointers
-    [x] Logical
-    [x] Bitwise
-    [x] Shifts
     [-] Modulo
     [-] Division
-    [x] Ternary if
-    [-] Comma
 [ ] const
 [ ] string
-[x] bool
 [-] Prototypes
     [ ] Structs
-    [ ] Functions
-[-] Function pointers?
-[x] do while
-[ ] Varargs
+    [x] Functions
+[-] Varargs
 [ ] static
     [ ] Variables
     [ ] Functions
 [ ] extern
 [ ] Global variables
-[x] sizeof
-[x] break
 [ ] continue
 [ ] main
     [ ] Args
@@ -66,31 +46,22 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
     [x] Symbols
 [-] If an operand is not literally the result, recreate it
     fo safety n shizzle
-[ ] Emitter helper functions
-[x] Normalize ptr decl binding
-[x] astCreateBOP(op, left, right)
 [-] Decode AST nodes like in emitterLoop and emitterFor
 [-] Assertions
 [ ] Clean up value moving code
-[x] Const correctness
 [-] Make sure prototypes and implementation match exactly (static)
-[ ] Use a cond field of ??? AST ???
 [ ] Do analyzerArrayLiteral lits properly
 [ ] File names in error messages
 [ ] Fix type compatibility
     - Type coercion needed (remember: bool -> int)
 [ ] Fix bop location thingy (astCreateBOP(o, l))
-[ ] Fix lvalue error messages
+[ ] Fix lvalue error messages ???
 [ ] Check constness of array sizes, enum values etc
-[x] Move type assignment stuff to analyzer? Could solve some of the above
-[x] Filext
-[x] tag -> tag
 [ ] Array size detection (basic x[] = {...})
-[ ] Lvalues
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
-[ ] Symbol shadowing
+[-] Symbol shadowing
 [ ] Review type compatibility (esp. w.r.t. derivation & unification)
 [ ] Check that fn impl and var init are semantically valid
 [ ] Get rid of &regs[] use outside reg.c
@@ -107,9 +78,8 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
       placement.
 [ ] Add symbol size back to debug output
 [ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
+    Why not?
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[ ] Shadowing
-    - Warning? Error?
 [ ] Param name clash
 [ ] Line that starts with undeclared ident... assume decl?
 [ ] Incomplete types and all that shizzle
@@ -122,12 +92,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 [-] Abysmal error recovery
 [ ] AST field reuse is weird and unclear
-[x] Parser/semantics merged => overly complex
-    - When in doubt, reject *semantically*
-      This means the parser fucks up less.
 [ ] Dealing with operands in the emitter is cumbersome
-[x] Arch specifics are a bit magic value-y
-[x] Type system overly simple
 [-] Lack of comments, esp. interface documentation
 [-] Assumption of operand tag permutations required
 [ ] Unit tests?

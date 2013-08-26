@@ -199,6 +199,12 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         operandFree(L);
         operandFree(R);
 
+    } else if (!strcmp(Node->o, ",")) {
+        asmEnter(ctx->Asm);
+        operandFree(emitterValue(ctx, Node->l, operandCreate(operandUndefined)));
+        Value = R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
+
     } else {
         asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
