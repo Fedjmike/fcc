@@ -45,7 +45,6 @@ static FILE* parserOpenFile (const char* filename, const vector/*<const char* co
         const char* path = vectorGet(&searchPaths, i);
         char* fullname = malloc(strlen(path)+1+filenameLength+1);
         sprintf(fullname, "%s/%s", path, filename);
-        printf("Trying '%s'\n", fullname);
         file = fopen(fullname, "r");
         free(fullname);
 
