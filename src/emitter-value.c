@@ -547,8 +547,6 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Sizeof");
 
     const type* DT = Node->r->dt;
@@ -560,8 +558,6 @@ static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Symbol");
 
     operand Value = operandCreate(operandUndefined);
@@ -587,8 +583,6 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Literal");
 
     operand Value;
