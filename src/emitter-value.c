@@ -289,6 +289,8 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
+    Value = emitterOperation(ctx->Asm, op, Node->l, Node->r);
+
     asmEnter(ctx->Asm);
     operand Value, R, L = emitterValue(ctx, Node->l, operandCreate(operandMem));
     asmLeave(ctx->Asm);
@@ -345,8 +347,8 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
             debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
     }
 
-    Value = R;
-    operandFree(L);
+    Value = !strcmp(Node->o, "=") ? R : L;
+    operandFree(!strcmp(Node->o, "=") ? L : R);
 
     debugLeave();
 
