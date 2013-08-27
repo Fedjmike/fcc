@@ -197,7 +197,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 }
 
 /**
- * StructOrUnion = "struct" | "union" [ Name# ]
+ * StructOrUnion = "struct" | "union" Name#
  *                 [ "{" [{ Field }] "}" ]
  *
  * Name is told to create a symbol of the tag indicated by the first

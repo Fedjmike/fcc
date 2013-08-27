@@ -37,7 +37,7 @@ Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = <Ident> | StructOrUnion
-StructOrUnion = "struct" | "union" [ Name# ]
+StructOrUnion = "struct" | "union" Name#
                 [ "{" [{ Field }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
