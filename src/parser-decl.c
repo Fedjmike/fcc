@@ -135,26 +135,10 @@ static ast* parserParam (parserCtx* ctx, bool inDecl) {
 static storageTag parserStorage (parserCtx* ctx) {
     debugEnter("Storage");
 
-    storageTag storage = storageAuto;
-
-    if (tokenIsKeyword(ctx, keywordAuto)) {
-        storage = storageAuto;
-        tokenMatch(ctx);
-
-    } else if (tokenIsKeyword(ctx, keywordStatic)) {
-        storage = storageStatic;
-        tokenMatch(ctx);
-
-    } else if (tokenIsKeyword(ctx, keywordExtern)) {
-        storage = storageExtern;
-        tokenMatch(ctx);
-
-    } else if (tokenIsKeyword(ctx, keywordTypedef)) {
-        storage = storageTypedef;
-        tokenMatch(ctx);
-
-    } else
-        {}
+    storageTag storage = tokenTryMatchKeyword(ctx, keywordStatic) ? storageStatic :
+                         tokenTryMatchKeyword(ctx, keywordExtern) ? storageExtern :
+                         tokenTryMatchKeyword(ctx, keywordTypedef) ? storageTypedef :
+                         (tokenTryMatchKeyword(ctx, keywordAuto), storage = storageAuto);
 
     debugLeave();
 
