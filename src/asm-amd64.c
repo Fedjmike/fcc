@@ -94,7 +94,7 @@ void asmPopN (asmCtx* ctx, int n) {
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {
     if (Dest.tag == operandMem && Src.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAlloc(Dest.size > Src.size ? Dest.size : Src.size));
+        operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
         asmMove(ctx, intermediate, Src);
         asmMove(ctx, Dest, intermediate);
         operandFree(intermediate);
@@ -145,11 +145,25 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         /*Unlike lea, perform the op after the move. This is because these
-          ops affect the flags (particularly cmp)*/
-        operand intermediate = operandCreateReg(regAlloc(L.size > R.size ? L.size : R.size));
+          ops affect the flags (particularly cmp)
+          !!!WHO EXPLOITS THIS?!!! DOESNT WORK AS BELOW*/
+        operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
         operandFree(intermediate);
+
+    /*imul m64, <...> isnt a thing
+      Sucks, right?*/
+    } else if (Op == bopMul && L.tag == operandMem && operandGetSize(ctx->arch, L) == 8) {
+        if (R.tag != operandReg) {
+            operand oldR = R;
+            R = operandCreateReg(regAlloc(max(L.size, R.size)));
+            asmMove(ctx, R, oldR);
+        }
+
+        asmBOP(ctx, bopMul, R, L);
+        asmMove(ctx, L, R);
+        operandFree(R);
 
     } else {
         char* LStr = operandToStr(L);

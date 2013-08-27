@@ -289,63 +289,41 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
-    Value = emitterOperation(ctx->Asm, op, Node->l, Node->r);
-
     asmEnter(ctx->Asm);
-    operand Value, R, L = emitterValue(ctx, Node->l, operandCreate(operandMem));
+    operand Value, L = emitterValue(ctx, Node->l, operandCreate(operandMem)),
+                   R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
     asmLeave(ctx->Asm);
 
-    if (!strcmp(Node->o, "*=")) {
-        /*imul m64, r/imm64 isnt a thing
-          So we have to do:
-          [request R -> reg]
-          [request L -> mem]
-          imul R:reg, L
-          mov L, R:reg
-          Sucks, right?*/
 
-        asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreate(operandReg));
-        asmLeave(ctx->Asm);
-
-        asmBOP(ctx->Asm, bopMul, R, L);
+    if (!strcmp(Node->o, "="))
         asmMove(ctx->Asm, L, R);
 
-    } else {
-        asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-        asmLeave(ctx->Asm);
+    else if (!strcmp(Node->o, "+="))
+        asmBOP(ctx->Asm, bopAdd, L, R);
 
-        if (!strcmp(Node->o, "="))
-            asmMove(ctx->Asm, L, R);
+    else if (!strcmp(Node->o, "-="))
+        asmBOP(ctx->Asm, bopSub, L, R);
 
-        else if (!strcmp(Node->o, "+="))
-            asmBOP(ctx->Asm, bopAdd, L, R);
+    else if (!strcmp(Node->o, "*="))
+        asmBOP(ctx->Asm, bopMul, L, R);
 
-        else if (!strcmp(Node->o, "-="))
-            asmBOP(ctx->Asm, bopSub, L, R);
+    else if (!strcmp(Node->o, "&="))
+        asmBOP(ctx->Asm, bopBitAnd, L, R);
 
-        else if (!strcmp(Node->o, "*="))
-            asmBOP(ctx->Asm, bopMul, L, R);
+    else if (!strcmp(Node->o, "|="))
+        asmBOP(ctx->Asm, bopBitOr, L, R);
 
-        else if (!strcmp(Node->o, "&="))
-            asmBOP(ctx->Asm, bopBitAnd, L, R);
+    else if (!strcmp(Node->o, "^="))
+        asmBOP(ctx->Asm, bopBitXor, L, R);
 
-        else if (!strcmp(Node->o, "|="))
-            asmBOP(ctx->Asm, bopBitOr, L, R);
+    else if (!strcmp(Node->o, ">>="))
+        asmBOP(ctx->Asm, bopShR, L, R);
 
-        else if (!strcmp(Node->o, "^="))
-            asmBOP(ctx->Asm, bopBitXor, L, R);
+    else if (!strcmp(Node->o, "<<="))
+        asmBOP(ctx->Asm, bopShL, L, R);
 
-        else if (!strcmp(Node->o, ">>="))
-            asmBOP(ctx->Asm, bopShR, L, R);
-
-        else if (!strcmp(Node->o, "<<="))
-            asmBOP(ctx->Asm, bopShL, L, R);
-
-        else
-            debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
-    }
+    else
+        debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
 
     Value = !strcmp(Node->o, "=") ? R : L;
     operandFree(!strcmp(Node->o, "=") ? L : R);
