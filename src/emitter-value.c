@@ -451,6 +451,14 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
     operand Value;
 
+    /*The return will be passed in a temporary position (stack) allocated by
+      the caller.*/
+    bool retInTemp = typeGetSize(ctx->arch, Node->dt) >= ctx->arch->wordsize;
+
+    if (retInTemp)
+        /*Allocate the temporary space (rounded up to the nearest word)*/
+        asmPushN(ctx->Asm, (typeGetSize(ctx->arch, Node->dt)-1)/ctx->arch->wordsize + 1);
+
     /*Save the general registers in use*/
     for (int r = regRAX; r <= regR15; r++)
         if (regIsUsed(r))
@@ -466,16 +474,26 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
         argSize += Arg.size;
     }
 
+    /*Pass on the reference to the temporary return space
+      Last, so that a varargs fn can still locate it*/
+    if (retInTemp) {
+        operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
+        asmEvalAddress(ctx->Asm, intermediate, operandCreateMem(&regs[regRSP], argSize, ctx->arch->wordsize));
+        asmPush(ctx->Asm, intermediate);
+        operandFree(intermediate);
+    }
+
     /*Get the address (usually, as a label) of the proc*/
     operand Proc = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
     asmCall(ctx->Asm, Proc);
     operandFree(Proc);
 
     if (!typeIsVoid(Node->dt)) {
+        int size = retInTemp ? ctx->arch->wordsize : typeGetSize(ctx->arch, Node->dt);
+
         /*If RAX is already in use (currently backed up to the stack), relocate the
           return value to another free reg before RAXs value is restored.*/
         if (regIsUsed(regRAX)) {
-            int size = typeGetSize(ctx->arch, Node->dt);
             Value = operandCreateReg(regAlloc(size));
             int tmp = regs[regRAX].allocatedAs;
             regs[regRAX].allocatedAs = size;
@@ -483,17 +501,21 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
             regs[regRAX].allocatedAs = tmp;
 
         } else
-            Value = operandCreateReg(regRequest(regRAX, typeGetSize(ctx->arch, Node->dt)));
+            Value = operandCreateReg(regRequest(regRAX, size));
+
+        /*The temporary's pointer is returned to us*/
+        if (retInTemp)
+            Value = operandCreateMem(Value.reg, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else
         Value = operandCreateVoid();
 
-    /*Pop the args*/
-    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize);
+    /*Pop the args (and temporary return pointer)*/
+    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + (retInTemp ? 1 : 0));
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (regIndex r = regR15; r >= regRAX; r--)
-        //Attempt to restore all but the one we just allocated for the ret value
+        /*Attempt to restore all but the one we just allocated for the ret value*/
         if (regIsUsed(r) && &regs[r] != Value.reg)
             asmPop(ctx->Asm, operandCreateReg(&regs[r]));
 
