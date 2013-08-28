@@ -73,6 +73,8 @@ void asmPush (struct asmCtx* ctx, operand L);
  */
 void asmPop (struct asmCtx* ctx, operand L);
 
+void asmPushN (struct asmCtx* ctx, int n);
+
 /**
  * Remove n words from the stack and discard them
  */

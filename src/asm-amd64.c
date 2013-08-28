@@ -88,6 +88,10 @@ void asmPop (asmCtx* ctx, operand L) {
     free(LStr);
 }
 
+void asmPushN (asmCtx* ctx, int n) {
+    asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+}
+
 void asmPopN (asmCtx* ctx, int n) {
     asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
