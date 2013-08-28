@@ -18,8 +18,8 @@
 #include "stdlib.h"
 
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
-static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 
 static operand emitterUOP (emitterCtx* ctx, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, const ast* Node);
@@ -234,6 +234,41 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
+static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("AssignnentBOP");
+
+    asmEnter(ctx->Asm);
+    operand Value, L = emitterValue(ctx, Node->l, operandCreate(operandMem)),
+                   R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+    asmLeave(ctx->Asm);
+
+    boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
+                     !strcmp(Node->o, "-=") ? bopSub :
+                     !strcmp(Node->o, "*=") ? bopMul :
+                     !strcmp(Node->o, "&=") ? bopBitAnd :
+                     !strcmp(Node->o, "|=") ? bopBitOr :
+                     !strcmp(Node->o, "^=") ? bopBitXor :
+                     !strcmp(Node->o, ">>=") ? bopShR :
+                     !strcmp(Node->o, "<<=") ? bopShL : bopUndefined;
+
+    if (!strcmp(Node->o, "=")) {
+        Value = R;
+        asmMove(ctx->Asm, L, R);
+        operandFree(L);
+
+    } else if (bop != bopUndefined) {
+        Value = L;
+        asmBOP(ctx->Asm, bop, L, R);
+        operandFree(R);
+
+    } else
+        debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
+
+    debugLeave();
+
+    return Value;
+}
+
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("LogicalBOP");
 
@@ -268,41 +303,6 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 
     asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(1));
     asmLabel(ctx->Asm, ShortLabel);
-
-    debugLeave();
-
-    return Value;
-}
-
-static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
-    debugEnter("AssignnentBOP");
-
-    asmEnter(ctx->Asm);
-    operand Value, L = emitterValue(ctx, Node->l, operandCreate(operandMem)),
-                   R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-    asmLeave(ctx->Asm);
-
-    boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
-                     !strcmp(Node->o, "-=") ? bopSub :
-                     !strcmp(Node->o, "*=") ? bopMul :
-                     !strcmp(Node->o, "&=") ? bopBitAnd :
-                     !strcmp(Node->o, "|=") ? bopBitOr :
-                     !strcmp(Node->o, "^=") ? bopBitXor :
-                     !strcmp(Node->o, ">>=") ? bopShR :
-                     !strcmp(Node->o, "<<=") ? bopShL : bopUndefined;
-
-    if (!strcmp(Node->o, "=")) {
-        Value = R;
-        asmMove(ctx->Asm, L, R);
-        operandFree(L);
-
-    } else if (bop != bopUndefined) {
-        Value = L;
-        asmBOP(ctx->Asm, bop, L, R);
-        operandFree(R);
-
-    } else
-        debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
 
     debugLeave();
 
