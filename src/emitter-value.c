@@ -211,29 +211,17 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
 
-        if (!strcmp(Node->o, "+"))
-            asmBOP(ctx->Asm, bopAdd, L, R);
+        boperation bop = !strcmp(Node->o, "+") ? bopAdd :
+                         !strcmp(Node->o, "-") ? bopSub :
+                         !strcmp(Node->o, "*") ? bopMul :
+                         !strcmp(Node->o, "&") ? bopBitAnd :
+                         !strcmp(Node->o, "|") ? bopBitOr :
+                         !strcmp(Node->o, "^") ? bopBitXor :
+                         !strcmp(Node->o, ">>") ? bopShR :
+                         !strcmp(Node->o, "<<") ? bopShL : bopUndefined;
 
-        else if (!strcmp(Node->o, "-"))
-            asmBOP(ctx->Asm, bopSub, L, R);
-
-        else if (!strcmp(Node->o, "*"))
-            asmBOP(ctx->Asm, bopMul, L, R);
-
-        else if (!strcmp(Node->o, "&"))
-            asmBOP(ctx->Asm, bopBitAnd, L, R);
-
-        else if (!strcmp(Node->o, "|"))
-            asmBOP(ctx->Asm, bopBitOr, L, R);
-
-        else if (!strcmp(Node->o, "^"))
-            asmBOP(ctx->Asm, bopBitXor, L, R);
-
-        else if (!strcmp(Node->o, ">>"))
-            asmBOP(ctx->Asm, bopShR, L, R);
-
-        else if (!strcmp(Node->o, "<<"))
-            asmBOP(ctx->Asm, bopShL, L, R);
+        if (bop)
+            asmBOP(ctx->Asm, bop, L, R);
 
         else
             debugErrorUnhandled("emitterBOP", "operator", Node->o);
