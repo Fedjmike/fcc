@@ -93,12 +93,41 @@ void asmPopN (asmCtx* ctx, int n) {
 }
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {
-    if (Dest.tag == operandMem && Src.tag == operandMem) {
+    if (Dest.tag == operandInvalid || Src.tag == operandInvalid)
+        return;
+
+    /*Too big for single register*/
+    else if (operandGetSize(ctx->arch, Dest) > ctx->arch->wordsize) {
+        debugAssert("asmMove", "Dest mem", Dest.tag == operandMem);
+        debugAssert("asmMove", "Src mem", Src.tag == operandMem);
+        debugAssert("asmMove", "operand size equality",
+                    operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src));
+
+        int size = operandGetSize(ctx->arch, Dest);
+        int chunk = ctx->arch->wordsize;
+        Dest.size = Src.size = chunk;
+
+        /*Move up the operands, so far as a chunk would not go past their ends*/
+        for (int i = 0;
+             i+chunk <= size;
+             i += chunk, Dest.offset += chunk, Src.offset += chunk)
+            asmMove(ctx, Dest, Src);
+
+        /*Were the operands not an even multiple of the chunk size?*/
+        if (size % chunk != 0) {
+            /*Final chunk size is the remainder*/
+            Dest.size = Src.size = size % chunk;
+            asmMove(ctx, Dest, Src);
+        }
+
+    /*Both memory operands*/
+    } else if (Dest.tag == operandMem && Src.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
         asmMove(ctx, intermediate, Src);
         asmMove(ctx, Dest, intermediate);
         operandFree(intermediate);
 
+    /*Flags*/
     } else if (Src.tag == operandFlags) {
         asmMove(ctx, Dest, operandCreateLiteral(1));
         asmConditionalMove(ctx, Src, Dest, operandCreateLiteral(0));
