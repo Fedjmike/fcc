@@ -5,6 +5,8 @@
 #include "../inc/sym.h"
 #include "../inc/reg.h"
 
+#include "../inc/architecture.h"
+
 #include "stdlib.h"
 #include "stdarg.h"
 #include "stdio.h"
@@ -230,4 +232,15 @@ void reportRegs () {
             debugOut("%s ", regToStr(&regs[r]));
 
     debugOut(" ]\n");
+}
+
+void reportOperand (const architecture* arch, operand R) {
+    char* RStr = operandToStr(R);
+
+    debugOut("tag: %s   size: %d   str: %s\n",
+             operandTagGetStr(R.tag),
+             operandGetSize(arch, R),
+             RStr);
+
+    free(RStr);
 }
