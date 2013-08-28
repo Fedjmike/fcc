@@ -60,9 +60,10 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
     for (ast* Current = Tree->firstChild;
          Current;
          Current = Current->nextSibling) {
-        /*!!!
-          what?*/
-        if (Current->tag == astFnImpl)
+        if (Current->tag == astUsing)
+            emitterModule(ctx, Current->r);
+
+        else if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
         else if (Current->tag == astDecl)
