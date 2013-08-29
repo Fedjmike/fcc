@@ -87,8 +87,6 @@ static void emitterUnion (emitterCtx* ctx, ast* Node) {
 }
 
 static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
-    debugMsg("DeclNode");
-
     if (Node->tag == astInvalid || Node->tag == astEmpty)
         ;
 
