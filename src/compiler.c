@@ -28,7 +28,7 @@ compilerResult compiler (const char* input, const char* output, const vector/*<c
     symCreateType(Global, "intptr_t", arch.wordsize, typeIntegral);
 
     if (arch.wordsize >= 8)
-        symCreateType(Global, "uint64_t", arch.wordsize, typeIntegral);
+        symCreateType(Global, "uint64_t", 8, typeIntegral);
 
     int errors = 0, warnings = 0;
 
