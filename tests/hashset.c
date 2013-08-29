@@ -52,7 +52,12 @@ void hashset_destroy (hashset* set) {
 }
 
 static int hashset_hash (hashset* set, void* element) {
-    return (int) element % set->size;
+    int hash = (int) element;
+    
+    while (hash > set->size)
+        hash -= set->size;
+
+    return hash;
 }
 
 static int hashset_find (hashset* set, void* element) {
@@ -142,7 +147,7 @@ int main (int argc, char** argv) {
     int max = 100000;
 
     for (int i = 0; i <= max; i++) {
-        intptr_t element = rand() % max;
+        intptr_t element = (intptr_t) rand();
         //printf("Adding: %d\n", element);
         hashset_add(&set, (void*) element);
     }
