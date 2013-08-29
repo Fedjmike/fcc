@@ -462,7 +462,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
     /*The return will be passed in a temporary position (stack) allocated by
       the caller.*/
-    bool retInTemp = typeGetSize(ctx->arch, Node->dt) >= ctx->arch->wordsize;
+    bool retInTemp = typeGetSize(ctx->arch, Node->dt) > ctx->arch->wordsize;
 
     if (retInTemp)
         /*Allocate the temporary space (rounded up to the nearest word)*/
