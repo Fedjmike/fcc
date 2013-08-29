@@ -14,6 +14,7 @@ static ast* parserParam (parserCtx* ctx, bool inDecl);
 static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
+static struct ast* parserEnum (parserCtx* ctx);
 
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
@@ -146,7 +147,7 @@ static storageTag parserStorage (parserCtx* ctx) {
 }
 
 /**
- * DeclBasic = <Ident> | StructUnion
+ * DeclBasic = <Ident> | StructUnion | Enum
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
@@ -155,6 +156,9 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
     if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
         Node = parserStructOrUnion(ctx);
+
+    else if (tokenIsKeyword(ctx, keywordEnum))
+        Node = parserEnum(ctx);
 
     else {
         sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
@@ -181,8 +185,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 }
 
 /**
- * StructOrUnion = "struct" | "union" Name#
- *                 [ "{" [{ Field }] "}" ]
+ * StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
  *
  * Name is told to create a symbol of the tag indicated by the first
  * token.
@@ -216,6 +219,31 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
     }
 
     ctx->scope = OldScope;
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Enum = "enum" Name# [ "{" Name# [{ "," Name# }] "}" ]
+ */
+static struct ast* parserEnum (parserCtx* ctx) {
+    debugEnter("Enum");
+
+    tokenMatchKeyword(ctx, keywordEnum);
+
+    ast* Node = astCreateEnum(ctx->location, parserName(ctx, true, symEnum));
+    Node->symbol = Node->l->symbol;
+
+    /*Body?*/
+    if (tokenTryMatchPunct(ctx, punctLBrace)) {
+        if (!tokenIsPunct(ctx, punctRBrace)) do {
+            astAddChild(Node, parserName(ctx, true, symId));
+        } while (tokenTryMatchPunct(ctx, punctComma));
+
+        tokenMatchPunct(ctx, punctRBrace);
+    }
 
     debugLeave();
 
@@ -409,8 +437,8 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
 
             /*SPECIAL EXCEPTION
               In C, there are multiple symbol tables for variables, typedefs, structs etc
-              But not in fcc! So there is this special exception: structs and unions may
-              be redeclared as typedefs, to allow for this idiom:
+              But not in fcc! So there is this special exception: structs and unions and
+              enums may be redeclared as typedefs, to allow for this idiom:
 
               typedef struct x {
                   ...
@@ -419,7 +447,8 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
               Doesn't guarantee that it's redeclaring the *right* symbol.*/
             if (   Node->symbol->tag != tag
                 && !(   (   Node->symbol->tag == symStruct
-                         || Node->symbol->tag == symUnion)
+                         || Node->symbol->tag == symUnion
+                         || Node->symbol->tag == symEnum)
                      && tag == symTypedef))
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
