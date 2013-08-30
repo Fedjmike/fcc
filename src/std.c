@@ -50,6 +50,7 @@ bool fexists (const char* filename) {
 char* fgetpath (const char* fullname) {
     int index = (int)(strrchr(fullname, (int) '/') - fullname);
     char* ret = strncpy(malloc(index+1), fullname, index);
+    ret[index] = 0;
     return ret;
 }
 
