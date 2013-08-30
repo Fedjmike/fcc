@@ -6,4 +6,4 @@ typedef struct {
     int errors, warnings;
 } compilerResult;
 
-compilerResult compiler (const char* input, const char* output, const vector/*<const char* const>*/ searchPaths);
+compilerResult compiler (const char* input, const char* output, vector/*<char*>*/* searchPaths);

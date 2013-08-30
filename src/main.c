@@ -14,18 +14,15 @@ static int driver (config conf) {
     int errors = 0, warnings = 0;
 
     vector/*<char*>*/ searchPaths = vectorCreate(8);
+    vectorPush(&searchPaths, "");
 
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++) {
-        vectorPush(&searchPaths, fgetpath(vectorGet(&conf.inputs, i)));
-
-        compilerResult result = compiler(fgetname(vectorGet(&conf.inputs, i)),
+        compilerResult result = compiler(vectorGet(&conf.inputs, i),
                                          vectorGet(&conf.intermediates, i),
-                                         searchPaths);
+                                         &searchPaths);
         errors += result.errors;
         warnings += result.warnings;
-
-        free(vectorPop(&searchPaths));
     }
 
     vectorDestroy(&searchPaths);

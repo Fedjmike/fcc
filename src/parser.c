@@ -23,39 +23,50 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx parserInit (FILE* file, const char* filename, sym* global, const vector/*<const char* const>*/ searchPaths) {
+static parserCtx parserInit (FILE* file, const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
     lexerCtx* lexer = lexerInit(file);
 
     return (parserCtx) {lexer, {lexer->stream->line, lexer->stream->lineChar},
                         filename, searchPaths,
                         global,
                         0,
-                        0, 0};;
+                        0, 0};
 }
 
 static void parserEnd (parserCtx ctx) {
+    free(vectorPop(ctx.searchPaths));
     lexerEnd(ctx.lexer);
 }
 
-static FILE* parserOpenFile (const char* filename, const vector/*<const char* const>*/ searchPaths) {
-    FILE* file;
+static FILE* parserOpenFile (const char* filename, vector/*<char*>*/* searchPaths) {
     int filenameLength = strlen(filename);
 
-    for (int i = 0; i < searchPaths.length; i++) {
-        const char* path = vectorGet(&searchPaths, i);
-        char* fullname = malloc(strlen(path)+1+filenameLength+1);
-        sprintf(fullname, "%s/%s", path, filename);
-        file = fopen(fullname, "r");
-        free(fullname);
+    for (int i = 0; i < searchPaths->length; i++) {
+        const char* path = vectorGet(searchPaths, i);
+        char* fullname;
 
-        if (file)
+        if (path[0] != 0) {
+            fullname = malloc(strlen(path)+1+filenameLength+1);
+            sprintf(fullname, "%s/%s", path, filename);
+
+        } else
+            fullname = strdup(filename);
+
+        FILE* file = fopen(fullname, "r");
+
+        if (file) {
+            vectorPush(searchPaths, fgetpath(fullname));
+            free(fullname);
             return file;
+
+        } else
+            free(fullname);
     }
 
     return 0;
 }
 
-parserResult parser (const char* filename, sym* global, const vector/*<const char* const>*/ searchPaths) {
+parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
     FILE* file = parserOpenFile(filename, searchPaths);
 
     if (file) {

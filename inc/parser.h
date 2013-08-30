@@ -13,7 +13,7 @@ typedef struct parserCtx {
     tokenLocation location;
 
     const char* filename;
-    const vector/*<const char* const>*/ searchPaths;
+    vector/*<char*>*/* searchPaths;
 
     struct sym* scope;
 
@@ -31,6 +31,6 @@ typedef struct {
     bool notfound;
 } parserResult;
 
-parserResult parser (const char* filename, struct sym* global, const vector/*<const char* const>*/ searchPaths);
+parserResult parser (const char* filename, struct sym* global, vector/*<char*>*/* searchPaths);
 
 struct ast* parserCode (parserCtx* ctx);
