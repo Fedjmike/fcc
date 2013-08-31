@@ -17,6 +17,7 @@ typedef struct {
 
     vector/*<char*>*/ inputs, intermediates;
     char* output;
+    vector/*<char*>*/ includeSearchPaths;
 } config;
 
 config configCreate ();

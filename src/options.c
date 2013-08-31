@@ -4,11 +4,19 @@
 #include "stdio.h"
 #include "string.h"
 
+typedef enum {
+    expectNothing,
+    expectOutput,
+    expectIncludeSearchPath,
+    expectTheUnexpected
+} expectTag;
+
 typedef struct {
-    bool expectOutput;
+    expectTag expect;
 } optionsState;
 
 static void configSetMode (config* conf, configMode mode, const char* option);
+static void stateSetExpect (optionsState* state, expectTag expect, const char* option);
 
 static void optionsParseMacro (config* conf, optionsState* state, const char* option);
 static void optionsParseMicro (config* conf, optionsState* state, const char* option);
@@ -23,12 +31,15 @@ config configCreate () {
     conf.inputs = vectorCreate(32);
     conf.intermediates = vectorCreate(32);
     conf.output = 0;
+    conf.includeSearchPaths = vectorCreate(8);
+    vectorPush(&conf.includeSearchPaths, strdup(""));
     return conf;
 }
 
 void configDestroy (config conf) {
     vectorDestroyObjs(&conf.inputs, free);
     vectorDestroyObjs(&conf.intermediates, free);
+    vectorDestroyObjs(&conf.includeSearchPaths, free);
     free(conf.output);
 }
 
@@ -37,6 +48,15 @@ static void configSetMode (config* conf, configMode mode, const char* option) {
         printf("fcc: Option '%s' overriding previous\n", option);
 
     conf->mode = mode;
+}
+
+/*:::: OPTIONS STATE ::::*/
+
+static void stateSetExpect (optionsState* state, expectTag expect, const char* option) {
+    if (state->expect != expectNothing)
+        printf("fcc: Option '%s' overriding previous\n", option);
+
+    state->expect = expect;
 }
 
 /*:::: OPTIONS PARSER ::::*/
@@ -69,7 +89,10 @@ static void optionsParseMicro (config* conf, optionsState* state, const char* op
             conf->deleteAsm = false;
 
         else if (suboption == 'o')
-            state->expectOutput = true;
+            stateSetExpect(state, expectOutput, asStr);
+
+        else if (suboption == 'I')
+            stateSetExpect(state, expectIncludeSearchPath, asStr);
 
         else
             printf("fcc: Unknown option '%c' in '%s'\n", suboption, option);
@@ -77,15 +100,17 @@ static void optionsParseMicro (config* conf, optionsState* state, const char* op
 }
 
 void optionsParse (config* conf, int argc, char** argv) {
-    optionsState state;
-    state.expectOutput = false;
+    optionsState state = {expectNothing};
 
     for (int i = 1; i < argc; i++) {
         const char* option = argv[i];
 
         if (strprefix(option, "-")) {
-            if (state.expectOutput)
-                printf("fcc: Expected output file, found option '%s'\n", option);
+            if (state.expect != expectNothing) {
+                const char* noun = state.expect == expectOutput ? "output file" : "include search path";
+                printf("fcc: Expected %s for preceding option, found option '%s'\n", noun, option);
+                state.expect = expectNothing;
+            }
 
             if (strprefix(option, "--"))
                 optionsParseMacro(conf, &state, option);
@@ -94,13 +119,18 @@ void optionsParse (config* conf, int argc, char** argv) {
                 optionsParseMicro(conf, &state, option);
 
         } else {
-            if (state.expectOutput) {
+            if (state.expect == expectOutput) {
                 if (conf->output) {
                     printf("fcc: Overriding previous output file with '%s'\n", option);
                     free(conf->output);
                 }
 
                 conf->output = strdup(option);
+                state.expect = expectNothing;
+
+            } else if (state.expect == expectIncludeSearchPath) {
+                vectorPush(&conf->includeSearchPaths, strdup(option));
+                state.expect = expectNothing;
 
             } else {
                 if (fexists(option)) {
