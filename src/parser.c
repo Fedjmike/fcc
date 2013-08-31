@@ -23,22 +23,25 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx parserInit (FILE* file, const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
-    lexerCtx* lexer = lexerInit(file);
+static parserCtx parserInit (const char* filename, char* fullname, sym* global, vector/*<char*>*/* searchPaths) {
+    lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
+
+    vectorPush(searchPaths, fgetpath(fullname));
 
     return (parserCtx) {lexer, {lexer->stream->line, lexer->stream->lineChar},
-                        filename, searchPaths,
+                        filename, fullname, searchPaths,
                         global,
                         0,
                         0, 0};
 }
 
 static void parserEnd (parserCtx ctx) {
+    free(ctx.fullname);
     free(vectorPop(ctx.searchPaths));
     lexerEnd(ctx.lexer);
 }
 
-static FILE* parserOpenFile (const char* filename, vector/*<char*>*/* searchPaths) {
+static char* parserFindFile (const char* filename, vector/*<char*>*/* searchPaths) {
     int filenameLength = strlen(filename);
 
     for (int i = 0; i < searchPaths->length; i++) {
@@ -52,14 +55,10 @@ static FILE* parserOpenFile (const char* filename, vector/*<char*>*/* searchPath
         } else
             fullname = strdup(filename);
 
-        FILE* file = fopen(fullname, "r");
+        if (fexists(fullname))
+            return fullname;
 
-        if (file) {
-            vectorPush(searchPaths, fgetpath(fullname));
-            free(fullname);
-            return file;
-
-        } else
+        else
             free(fullname);
     }
 
@@ -67,10 +66,10 @@ static FILE* parserOpenFile (const char* filename, vector/*<char*>*/* searchPath
 }
 
 parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
-    FILE* file = parserOpenFile(filename, searchPaths);
+    char* fullname = parserFindFile(filename, searchPaths);
 
-    if (file) {
-        parserCtx ctx = parserInit(file, filename, global, searchPaths);
+    if (fullname) {
+        parserCtx ctx = parserInit(filename, fullname, global, searchPaths);
         ast* Module = parserModule(&ctx);
         parserEnd(ctx);
 

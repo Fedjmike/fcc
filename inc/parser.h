@@ -13,6 +13,7 @@ typedef struct parserCtx {
     tokenLocation location;
 
     const char* filename;
+    char* fullname;
     vector/*<char*>*/* searchPaths;
 
     struct sym* scope;
