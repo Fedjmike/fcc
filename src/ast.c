@@ -106,6 +106,12 @@ ast* astCreateUnion (tokenLocation location, ast* name) {
     return Node;
 }
 
+ast* astCreateEnum (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astEnum, location);
+    Node->l = name;
+    return Node;
+}
+
 ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r) {
     ast* Node = astCreate(astBOP, location);
     Node->l = l;
