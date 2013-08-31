@@ -26,7 +26,6 @@ lexerCtx* lexerInit (FILE* file) {
 
     ctx->bufferSize = 64;
     ctx->buffer = malloc(sizeof(char)*ctx->bufferSize);
-    lexerNext(ctx);
     return ctx;
 }
 
@@ -119,15 +118,11 @@ static bool lexerTryEatNext (lexerCtx* ctx, char c) {
         return false;
 }
 
-tokenLocation lexerNext (lexerCtx* ctx) {
-    if (ctx->token == tokenEOF) {
-        tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
-        return loc;
-    }
+void lexerNext (lexerCtx* ctx) {
+    if (ctx->token == tokenEOF)
+        return;
 
     lexerSkipInsignificants(ctx);
-
-    tokenLocation loc = {ctx->stream->line, ctx->stream->lineChar};
 
     ctx->length = 0;
     ctx->keyword = keywordUndefined;
@@ -269,8 +264,6 @@ tokenLocation lexerNext (lexerCtx* ctx) {
     lexerEat(ctx, 0);
 
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
-
-    return loc;
 }
 
 static keywordTag lookKeyword (const char* str) {

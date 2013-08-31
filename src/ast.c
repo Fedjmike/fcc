@@ -48,6 +48,9 @@ void astDestroy (ast* Node) {
     if (Node->dt)
         typeDestroy(Node->dt);
 
+    if (Node->tag == astModule)
+        free(Node->location.filename);
+
     free(Node->o);
     free(Node->literal);
     free(Node);

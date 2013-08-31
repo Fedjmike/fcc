@@ -3,16 +3,23 @@
 #include "../std/std.h"
 
 #include "vector.h"
-#include "lexer.h"
 
 struct ast;
 struct sym;
 
+struct lexerCtx;
+
+typedef struct {
+    char* filename; ///< Only the tokenLocation of the astModule of the file in question owns this
+    int line;
+    int lineChar;
+} tokenLocation;
+
 typedef struct parserCtx {
-    lexerCtx* lexer;
+    struct lexerCtx* lexer;
     tokenLocation location;
 
-    const char* filename;
+    char* filename; ///< Ownership is taken by the tokenLocation of the astModule of the file
     char* fullname;
     vector/*<char*>*/* searchPaths;
 

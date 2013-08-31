@@ -28,8 +28,8 @@ static parserCtx parserInit (const char* filename, char* fullname, sym* global, 
 
     vectorPush(searchPaths, fgetpath(fullname));
 
-    return (parserCtx) {lexer, {lexer->stream->line, lexer->stream->lineChar},
-                        filename, fullname, searchPaths,
+    return (parserCtx) {lexer, {0, 0, 0},
+                        strdup(filename), fullname, searchPaths,
                         global,
                         0,
                         0, 0};
@@ -70,13 +70,14 @@ parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searc
 
     if (fullname) {
         parserCtx ctx = parserInit(filename, fullname, global, searchPaths);
+        tokenNext(&ctx);
         ast* Module = parserModule(&ctx);
         parserEnd(ctx);
 
         return (parserResult) {Module, ctx.errors, ctx.warnings, false};
 
     } else
-        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0}),
+        return (parserResult) {astCreateInvalid((tokenLocation) {0,  0, 0}),
                                1, 0, true};
 }
 

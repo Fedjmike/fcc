@@ -4,6 +4,7 @@
 #include "../inc/ast.h"
 #include "../inc/debug.h"
 
+#include "../inc/lexer.h"
 #include "../inc/parser.h"
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"

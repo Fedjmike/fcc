@@ -20,10 +20,17 @@ sym* scopeSet (parserCtx* ctx, sym* Scope) {
     return Old;
 }
 
+/*:::: ::::*/
+
+static void tokenLocationMsg (tokenLocation loc) {
+    printf("%s:%d:%d: ", loc.filename, loc.line, loc.lineChar);
+}
+
 /*:::: ERROR MESSAGING ::::*/
 
 static void error (parserCtx* ctx, const char* format, ...) {
-    printf("error(%d:%d): ", ctx->location.line, ctx->location.lineChar);
+    tokenLocationMsg(ctx->location);
+    printf("error: ");
 
     va_list args;
     va_start(args, format);
@@ -52,39 +59,35 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
     error(ctx, "illegal %s outside of %s", what, where);
 }
 
-void errorRedeclaredSymAs (struct parserCtx* ctx, sym* Symbol, symTag tag) {
+void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
-    error(ctx, "'%s' redeclared as %s.\n"
-               "     (%d:%d): first declaration here as %s",
-               Symbol->ident, symTagGetStr(tag),
-               first->location.line, first->location.lineChar,
-               symTagGetStr(Symbol->tag));
+    error(ctx, "'%s' redeclared as %s", Symbol->ident, symTagGetStr(tag));
+
+    tokenLocationMsg(first->location);
+    printf("       first declaration here as %s\n", symTagGetStr(Symbol->tag));
 }
 
-void errorReimplementedSym (struct parserCtx* ctx, sym* Symbol) {
-    error(ctx, "%s '%s' reimplemented.\n"
-               "     (%d:%d): first implementation here",
-               Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident,
-               Symbol->impl->location.line, Symbol->impl->location.lineChar);
+void errorReimplementedSym (parserCtx* ctx, sym* Symbol) {
+    error(ctx, "%s '%s' reimplemented",
+          Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
+
+    tokenLocationMsg(Symbol->impl->location);
+    puts("       first implementation here");
 }
 
-void errorFileNotFound (struct parserCtx* ctx, const char* name) {
+void errorFileNotFound (parserCtx* ctx, const char* name) {
     error(ctx, "File not found, '%s'", name);
 }
 
 /*:::: TOKEN HANDLING ::::*/
-
-static bool tokenIs (const parserCtx* ctx, const char* Match) {
-    return !strcmp(ctx->lexer->buffer, Match);
-}
 
 bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword) {
     /*Keyword is keywordUndefined if not keyword token*/
     return ctx->lexer->keyword == keyword;
 }
 
-bool tokenIsPunct (const struct parserCtx* ctx, punctTag punct) {
+bool tokenIsPunct (const parserCtx* ctx, punctTag punct) {
     return ctx->lexer->punct == punct;
 }
 
@@ -115,19 +118,19 @@ bool tokenIsDecl (const parserCtx* ctx) {
 }
 
 void tokenNext (parserCtx* ctx) {
-    ctx->location = lexerNext(ctx->lexer);
+    lexerNext(ctx->lexer);
+    ctx->location = (tokenLocation) {ctx->filename,
+                                     ctx->lexer->stream->line,
+                                     ctx->lexer->stream->lineChar};
 }
 
 void tokenSkipMaybe (parserCtx* ctx) {
-    if (!tokenIs(ctx, ")") && !tokenIs(ctx, "]") && !tokenIs(ctx, "}"))
+    /*if (!tokenIs(ctx, ")") && !tokenIs(ctx, "]") && !tokenIs(ctx, "}"))*/
         tokenNext(ctx);
 }
 
 void tokenMatch (parserCtx* ctx) {
-    debugMsg("matched(%d:%d): '%s'",
-             ctx->location.line,
-             ctx->location.lineChar,
-             ctx->lexer->buffer);
+    debugMsg("matched: '%s'", ctx->lexer->buffer);
     tokenNext(ctx);
 }
 
@@ -175,7 +178,7 @@ void tokenMatchKeyword (parserCtx* ctx, keywordTag keyword) {
     }
 }
 
-bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword) {
+bool tokenTryMatchKeyword (parserCtx* ctx, keywordTag keyword) {
     if (tokenIsKeyword(ctx, keyword)) {
         tokenMatch(ctx);
         return true;
@@ -184,7 +187,7 @@ bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword) {
         return false;
 }
 
-void tokenMatchPunct (struct parserCtx* ctx, punctTag punct) {
+void tokenMatchPunct (parserCtx* ctx, punctTag punct) {
     if (tokenIsPunct(ctx, punct))
         tokenMatch(ctx);
 
@@ -199,7 +202,7 @@ void tokenMatchPunct (struct parserCtx* ctx, punctTag punct) {
     }
 }
 
-bool tokenTryMatchPunct (struct parserCtx* ctx, punctTag punct) {
+bool tokenTryMatchPunct (parserCtx* ctx, punctTag punct) {
     if (tokenIsPunct(ctx, punct)) {
         tokenMatch(ctx);
         return true;

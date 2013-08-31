@@ -2,7 +2,7 @@
 
 #include "../std/std.h"
 
-#include "lexer.h"
+#include "parser.h"
 
 struct type;
 struct sym;

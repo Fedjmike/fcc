@@ -60,12 +60,7 @@ typedef enum {
     punctModulo, punctModuloAssign,
 } punctTag;
 
-typedef struct {
-    int line;
-    int lineChar;
-} tokenLocation;
-
-typedef struct  {
+typedef struct lexerCtx {
     streamCtx* stream;
 
     tokenTag token;
@@ -77,10 +72,10 @@ typedef struct  {
     int length;
 } lexerCtx;
 
-lexerCtx* lexerInit (FILE* File);
+lexerCtx* lexerInit (FILE* file);
 void lexerEnd (lexerCtx* ctx);
 
-tokenLocation lexerNext (lexerCtx* ctx);
+void lexerNext (lexerCtx* ctx);
 
 const char* keywordTagGetStr (keywordTag tag);
 const char* punctTagGetStr (punctTag tag);
