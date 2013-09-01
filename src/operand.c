@@ -192,72 +192,46 @@ char* operandToStr (operand Value) {
 }
 
 const char* operandTagGetStr (operandTag tag) {
-    if (tag == operandUndefined)
-        return "operandUndefined";
-    else if (tag == operandInvalid)
-        return "operandInvalid";
-    else if (tag == operandVoid)
-        return "operandVoid";
-    else if (tag == operandFlags)
-        return "operandFlags";
-    else if (tag == operandReg)
-        return "operandReg";
-    else if (tag == operandMem)
-        return "operandMem";
-    else if (tag == operandMemRef)
-        return "operandMemRef";
-    else if (tag == operandLiteral)
-        return "operandLiteral";
-    else if (tag == operandLabel)
-        return "operandLabel";
-    else if (tag == operandLabelOffset)
-        return "operandLabelOffset";
-    else if (tag == operandStack)
-        return "operandStack";
-
+    if (tag == operandUndefined) return "operandUndefined";
+    else if (tag == operandInvalid) return "operandInvalid";
+    else if (tag == operandVoid) return "operandVoid";
+    else if (tag == operandFlags) return "operandFlags";
+    else if (tag == operandReg) return "operandReg";
+    else if (tag == operandMem) return "operandMem";
+    else if (tag == operandMemRef) return "operandMemRef";
+    else if (tag == operandLiteral) return "operandLiteral";
+    else if (tag == operandLabel) return "operandLabel";
+    else if (tag == operandLabelOffset) return "operandLabelOffset";
+    else if (tag == operandStack) return "operandStack";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("operandTagGetStr", "operand tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }
 
 /* ::::CONDITIONS:::: */
 
 int conditionFromStr (char* cond) {
-    if (!strcmp(cond, "=="))
-        return conditionEqual;
-    else if (!strcmp(cond, "!="))
-        return conditionNotEqual;
-    else if (!strcmp(cond, ">"))
-        return conditionGreater;
-    else if (!strcmp(cond, ">="))
-        return conditionGreaterEqual;
-    else if (!strcmp(cond, "<"))
-        return conditionLess;
-    else if (!strcmp(cond, "<="))
-        return conditionLessEqual;
-    else
-        return conditionUndefined;
+    if (!strcmp(cond, "==")) return conditionEqual;
+    else if (!strcmp(cond, "!=")) return conditionNotEqual;
+    else if (!strcmp(cond, ">")) return conditionGreater;
+    else if (!strcmp(cond, ">=")) return conditionGreaterEqual;
+    else if (!strcmp(cond, "<")) return conditionLess;
+    else if (!strcmp(cond, "<=")) return conditionLessEqual;
+    else return conditionUndefined;
 }
 
 int conditionNegate (int cond) {
-    if (cond == conditionEqual)
-        return conditionNotEqual;
-    else if (cond == conditionNotEqual)
-        return conditionEqual;
-    else if (cond == conditionGreater)
-        return conditionLessEqual;
-    else if (cond == conditionGreaterEqual)
-        return conditionLess;
-    else if (cond == conditionLess)
-        return conditionGreaterEqual;
-    else if (cond == conditionLessEqual)
-        return conditionGreater;
-    else
-        return conditionUndefined;
+    if (cond == conditionEqual) return conditionNotEqual;
+    else if (cond == conditionNotEqual) return conditionEqual;
+    else if (cond == conditionGreater) return conditionLessEqual;
+    else if (cond == conditionGreaterEqual) return conditionLess;
+    else if (cond == conditionLess) return conditionGreaterEqual;
+    else if (cond == conditionLessEqual) return conditionGreater;
+    else return conditionUndefined;
 }
 
 /* ::::LABELS:::: */

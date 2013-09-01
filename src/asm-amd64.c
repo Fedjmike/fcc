@@ -88,17 +88,50 @@ void asmPop (asmCtx* ctx, operand L) {
     free(LStr);
 }
 
+void asmPushN (asmCtx* ctx, int n) {
+    asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+}
+
 void asmPopN (asmCtx* ctx, int n) {
     asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {
-    if (Dest.tag == operandMem && Src.tag == operandMem) {
-        operand intermediate = operandCreateReg(regAlloc(Dest.size > Src.size ? Dest.size : Src.size));
+    if (Dest.tag == operandInvalid || Src.tag == operandInvalid)
+        return;
+
+    /*Too big for single register*/
+    else if (operandGetSize(ctx->arch, Dest) > ctx->arch->wordsize) {
+        debugAssert("asmMove", "Dest mem", Dest.tag == operandMem);
+        debugAssert("asmMove", "Src mem", Src.tag == operandMem);
+        debugAssert("asmMove", "operand size equality",
+                    operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src));
+
+        int size = operandGetSize(ctx->arch, Dest);
+        int chunk = ctx->arch->wordsize;
+        Dest.size = Src.size = chunk;
+
+        /*Move up the operands, so far as a chunk would not go past their ends*/
+        for (int i = 0;
+             i+chunk <= size;
+             i += chunk, Dest.offset += chunk, Src.offset += chunk)
+            asmMove(ctx, Dest, Src);
+
+        /*Were the operands not an even multiple of the chunk size?*/
+        if (size % chunk != 0) {
+            /*Final chunk size is the remainder*/
+            Dest.size = Src.size = size % chunk;
+            asmMove(ctx, Dest, Src);
+        }
+
+    /*Both memory operands*/
+    } else if (Dest.tag == operandMem && Src.tag == operandMem) {
+        operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
         asmMove(ctx, intermediate, Src);
         asmMove(ctx, Dest, intermediate);
         operandFree(intermediate);
 
+    /*Flags*/
     } else if (Src.tag == operandFlags) {
         asmMove(ctx, Dest, operandCreateLiteral(1));
         asmConditionalMove(ctx, Src, Dest, operandCreateLiteral(0));
@@ -145,42 +178,42 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         /*Unlike lea, perform the op after the move. This is because these
-          ops affect the flags (particularly cmp)*/
-        operand intermediate = operandCreateReg(regAlloc(L.size > R.size ? L.size : R.size));
+          ops affect the flags (particularly cmp)
+          !!!WHO EXPLOITS THIS?!!! DOESNT WORK AS BELOW*/
+        operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
         operandFree(intermediate);
+
+    /*imul m64, <...> isnt a thing
+      Sucks, right?*/
+    } else if (Op == bopMul && L.tag == operandMem && operandGetSize(ctx->arch, L) == 8) {
+        if (R.tag != operandReg) {
+            operand oldR = R;
+            R = operandCreateReg(regAlloc(max(L.size, R.size)));
+            asmMove(ctx, R, oldR);
+        }
+
+        asmBOP(ctx, bopMul, R, L);
+        asmMove(ctx, L, R);
+        operandFree(R);
 
     } else {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
 
-        if (Op == bopCmp)
-            asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        const char* OpStr = Op == bopCmp ? "cmp" :
+                            Op == bopAdd ? "add" :
+                            Op == bopSub ? "sub" :
+                            Op == bopMul ? "imul" :
+                            Op == bopBitAnd ? "and" :
+                            Op == bopBitOr ? "or" :
+                            Op == bopBitXor ? "xor" :
+                            Op == bopShR ? "sar" :
+                            Op == bopShL ? "sal" : 0;
 
-        else if (Op == bopAdd)
-            asmOutLn(ctx, "add %s, %s", LStr, RStr);
-
-        else if (Op == bopSub)
-            asmOutLn(ctx, "sub %s, %s", LStr, RStr);
-
-        else if (Op == bopMul)
-            asmOutLn(ctx, "imul %s, %s", LStr, RStr);
-
-        else if (Op == bopBitAnd)
-            asmOutLn(ctx, "and %s, %s", LStr, RStr);
-
-        else if (Op == bopBitOr)
-            asmOutLn(ctx, "or %s, %s", LStr, RStr);
-
-        else if (Op == bopBitXor)
-            asmOutLn(ctx, "xor %s, %s", LStr, RStr);
-
-        else if (Op == bopShR)
-            asmOutLn(ctx, "sar %s, %s", LStr, RStr);
-
-        else if (Op == bopShL)
-            asmOutLn(ctx, "sal %s, %s", LStr, RStr);
+        if (OpStr)
+            asmOutLn(ctx, "%s %s, %s", OpStr, LStr, RStr);
 
         else
             printf("asmBOP(): unhandled operator '%d'\n", Op);
@@ -199,8 +232,8 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
     else if (Op == uopDec)
         asmOutLn(ctx, "sub %s, 1", RStr);
 
-    else if (Op == uopNeg)
-        asmOutLn(ctx, "neg %s", RStr);
+    else if (Op == uopNeg || Op == uopBitwiseNot)
+        asmOutLn(ctx, "%s %s", Op == uopNeg ? "neg" : "not", RStr);
 
     else
         printf("asmUOP(): unhandled operator tag, %d", Op);

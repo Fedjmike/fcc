@@ -6,7 +6,6 @@
  * Stream context
  */
 typedef struct {
-    char* filename;
     FILE* file;
 
     char current;
@@ -14,7 +13,7 @@ typedef struct {
     int lineChar;
 } streamCtx;
 
-streamCtx* streamInit (const char* File);
+streamCtx* streamInit (FILE* file);
 void streamEnd (streamCtx* ctx);
 
 /**

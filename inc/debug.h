@@ -6,6 +6,8 @@
 struct type;
 struct ast;
 struct sym;
+struct operand;
+struct architecture;
 
 typedef enum {
     debugFull,
@@ -47,3 +49,6 @@ void reportType (const struct type* DT);
 void reportSymbol (const struct sym* Symbol);
 void reportNode (const struct ast* Node);
 void reportRegs ();
+void reportOperand (const struct architecture* arch, const struct operand* R);
+
+extern int internalErrors;

@@ -24,11 +24,15 @@ void vectorDestroyObjs (vector* v, dtorType dtor) {
     vectorDestroy(v);
 }
 
-void vectorAdd (vector* v, void* item) {
+void vectorPush (vector* v, void* item) {
     if (v->length == v->capacity)
         v->buffer = realloc(v->buffer, (v->capacity *= 2)*sizeof(void*));
 
     v->buffer[v->length++] = item;
+}
+
+void* vectorPop (vector* v) {
+    return v->buffer[v->length -= 1];
 }
 
 void* vectorGet (const vector* v, int n) {

@@ -43,23 +43,3 @@ analyzerResult analyzer (struct ast* Tree, struct sym** Types);
  * specialized handlers.
  */
 void analyzerNode (analyzerCtx* ctx, struct ast* Node);
-
-void analyzerErrorExpected (analyzerCtx* ctx, const struct ast* Node, const char* where, const char* Expected, const struct type* Found);
-
-void analyzerErrorExpectedType (analyzerCtx* ctx, const struct ast* Node, const char* where, const struct type* Expected, const struct type* Found);
-
-void analyzerErrorOp (analyzerCtx* ctx, const char* o, const char* desc, const struct ast* Operand, const struct type* DT);
-
-void analyzerErrorMismatch (analyzerCtx* ctx, const struct ast* Node, const char* o, const struct type* L, const struct type* R);
-
-void analyzerErrorDegree (analyzerCtx* ctx, const struct ast* Node, const char* thing, int expected, int found, const char* where);
-
-void analyzerErrorMember (analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* Record);
-
-void analyzerErrorParamMismatch (analyzerCtx* ctx, const struct ast* Node, int n, const struct type* Expected, const struct type* Found);
-
-void analyzerErrorConflictingDeclarations (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol, const struct type* Found);
-
-void analyzerErrorRedeclaredVar (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);
-
-void analyzerErrorIllegalSymAsValue (analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);

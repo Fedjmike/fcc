@@ -4,6 +4,7 @@
 #include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
+#include "../inc/error.h"
 
 #include "../inc/lexer.h"
 #include "../inc/parser-helpers.h"
@@ -14,6 +15,7 @@
 #include "string.h"
 
 static ast* parserModule (parserCtx* ctx);
+static ast* parserUsing (parserCtx* ctx);
 
 static ast* parserLine (parserCtx* ctx);
 
@@ -22,43 +24,66 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx* parserInit (const char* File, sym* Global) {
-    parserCtx* ctx = malloc(sizeof(parserCtx));
+static parserCtx parserInit (const char* filename, char* fullname, sym* global, vector/*<char*>*/* searchPaths) {
+    lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
 
-    ctx->lexer = lexerInit(File);
+    vectorPush(searchPaths, fgetpath(fullname));
 
-    ctx->location.line = ctx->lexer->stream->line;
-    ctx->location.lineChar = ctx->lexer->stream->lineChar;
-
-    ctx->scope = Global;
-
-    ctx->breakLevel = 0;
-
-    ctx->errors = 0;
-    ctx->warnings = 0;
-
-    return ctx;
+    return (parserCtx) {lexer, {0, 0, 0},
+                        strdup(filename), fullname, searchPaths,
+                        global,
+                        0,
+                        0, 0};
 }
 
-static void parserEnd (parserCtx* ctx) {
-    lexerEnd(ctx->lexer);
-    free(ctx);
+static void parserEnd (parserCtx ctx) {
+    free(ctx.fullname);
+    free(vectorPop(ctx.searchPaths));
+    lexerEnd(ctx.lexer);
 }
 
-parserResult parser (const char* File, sym* Global) {
-    parserCtx* ctx = parserInit(File, Global);
+static char* parserFindFile (const char* filename, vector/*<char*>*/* searchPaths) {
+    int filenameLength = strlen(filename);
 
-    ast* Module = parserModule(ctx);
+    for (int i = 0; i < searchPaths->length; i++) {
+        const char* path = vectorGet(searchPaths, i);
+        char* fullname;
 
-    parserResult result = {Module, ctx->errors, ctx->warnings};
+        if (path[0] != 0) {
+            fullname = malloc(strlen(path)+1+filenameLength+1);
+            sprintf(fullname, "%s/%s", path, filename);
 
-    parserEnd(ctx);
+        } else
+            fullname = strdup(filename);
 
-    return result;
+        if (fexists(fullname))
+            return fullname;
+
+        else
+            free(fullname);
+    }
+
+    return 0;
+}
+
+parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
+    char* fullname = parserFindFile(filename, searchPaths);
+
+    if (fullname) {
+        parserCtx ctx = parserInit(filename, fullname, global, searchPaths);
+        tokenNext(&ctx);
+        ast* Module = parserModule(&ctx);
+        parserEnd(ctx);
+
+        return (parserResult) {Module, ctx.errors, ctx.warnings, false};
+
+    } else
+        return (parserResult) {astCreateInvalid((tokenLocation) {0,  0, 0}),
+                               1, 0, true};
 }
 
 /**
- * Module = [{ Decl# | ";" }]
+ * Module = [{ Decl# | Using | ";" }]
  */
 static ast* parserModule (parserCtx* ctx) {
     debugEnter("Module");
@@ -67,18 +92,52 @@ static ast* parserModule (parserCtx* ctx) {
     Module->symbol = ctx->scope;
 
     while (ctx->lexer->token != tokenEOF) {
-        if (tokenTryMatchStr(ctx, ";"))
+        if (tokenTryMatchPunct(ctx, punctSemicolon))
             astAddChild(Module, astCreateEmpty(ctx->location));
+
+        else if (tokenIsKeyword(ctx, keywordUsing))
+            astAddChild(Module, parserUsing(ctx));
 
         else
             astAddChild(Module, parserDecl(ctx, true));
 
-        debugWait();
+        //debugWait();
     }
 
     debugLeave();
 
     return Module;
+}
+
+/**
+ * Using = "using" <Str> ";"
+ */
+static ast* parserUsing (parserCtx* ctx) {
+    debugEnter("Using");
+
+    tokenLocation loc = ctx->location;
+    tokenMatchKeyword(ctx, keywordUsing);
+
+    char* name = tokenMatchStr(ctx);
+    ast* Node = astCreateUsing(loc, name);
+
+    if (name[0] != 0) {
+        //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
+        parserResult res = parser(name, ctx->scope, ctx->searchPaths);
+
+        ctx->errors += res.errors;
+        ctx->warnings += res.warnings;
+        Node->r = res.tree;
+
+        if (res.notfound)
+            errorFileNotFound(ctx, name);
+    }
+
+    tokenMatchPunct(ctx, punctSemicolon);
+
+    debugLeave();
+
+    return Node;
 }
 
 /**
@@ -91,8 +150,8 @@ ast* parserCode (parserCtx* ctx) {
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    if (tokenTryMatchStr(ctx, "{"))
-        while (!tokenTryMatchStr(ctx, "}") && ctx->lexer->token != tokenEOF)
+    if (tokenTryMatchPunct(ctx, punctLBrace))
+        while (!tokenTryMatchPunct(ctx, punctRBrace) && ctx->lexer->token != tokenEOF)
             astAddChild(Node, parserLine(ctx));
 
     else
@@ -113,19 +172,19 @@ static ast* parserLine (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "if"))
+    if (tokenIsKeyword(ctx, keywordIf))
         Node = parserIf(ctx);
 
-    else if (tokenIs(ctx, "while"))
+    else if (tokenIsKeyword(ctx, keywordWhile))
         Node = parserWhile(ctx);
 
-    else if (tokenIs(ctx, "do"))
+    else if (tokenIsKeyword(ctx, keywordDo))
         Node = parserDoWhile(ctx);
 
-    else if (tokenIs(ctx, "for"))
+    else if (tokenIsKeyword(ctx, keywordFor))
         Node = parserFor(ctx);
 
-    else if (tokenIs(ctx, "{"))
+    else if (tokenIsPunct(ctx, punctLBrace))
         Node = parserCode(ctx);
 
     else if (tokenIsDecl(ctx))
@@ -133,13 +192,13 @@ static ast* parserLine (parserCtx* ctx) {
 
     /*Statements (that which require ';')*/
     else {
-        if (tokenTryMatchStr(ctx, "return")) {
+        if (tokenTryMatchKeyword(ctx, keywordReturn)) {
             Node = astCreate(astReturn, ctx->location);
 
-            if (!tokenIs(ctx, ";"))
+            if (!tokenIsPunct(ctx, punctSemicolon))
                 Node->r = parserValue(ctx);
 
-        } else if (tokenIs(ctx, "break")) {
+        } else if (tokenIsKeyword(ctx, keywordBreak)) {
             if (ctx->breakLevel == 0)
                 errorIllegalOutside(ctx, "break", "a loop");
 
@@ -149,13 +208,13 @@ static ast* parserLine (parserCtx* ctx) {
             Node = astCreate(astBreak, ctx->location);
 
         /*Allow empty lines, ";"*/
-        } else if (tokenIs(ctx, ";"))
+        } else if (tokenIsPunct(ctx, punctSemicolon))
             Node = astCreateEmpty(ctx->location);
 
         else
             Node = parserValue(ctx);
 
-        tokenMatchStr(ctx, ";");
+        tokenMatchPunct(ctx, punctSemicolon);
     }
 
     debugLeave();
@@ -173,14 +232,14 @@ static ast* parserIf (parserCtx* ctx) {
 
     ast* Node = astCreate(astBranch, ctx->location);
 
-    tokenMatchStr(ctx, "if");
-    tokenMatchStr(ctx, "(");
+    tokenMatchKeyword(ctx, keywordIf);
+    tokenMatchPunct(ctx, punctLParen);
     astAddChild(Node, parserValue(ctx));
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     Node->l = parserCode(ctx);
 
-    if (tokenTryMatchStr(ctx, "else"))
+    if (tokenTryMatchKeyword(ctx, keywordElse))
         Node->r = parserCode(ctx);
 
     debugLeave();
@@ -196,10 +255,10 @@ static ast* parserWhile (parserCtx* ctx) {
 
     ast* Node = astCreate(astLoop, ctx->location);
 
-    tokenMatchStr(ctx, "while");
-    tokenMatchStr(ctx, "(");
+    tokenMatchKeyword(ctx, keywordWhile);
+    tokenMatchPunct(ctx, punctLParen);
     Node->l = parserValue(ctx);
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     ctx->breakLevel++;
     Node->r = parserCode(ctx);
@@ -218,17 +277,17 @@ static ast* parserDoWhile (parserCtx* ctx) {
 
     ast* Node = astCreate(astLoop, ctx->location);
 
-    tokenMatchStr(ctx, "do");
+    tokenMatchKeyword(ctx, keywordDo);
 
     ctx->breakLevel++;
     Node->l = parserCode(ctx);
     ctx->breakLevel--;
 
-    tokenMatchStr(ctx, "while");
-    tokenMatchStr(ctx, "(");
+    tokenMatchKeyword(ctx, keywordWhile);
+    tokenMatchPunct(ctx, punctLParen);
     Node->r = parserValue(ctx);
-    tokenMatchStr(ctx, ")");
-    tokenMatchStr(ctx, ";");
+    tokenMatchPunct(ctx, punctRParen);
+    tokenMatchPunct(ctx, punctSemicolon);
 
     debugLeave();
 
@@ -243,8 +302,8 @@ static ast* parserFor (parserCtx* ctx) {
 
     ast* Node = astCreate(astIter, ctx->location);
 
-    tokenMatchStr(ctx, "for");
-    tokenMatchStr(ctx, "(");
+    tokenMatchKeyword(ctx, keywordFor);
+    tokenMatchPunct(ctx, punctLParen);
 
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
@@ -254,32 +313,32 @@ static ast* parserFor (parserCtx* ctx) {
         astAddChild(Node, parserDecl(ctx, false));
 
     else {
-        if (!tokenIs(ctx, ";"))
+        if (!tokenIsPunct(ctx, punctSemicolon))
             astAddChild(Node, parserValue(ctx));
 
         else
             astAddChild(Node, astCreateEmpty(ctx->location));
 
-        tokenMatchStr(ctx, ";");
+        tokenMatchPunct(ctx, punctSemicolon);
     }
 
     /*Condition*/
-    if (!tokenIs(ctx, ";"))
+    if (!tokenIsPunct(ctx, punctSemicolon))
         astAddChild(Node, parserValue(ctx));
 
     else
         astAddChild(Node, astCreateEmpty(ctx->location));
 
-    tokenMatchStr(ctx, ";");
+    tokenMatchPunct(ctx, punctSemicolon);
 
     /*Iterator*/
-    if (!tokenIs(ctx, ";"))
+    if (!tokenIsPunct(ctx, punctRParen))
         astAddChild(Node, parserValue(ctx));
 
     else
         astAddChild(Node, astCreateEmpty(ctx->location));
 
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     ctx->breakLevel++;
     Node->l = parserCode(ctx);

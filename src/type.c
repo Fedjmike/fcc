@@ -324,23 +324,17 @@ bool typeIsEqual (const type* L, const type* R) {
 /*:::: MISC INTERFACES ::::*/
 
 const char* typeTagGetStr (typeTag tag) {
-    if (tag == typeBasic)
-        return "typeBasic";
-    else if (tag == typePtr)
-        return "typePtr";
-    else if (tag == typeArray)
-        return "typeArray";
-    else if (tag == typeFunction)
-        return "typeFunction";
-    else if (tag == typeInvalid)
-        return "typeInvalid";
-
+    if (tag == typeBasic) return "typeBasic";
+    else if (tag == typePtr) return "typePtr";
+    else if (tag == typeArray) return "typeArray";
+    else if (tag == typeFunction) return "typeFunction";
+    else if (tag == typeInvalid) return "typeInvalid";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
-        debugErrorUnhandled("typeTagGetStr", "symbol tag", str);
+        debugErrorUnhandled("typeTagGetStr", "type tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }
 

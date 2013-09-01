@@ -34,13 +34,10 @@ ast* astCreate (astTag tag, tokenLocation location) {
 void astDestroy (ast* Node) {
     debugAssert("astDestroy", "null param", Node != 0);
 
-    for (ast* Current = Node->firstChild;
+    for (ast *Current = Node->firstChild, *Next = Current ? Current->nextSibling : 0;
          Current;
-         ) {
-        ast* Next = Current->nextSibling;
+         Current = Next, Next = Next ? Next->nextSibling : 0)
         astDestroy(Current);
-        Current = Next;
-    }
 
     if (Node->l)
         astDestroy(Node->l);
@@ -50,6 +47,9 @@ void astDestroy (ast* Node) {
 
     if (Node->dt)
         typeDestroy(Node->dt);
+
+    if (Node->tag == astModule)
+        free(Node->location.filename);
 
     free(Node->o);
     free(Node->literal);
@@ -64,9 +64,23 @@ ast* astCreateEmpty (tokenLocation location) {
     return astCreate(astEmpty, location);
 }
 
+ast* astCreateUsing (tokenLocation location, char* name) {
+    ast* Node = astCreate(astUsing, location);
+    Node->litTag = literalStr;
+    Node->literal = (void*) name;
+    return Node;
+}
+
 ast* astCreateFnImpl (tokenLocation location, ast* decl) {
     ast* Node = astCreate(astFnImpl, location);
     Node->l = decl;
+    return Node;
+}
+
+ast* astCreateType (tokenLocation location, ast* basic, ast* expr) {
+    ast* Node = astCreate(astType, location);
+    Node->l = basic;
+    Node->r = expr;
     return Node;
 }
 
@@ -83,13 +97,6 @@ ast* astCreateParam (tokenLocation location, ast* basic, ast* expr) {
     return Node;
 }
 
-ast* astCreateType (tokenLocation location, ast* basic, ast* expr) {
-    ast* Node = astCreate(astType, location);
-    Node->l = basic;
-    Node->r = expr;
-    return Node;
-}
-
 ast* astCreateStruct (tokenLocation location, ast* name) {
     ast* Node = astCreate(astStruct, location);
     Node->l = name;
@@ -98,6 +105,12 @@ ast* astCreateStruct (tokenLocation location, ast* name) {
 
 ast* astCreateUnion (tokenLocation location, ast* name) {
     ast* Node = astCreate(astUnion, location);
+    Node->l = name;
+    return Node;
+}
+
+ast* astCreateEnum (tokenLocation location, ast* name) {
+    ast* Node = astCreate(astEnum, location);
     Node->l = name;
     return Node;
 }
@@ -193,85 +206,53 @@ int astIsValueTag (astTag tag) {
 }
 
 const char* astTagGetStr (astTag tag) {
-    if (tag == astUndefined)
-        return "astUndefined";
-    else if (tag == astInvalid)
-        return "astInvalid";
-    else if (tag == astEmpty)
-        return "astEmpty";
-    else if (tag == astModule)
-        return "astModule";
-    else if (tag == astFnImpl)
-        return "astFnImpl";
-    else if (tag == astDecl)
-        return "astDecl";
-    else if (tag == astParam)
-        return "astParam";
-    else if (tag == astStruct)
-        return "astStruct";
-    else if (tag == astUnion)
-        return "astUnion";
-    else if (tag == astType)
-        return "astType";
-    else if (tag == astCode)
-        return "astCode";
-    else if (tag == astBranch)
-        return "astBranch";
-    else if (tag == astLoop)
-        return "astLoop";
-    else if (tag == astIter)
-        return "astIter";
-    else if (tag == astReturn)
-        return "astReturn";
-    else if (tag == astBreak)
-        return "astBreak";
-    else if (tag == astBOP)
-        return "astBOP";
-    else if (tag == astUOP)
-        return "astUOP";
-    else if (tag == astTOP)
-        return "astTOP";
-    else if (tag == astIndex)
-        return "astIndex";
-    else if (tag == astCall)
-        return "astCall";
-    else if (tag == astCast)
-        return "astCast";
-    else if (tag == astSizeof)
-        return "astSizeof";
-    else if (tag == astLiteral)
-        return "astLiteral";
-    else if (tag == astEllipsis)
-        return "astEllipsis";
-
+    if (tag == astUndefined) return "astUndefined";
+    else if (tag == astInvalid) return "astInvalid";
+    else if (tag == astEmpty) return "astEmpty";
+    else if (tag == astModule) return "astModule";
+    else if (tag == astUsing) return "astUsing";
+    else if (tag == astFnImpl) return "astFnImpl";
+    else if (tag == astDecl) return "astDecl";
+    else if (tag == astParam) return "astParam";
+    else if (tag == astStruct) return "astStruct";
+    else if (tag == astUnion) return "astUnion";
+    else if (tag == astType) return "astType";
+    else if (tag == astCode) return "astCode";
+    else if (tag == astBranch) return "astBranch";
+    else if (tag == astLoop) return "astLoop";
+    else if (tag == astIter) return "astIter";
+    else if (tag == astReturn) return "astReturn";
+    else if (tag == astBreak) return "astBreak";
+    else if (tag == astBOP) return "astBOP";
+    else if (tag == astUOP) return "astUOP";
+    else if (tag == astTOP) return "astTOP";
+    else if (tag == astIndex) return "astIndex";
+    else if (tag == astCall) return "astCall";
+    else if (tag == astCast) return "astCast";
+    else if (tag == astSizeof) return "astSizeof";
+    else if (tag == astLiteral) return "astLiteral";
+    else if (tag == astEllipsis) return "astEllipsis";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
-        debugErrorUnhandled("astTagGetStr", "symbol tag", str);
+        debugErrorUnhandled("astTagGetStr", "AST tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }
 
 const char* literalTagGetStr (literalTag tag) {
-    if (tag == literalUndefined)
-        return "literalUndefined";
-    else if (tag == literalIdent)
-        return "literalIdent";
-    else if (tag == literalInt)
-        return "literalInt";
-    else if (tag == literalStr)
-        return "literalStr";
-    else if (tag == literalBool)
-        return "literalBool";
-    else if (tag == literalArray)
-        return "literalArray";
-
+    if (tag == literalUndefined) return "literalUndefined";
+    else if (tag == literalIdent) return "literalIdent";
+    else if (tag == literalInt) return "literalInt";
+    else if (tag == literalStr) return "literalStr";
+    else if (tag == literalBool) return "literalBool";
+    else if (tag == literalArray) return "literalArray";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
-        debugErrorUnhandled("literalTagGetStr", "symbol tag", str);
+        debugErrorUnhandled("literalTagGetStr", "literal tag", str);
         free(str);
-        return "unhandled";
+        return "<unhandled>";
     }
 }

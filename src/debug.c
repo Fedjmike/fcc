@@ -4,6 +4,9 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/reg.h"
+#include "../inc/operand.h"
+
+#include "../inc/architecture.h"
 
 #include "stdlib.h"
 #include "stdarg.h"
@@ -14,9 +17,12 @@ debugMode mode;
 //Indentation level of debug output
 int depth;
 
+int internalErrors = 0;
+
 void debugInit (FILE* nlog) {
     logFile = nlog;
     debugSetMode(debugFull);
+    internalErrors = 0;
 }
 
 debugMode debugSetMode (debugMode nmode) {
@@ -97,6 +103,7 @@ void debugError (const char* functionName,
     fputc('\n', logFile);
 
     debugWait();
+    internalErrors++;
 }
 
 void debugAssert (const char* functionName,
@@ -226,4 +233,15 @@ void reportRegs () {
             debugOut("%s ", regToStr(&regs[r]));
 
     debugOut(" ]\n");
+}
+
+void reportOperand (const architecture* arch, const operand* R) {
+    char* RStr = operandToStr(*R);
+
+    debugOut("tag: %s   size: %d   str: %s\n",
+             operandTagGetStr(R->tag),
+             operandGetSize(arch, *R),
+             RStr);
+
+    free(RStr);
 }

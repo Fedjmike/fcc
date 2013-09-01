@@ -1,4 +1,6 @@
-Module = [{ [ Decl# ] ";" }]
+Module = [{ Decl# | Using | ";" }]
+Using = "using" <Str> ";"
+
 Code = ( "{" [{ Line }] "}" ) | Line
 Line = If | While | DoWhile | For | Code | Decl# | ( [ ( "return" Value ) | "break" | Value ] ";" )
 If = "if" "(" Value ")" Code [ "else" Code ]
@@ -30,13 +32,13 @@ Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
 									       | Code# )
 
-Field = Decl#
+Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
 Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
-DeclBasic = <Ident> | StructOrUnion
-StructOrUnion = "struct" | "union" [ Name# ]
-                [ "{" [{ Field }] "}" ]
+DeclBasic = <Ident> | StructOrUnion | Enum
+StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
+Enum = "enum" Name# [ "{" Name# [{ "," Name# }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject

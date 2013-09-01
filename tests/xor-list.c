@@ -1,15 +1,10 @@
 #include "compat.h"
+#include "stdint.h"
 #include "stdlib.h"
 #include "stdio.h"
 
-void* malloc (int);
-void free (void*);
-
-int printf (char*, ...);
-int puts (char*);
-
-//using(stdlib);
-//using(stdio);
+using "stdlib.h";
+using "stdio.h";
 
 typedef struct list_node {
     int item;
@@ -60,7 +55,7 @@ list_node* node_init (int item, intptr_t xor_ptr) {
  * Return the last element in a list, given the first
  */
 list_node* get_last (list_node* first) {
-    if (first->xor_ptr == 0)
+    if (first->xor_ptr == (intptr_t) 0)
         return first;
 
     else {
@@ -115,7 +110,7 @@ void advance (list_node** previous, list_node** current) {
 list_node* insert_between (list_node* previous, list_node* next, int item) {
     //Insert into empty list
     if (previous == 0 && next == 0)
-        return node_init(item, 0);
+        return node_init(item, (intptr_t) 0);
 
     //Insert before first
     else if (previous == 0) {

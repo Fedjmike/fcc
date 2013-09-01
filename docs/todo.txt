@@ -1,129 +1,91 @@
 Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
              -  Information      o  Option
 
-[ ] Self hosting
-    [ ] Discrepancies between GCC and FCC:
-        - struct and union decl syntax & semantics
-        - Module system
-        - Operator precedence
-    [ ] ABI
-[ ] Command line options
-    [ ] Control pretty printing
-[ ] Modules
-    - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
-[-] CRT support
-[-] Type system
-    - By val -> By ref (grr)
-    - Wrap types in modifiers: ptr, array, fn
-    - Match-all tag for error handling
-    [ ] Unique ptrs?
-    [ ] Lvalues
-    [ ] Narrowing/widening (careful with function rets)
-[ ] Error handling
-    [ ] Skipping
-[-] struct
-    [ ] Literals
-[ ] union
-    [ ] Cray-cray anonymous struct in anonymous union in struct things
-[-] enum
-[ ] typedef
-[x] Block scope
-[x] Casts
-    - (type) value
-    - Differentiate between this and (value) by symbol lookup
-[-] Operators
-    [x] Pointers
-    [x] Logical
-    [x] Bitwise
-    [x] Shifts
-    [-] Modulo
-    [-] Division
-    [x] Ternary if
-    [-] Comma
-[ ] const
-[ ] string
-[x] bool
-[-] Prototypes
-    [ ] Structs
-    [ ] Functions
-[-] Function pointers?
-[x] do while
-[ ] Varargs
-[ ] static
-    [ ] Variables
-    [ ] Functions
-[ ] extern
-[ ] Global variables
-[x] sizeof
-[x] break
-[ ] continue
-[ ] main
-    [ ] Args
-    [ ] Conformance
+High importance:
 
-[-] Global state -> state structs
-    [ ] Operands: reg, labels
-    [x] Symbols
-[-] If an operand is not literally the result, recreate it
-    fo safety n shizzle
-[ ] Emitter helper functions
-[x] Normalize ptr decl binding
-[x] astCreateBOP(op, left, right)
-[-] Decode AST nodes like in emitterLoop and emitterFor
-[-] Assertions
-[ ] Clean up value moving code
-[x] Const correctness
-[-] Make sure prototypes and implementation match exactly (static)
-[ ] Use a cond field of ??? AST ???
-[ ] Do analyzerArrayLiteral lits properly
-[ ] File names in error messages
-[ ] Fix type compatibility
-    - Type coercion needed (remember: bool -> int)
+[ ] Compound literals
+[ ] Anonymous:
+    [ ] Unions
+    [ ] Structs
+    [ ] Structs in unions
+[ ] const
+[-] char
+[ ] Review type compatibility
+[ ] Numeric type coercion: widening & narrowing
+[ ] Type completeness
+[-] Varargs
+[-] enum
+[ ] extern
+[ ] argc & argv passing
+[ ] continue
+[-] static
+    [ ] Function linkage
+    [ ] Disallow all others?
+[ ] Disallow global variables
+[ ] Modules
+    [ ] Separated namespaces
+    [ ] Different dialect?
+        - No impls
+
+Medium:
+
+[-] Typedef
+
+Low:
+
+[ ] main conformance
+[ ] % /
+[ ] Pretty printing control by command line
+[ ] string
+[ ] New IR
+    - Expression only (to start withw)
+
+
+
+Other issues:
+
+[ ] Add symbol size back to debug output
+
+Lexer:
+
+[ ] Lexing of pp
+[ ] More on char and str lexing
+
+Parser:
+
+[ ] Param name clash
 [ ] Fix bop location thingy (astCreateBOP(o, l))
-[ ] Fix lvalue error messages
+[-] Symbol shadowing
+[ ] Get tokenMatch to guess whether to skip based on similarity of tokens
+[ ] Line that starts with undeclared ident... assume decl?
+[ ] Complain about keywords as idents
+
+Semantic analyzer:
+
 [ ] Check constness of array sizes, enum values etc
-[x] Move type assignment stuff to analyzer? Could solve some of the above
-[x] Filext
-[x] tag -> tag
 [ ] Array size detection (basic x[] = {...})
-[ ] Lvalues
+[ ] Do analyzerArrayLiteral lits properly
+[ ] Check that fn impl and var init are semantically valid
+[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
+    Why not?
+[-] Make sure prototypes and implementation match exactly (static)
+[ ] Empty decl warning?
+
+Emitter:
+
+[ ] Get rid of global state in registers and labels
+[ ] Clean up value moving code
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
-[ ] Symbol shadowing
-[ ] Review type compatibility (esp. w.r.t. derivation & unification)
-[ ] Check that fn impl and var init are semantically valid
 [ ] Get rid of &regs[] use outside reg.c
     - Make stack operations
     - Differentiate between top and base operands
 [ ] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
-[ ] Merge operand size and reg size?
 [ ] Extra layer between emitter and assembly?
     - Expand operand?
     - Maybe: have a layer that takes expressions and an operation,
       sends them off to emitterValue, handles operands and reg
       placement.
-[ ] Add symbol size back to debug output
-[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
-[ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[ ] Shadowing
-    - Warning? Error?
-[ ] Param name clash
-[ ] Line that starts with undeclared ident... assume decl?
-[ ] Incomplete types and all that shizzle
-[ ] Storage class mismatch
-
-[ ] Abysmal error recovery
-[-] AST is not abstract
-[ ] AST field reuse is weird and unclear
-[x] Parser/semantics merged => overly complex
-    - When in doubt, reject *semantically*
-      This means the parser fucks up less.
-[ ] Dealing with operands in the emitter is cumbersome
-[x] Arch specifics are a bit magic value-y
-[x] Type system overly simple
-[-] Lack of comments, esp. interface documentation
-[-] Assumption of operand tag permutations required
-[ ] Unit tests?

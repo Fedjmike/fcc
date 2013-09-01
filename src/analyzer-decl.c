@@ -4,6 +4,7 @@
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+#include "../inc/error.h"
 
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
@@ -47,12 +48,12 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
 
             /*Not the first declaration of this symbol, check type matches*/
             } else if (!typeIsEqual(Current->symbol->dt, DT))
-                analyzerErrorConflictingDeclarations(ctx, Current, Current->symbol, DT);
+                errorConflictingDeclarations(ctx, Current, Current->symbol, DT);
 
             /*Even if types match, not allowed to be redeclared unless a
               function*/
             else if (!typeIsFunction(DT))
-                analyzerErrorRedeclaredVar(ctx, Node, Current->symbol);
+                errorRedeclaredVar(ctx, Node, Current->symbol);
 
         } else
             reportType(DT);
@@ -200,10 +201,10 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     debugEnter("DeclAssignBOP");
 
     const type* L = analyzerDeclNode(ctx, Node->l, base);
-    const type* R = analyzerValue(ctx, Node->r);
+    valueResult R = analyzerValue(ctx, Node->r);
 
-    if (!typeIsCompatible(R, L))
-        analyzerErrorExpectedType(ctx, Node->r, "variable initialization", L, R);
+    if (!typeIsCompatible(R.dt, L))
+        errorTypeExpectedType(ctx, Node->r, "variable initialization", L, R.dt);
 
     //const type* DT;
 

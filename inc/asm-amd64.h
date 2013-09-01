@@ -19,7 +19,8 @@ typedef enum {
 	uopUndefined,
 	uopInc,
 	uopDec,
-	uopNeg
+	uopNeg,
+	uopBitwiseNot
 } uoperation;
 
 /**
@@ -53,7 +54,7 @@ void asmStringConstant (struct asmCtx* ctx, operand label, char* str);
 void asmLabel (struct asmCtx* ctx, operand L);
 
 /**
- * Emit an unconditionally jump
+ * Emit an unconditional jump
  */
 void asmJump (struct asmCtx* ctx, operand L);
 
@@ -71,6 +72,8 @@ void asmPush (struct asmCtx* ctx, operand L);
  * Pop a word off the stack, into an operand
  */
 void asmPop (struct asmCtx* ctx, operand L);
+
+void asmPushN (struct asmCtx* ctx, int n);
 
 /**
  * Remove n words from the stack and discard them

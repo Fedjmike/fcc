@@ -23,6 +23,8 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
 static void emitterCode (emitterCtx* ctx, const ast* Node);
 static void emitterLine (emitterCtx* ctx, const ast* Node);
 
+static void emitterReturn (emitterCtx* ctx, const ast* Node);
+
 static void emitterBranch (emitterCtx* ctx, const ast* Node);
 static void emitterLoop (emitterCtx* ctx, const ast* Node);
 static void emitterIter (emitterCtx* ctx, const ast* Node);
@@ -60,9 +62,10 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
     for (ast* Current = Tree->firstChild;
          Current;
          Current = Current->nextSibling) {
-        /*!!!
-          what?*/
-        if (Current->tag == astFnImpl)
+        if (Current->tag == astUsing)
+            emitterModule(ctx, Current->r);
+
+        else if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
         else if (Current->tag == astDecl)
@@ -102,6 +105,10 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
       return ptr and saved base pointer*/
     int lastOffset = 2*ctx->arch->wordsize;
     sym* Symbol;
+
+    /*Returning through temporary?*/
+    if (typeGetSize(ctx->arch, Node->symbol->dt->returnType) > ctx->arch->wordsize)
+        lastOffset += ctx->arch->wordsize;
 
     /*Asign offsets to all the parameters*/
     for (Symbol = Node->symbol->firstChild;
@@ -153,22 +160,10 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
     else if (Node->tag == astIter)
         emitterIter(ctx, Node);
 
-    else if (Node->tag == astReturn) {
-        operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-        reg* rax;
+    else if (Node->tag == astReturn)
+        emitterReturn(ctx, Node);
 
-        if ((rax = regRequest(regRAX, typeGetSize(ctx->arch, Node->r->dt))) != 0) {
-            asmMove(ctx->Asm, operandCreateReg(rax), Ret);
-            regFree(rax);
-
-        } else if (Ret.reg != &regs[regRAX])
-            debugError("emitterLine", "unable to allocate RAX for return");
-
-        operandFree(Ret);
-
-        asmJump(ctx->Asm, ctx->labelReturnTo);
-
-    } else if (Node->tag == astBreak)
+    else if (Node->tag == astBreak)
         asmJump(ctx->Asm, ctx->labelBreakTo);
 
     else if (Node->tag == astDecl)
@@ -179,6 +174,45 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
 
     else
         debugErrorUnhandled("emitterLine", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
+}
+
+static void emitterReturn (emitterCtx* ctx, const ast* Node) {
+    debugEnter("Return");
+
+    operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+    int retSize = typeGetSize(ctx->arch, Node->r->dt);
+
+    bool retInTemp = retSize > ctx->arch->wordsize;
+
+    /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
+    if (retInTemp) {
+        operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
+
+        /*Dereference the temporary*/
+        asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
+        /*Copy over the value*/
+        asmMove(ctx->Asm, operandCreateMem(tempRef.reg, 0, retSize), Ret);
+        operandFree(Ret);
+
+        /*Return the temporary reference*/
+        Ret = tempRef;
+    }
+
+    reg* rax;
+
+    /*Returning either the return value itself or a reference to it*/
+    if ((rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize)) != 0) {
+        asmMove(ctx->Asm, operandCreateReg(rax), Ret);
+        regFree(rax);
+
+    } else if (Ret.reg != &regs[regRAX])
+        debugError("emitterLine", "unable to allocate RAX for return");
+
+    operandFree(Ret);
+
+    asmJump(ctx->Asm, ctx->labelReturnTo);
 
     debugLeave();
 }

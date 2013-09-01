@@ -1,21 +1,6 @@
-#ifndef _H_OCC_STD_STD
-#define _H_OCC_STD_STD
+#pragma once
 
-/*/ *string.h* /
-int strlen (char* Str);
-char* memcpy (char* Dest, char* Src, int Length);
-char* strcpy (char* Dest, char* Src);*/
-char* strdup (const char* Str);						//Non standard (GNU extension)
-/*char* strcat (char* Dest, char* Src);
-char* strchr (char* Haystack, int Needle);
-int strcmp (char* L, char* R);
-
-/ *ctype.h* /
-int isspace (char Look);
-int isalpha (char Look);
-int isdigit (char Look);
-int isalnum (char Look);
-char tolower (char Char);*/
+char* strdup (const char* Str);	
 
 /*Non standard (mine)*/
 
@@ -35,10 +20,12 @@ int logi (int x, int base);
 
 bool fexists (const char* filename);
 
+char* fgetpath (const char* fullname);
+char* fgetname (const char* fullname);
+
 bool strprefix (const char* str, const char* prefix);
 
 int vsystem (const char* format, ...);
 
 #define max(x, y) ((x) > (y) ? (x) : (y))
-
-#endif
+#define min(x, y) ((x) < (y) ? (x) : (y))

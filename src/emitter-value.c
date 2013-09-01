@@ -18,8 +18,8 @@
 #include "stdlib.h"
 
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
-static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 
 static operand emitterUOP (emitterCtx* ctx, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, const ast* Node);
@@ -199,41 +199,70 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         operandFree(L);
         operandFree(R);
 
+    } else if (!strcmp(Node->o, ",")) {
+        asmEnter(ctx->Asm);
+        operandFree(emitterValue(ctx, Node->l, operandCreate(operandUndefined)));
+        Value = R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
+
     } else {
         asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
         R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
 
-        if (!strcmp(Node->o, "+"))
-            asmBOP(ctx->Asm, bopAdd, L, R);
+        boperation bop = !strcmp(Node->o, "+") ? bopAdd :
+                         !strcmp(Node->o, "-") ? bopSub :
+                         !strcmp(Node->o, "*") ? bopMul :
+                         !strcmp(Node->o, "&") ? bopBitAnd :
+                         !strcmp(Node->o, "|") ? bopBitOr :
+                         !strcmp(Node->o, "^") ? bopBitXor :
+                         !strcmp(Node->o, ">>") ? bopShR :
+                         !strcmp(Node->o, "<<") ? bopShL : bopUndefined;
 
-        else if (!strcmp(Node->o, "-"))
-            asmBOP(ctx->Asm, bopSub, L, R);
-
-        else if (!strcmp(Node->o, "*"))
-            asmBOP(ctx->Asm, bopMul, L, R);
-
-        else if (!strcmp(Node->o, "&"))
-            asmBOP(ctx->Asm, bopBitAnd, L, R);
-
-        else if (!strcmp(Node->o, "|"))
-            asmBOP(ctx->Asm, bopBitOr, L, R);
-
-        else if (!strcmp(Node->o, "^"))
-            asmBOP(ctx->Asm, bopBitXor, L, R);
-
-        else if (!strcmp(Node->o, ">>"))
-            asmBOP(ctx->Asm, bopShR, L, R);
-
-        else if (!strcmp(Node->o, "<<"))
-            asmBOP(ctx->Asm, bopShL, L, R);
+        if (bop)
+            asmBOP(ctx->Asm, bop, L, R);
 
         else
             debugErrorUnhandled("emitterBOP", "operator", Node->o);
 
         operandFree(R);
     }
+
+    debugLeave();
+
+    return Value;
+}
+
+static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("AssignnentBOP");
+
+    asmEnter(ctx->Asm);
+    operand Value, L = emitterValue(ctx, Node->l, operandCreate(operandMem)),
+                   R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+    asmLeave(ctx->Asm);
+
+    boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
+                     !strcmp(Node->o, "-=") ? bopSub :
+                     !strcmp(Node->o, "*=") ? bopMul :
+                     !strcmp(Node->o, "&=") ? bopBitAnd :
+                     !strcmp(Node->o, "|=") ? bopBitOr :
+                     !strcmp(Node->o, "^=") ? bopBitXor :
+                     !strcmp(Node->o, ">>=") ? bopShR :
+                     !strcmp(Node->o, "<<=") ? bopShL : bopUndefined;
+
+    if (!strcmp(Node->o, "=")) {
+        Value = R;
+        asmMove(ctx->Asm, L, R);
+        operandFree(L);
+
+    } else if (bop != bopUndefined) {
+        Value = L;
+        asmBOP(ctx->Asm, bop, L, R);
+        operandFree(R);
+
+    } else
+        debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
 
     debugLeave();
 
@@ -280,73 +309,6 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
-    debugEnter("AssignnentBOP");
-
-    asmEnter(ctx->Asm);
-    operand Value, R, L = emitterValue(ctx, Node->l, operandCreate(operandMem));
-    asmLeave(ctx->Asm);
-
-    if (!strcmp(Node->o, "*=")) {
-        /*imul m64, r/imm64 isnt a thing
-          So we have to do:
-          [request R -> reg]
-          [request L -> mem]
-          imul R:reg, L
-          mov L, R:reg
-          Sucks, right?*/
-
-        asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreate(operandReg));
-        asmLeave(ctx->Asm);
-
-        asmBOP(ctx->Asm, bopMul, R, L);
-        asmMove(ctx->Asm, L, R);
-
-    } else {
-        asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-        asmLeave(ctx->Asm);
-
-        if (!strcmp(Node->o, "="))
-            asmMove(ctx->Asm, L, R);
-
-        else if (!strcmp(Node->o, "+="))
-            asmBOP(ctx->Asm, bopAdd, L, R);
-
-        else if (!strcmp(Node->o, "-="))
-            asmBOP(ctx->Asm, bopSub, L, R);
-
-        else if (!strcmp(Node->o, "*="))
-            asmBOP(ctx->Asm, bopMul, L, R);
-
-        else if (!strcmp(Node->o, "&="))
-            asmBOP(ctx->Asm, bopBitAnd, L, R);
-
-        else if (!strcmp(Node->o, "|="))
-            asmBOP(ctx->Asm, bopBitOr, L, R);
-
-        else if (!strcmp(Node->o, "^="))
-            asmBOP(ctx->Asm, bopBitXor, L, R);
-
-        else if (!strcmp(Node->o, ">>="))
-            asmBOP(ctx->Asm, bopShR, L, R);
-
-        else if (!strcmp(Node->o, "<<="))
-            asmBOP(ctx->Asm, bopShL, L, R);
-
-        else
-            debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
-    }
-
-    Value = R;
-    operandFree(L);
-
-    debugLeave();
-
-    return Value;
-}
-
 static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("UOP");
 
@@ -369,12 +331,22 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
         operandFree(R);
 
-    } else if (!strcmp(Node->o, "-")) {
+    } else if (   !strcmp(Node->o, "-")
+               || !strcmp(Node->o, "~")
+               || !strcmp(Node->o, "!")) {
         asmEnter(ctx->Asm);
-        Value = R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
+        R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
         asmLeave(ctx->Asm);
 
-        asmUOP(ctx->Asm, uopNeg, R);
+        if (!strcmp(Node->o, "!")) {
+            asmBOP(ctx->Asm, bopCmp, R, operandCreateLiteral(0));
+            Value = operandCreateFlags(conditionNotEqual);
+            operandFree(R);
+
+        } else {
+            asmUOP(ctx->Asm, !strcmp(Node->o, "-") ? uopNeg : uopBitwiseNot, R);
+            Value = R;
+        }
 
     } else if (!strcmp(Node->o, "*")) {
         operand Ptr = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
@@ -488,6 +460,14 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
     operand Value;
 
+    /*The return will be passed in a temporary position (stack) allocated by
+      the caller.*/
+    bool retInTemp = typeGetSize(ctx->arch, Node->dt) > ctx->arch->wordsize;
+
+    if (retInTemp)
+        /*Allocate the temporary space (rounded up to the nearest word)*/
+        asmPushN(ctx->Asm, (typeGetSize(ctx->arch, Node->dt)-1)/ctx->arch->wordsize + 1);
+
     /*Save the general registers in use*/
     for (int r = regRAX; r <= regR15; r++)
         if (regIsUsed(r))
@@ -503,16 +483,26 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
         argSize += Arg.size;
     }
 
+    /*Pass on the reference to the temporary return space
+      Last, so that a varargs fn can still locate it*/
+    if (retInTemp) {
+        operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
+        asmEvalAddress(ctx->Asm, intermediate, operandCreateMem(&regs[regRSP], argSize, ctx->arch->wordsize));
+        asmPush(ctx->Asm, intermediate);
+        operandFree(intermediate);
+    }
+
     /*Get the address (usually, as a label) of the proc*/
     operand Proc = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
     asmCall(ctx->Asm, Proc);
     operandFree(Proc);
 
     if (!typeIsVoid(Node->dt)) {
+        int size = retInTemp ? ctx->arch->wordsize : typeGetSize(ctx->arch, Node->dt);
+
         /*If RAX is already in use (currently backed up to the stack), relocate the
           return value to another free reg before RAXs value is restored.*/
         if (regIsUsed(regRAX)) {
-            int size = typeGetSize(ctx->arch, Node->dt);
             Value = operandCreateReg(regAlloc(size));
             int tmp = regs[regRAX].allocatedAs;
             regs[regRAX].allocatedAs = size;
@@ -520,17 +510,21 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
             regs[regRAX].allocatedAs = tmp;
 
         } else
-            Value = operandCreateReg(regRequest(regRAX, typeGetSize(ctx->arch, Node->dt)));
+            Value = operandCreateReg(regRequest(regRAX, size));
+
+        /*The temporary's pointer is returned to us*/
+        if (retInTemp)
+            Value = operandCreateMem(Value.reg, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else
         Value = operandCreateVoid();
 
-    /*Pop the args*/
-    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize);
+    /*Pop the args (and temporary return pointer)*/
+    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + (retInTemp ? 1 : 0));
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (regIndex r = regR15; r >= regRAX; r--)
-        //Attempt to restore all but the one we just allocated for the ret value
+        /*Attempt to restore all but the one we just allocated for the ret value*/
         if (regIsUsed(r) && &regs[r] != Value.reg)
             asmPop(ctx->Asm, operandCreateReg(&regs[r]));
 
@@ -540,8 +534,6 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Sizeof");
 
     const type* DT = Node->r->dt;
@@ -553,8 +545,6 @@ static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Symbol");
 
     operand Value = operandCreate(operandUndefined);
@@ -580,8 +570,6 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Literal");
 
     operand Value;

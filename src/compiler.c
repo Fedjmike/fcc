@@ -9,7 +9,7 @@
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
 
-compilerResult compiler (const char* input, const char* output) {
+compilerResult compiler (const char* input, const char* output, vector/*<char*>*/* searchPaths) {
     architecture arch = {8};
 
     /*Initialize symbol "table",
@@ -28,7 +28,7 @@ compilerResult compiler (const char* input, const char* output) {
     symCreateType(Global, "intptr_t", arch.wordsize, typeIntegral);
 
     if (arch.wordsize >= 8)
-        symCreateType(Global, "uint64_t", arch.wordsize, typeIntegral);
+        symCreateType(Global, "uint64_t", 8, typeIntegral);
 
     int errors = 0, warnings = 0;
 
@@ -37,10 +37,13 @@ compilerResult compiler (const char* input, const char* output) {
     debugSetMode(debugCompressed);
 
     ast* Tree = 0; {
-        parserResult res = parser(input, Global);
+        parserResult res = parser(input, Global, searchPaths);
         errors += res.errors;
         warnings += res.warnings;
         Tree = res.tree;
+
+        if (res.notfound)
+            printf("error: File not found, '%s'\n", input);
     }
 
     /*Semantic analysis*/
@@ -53,7 +56,7 @@ compilerResult compiler (const char* input, const char* output) {
 
     /*Emit the assembly*/
 
-    if (errors == 0) {
+    if (errors == 0 && internalErrors == 0) {
         debugWait();
         emitter(Tree, output, &arch);
     }

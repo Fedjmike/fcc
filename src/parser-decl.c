@@ -3,7 +3,9 @@
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/debug.h"
+#include "../inc/error.h"
 
+#include "../inc/lexer.h"
 #include "../inc/parser.h"
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
@@ -14,6 +16,7 @@ static ast* parserParam (parserCtx* ctx, bool inDecl);
 static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
+static struct ast* parserEnum (parserCtx* ctx);
 
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
@@ -53,19 +56,20 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
     tokenLocation loc = ctx->location;
     storageTag storage = parserStorage(ctx);
+
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
-    if (tokenTryMatchStr(ctx, ";"))
+    if (tokenTryMatchPunct(ctx, punctSemicolon))
         ;
 
     else {
         /*Grammatically, typedef is a storage class, but semantically
           a symbol tag.*/
-        astAddChild(Node, parserDeclExpr(ctx, true,   storage == storageTypedef
-                                                    ? symTypedef
-                                                    : symId));
+        symTag symt = storage == storageTypedef ? symTypedef : symId;
 
-        if (tokenIs(ctx, "{")) {
+        astAddChild(Node, parserDeclExpr(ctx, true, symt));
+
+        if (tokenIsPunct(ctx, punctLBrace)) {
             loc = ctx->location;
             Node = astCreateFnImpl(loc, Node);
             Node->symbol = Node->l->firstChild->symbol;
@@ -85,10 +89,10 @@ ast* parserDecl (parserCtx* ctx, bool module) {
             ctx->scope = OldScope;
 
         } else {
-            while (tokenTryMatchStr(ctx, ","))
-                astAddChild(Node, parserDeclExpr(ctx, true, symId));
+            while (tokenTryMatchPunct(ctx, punctComma))
+                astAddChild(Node, parserDeclExpr(ctx, true, symt));
 
-            tokenMatchStr(ctx, ";");
+            tokenMatchPunct(ctx, punctSemicolon);
         }
     }
 
@@ -98,15 +102,23 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 }
 
 /**
- * Field = Decl#
+ * Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
  */
 static ast* parserField (parserCtx* ctx) {
-    return parserDecl(ctx, false);
-    /*!!!CHANGEZ MOI!!!
-      To what?
-      Differences: not allowed to assign values, not allowed to decl
-                   functions, certainly not implement them
-      Decling fns is an issue for the analyzer*/
+    debugEnter("Field");
+
+    tokenLocation loc = ctx->location;
+    ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
+
+    if (!tokenIsPunct(ctx, punctSemicolon)) do {
+        astAddChild(Node, parserDeclExpr(ctx, true, symId));
+    } while (tokenTryMatchPunct(ctx, punctComma));
+
+    tokenMatchPunct(ctx, punctSemicolon);
+
+    debugLeave();
+
+    return Node;
 }
 
 /**
@@ -135,26 +147,10 @@ static ast* parserParam (parserCtx* ctx, bool inDecl) {
 static storageTag parserStorage (parserCtx* ctx) {
     debugEnter("Storage");
 
-    storageTag storage = storageAuto;
-
-    if (tokenIs(ctx, "auto")) {
-        storage = storageAuto;
-        tokenMatch(ctx);
-
-    } else if (tokenIs(ctx, "static")) {
-        storage = storageStatic;
-        tokenMatch(ctx);
-
-    } else if (tokenIs(ctx, "extern")) {
-        storage = storageExtern;
-        tokenMatch(ctx);
-
-    } else if (tokenIs(ctx, "typedef")) {
-        storage = storageTypedef;
-        tokenMatch(ctx);
-
-    } else
-        {}
+    storageTag storage = tokenTryMatchKeyword(ctx, keywordStatic) ? storageStatic :
+                         tokenTryMatchKeyword(ctx, keywordExtern) ? storageExtern :
+                         tokenTryMatchKeyword(ctx, keywordTypedef) ? storageTypedef :
+                         (tokenTryMatchKeyword(ctx, keywordAuto), storage = storageAuto);
 
     debugLeave();
 
@@ -162,15 +158,18 @@ static storageTag parserStorage (parserCtx* ctx) {
 }
 
 /**
- * DeclBasic = <Ident> | StructUnion
+ * DeclBasic = <Ident> | StructUnion | Enum
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "struct") || tokenIs(ctx, "union"))
+    if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
         Node = parserStructOrUnion(ctx);
+
+    else if (tokenIsKeyword(ctx, keywordEnum))
+        Node = parserEnum(ctx);
 
     else {
         sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
@@ -197,8 +196,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 }
 
 /**
- * StructOrUnion = "struct" | "union" [ Name# ]
- *                 [ "{" [{ Field }] "}" ]
+ * StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
  *
  * Name is told to create a symbol of the tag indicated by the first
  * token.
@@ -206,9 +204,9 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 static struct ast* parserStructOrUnion (parserCtx* ctx) {
     debugEnter("StructOrUnion");
 
-    symTag tag =   tokenTryMatchStr(ctx, "struct")
+    symTag tag =   tokenTryMatchKeyword(ctx, keywordStruct)
                  ? symStruct
-                 : (tokenMatchStr(ctx, "union"), symUnion);
+                 : (tokenMatchKeyword(ctx, keywordUnion), symUnion);
 
     ast* Node = (tag == symStruct ? astCreateStruct : astCreateUnion)
                 (ctx->location, parserName(ctx, true, tag));
@@ -216,7 +214,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
     /*Body?*/
-    if (tokenTryMatchStr(ctx, "{")) {
+    if (tokenTryMatchPunct(ctx, punctLBrace)) {
         /*Only error if not already errored for wrong tag*/
         if (Node->symbol->impl && Node->symbol->tag == tag)
             errorReimplementedSym(ctx, Node->symbol);
@@ -225,13 +223,38 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
             Node->symbol->impl = Node;
 
         /*Eat fields*/
-        while (!tokenIs(ctx, "}"))
+        while (!tokenIsPunct(ctx, punctRBrace))
             astAddChild(Node, parserField(ctx));
 
-        tokenMatchStr(ctx, "}");
+        tokenMatchPunct(ctx, punctRBrace);
     }
 
     ctx->scope = OldScope;
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Enum = "enum" Name# [ "{" Name# [{ "," Name# }] "}" ]
+ */
+static struct ast* parserEnum (parserCtx* ctx) {
+    debugEnter("Enum");
+
+    tokenMatchKeyword(ctx, keywordEnum);
+
+    ast* Node = astCreateEnum(ctx->location, parserName(ctx, true, symEnum));
+    Node->symbol = Node->l->symbol;
+
+    /*Body?*/
+    if (tokenTryMatchPunct(ctx, punctLBrace)) {
+        if (!tokenIsPunct(ctx, punctRBrace)) do {
+            astAddChild(Node, parserName(ctx, true, symId));
+        } while (tokenTryMatchPunct(ctx, punctComma));
+
+        tokenMatchPunct(ctx, punctRBrace);
+    }
 
     debugLeave();
 
@@ -252,7 +275,7 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
 
     ast* Node = parserDeclUnary(ctx, inDecl, tag);
 
-    if (tokenIs(ctx, "=")) {
+    if (tokenIsPunct(ctx, punctAssign)) {
         if (inDecl && tag == symId) {
             tokenLocation loc = ctx->location;
             char* o = tokenDupMatch(ctx);
@@ -278,7 +301,7 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
 
     ast* Node = 0;
 
-    if (tokenIs(ctx, "*")) {
+    if (tokenIsPunct(ctx, punctTimes)) {
         tokenLocation loc = ctx->location;
         char* o = tokenDupMatch(ctx);
         Node = astCreateUOP(loc, o, parserDeclUnary(ctx, inDecl, tag));
@@ -300,23 +323,23 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 
     ast* Node = parserDeclAtom(ctx, inDecl, tag);
 
-    while (tokenIs(ctx, "(") || tokenIs(ctx, "[")) {
+    while (tokenIsPunct(ctx, punctLParen) || tokenIsPunct(ctx, punctLBracket)) {
         tokenLocation loc = ctx->location;
 
         /*Function*/
-        if (tokenIs(ctx, "("))
+        if (tokenIsPunct(ctx, punctLParen))
             Node = parserDeclFunction(ctx, inDecl, tag, Node);
 
         /*Array*/
-        else if (tokenTryMatchStr(ctx, "[")) {
+        else if (tokenTryMatchPunct(ctx, punctLBracket)) {
             sym* Symbol = Node->symbol;
 
-            if (tokenTryMatchStr(ctx, "]"))
+            if (tokenTryMatchPunct(ctx, punctRBracket))
                 Node = astCreateIndex(loc, Node, astCreateEmpty(loc));
 
             else {
                 Node = astCreateIndex(loc, Node, parserValue(ctx));
-                tokenMatchStr(ctx, "]");
+                tokenMatchPunct(ctx, punctRBracket);
             }
 
             Node->symbol = Symbol;
@@ -336,7 +359,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
 
     debugEnter("DeclFunction");
 
-    tokenMatchStr(ctx, "(");
+    tokenMatchPunct(ctx, punctLParen);
 
     ast* Node = astCreateCall(ctx->location, atom);
     /*Propogate the declared symbol up the chain*/
@@ -344,8 +367,8 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
 
     sym* OldScope = scopeSet(ctx, atom->symbol);
 
-    if (!tokenIs(ctx, ")")) do {
-        if (tokenIs(ctx, "...")) {
+    if (!tokenIsPunct(ctx, punctRParen)) do {
+        if (tokenIsPunct(ctx, punctEllipsis)) {
             astAddChild(Node, astCreateEllipsis(ctx->location));
             tokenMatch(ctx);
             break;
@@ -353,11 +376,11 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
         } else
             astAddChild(Node, parserParam(ctx, inDecl));
 
-    } while (tokenTryMatchStr(ctx, ","));
+    } while (tokenTryMatchPunct(ctx, punctComma));
 
     ctx->scope = OldScope;
 
-    tokenMatchStr(ctx, ")");
+    tokenMatchPunct(ctx, punctRParen);
 
     debugLeave();
 
@@ -377,9 +400,9 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag) {
 
     ast* Node = 0;
 
-    if (tokenTryMatchStr(ctx, "(")) {
+    if (tokenTryMatchPunct(ctx, punctLParen)) {
         Node = parserDeclExpr(ctx, inDecl, tag);
-        tokenMatchStr(ctx, ")");
+        tokenMatchPunct(ctx, punctRParen);
 
     } else if (tokenIsIdent(ctx)) {
         if (inDecl || tag == symParam)
@@ -425,8 +448,8 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
 
             /*SPECIAL EXCEPTION
               In C, there are multiple symbol tables for variables, typedefs, structs etc
-              But not in fcc! So there is this special exception: structs and unions may
-              be redeclared as typedefs, to allow for this idiom:
+              But not in fcc! So there is this special exception: structs and unions and
+              enums may be redeclared as typedefs, to allow for this idiom:
 
               typedef struct x {
                   ...
@@ -435,7 +458,8 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
               Doesn't guarantee that it's redeclaring the *right* symbol.*/
             if (   Node->symbol->tag != tag
                 && !(   (   Node->symbol->tag == symStruct
-                         || Node->symbol->tag == symUnion)
+                         || Node->symbol->tag == symUnion
+                         || Node->symbol->tag == symEnum)
                      && tag == symTypedef))
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
@@ -444,7 +468,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
 
         /*Can't tell whether this is a duplicate declaration
           or a (matching) redefinition*/
-        vectorAdd(&Node->symbol->decls, Node);
+        vectorPush(&Node->symbol->decls, Node);
 
     } else {
         errorExpected(ctx, "name");
