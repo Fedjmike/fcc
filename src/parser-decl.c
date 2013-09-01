@@ -56,6 +56,7 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
     tokenLocation loc = ctx->location;
     storageTag storage = parserStorage(ctx);
+
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
     if (tokenTryMatchPunct(ctx, punctSemicolon))
@@ -64,9 +65,9 @@ ast* parserDecl (parserCtx* ctx, bool module) {
     else {
         /*Grammatically, typedef is a storage class, but semantically
           a symbol tag.*/
-        astAddChild(Node, parserDeclExpr(ctx, true,   storage == storageTypedef
-                                                    ? symTypedef
-                                                    : symId));
+        symTag symt = storage == storageTypedef ? symTypedef : symId;
+
+        astAddChild(Node, parserDeclExpr(ctx, true, symt));
 
         if (tokenIsPunct(ctx, punctLBrace)) {
             loc = ctx->location;
@@ -89,7 +90,7 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
         } else {
             while (tokenTryMatchPunct(ctx, punctComma))
-                astAddChild(Node, parserDeclExpr(ctx, true, symId));
+                astAddChild(Node, parserDeclExpr(ctx, true, symt));
 
             tokenMatchPunct(ctx, punctSemicolon);
         }
@@ -101,15 +102,23 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 }
 
 /**
- * Field = Decl#
+ * Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
  */
 static ast* parserField (parserCtx* ctx) {
-    return parserDecl(ctx, false);
-    /*!!!CHANGEZ MOI!!!
-      To what?
-      Differences: not allowed to assign values, not allowed to decl
-                   functions, certainly not implement them
-      Decling fns is an issue for the analyzer*/
+    debugEnter("Field");
+
+    tokenLocation loc = ctx->location;
+    ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
+
+    if (!tokenIsPunct(ctx, punctSemicolon)) do {
+        astAddChild(Node, parserDeclExpr(ctx, true, symId));
+    } while (tokenTryMatchPunct(ctx, punctComma));
+
+    tokenMatchPunct(ctx, punctSemicolon);
+
+    debugLeave();
+
+    return Node;
 }
 
 /**
