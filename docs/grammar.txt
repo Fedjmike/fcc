@@ -32,7 +32,7 @@ Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
 									       | Code# )
 
-Field = Decl#
+Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
 Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
