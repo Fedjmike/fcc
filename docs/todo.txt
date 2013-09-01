@@ -1,98 +1,91 @@
 Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
              -  Information      o  Option
 
-[ ] Self hosting
-    [ ] Discrepancies between C11 and FCC:
-        - struct and union decl syntax & semantics
-        - Module system
-        - Operator precedence
-    [ ] ABI
-[ ] Control pretty printing
-[-] Modules
-    - http://llvm.org/devmtg/2012-11/Gregor-Modules.pdf
-[-] Type system
-    [ ] Unique ptrs?
-    [x] Lvalues
-    [ ] Narrowing/widening (careful with function rets)
-[ ] Error handling
-    [ ] Skipping
-[-] struct
-    [ ] Literals
-[x] union
-[ ] Cray-cray anonymous struct in anonymous union in struct things
-[ ] enum
-[-] typedef
-[-] Operators
-    [-] Modulo
-    [-] Division
-[ ] const
-[ ] string
-[-] Prototypes
-    [ ] Structs
-    [x] Functions
-[-] Varargs
-[ ] static
-    [ ] Variables
-    [ ] Functions
-[ ] extern
-[ ] Global variables
-[ ] continue
-[ ] main
-    [ ] Args
-    [ ] Conformance
+High importance:
 
-[-] Global state -> state structs
-    [ ] Operands: reg, labels
-    [x] Symbols
-[-] If an operand is not literally the result, recreate it
-    fo safety n shizzle
-[-] Decode AST nodes like in emitterLoop and emitterFor
-[-] Assertions
-[ ] Clean up value moving code
-[-] Make sure prototypes and implementation match exactly (static)
-[ ] Do analyzerArrayLiteral lits properly
-[ ] File names in error messages
-[ ] Fix type compatibility
-    - Type coercion needed (remember: bool -> int)
+[ ] Compound literals
+[ ] Anonymous:
+    [ ] Unions
+    [ ] Structs
+    [ ] Structs in unions
+[ ] const
+[-] char
+[ ] Review type compatibility
+[ ] Numeric type coercion: widening & narrowing
+[ ] Type completeness
+[-] Varargs
+[-] enum
+[ ] extern
+[ ] argc & argv passing
+[ ] continue
+[-] static
+    [ ] Function linkage
+    [ ] Disallow all others?
+[ ] Disallow global variables
+[ ] Modules
+    [ ] Separated namespaces
+    [ ] Different dialect?
+        - No impls
+
+Medium:
+
+[-] Typedef
+
+Low:
+
+[ ] main conformance
+[ ] % /
+[ ] Pretty printing control by command line
+[ ] string
+[ ] New IR
+    - Expression only (to start withw)
+
+
+
+Other issues:
+
+[ ] Add symbol size back to debug output
+
+Lexer:
+
+[ ] Lexing of pp
+[ ] More on char and str lexing
+
+Parser:
+
+[ ] Param name clash
 [ ] Fix bop location thingy (astCreateBOP(o, l))
-[ ] Fix lvalue error messages ???
+[-] Symbol shadowing
+[ ] Get tokenMatch to guess whether to skip based on similarity of tokens
+[ ] Line that starts with undeclared ident... assume decl?
+[ ] Complain about keywords as idents
+
+Semantic analyzer:
+
 [ ] Check constness of array sizes, enum values etc
 [ ] Array size detection (basic x[] = {...})
+[ ] Do analyzerArrayLiteral lits properly
+[ ] Check that fn impl and var init are semantically valid
+[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
+    Why not?
+[-] Make sure prototypes and implementation match exactly (static)
+[ ] Empty decl warning?
+
+Emitter:
+
+[ ] Get rid of global state in registers and labels
+[ ] Clean up value moving code
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
-[-] Symbol shadowing
-[ ] Review type compatibility (esp. w.r.t. derivation & unification)
-[ ] Check that fn impl and var init are semantically valid
 [ ] Get rid of &regs[] use outside reg.c
     - Make stack operations
     - Differentiate between top and base operands
 [ ] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
-[ ] Merge operand size and reg size?
 [ ] Extra layer between emitter and assembly?
     - Expand operand?
     - Maybe: have a layer that takes expressions and an operation,
       sends them off to emitterValue, handles operands and reg
       placement.
-[ ] Add symbol size back to debug output
-[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
-    Why not?
-[ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[ ] Param name clash
-[ ] Line that starts with undeclared ident... assume decl?
-[ ] Incomplete types and all that shizzle
-[ ] Storage class mismatch
-[ ] Add keywords to lexer
-[ ] Lexing of pp
-[ ] Empty decl warning?
-[ ] Complain about keywords as idents
-[ ] More on char and str lexing
-
-[-] Abysmal error recovery
-[ ] AST field reuse is weird and unclear
-[ ] Dealing with operands in the emitter is cumbersome
-[-] Lack of comments, esp. interface documentation
-[-] Assumption of operand tag permutations required
-[ ] Unit tests?
