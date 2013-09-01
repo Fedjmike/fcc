@@ -4,6 +4,7 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/reg.h"
+#include "../inc/operand.h"
 
 #include "../inc/architecture.h"
 
@@ -234,12 +235,12 @@ void reportRegs () {
     debugOut(" ]\n");
 }
 
-void reportOperand (const architecture* arch, operand R) {
-    char* RStr = operandToStr(R);
+void reportOperand (const architecture* arch, const operand* R) {
+    char* RStr = operandToStr(*R);
 
     debugOut("tag: %s   size: %d   str: %s\n",
-             operandTagGetStr(R.tag),
-             operandGetSize(arch, R),
+             operandTagGetStr(R->tag),
+             operandGetSize(arch, *R),
              RStr);
 
     free(RStr);

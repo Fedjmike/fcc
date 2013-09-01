@@ -1,13 +1,12 @@
 #include "../std/std.h"
 
-#include "operand.h"
-
 #include "stdio.h"
 #include "stdarg.h"
 
 struct type;
 struct ast;
 struct sym;
+struct operand;
 struct architecture;
 
 typedef enum {
@@ -50,6 +49,6 @@ void reportType (const struct type* DT);
 void reportSymbol (const struct sym* Symbol);
 void reportNode (const struct ast* Node);
 void reportRegs ();
-void reportOperand (const struct architecture* arch, operand R);
+void reportOperand (const struct architecture* arch, const struct operand* R);
 
 extern int internalErrors;
