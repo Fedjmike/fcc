@@ -3,6 +3,7 @@
 #include "../inc/debug.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
+#include "../inc/error.h"
 
 #include "../inc/parser.h"
 
@@ -18,66 +19,6 @@ sym* scopeSet (parserCtx* ctx, sym* Scope) {
     sym* Old = ctx->scope;
     ctx->scope = Scope;
     return Old;
-}
-
-/*:::: ::::*/
-
-static void tokenLocationMsg (tokenLocation loc) {
-    printf("%s:%d:%d: ", loc.filename, loc.line, loc.lineChar);
-}
-
-/*:::: ERROR MESSAGING ::::*/
-
-static void error (parserCtx* ctx, const char* format, ...) {
-    tokenLocationMsg(ctx->location);
-    printf("error: ");
-
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-
-    puts(".");
-
-    ctx->errors++;
-    debugWait();
-}
-
-void errorExpected (parserCtx* ctx, const char* Expected) {
-    error(ctx, "expected %s, found '%s'", Expected, ctx->lexer->buffer);
-}
-
-void errorUndefSym (parserCtx* ctx) {
-    error(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
-}
-
-void errorUndefType (parserCtx* ctx) {
-    error(ctx, "undefined symbol '%s', expected type", ctx->lexer->buffer);
-}
-
-void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
-    error(ctx, "illegal %s outside of %s", what, where);
-}
-
-void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
-    const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
-
-    error(ctx, "'%s' redeclared as %s", Symbol->ident, symTagGetStr(tag));
-
-    tokenLocationMsg(first->location);
-    printf("       first declaration here as %s\n", symTagGetStr(Symbol->tag));
-}
-
-void errorReimplementedSym (parserCtx* ctx, sym* Symbol) {
-    error(ctx, "%s '%s' reimplemented",
-          Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
-
-    tokenLocationMsg(Symbol->impl->location);
-    puts("       first implementation here");
-}
-
-void errorFileNotFound (parserCtx* ctx, const char* name) {
-    error(ctx, "File not found, '%s'", name);
 }
 
 /*:::: TOKEN HANDLING ::::*/

@@ -4,6 +4,7 @@
 #include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
+#include "../inc/error.h"
 
 #include "../inc/lexer.h"
 #include "../inc/parser.h"

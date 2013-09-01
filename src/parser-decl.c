@@ -3,6 +3,7 @@
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/debug.h"
+#include "../inc/error.h"
 
 #include "../inc/lexer.h"
 #include "../inc/parser.h"
