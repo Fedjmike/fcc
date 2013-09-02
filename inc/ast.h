@@ -77,7 +77,7 @@ ast* astCreateUOP (tokenLocation location, char* o, ast* r);
 ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
-ast* astCreateCast (tokenLocation location, ast* result);
+ast* astCreateCast (tokenLocation location, ast* result, ast* r);
 ast* astCreateSizeof (tokenLocation location, ast* r);
 ast* astCreateLiteral (tokenLocation location, literalTag litTag);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
