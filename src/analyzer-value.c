@@ -24,7 +24,8 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerCast (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node);
-static valueResult analyzerArrayLiteral (analyzerCtx* ctx, ast* Node);
+static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
+static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT);
 
 /**
  * Returns whether the (binary) operator is one that can only act on
@@ -133,8 +134,8 @@ valueResult analyzerValue (analyzerCtx* ctx, ast* Node) {
         return analyzerSizeof(ctx, Node);
 
     else if (Node->tag == astLiteral) {
-        if (Node->litTag == literalArray)
-            return analyzerArrayLiteral(ctx, Node);
+        if (Node->litTag == literalCompound)
+            return analyzerCompoundLiteral(ctx, Node);
 
         else
             return analyzerLiteral(ctx, Node);
@@ -248,7 +249,8 @@ static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     valueResult L = analyzerValue(ctx, Node->l);
 
-    if (!typeIsRecord(L.dt)) {
+    if (!(   typeIsRecord(L.dt)
+          || (L.dt->tag == typePtr && typeIsRecord(L.dt->base)))) {
         if (isDerefBOP(Node->o))
             errorOp(ctx, Node->o, "structure or union pointer", Node->l, L.dt);
 
@@ -446,7 +448,7 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
                 valueResult Param = analyzerValue(ctx, Current);
 
                 if (!typeIsCompatible(Param.dt, fn->paramTypes[n]))
-                    errorParamMismatch(ctx, Node, n, fn->paramTypes[n], Param.dt);
+                    errorParamMismatch(ctx, Current, n, fn->paramTypes[n], Param.dt);
             }
 
             /*Analyze the rest of the given params even if there were
@@ -535,17 +537,71 @@ static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     return (valueResult) {Node->dt, Node->litTag == literalIdent};
 }
 
-static valueResult analyzerArrayLiteral (analyzerCtx* ctx, ast* Node) {
-    debugEnter("ArrayLiteral");
+static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
+    debugEnter("CompoundLiteral");
 
-    /*Allowed?*/
+    analyzerInitOrCompoundLiteral(ctx, Node, analyzerType(ctx, Node->l));
 
-    /*TODO: Check element types match eachother*/
+    debugLeave();
 
-    /*Return type*/
+    return (valueResult) {Node->dt, true};
+}
 
-    Node->dt = typeDeriveArray(analyzerValue(ctx, Node->firstChild).dt,
-                               Node->children);
+static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT) {
+    debugEnter("InitOrCompoundtLiteral");
+
+    if (typeIsInvalid(DT))
+        Node->dt = typeCreateInvalid();
+
+    /*struct: check each field in order, check lengths match*/
+    else if (DT->tag == typeBasic && DT->basic->tag == symStruct) {
+        sym* structSym = DT->basic;
+
+        if (structSym->children != Node->children)
+            errorDegree(ctx, Node, "fields", structSym->children, Node->children, structSym->ident);
+
+        else {
+            ast* curNode;
+            sym* curSym;
+
+            for (curNode = Node->firstChild, curSym = structSym->firstChild;
+                 curNode && curSym;
+                 curNode = curNode->nextSibling, curSym = curSym->nextSibling) {
+                valueResult curValue;
+
+                if (curNode->tag == astLiteral && curNode->litTag == literalInit)
+                    curValue = analyzerInitOrCompoundLiteral(ctx, curNode, curSym->dt);
+
+                else
+                    curValue = analyzerValue(ctx, curNode);
+
+                if (!typeIsCompatible(curValue.dt, curSym->dt))
+                    errorInitFieldMismatch(ctx, curNode, curSym, curValue.dt);
+            }
+        }
+
+    /*Array: check that all are of the right type, complain only once*/
+    } else if (typeIsArray(DT)) {
+        if (DT->array != -1 && DT->array < Node->children)
+            errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
+
+        for (ast* curNode = Node->firstChild;
+             curNode;
+             curNode = curNode->nextSibling) {
+            valueResult curValue;
+
+            if (curNode->tag == astLiteral && curNode->litTag == literalInit)
+                curValue = analyzerInitOrCompoundLiteral(ctx, curNode, DT->base);
+
+            else
+                curValue = analyzerValue(ctx, curNode);
+
+            if (!typeIsCompatible(curValue.dt, DT->base))
+                errorTypeExpectedType(ctx, curNode, "array initialization", DT->base, curValue.dt);
+        }
+
+    } else
+        {} //TODO
 
     debugLeave();
 

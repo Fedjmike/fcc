@@ -4,7 +4,7 @@
 #include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
-\#include "../inc/error.h"
+#include "../inc/error.h"
 
 #include "../inc/lexer.h"
 #include "../inc/parser.h"
@@ -310,7 +310,7 @@ static ast* parserFactor (parserCtx* ctx) {
             if (tokenTryMatchPunct(ctx, punctLBrace)) {
                 ast* tmp = Node;
                 Node = astCreateLiteral(ctx->location, literalCompound);
-                (ast*) Node->literal = tmp;
+                Node->l = tmp;
 
                 do {
                     astAddChild(Node, parserAssignValue(ctx));
@@ -382,7 +382,7 @@ static ast* parserFactor (parserCtx* ctx) {
         /*Valid symbol?*/
         if (Symbol) {
             Node = astCreateLiteral(ctx->location, literalIdent);
-            (char*) Node->literal = tokenDupMatch(ctx);
+            Node->literal = (char*) tokenDupMatch(ctx);
             Node->symbol = Symbol;
 
         } else {

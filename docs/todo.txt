@@ -39,6 +39,7 @@ Low:
 [ ] string
 [ ] New IR
     - Expression only (to start withw)
+[ ] Designated initializers in compound literals
 
 
 
@@ -59,6 +60,7 @@ Parser:
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
 [ ] Line that starts with undeclared ident... assume decl?
 [ ] Complain about keywords as idents
+[ ] Disallow initializations inside regular expressions
 
 Semantic analyzer:
 

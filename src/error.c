@@ -122,18 +122,26 @@ void errorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expe
     analyzerError(ctx, Node, "%s expected %d %s, %d given", where, expected, thing, found);
 }
 
-void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* Expected, const type* Found) {
-    char* ExpectedStr = typeToStr(Expected, "");
-    char* FoundStr = typeToStr(Found, "");
-    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s", n+1, ExpectedStr, FoundStr);
-    free(ExpectedStr);
-    free(FoundStr);
+void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* expected, const type* found) {
+    char* expectedStr = typeToStr(expected, "");
+    char* foundStr = typeToStr(found, "");
+    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s", n+1, expectedStr, foundStr);
+    free(expectedStr);
+    free(foundStr);
 }
 
-void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* Record) {
-    char* RecordStr = typeToStr(Record, "");
-    analyzerError(ctx, Node, "%s expected field of %s, found %s", o, RecordStr, Node->literal);
-    free(RecordStr);
+void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
+    char* recordStr = typeToStr(record, "");
+    analyzerError(ctx, Node, "%s expected field of %s, found %s", o, recordStr, Node->literal);
+    free(recordStr);
+}
+
+void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node, const sym* expected, const type* found) {
+    char* expectedStr = typeToStr(expected->dt, expected->ident);
+    char* foundStr = typeToStr(found, "");
+    analyzerError(ctx, Node, "type mismatch for initialization of field %s with %s", expectedStr, foundStr);
+    free(expectedStr);
+    free(foundStr);
 }
 
 void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* found) {

@@ -117,7 +117,9 @@ sym* typeGetRecordSym (const type* record) {
         return 0;
 
     else {
-        debugAssert("typeGetRecordSym", "record param", typeIsRecord(record));
+        debugAssert("typeGetRecordSym", "record param",
+                       typeIsRecord(record)
+                    || (record->tag == typePtr && typeIsRecord(record->base)));
 
         if (typeIsPtr(record))
             return record->base->basic;
@@ -225,7 +227,6 @@ bool typeIsRecord (const type* DT) {
     return    (   DT->tag == typeBasic
                && (   DT->basic->tag == symStruct
                    || DT->basic->tag == symUnion))
-           || (DT->tag == typePtr && typeIsRecord(DT->base))
            || typeIsInvalid(DT);
 }
 

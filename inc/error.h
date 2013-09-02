@@ -20,8 +20,9 @@ void errorOp (struct analyzerCtx* ctx, const char* o, const char* desc, const st
 void errorLvalue (struct analyzerCtx* ctx, const char* o, const struct ast* Operand);
 void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char* o, const struct type* L, const struct type* R);
 void errorDegree (struct analyzerCtx* ctx, const struct ast* Node, const char* thing, int expected, int found, const char* where);
-void errorMember (struct analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* Record);
+void errorMember (struct analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* record);
 void errorParamMismatch (struct analyzerCtx* ctx, const struct ast* Node, int n, const struct type* expected, const struct type* found);
+void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node, const sym* expected, const struct type* found);
 void errorConflictingDeclarations (struct analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol, const struct type* found);
 void errorRedeclaredVar (struct analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);
 void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, const struct sym* Symbol);
