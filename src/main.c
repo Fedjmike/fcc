@@ -25,11 +25,11 @@ static int driver (config conf) {
     if (errors != 0 || warnings != 0)
         printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
 
-    else if (conf.mode == modeNoAssemble || internalErrors)
-        ;
+    else if (internalErrors)
+        printf("Compilation complete with %d internal error(s)\n", internalErrors);
 
     /*Assemble/link*/
-    else {
+    else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
         char* intermediates = 0; {
             int length = 0;
