@@ -86,7 +86,7 @@ ast* astCreateEllipsis (tokenLocation location);
 
 void astAddChild (ast* Parent, ast* Child);
 
-int astIsValueTag (astTag tag);
+bool astIsValueTag (astTag tag);
 
 /**
  * Return the string associated with an AST tag

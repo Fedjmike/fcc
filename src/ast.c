@@ -200,7 +200,7 @@ void astAddChild (ast* Parent, ast* Child) {
     Parent->children++;
 }
 
-int astIsValueTag (astTag tag) {
+bool astIsValueTag (astTag tag) {
     return    tag == astBOP || tag == astUOP || tag == astTOP
            || tag == astCall || tag == astIndex || tag == astCast
            || tag == astSizeof || tag == astLiteral;
