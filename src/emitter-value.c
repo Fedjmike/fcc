@@ -73,7 +73,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
             Value = emitterSymbol(ctx, Node);
 
         else if (Node->litTag == literalCompound)
-            return emitterCompoundLiteral(ctx, Node);
+            Value = emitterCompoundLiteral(ctx, Node);
 
         else
             Value = emitterLiteral(ctx, Node);
