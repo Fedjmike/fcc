@@ -299,6 +299,8 @@ static ast* parserFactor (parserCtx* ctx) {
 
     ast* Node = 0;
 
+    tokenLocation loc = ctx->location;
+
     /*Cast, compound literal or parenthesized expression*/
     if (tokenTryMatchPunct(ctx, punctLParen)) {
         /*Cast or compound literal*/
@@ -309,7 +311,7 @@ static ast* parserFactor (parserCtx* ctx) {
             /*Compound literal*/
             if (tokenTryMatchPunct(ctx, punctLBrace)) {
                 ast* tmp = Node;
-                Node = astCreateLiteral(ctx->location, literalCompound);
+                Node = astCreateLiteral(loc, literalCompound);
                 Node->l = tmp;
 
                 do {
@@ -320,7 +322,7 @@ static ast* parserFactor (parserCtx* ctx) {
 
             /*Cast*/
             } else
-                Node = astCreateCast(ctx->location, Node, parserUnary(ctx));
+                Node = astCreateCast(loc, Node, parserUnary(ctx));
 
         /*Expression*/
         } else {
@@ -330,7 +332,7 @@ static ast* parserFactor (parserCtx* ctx) {
 
     /*Struct/array initialiazer*/
     } else if (tokenTryMatchPunct(ctx, punctLBrace)) {
-        Node = astCreateLiteral(ctx->location, literalInit);
+        Node = astCreateLiteral(loc, literalInit);
 
         do {
             astAddChild(Node, parserAssignValue(ctx));
@@ -354,7 +356,7 @@ static ast* parserFactor (parserCtx* ctx) {
         } else
             Node = parserUnary(ctx);
 
-        Node = astCreateSizeof(ctx->location, Node);
+        Node = astCreateSizeof(loc, Node);
 
     /*Integer literal*/
     } else if (tokenIsInt(ctx)) {
