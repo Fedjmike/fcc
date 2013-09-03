@@ -602,8 +602,18 @@ valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                 errorTypeExpectedType(ctx, curNode, "array initialization", DT->base, curValue.dt);
         }
 
-    } else
-        {} //TODO
+    /*Scalar*/
+    } else {
+        if (Node->children != 1)
+            errorDegree(ctx, Node, "element", 1, Node->children, "scalar");
+
+        else {
+            valueResult R = analyzerValue(ctx, Node->firstChild);
+
+            if (!typeIsCompatible(R.dt, DT))
+                errorTypeExpectedType(ctx, Node->r, "variable initialization", DT, R.dt);
+        }
+    }
 
     debugLeave();
 

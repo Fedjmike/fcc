@@ -220,8 +220,14 @@ static void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym*
             operandFree(R);
         }
 
-    } else
-        {} //TODO
+    /*Scalar*/
+    } else {
+        asmEnter(ctx->Asm);
+        operand R = emitterValue(ctx, Node->firstChild, operandCreate(operandUndefined));
+        asmLeave(ctx->Asm);
+        asmMove(ctx->Asm, base, R);
+        operandFree(R);
+    }
 
     debugLeave();
 }
