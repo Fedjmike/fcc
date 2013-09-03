@@ -23,8 +23,6 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
 static void emitterDeclCall (emitterCtx* ctx, const ast* Node);
 
-static void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol, operand base);
-
 void emitterDecl (emitterCtx* ctx, const ast* Node) {
     debugEnter("Decl");
 
@@ -162,72 +160,6 @@ static void emitterDeclCall (emitterCtx* ctx, const ast* Node) {
 
     if (Node->symbol->label.label == 0)
         Node->symbol->label = labelNamed(Node->symbol->ident);
-
-    debugLeave();
-}
-
-static void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol, operand base) {
-    debugEnter("InitOrCompoundLiteral");
-    (void) Symbol;
-
-    /*Struct initialization*/
-    if (Node->dt->tag == typeBasic && Node->dt->basic->tag == symStruct) {
-        sym* structSym = Node->dt->basic;
-
-        ast* value;
-        sym* field;
-
-        /*For every field*/
-        for (value = Node->firstChild, field = structSym->firstChild;
-             value && field;
-             value = value->nextSibling, field = field->nextSibling) {
-            /*Prepare the left operand*/
-            operand L = base;
-            L.size = typeGetSize(ctx->arch, field->dt);
-            L.offset += field->offset;
-
-            /*Recursive initialization*/
-            if (value->tag == astLiteral && value->litTag == literalInit) {
-                emitterInitOrCompoundLiteral(ctx, value, field, L);
-
-            /*Regular value*/
-            } else {
-                asmEnter(ctx->Asm);
-                operand R = emitterValue(ctx, value, operandCreate(operandUndefined));
-                asmLeave(ctx->Asm);
-
-                asmMove(ctx->Asm, L, R);
-                operandFree(R);
-            }
-        }
-
-    /*Array initialization*/
-    } else if (typeIsArray(Node->dt)) {
-        int elementSize = typeGetSize(ctx->arch, Symbol->dt->base);
-        operand L = base;
-        L.size = elementSize;
-
-        /*For every element*/
-        for (ast* Current = Node->firstChild;
-             Current;
-             Current = Current->nextSibling) {
-            asmEnter(ctx->Asm);
-            operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
-            asmLeave(ctx->Asm);
-
-            L.offset += elementSize;
-            asmMove(ctx->Asm, L, R);
-            operandFree(R);
-        }
-
-    /*Scalar*/
-    } else {
-        asmEnter(ctx->Asm);
-        operand R = emitterValue(ctx, Node->firstChild, operandCreate(operandUndefined));
-        asmLeave(ctx->Asm);
-        asmMove(ctx->Asm, base, R);
-        operandFree(R);
-    }
 
     debugLeave();
 }
