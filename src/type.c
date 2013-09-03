@@ -340,6 +340,8 @@ const char* typeTagGetStr (typeTag tag) {
 }
 
 int typeGetSize (const architecture* arch, const type* DT) {
+    debugAssert("typeGetSize", "null parameter", DT != 0);
+    
     if (typeIsInvalid(DT))
         return 0;
 
