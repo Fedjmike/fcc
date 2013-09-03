@@ -61,8 +61,8 @@ bool tokenIsDecl (const parserCtx* ctx) {
 void tokenNext (parserCtx* ctx) {
     lexerNext(ctx->lexer);
     ctx->location = (tokenLocation) {ctx->filename,
-                                     ctx->lexer->stream->line,
-                                     ctx->lexer->stream->lineChar};
+                                     ctx->lexer->line,
+                                     ctx->lexer->lineChar};
 }
 
 void tokenSkipMaybe (parserCtx* ctx) {
@@ -71,7 +71,7 @@ void tokenSkipMaybe (parserCtx* ctx) {
 }
 
 void tokenMatch (parserCtx* ctx) {
-    debugMsg("matched: '%s'", ctx->lexer->buffer);
+    debugMsg("matched:%d:%d: '%s'", ctx->location.line, ctx->location.lineChar, ctx->lexer->buffer);
     tokenNext(ctx);
 }
 

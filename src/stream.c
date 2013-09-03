@@ -35,7 +35,7 @@ char streamNext (streamCtx* ctx) {
 
     if (old == '\n') {
         ctx->line++;
-        ctx->lineChar = 0;
+        ctx->lineChar = 1;
 
     } else if (old == '\t')
         ctx->lineChar += 3;

@@ -62,6 +62,7 @@ typedef enum {
 
 typedef struct lexerCtx {
     streamCtx* stream;
+    int line, lineChar;
 
     tokenTag token;
     keywordTag keyword;

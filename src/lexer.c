@@ -19,6 +19,8 @@ static keywordTag lookKeyword (const char* str);
 lexerCtx* lexerInit (FILE* file) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
     ctx->stream = streamInit(file);
+    ctx->line = 1;
+    ctx->lineChar = 1;
 
     ctx->token = tokenUndefined;
     ctx->keyword = keywordUndefined;
@@ -123,6 +125,9 @@ void lexerNext (lexerCtx* ctx) {
         return;
 
     lexerSkipInsignificants(ctx);
+
+    ctx->line = ctx->stream->line;
+    ctx->lineChar = ctx->stream->lineChar;
 
     ctx->length = 0;
     ctx->keyword = keywordUndefined;
