@@ -65,7 +65,7 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
     parserError(ctx, "illegal %s outside of %s", what, where);
 }
 
-void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
+void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
     parserError(ctx, "'%s' redeclared as %s", Symbol->ident, symTagGetStr(tag));
@@ -74,7 +74,7 @@ void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
     printf("       first declaration here as %s\n", symTagGetStr(Symbol->tag));
 }
 
-void errorReimplementedSym (parserCtx* ctx, sym* Symbol) {
+void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
     parserError(ctx, "%s '%s' reimplemented",
           Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
 
@@ -122,18 +122,26 @@ void errorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expe
     analyzerError(ctx, Node, "%s expected %d %s, %d given", where, expected, thing, found);
 }
 
-void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* Expected, const type* Found) {
-    char* ExpectedStr = typeToStr(Expected, "");
-    char* FoundStr = typeToStr(Found, "");
-    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s", n+1, ExpectedStr, FoundStr);
-    free(ExpectedStr);
-    free(FoundStr);
+void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* expected, const type* found) {
+    char* expectedStr = typeToStr(expected, "");
+    char* foundStr = typeToStr(found, "");
+    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s", n+1, expectedStr, foundStr);
+    free(expectedStr);
+    free(foundStr);
 }
 
-void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* Record) {
-    char* RecordStr = typeToStr(Record, "");
-    analyzerError(ctx, Node, "%s expected field of %s, found %s", o, RecordStr, Node->literal);
-    free(RecordStr);
+void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
+    char* recordStr = typeToStr(record, "");
+    analyzerError(ctx, Node, "%s expected field of %s, found %s", o, recordStr, Node->literal);
+    free(recordStr);
+}
+
+void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* structSym, const sym* fieldSym, const type* found) {
+    char* fieldStr = typeToStr(fieldSym->dt, fieldSym->ident);
+    char* foundStr = typeToStr(found, "");
+    analyzerError(ctx, Node, "type mismatch: %s given for initialization of field %s in %s %s", foundStr, fieldStr, symTagGetStr(structSym->tag), structSym->ident);
+    free(fieldStr);
+    free(foundStr);
 }
 
 void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* found) {

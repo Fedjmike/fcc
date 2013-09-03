@@ -120,6 +120,8 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
         reportSymbol(Symbol);
     }
 
+    /*Allocate stack space for all the auto variables
+      Stack grows down, so the amount is the negation of the last offset*/
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /*Label to jump to from returns*/

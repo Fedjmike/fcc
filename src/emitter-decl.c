@@ -23,7 +23,7 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
 static void emitterDeclCall (emitterCtx* ctx, const ast* Node);
 
-static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Symbol);
+static void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol, operand base);
 
 void emitterDecl (emitterCtx* ctx, const ast* Node) {
     debugEnter("Decl");
@@ -129,17 +129,19 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     /*The emitter doesn't need to trace the RHS*/
     emitterDeclNode(ctx, Node->l);
 
-    /*Array*/
-    if (Node->r->tag == astLiteral && Node->r->litTag == literalArray)
-        emitterArrayLiteral(ctx, Node->r, Node->symbol);
+    asmEnter(ctx->Asm);
+    operand L = operandCreateMem(&regs[regRBP],
+                                 Node->symbol->offset,
+                                 typeGetSize(ctx->arch,
+                                             Node->symbol->dt));
+    asmLeave(ctx->Asm);
+
+    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+        emitterInitOrCompoundLiteral(ctx, Node->r, Node->symbol, L);
 
     else {
         if (Node->symbol->storage == storageAuto) {
             asmEnter(ctx->Asm);
-            operand L = operandCreateMem(&regs[regRBP],
-                                         Node->symbol->offset,
-                                         typeGetSize(ctx->arch,
-                                                     Node->symbol->dt));
             operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
             asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
@@ -164,21 +166,66 @@ static void emitterDeclCall (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 }
 
-static void emitterArrayLiteral (emitterCtx* ctx, const ast* Node, const sym* Symbol) {
-    debugEnter("ArrayLiteral");
+static void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol, operand base) {
+    debugEnter("InitOrCompoundLiteral");
+    (void) Symbol;
 
-    int n = 0;
+    /*Struct initialization*/
+    if (Node->dt->tag == typeBasic && Node->dt->basic->tag == symStruct) {
+        sym* structSym = Node->dt->basic;
 
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling, n++) {
+        ast* value;
+        sym* field;
+
+        /*For every field*/
+        for (value = Node->firstChild, field = structSym->firstChild;
+             value && field;
+             value = value->nextSibling, field = field->nextSibling) {
+            /*Prepare the left operand*/
+            operand L = base;
+            L.size = typeGetSize(ctx->arch, field->dt);
+            L.offset += field->offset;
+
+            /*Recursive initialization*/
+            if (value->tag == astLiteral && value->litTag == literalInit) {
+                emitterInitOrCompoundLiteral(ctx, value, field, L);
+
+            /*Regular value*/
+            } else {
+                asmEnter(ctx->Asm);
+                operand R = emitterValue(ctx, value, operandCreate(operandUndefined));
+                asmLeave(ctx->Asm);
+
+                asmMove(ctx->Asm, L, R);
+                operandFree(R);
+            }
+        }
+
+    /*Array initialization*/
+    } else if (typeIsArray(Node->dt)) {
+        int elementSize = typeGetSize(ctx->arch, Symbol->dt->base);
+        operand L = base;
+        L.size = elementSize;
+
+        /*For every element*/
+        for (ast* Current = Node->firstChild;
+             Current;
+             Current = Current->nextSibling) {
+            asmEnter(ctx->Asm);
+            operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
+            asmLeave(ctx->Asm);
+
+            L.offset += elementSize;
+            asmMove(ctx->Asm, L, R);
+            operandFree(R);
+        }
+
+    /*Scalar*/
+    } else {
         asmEnter(ctx->Asm);
-        operand L = operandCreateMem(&regs[regRBP],
-                                     Symbol->offset + typeGetSize(ctx->arch, Symbol->dt->base)*n,
-                                     typeGetSize(ctx->arch, Symbol->dt->base));
-        operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
+        operand R = emitterValue(ctx, Node->firstChild, operandCreate(operandUndefined));
         asmLeave(ctx->Asm);
-        asmMove(ctx->Asm, L, R);
+        asmMove(ctx->Asm, base, R);
         operandFree(R);
     }
 

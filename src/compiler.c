@@ -10,7 +10,7 @@
 #include "../inc/emitter.h"
 
 compilerResult compiler (const char* input, const char* output, vector/*<char*>*/* searchPaths) {
-    architecture arch = {8};
+    architecture arch = {4};
 
     /*Initialize symbol "table",
       make new built in data types and add them to the global namespace*/
@@ -34,7 +34,7 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
 
     /*Parse the module*/
 
-    debugSetMode(debugCompressed);
+    //debugSetMode(debugCompressed);
 
     ast* Tree = 0; {
         parserResult res = parser(input, Global, searchPaths);

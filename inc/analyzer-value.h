@@ -11,3 +11,4 @@ typedef struct value {
 } valueResult;
 
 valueResult analyzerValue (struct analyzerCtx* ctx, struct ast* Node);
+valueResult analyzerInitOrCompoundLiteral (struct analyzerCtx* ctx, struct ast* Node, const struct type* DT);

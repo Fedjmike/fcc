@@ -151,9 +151,10 @@ ast* astCreateCall (tokenLocation location, ast* function) {
     return Node;
 }
 
-ast* astCreateCast (tokenLocation location, ast* result) {
+ast* astCreateCast (tokenLocation location, ast* result, ast* r) {
     ast* Node = astCreate(astCast, location);
     Node->l = result;
+    Node->r = r;
     return Node;
 }
 
@@ -247,7 +248,8 @@ const char* literalTagGetStr (literalTag tag) {
     else if (tag == literalInt) return "literalInt";
     else if (tag == literalStr) return "literalStr";
     else if (tag == literalBool) return "literalBool";
-    else if (tag == literalArray) return "literalArray";
+    else if (tag == literalCompound) return "literalCompound";
+    else if (tag == literalInit) return "literalInit";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

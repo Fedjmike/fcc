@@ -105,6 +105,7 @@ static void symAddChild (sym* Parent, sym* Child) {
     }
 
     Child->parent = Parent;
+    Parent->children++;
 }
 
 sym* symChild (const sym* Scope, const char* look) {

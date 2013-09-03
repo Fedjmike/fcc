@@ -290,7 +290,7 @@ static ast* parserObject (parserCtx* ctx) {
 /**
  * Factor =   ( "(" Value ")" )
  *          | ( "(" Type ")" Unary )
- *          | ( "{" [ AssignValue [{ "," AssignValue }] ] "}" )
+ *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
  *          | <Int> | <Bool> | <Str> | <Ident>
  */
@@ -299,15 +299,31 @@ static ast* parserFactor (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    /*Cast or parenthesized expression*/
+    tokenLocation loc = ctx->location;
+
+    /*Cast, compound literal or parenthesized expression*/
     if (tokenTryMatchPunct(ctx, punctLParen)) {
-        /*Cast*/
+        /*Cast or compound literal*/
         if (tokenIsDecl(ctx)) {
-            debugMode old = debugSetMode(debugFull);
-            Node = astCreateCast(ctx->location, parserType(ctx));
-            debugSetMode(old);
+            Node = parserType(ctx);
             tokenMatchPunct(ctx, punctRParen);
-            Node->r = parserUnary(ctx);
+
+            /*Compound literal*/
+            if (tokenTryMatchPunct(ctx, punctLBrace)) {
+                ast* tmp = Node;
+                Node = astCreateLiteral(loc, literalCompound);
+                Node->symbol = symCreateNamed(symId, ctx->scope, "");
+                Node->l = tmp;
+
+                do {
+                    astAddChild(Node, parserAssignValue(ctx));
+                } while (tokenTryMatchPunct(ctx, punctComma));
+
+                tokenMatchPunct(ctx, punctRBrace);
+
+            /*Cast*/
+            } else
+                Node = astCreateCast(loc, Node, parserUnary(ctx));
 
         /*Expression*/
         } else {
@@ -315,9 +331,9 @@ static ast* parserFactor (parserCtx* ctx) {
             tokenMatchPunct(ctx, punctRParen);
         }
 
-    /*Struct/array literal*/
+    /*Struct/array initialiazer*/
     } else if (tokenTryMatchPunct(ctx, punctLBrace)) {
-        Node = astCreateLiteral(ctx->location, literalArray);
+        Node = astCreateLiteral(loc, literalInit);
 
         do {
             astAddChild(Node, parserAssignValue(ctx));
@@ -341,7 +357,7 @@ static ast* parserFactor (parserCtx* ctx) {
         } else
             Node = parserUnary(ctx);
 
-        Node = astCreateSizeof(ctx->location, Node);
+        Node = astCreateSizeof(loc, Node);
 
     /*Integer literal*/
     } else if (tokenIsInt(ctx)) {
@@ -369,7 +385,7 @@ static ast* parserFactor (parserCtx* ctx) {
         /*Valid symbol?*/
         if (Symbol) {
             Node = astCreateLiteral(ctx->location, literalIdent);
-            Node->literal = (void*) tokenDupMatch(ctx);
+            Node->literal = (char*) tokenDupMatch(ctx);
             Node->symbol = Symbol;
 
         } else {

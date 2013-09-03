@@ -99,6 +99,7 @@ typedef struct sym {
     struct sym* firstChild;
     struct sym* lastChild;
     struct sym* nextSibling;
+    int children;
 
     operand label;  ///Label associated with this symbol in the assembly
     int offset;  ///Offset, in bytes, for stack stored vars/parameters and non
