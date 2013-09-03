@@ -35,6 +35,17 @@ static void analyzerEnd (analyzerCtx* ctx) {
     free(ctx);
 }
 
+static analyzerFnCtx analyzerPushFnctx (analyzerCtx* ctx, sym* Symbol) {
+    analyzerFnCtx old = ctx->fnctx;
+    ctx->fnctx = (analyzerFnCtx) {Symbol, typeDeriveReturn(Symbol->dt)};
+    return old;
+}
+
+static void analyzerPopFnctx (analyzerCtx* ctx, analyzerFnCtx old) {
+    typeDestroy(ctx->fnctx.returnType);
+    ctx->fnctx = old;
+}
+
 analyzerResult analyzer (ast* Tree, sym** Types) {
     analyzerCtx* ctx = analyzerInit(Types);
 
@@ -106,7 +117,6 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
 static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
     debugEnter("Using");
 
-    (void) ctx, (void) Node;
     analyzerNode(ctx, Node->r);
 
     debugLeave();
@@ -119,19 +129,17 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
 
     analyzerDecl(ctx, Node->l);
 
-    if (!typeIsFunction(Node->l->firstChild->symbol->dt))
+    if (!typeIsFunction(Node->symbol->dt))
         errorTypeExpected(ctx, Node, "implementation", "function", Node->symbol->dt);
 
     /*Analyze the implementation*/
 
     /*Save the old one, functions may be (illegally) nested*/
-    type* oldReturn = ctx->returnType;
-    ctx->returnType = typeDeriveReturn(Node->symbol->dt);
+    analyzerFnCtx oldFnctx = analyzerPushFnctx(ctx, Node->symbol);
 
     analyzerNode(ctx, Node->r);
 
-    typeDestroy(ctx->returnType);
-    ctx->returnType = oldReturn;
+    analyzerPopFnctx(ctx, oldFnctx);
 
     debugLeave();
 }
@@ -234,12 +242,12 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
     if (Node->r) {
         valueResult R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R.dt, ctx->returnType))
-            errorTypeExpectedType(ctx, Node->r, "return", ctx->returnType, R.dt);
+        if (!typeIsCompatible(R.dt, ctx->fnctx.returnType))
+            errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType, R.dt);
 
-    } else if (!typeIsVoid(ctx->returnType)) {
+    } else if (!typeIsVoid(ctx->fnctx.returnType)) {
         type* tmp = typeCreateBasic(ctx->types[builtinVoid]);
-        errorTypeExpectedType(ctx, Node, "return statement", ctx->returnType, tmp);
+        errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType, tmp);
         typeDestroy(tmp);
     }
 

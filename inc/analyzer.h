@@ -2,6 +2,15 @@ struct ast;
 struct sym;
 
 /**
+ * Analyzer context specific to a function
+ */
+typedef struct analyzerFnCtx {
+    struct sym* fn;
+    ///Return type
+    struct type* returnType;
+} analyzerFnCtx;
+
+/**
  * Semantic analyzer context
  *
  * Used only by internal analyzerXXX functions
@@ -10,8 +19,8 @@ typedef struct analyzerCtx {
     ///An array of built-in types
     struct sym** types;
 
-    ///Return type of the function currently in
-    struct type* returnType;
+    ///Current function context
+    analyzerFnCtx fnctx;
 
     int errors;
     int warnings;
