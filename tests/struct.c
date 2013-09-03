@@ -4,7 +4,7 @@ struct A {
 
 struct B {
 	A* x;
-	char y[3];
+	int y[3];
 };
 
 int f (B b) {
@@ -12,10 +12,8 @@ int f (B b) {
 }
 
 int main () {
-	A a;// = {1, 2, 3};
-	B b;// = {0, {1, 2, 3}};
-	
-	a.y = 2;
+	A a = {1, 2, 3};
+	B b = {0, {1, 2, 3}};
 	
 	b.x = &a;
 	b.x->y *= 2;

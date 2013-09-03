@@ -9,5 +9,5 @@ int f (A a, int array[2]) {
 
 int main () {
 	/*Returns 17*/
-	return f({{1, 2}, {3, 4}}, {1, 2});
+	return f((A) {{1, 2}, {3, 4}}, {1, 2});
 }
