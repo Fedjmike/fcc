@@ -185,18 +185,27 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         asmBOP(ctx, Op, L, intermediate);
         operandFree(intermediate);
 
-    /*imul m64, <...> isnt a thing
+    /*imul mem, <...> isnt a thing
       Sucks, right?*/
-    } else if (Op == bopMul && L.tag == operandMem && operandGetSize(ctx->arch, L) == 8) {
-        if (R.tag != operandReg) {
-            operand oldR = R;
-            R = operandCreateReg(regAlloc(max(L.size, R.size)));
-            asmMove(ctx, R, oldR);
-        }
+    } else if (Op == bopMul && L.tag == operandMem) {
+        if (R.tag == operandReg) {
+            asmBOP(ctx, bopMul, R, L);
+            asmMove(ctx, L, R);
+            operandFree(R);
 
-        asmBOP(ctx, bopMul, R, L);
-        asmMove(ctx, L, R);
-        operandFree(R);
+        } else {
+            operand tmp = operandCreateReg(regAlloc(max(L.size, R.size)));
+
+            char* LStr = operandToStr(L);
+            char* RStr = operandToStr(R);
+            char* tmpStr = operandToStr(tmp);
+            asmOutLn(ctx, "imul %s, %s, %s", tmpStr, LStr, RStr);
+            free(LStr);
+            free(RStr);
+
+            asmMove(ctx, L, tmp);
+            operandFree(tmp);
+        }
 
     } else {
         char* LStr = operandToStr(L);
