@@ -135,7 +135,7 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     asmLeave(ctx->Asm);
 
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        emitterInitOrCompoundLiteral(ctx, Node->r, Node->symbol, L);
+        emitterInitOrCompoundLiteral(ctx, Node->r, L);
 
     else {
         if (Node->symbol->storage == storageAuto) {

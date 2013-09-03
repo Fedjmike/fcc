@@ -595,9 +595,8 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol, operand base) {
+void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand base) {
     debugEnter("InitOrCompoundLiteral");
-    (void) Symbol;
 
     /*Struct initialization*/
     if (Node->dt->tag == typeBasic && Node->dt->basic->tag == symStruct) {
@@ -617,7 +616,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol
 
             /*Recursive initialization*/
             if (value->tag == astLiteral && value->litTag == literalInit) {
-                emitterInitOrCompoundLiteral(ctx, value, field, L);
+                emitterInitOrCompoundLiteral(ctx, value, L);
 
             /*Regular value*/
             } else {
@@ -632,7 +631,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, sym* Symbol
 
     /*Array initialization*/
     } else if (typeIsArray(Node->dt)) {
-        int elementSize = typeGetSize(ctx->arch, Symbol->dt->base);
+        int elementSize = typeGetSize(ctx->arch, Node->dt->base);
         operand L = base;
         L.size = elementSize;
 
