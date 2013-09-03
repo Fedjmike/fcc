@@ -24,6 +24,7 @@ High importance:
 [ ] Disallow global variables
 [ ] Modules
     [ ] Separated namespaces
+    [ ] Include once only
     [ ] Different dialect?
         - No impls
 
@@ -38,7 +39,7 @@ Low:
 [ ] Pretty printing control by command line
 [ ] string
 [ ] New IR
-    - Expression only (to start withw)
+    - Expression only (to start with)
 [ ] Designated initializers in compound literals
 
 
@@ -61,6 +62,8 @@ Parser:
 [ ] Line that starts with undeclared ident... assume decl?
 [ ] Complain about keywords as idents
 [ ] Disallow initializations inside regular expressions
+[ ] Search paths are still broken
+    - Don't add current path to search, only use it within
 
 Semantic analyzer:
 
@@ -72,6 +75,8 @@ Semantic analyzer:
     Why not?
 [-] Make sure prototypes and implementation match exactly (static)
 [ ] Empty decl warning?
+[ ] Initialization of extern and typedef
+[ ] Use the DT of passed node in analyzer errors?
 
 Emitter:
 
