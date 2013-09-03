@@ -1,10 +1,12 @@
 #pragma once
 
+#include "compat.h"
+
 char* strdup (const char* Str);	
 
 /*Non standard (mine)*/
 
-typedef enum {false = 0, true = 1} bool;
+//typedef enum {false = 0, true = 1} bool;
 
 /**
  * Modify a file names extension
