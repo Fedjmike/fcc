@@ -34,7 +34,7 @@ typedef enum {
     labelROData
 } labelTag;
 
-typedef struct {
+typedef struct operand {
     operandTag tag;
 
     struct reg* reg;
