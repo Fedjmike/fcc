@@ -28,6 +28,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, const ast* Node);
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
+static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
 
 operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     operand Value;
@@ -70,6 +71,9 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             Value = emitterSymbol(ctx, Node);
+
+        else if (Node->litTag == literalCompound)
+            return emitterCompoundLiteral(ctx, Node);
 
         else
             Value = emitterLiteral(ctx, Node);
@@ -589,6 +593,20 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
         debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Value = operandCreateInvalid();
     }
+
+    debugLeave();
+
+    return Value;
+}
+
+static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node) {
+    debugEnter("CompoundLiteral");
+
+    operand Value = operandCreateMem(&regs[regRBP],
+                                 Node->symbol->offset,
+                                 typeGetSize(ctx->arch, Node->symbol->dt));
+
+    emitterInitOrCompoundLiteral(ctx, Node, Value);
 
     debugLeave();
 
