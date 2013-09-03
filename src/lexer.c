@@ -83,7 +83,8 @@ static void lexerSkipInsignificants (lexerCtx* ctx) {
                 streamNext(ctx->stream);
 
                 while (   ctx->stream->current != '\n'
-                       && ctx->stream->current != '\r')
+                       && ctx->stream->current != '\r'
+                       && ctx->stream->current != 0)
                     streamNext(ctx->stream);
 
             /*Fuck, we just ate an important character. Backtrack!*/
@@ -167,7 +168,8 @@ void lexerNext (lexerCtx* ctx) {
         ctx->token = tokenStr;
         lexerEatNext(ctx);
 
-        while (ctx->stream->current != '"') {
+        while (   ctx->stream->current != '"'
+               && ctx->stream->current != 0) {
             if (ctx->stream->current == '\\')
                 lexerEatNext(ctx);
 
@@ -181,7 +183,8 @@ void lexerNext (lexerCtx* ctx) {
         ctx->token = tokenChar;
         lexerEatNext(ctx);
 
-        while (ctx->stream->current != '\'') {
+        while (   ctx->stream->current != '\''
+               && ctx->stream->current != 0) {
             if (ctx->stream->current == '\\')
                 lexerEatNext(ctx);
 
