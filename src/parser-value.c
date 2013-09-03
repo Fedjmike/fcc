@@ -312,6 +312,7 @@ static ast* parserFactor (parserCtx* ctx) {
             if (tokenTryMatchPunct(ctx, punctLBrace)) {
                 ast* tmp = Node;
                 Node = astCreateLiteral(loc, literalCompound);
+                Node->symbol = symCreateNamed(symId, ctx->scope, "");
                 Node->l = tmp;
 
                 do {
