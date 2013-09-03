@@ -16,7 +16,7 @@ static ast* parserParam (parserCtx* ctx, bool inDecl);
 static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
-static struct ast* parserEnum (parserCtx* ctx);
+static ast* parserEnum (parserCtx* ctx);
 
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
