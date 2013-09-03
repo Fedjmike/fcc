@@ -65,7 +65,7 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
     parserError(ctx, "illegal %s outside of %s", what, where);
 }
 
-void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
+void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
     parserError(ctx, "'%s' redeclared as %s", Symbol->ident, symTagGetStr(tag));
@@ -74,7 +74,7 @@ void errorRedeclaredSymAs (parserCtx* ctx, sym* Symbol, symTag tag) {
     printf("       first declaration here as %s\n", symTagGetStr(Symbol->tag));
 }
 
-void errorReimplementedSym (parserCtx* ctx, sym* Symbol) {
+void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
     parserError(ctx, "%s '%s' reimplemented",
           Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
 
@@ -136,11 +136,11 @@ void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* 
     free(recordStr);
 }
 
-void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node, const sym* expected, const type* found) {
-    char* expectedStr = typeToStr(expected->dt, expected->ident);
+void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* structSym, const sym* fieldSym, const type* found) {
+    char* fieldStr = typeToStr(fieldSym->dt, fieldSym->ident);
     char* foundStr = typeToStr(found, "");
-    analyzerError(ctx, Node, "type mismatch for initialization of field %s with %s", expectedStr, foundStr);
-    free(expectedStr);
+    analyzerError(ctx, Node, "type mismatch: %s given for initialization of field %s in %s %s", foundStr, fieldStr, symTagGetStr(structSym->tag), structSym->ident);
+    free(fieldStr);
     free(foundStr);
 }
 

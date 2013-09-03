@@ -576,7 +576,7 @@ static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, c
                     curValue = analyzerValue(ctx, curNode);
 
                 if (!typeIsCompatible(curValue.dt, curSym->dt))
-                    errorInitFieldMismatch(ctx, curNode, curSym, curValue.dt);
+                    errorInitFieldMismatch(ctx, curNode, structSym, curSym, curValue.dt);
             }
         }
 
