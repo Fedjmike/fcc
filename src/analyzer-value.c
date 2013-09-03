@@ -25,7 +25,6 @@ static valueResult analyzerCast (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
-static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT);
 
 /**
  * Returns whether the (binary) operator is one that can only act on
@@ -541,17 +540,20 @@ static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("CompoundLiteral");
 
     analyzerInitOrCompoundLiteral(ctx, Node, analyzerType(ctx, Node->l));
+    Node->symbol->dt = typeDeepDuplicate(Node->dt);
 
     debugLeave();
 
     return (valueResult) {Node->dt, true};
 }
 
-static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT) {
+valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT) {
     debugEnter("InitOrCompoundtLiteral");
 
+    Node->dt = typeDeepDuplicate(DT);
+
     if (typeIsInvalid(DT))
-        Node->dt = typeCreateInvalid();
+        ;
 
     /*struct: check each field in order, check lengths match*/
     else if (DT->tag == typeBasic && DT->basic->tag == symStruct) {
@@ -562,21 +564,21 @@ static valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, c
 
         else {
             ast* curNode;
-            sym* curSym;
+            sym* field;
 
-            for (curNode = Node->firstChild, curSym = structSym->firstChild;
-                 curNode && curSym;
-                 curNode = curNode->nextSibling, curSym = curSym->nextSibling) {
+            for (curNode = Node->firstChild, field = structSym->firstChild;
+                 curNode && field;
+                 curNode = curNode->nextSibling, field = field->nextSibling) {
                 valueResult curValue;
 
                 if (curNode->tag == astLiteral && curNode->litTag == literalInit)
-                    curValue = analyzerInitOrCompoundLiteral(ctx, curNode, curSym->dt);
+                    curValue = analyzerInitOrCompoundLiteral(ctx, curNode, field->dt);
 
                 else
                     curValue = analyzerValue(ctx, curNode);
 
-                if (!typeIsCompatible(curValue.dt, curSym->dt))
-                    errorInitFieldMismatch(ctx, curNode, structSym, curSym, curValue.dt);
+                if (!typeIsCompatible(curValue.dt, field->dt))
+                    errorInitFieldMismatch(ctx, curNode, structSym, field, curValue.dt);
             }
         }
 

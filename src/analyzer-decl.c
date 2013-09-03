@@ -201,15 +201,19 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     debugEnter("DeclAssignBOP");
 
     const type* L = analyzerDeclNode(ctx, Node->l, base);
-    valueResult R = analyzerValue(ctx, Node->r);
 
-    if (!typeIsCompatible(R.dt, L))
-        errorTypeExpectedType(ctx, Node->r, "variable initialization", L, R.dt);
+    /*Struct/array initializer?*/
+    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+        analyzerInitOrCompoundLiteral(ctx, Node->r, L);
 
-    //const type* DT;
+    else {
+        valueResult R = analyzerValue(ctx, Node->r);
 
-    //TODO: is assignable?
-    //if (typeIs)
+        if (!typeIsCompatible(R.dt, L))
+            errorTypeExpectedType(ctx, Node->r, "variable initialization", L, R.dt);
+
+        //TODO: is assignable?
+    }
 
     Node->dt = typeDeepDuplicate(L);
 
