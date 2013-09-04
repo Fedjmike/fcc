@@ -3,7 +3,7 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 High importance:
 
-[ ] Compound literals
+[x] Compound literals
 [ ] Anonymous:
     [ ] Unions
     [ ] Structs
@@ -64,19 +64,22 @@ Parser:
 [ ] Disallow initializations inside regular expressions
 [ ] Search paths are still broken
     - Don't add current path to search, only use it within
+[ ] Implicit declarations on error
 
 Semantic analyzer:
 
 [ ] Check constness of array sizes, enum values etc
 [ ] Array size detection (basic x[] = {...})
-[ ] Do analyzerArrayLiteral lits properly
+[x] Do analyzerArrayLiteral lits properly
 [ ] Check that fn impl and var init are semantically valid
 [ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
     Why not?
+    Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
 [ ] Empty decl warning?
 [ ] Initialization of extern and typedef
-[ ] Use the DT of passed node in analyzer errors?
+[x] Use the DT of passed node in analyzer errors
+[ ] '' in errors
 
 Emitter:
 
