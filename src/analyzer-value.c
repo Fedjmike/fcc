@@ -159,18 +159,16 @@ static valueResult analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
     if (isNumericBOP(Node->o))
         if (!typeIsNumeric(L.dt) || !typeIsNumeric(R.dt))
-            errorOp(ctx, Node->o, "numeric type",
-                    !typeIsNumeric(L.dt) ? Node->l : Node->r,
-                    !typeIsNumeric(L.dt) ? L.dt : R.dt);
+            errorTypeExpected(ctx, !typeIsNumeric(L.dt) ? Node->l : Node->r,
+                              Node->o, "numeric type");
 
     if (isAssignmentBOP(Node->o)) {
         if (!typeIsAssignment(L.dt) || !typeIsAssignment(R.dt))
-            errorOp(ctx, Node->o, "assignable type",
-                    !typeIsAssignment(L.dt) ? Node->l : Node->r,
-                    !typeIsAssignment(L.dt) ? L.dt : R.dt);
+            errorTypeExpected(ctx, !typeIsAssignment(L.dt) ? Node->l : Node->r,
+                              Node->o, "assignable type");
 
         if (!L.lvalue)
-            errorLvalue(ctx, Node->o, Node->l);
+            errorLvalue(ctx, Node->l, Node->o);
     }
 
     /*Work out the type of the result*/
@@ -179,7 +177,7 @@ static valueResult analyzerBOP (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeDeriveFromTwo(L.dt, R.dt);
 
     else {
-        errorMismatch(ctx, Node, Node->o, L.dt, R.dt);
+        errorMismatch(ctx, Node, Node->o);
         Node->dt = typeCreateInvalid();
     }
 
@@ -198,18 +196,16 @@ static valueResult analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
 
     if (isOrdinalBOP(Node->o)) {
         if (!typeIsOrdinal(L.dt) || !typeIsOrdinal(R.dt))
-            errorOp(ctx, Node->o, "comparable type",
-                    !typeIsOrdinal(L.dt) ? Node->l : Node->r,
-                    !typeIsOrdinal(L.dt) ? L.dt : R.dt);
+            errorTypeExpected(ctx, !typeIsOrdinal(L.dt) ? Node->l : Node->r,
+                              Node->o, "comparable type");
 
     } else /*if (isEqualityBOP(Node->o))*/
         if (!typeIsEquality(L.dt) || !typeIsEquality(R.dt))
-            errorOp(ctx, Node->o, "comparable type",
-                    !typeIsEquality(L.dt) ? Node->l : Node->r,
-                    !typeIsEquality(L.dt) ? L.dt : R.dt);
+            errorTypeExpected(ctx, !typeIsEquality(L.dt) ? Node->l : Node->r,
+                              Node->o, "comparable type");
 
     if (!typeIsCompatible(L.dt, R.dt)) {
-        errorMismatch(ctx, Node, Node->o, L.dt, R.dt);
+        errorMismatch(ctx, Node, Node->o);
         Node->dt = typeCreateInvalid();
     }
 
@@ -231,9 +227,8 @@ static valueResult analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
     /*Allowed*/
 
     if (!typeIsCondition(L.dt) || !typeIsCondition(R.dt))
-        errorOp(ctx, Node->o, "condition",
-                !typeIsCondition(L.dt) ? Node->l : Node->r,
-                !typeIsCondition(L.dt) ? L.dt : R.dt);
+        errorTypeExpected(ctx, !typeIsCondition(L.dt) ? Node->l : Node->r,
+                          Node->o, "condition");
 
     /*Result: bool*/
     Node->dt = typeCreateBasic(ctx->types[builtinBool]);
@@ -251,16 +246,16 @@ static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
     if (!(   typeIsRecord(L.dt)
           || (L.dt->tag == typePtr && typeIsRecord(L.dt->base)))) {
         if (isDerefBOP(Node->o))
-            errorOp(ctx, Node->o, "structure or union pointer", Node->l, L.dt);
+            errorTypeExpected(ctx, Node->l, Node->o, "structure or union pointer");
 
         else
-            errorOp(ctx, Node->o, "structure or union type", Node->l, L.dt);
+            errorTypeExpected(ctx, Node->l, Node->o, "structure or union type");
 
         Node->dt = typeCreateInvalid();
 
     } else {
         if (isDerefBOP(Node->o) && !typeIsPtr(L.dt))
-            errorOp(ctx, Node->o, "pointer", Node->l, L.dt);
+            errorTypeExpected(ctx, Node->l, Node->o, "pointer");
 
         sym* recordSym = typeGetRecordSym(L.dt);
 
@@ -309,14 +304,14 @@ static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
         || !strcmp(Node->o, "++") || !strcmp(Node->o, "--")
         || !strcmp(Node->o, "~")) {
         if (!typeIsNumeric(R.dt)) {
-            errorOp(ctx, Node->o, "numeric type", Node->r, R.dt);
+            errorTypeExpected(ctx, Node->r, Node->o, "numeric type");
             Node->dt = typeCreateInvalid();
 
         } else {
             /*Assignment operator*/
             if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--"))
                 if (!R.lvalue)
-                    errorLvalue(ctx, Node->o, Node->r);
+                    errorLvalue(ctx, Node->r, Node->o);
 
             Node->dt = typeDeriveFrom(R.dt);
         }
@@ -324,7 +319,7 @@ static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
     /*Logical negation*/
     } else if (!strcmp(Node->o, "!")) {
         if (!typeIsCondition(R.dt))
-            errorOp(ctx, Node->o, "condition", Node->r, R.dt);
+            errorTypeExpected(ctx, Node->r, Node->o, "condition");
 
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
@@ -334,14 +329,14 @@ static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
             Node->dt = typeDeriveBase(R.dt);
 
         else {
-            errorOp(ctx, Node->o, "pointer", Node->r, R.dt);
+            errorTypeExpected(ctx, Node->r, Node->o, "pointer");
             Node->dt = typeCreateInvalid();
         }
 
     /*Referencing an lvalue*/
     } else if (!strcmp(Node->o, "&")) {
         if (!R.lvalue)
-            errorLvalue(ctx, Node->o, Node->r);
+            errorLvalue(ctx, Node->r, Node->o);
 
         Node->dt = typeDerivePtr(R.dt);
 
@@ -366,7 +361,7 @@ static valueResult analyzerTernary (analyzerCtx* ctx, ast* Node) {
     /*Operation allowed*/
 
     if (!typeIsCondition(Cond.dt))
-        errorOp(ctx, "ternary ?:", "condition value", Node->firstChild, Cond.dt);
+        errorTypeExpected(ctx, Node->firstChild, "ternary ?:", "condition value");
 
     /*Result types match => return type*/
 
@@ -374,7 +369,7 @@ static valueResult analyzerTernary (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeDeriveUnified(L.dt, R.dt);
 
     else {
-        errorMismatch(ctx, Node, "ternary ?:", L.dt, R.dt);
+        errorMismatch(ctx, Node, "ternary ?:");
         Node->dt = typeCreateInvalid();
     }
 
@@ -391,13 +386,13 @@ static valueResult analyzerIndex (analyzerCtx* ctx, ast* Node) {
     valueResult R = analyzerValue(ctx, Node->r);
 
     if (!typeIsNumeric(R.dt))
-        errorOp(ctx, "[]", "numeric index", Node->r, R.dt);
+        errorTypeExpected(ctx, Node->r, "[]", "numeric index");
 
     if (typeIsArray(L.dt) || typeIsPtr(L.dt))
         Node->dt = typeDeriveBase(L.dt);
 
     else {
-        errorOp(ctx, "[]", "array or pointer", Node->l, L.dt);
+        errorTypeExpected(ctx, Node->l, "[]", "array or pointer");
         Node->dt = typeCreateInvalid();
     }
 
@@ -414,7 +409,7 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     /*Callable*/
     if (!typeIsCallable(L.dt)) {
-        errorOp(ctx, "()", "function", Node->firstChild, L.dt);
+        errorTypeExpected(ctx, Node->l, "()", "function");
         Node->dt = typeCreateInvalid();
 
     } else if (typeIsInvalid(L.dt))
@@ -599,7 +594,7 @@ valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                 curValue = analyzerValue(ctx, curNode);
 
             if (!typeIsCompatible(curValue.dt, DT->base))
-                errorTypeExpectedType(ctx, curNode, "array initialization", DT->base, curValue.dt);
+                errorTypeExpectedType(ctx, curNode, "array initialization", DT->base);
         }
 
     /*Scalar*/
@@ -611,7 +606,7 @@ valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             valueResult R = analyzerValue(ctx, Node->firstChild);
 
             if (!typeIsCompatible(R.dt, DT))
-                errorTypeExpectedType(ctx, Node->r, "variable initialization", DT, R.dt);
+                errorTypeExpectedType(ctx, Node->r, "variable initialization", DT);
         }
     }
 

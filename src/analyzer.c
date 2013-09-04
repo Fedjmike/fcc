@@ -130,7 +130,7 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
     analyzerDecl(ctx, Node->l);
 
     if (!typeIsFunction(Node->symbol->dt))
-        errorTypeExpected(ctx, Node, "implementation", "function", Node->symbol->dt);
+        errorTypeExpected(ctx, Node->l->firstChild, "implementation", "function");
 
     /*Analyze the implementation*/
 
@@ -161,10 +161,10 @@ static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
     /*Is the condition a valid condition?*/
 
     ast* cond = Node->firstChild;
-    valueResult condRes = analyzerValue(ctx, cond);
+    analyzerValue(ctx, cond);
 
-    if (!typeIsCondition(condRes.dt))
-        errorTypeExpected(ctx, cond, "if", "condition", condRes.dt);
+    if (!typeIsCondition(cond->dt))
+        errorTypeExpected(ctx, cond, "if", "condition");
 
     /*Code*/
 
@@ -186,10 +186,10 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
 
     /*Condition*/
 
-    valueResult condRes = analyzerValue(ctx, cond);
+    analyzerValue(ctx, cond);
 
-    if (!typeIsCondition(condRes.dt))
-        errorTypeExpected(ctx, cond, "do loop", "condition", condRes.dt);
+    if (!typeIsCondition(cond->dt))
+        errorTypeExpected(ctx, cond, "do loop", "condition");
 
     /*Code*/
 
@@ -216,10 +216,10 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
     /*Condition*/
 
     if (cond->tag != astEmpty) {
-        valueResult condRes = analyzerValue(ctx, cond);
+        analyzerValue(ctx, cond);
 
-        if (!typeIsCondition(condRes.dt))
-            errorTypeExpected(ctx, cond, "for loop", "condition", condRes.dt);
+        if (!typeIsCondition(cond->dt))
+            errorTypeExpected(ctx, cond, "for loop", "condition");
     }
 
     /*Iterator*/
@@ -243,12 +243,11 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
         valueResult R = analyzerValue(ctx, Node->r);
 
         if (!typeIsCompatible(R.dt, ctx->fnctx.returnType))
-            errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType, R.dt);
+            errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
 
     } else if (!typeIsVoid(ctx->fnctx.returnType)) {
-        type* tmp = typeCreateBasic(ctx->types[builtinVoid]);
-        errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType, tmp);
-        typeDestroy(tmp);
+        Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
+        errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType);
     }
 
     debugLeave();

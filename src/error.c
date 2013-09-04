@@ -88,34 +88,28 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 
 /*:::: ANALYZER ERRORS ::::*/
 
-void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected, const type* found) {
-    char* foundStr = typeToStr(found, "");
-    analyzerError(ctx, Node, "%s expected %s, found %s", where, expected, foundStr);
-    free(foundStr);
+void errorTypeExpected (struct analyzerCtx* ctx, const struct ast* Node, const char* where, const char* expected) {
+    char* found = typeToStr(Node->dt, "");
+    analyzerError(ctx, Node, "%s requires %s, found '%s'", where, expected, found);
+    free(found);
 }
 
-void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected, const type* found) {
+void errorTypeExpectedType (struct analyzerCtx* ctx, const struct ast* Node, const char* where, const struct type* expected) {
     char* expectedStr = typeToStr(expected, "");
-    errorTypeExpected(ctx, Node, where, expectedStr, found);
+    errorTypeExpected(ctx, Node, where, expectedStr);
     free(expectedStr);
 }
 
-void errorOp (analyzerCtx* ctx, const char* o, const char* desc, const ast* Operand, const type* DT) {
-    char* DTStr = typeToStr(DT, "");
-    analyzerError(ctx, Operand, "%s requires %s, found %s", o, desc, DTStr);
-    free(DTStr);
+void errorLvalue (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+    analyzerError(ctx, Node, "%s requires lvalue", o);
 }
 
-void errorLvalue (analyzerCtx* ctx, const char* o, const struct ast* Operand) {
-    analyzerError(ctx, Operand, "%s requires lvalue", o);
-}
-
-void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o, const type* L, const type* R) {
-    char* LStr = typeToStr(L, "");
-    char* RStr = typeToStr(R, "");
-    analyzerError(ctx, Node, "type mismatch between %s and %s for %s", LStr, RStr, o);
-    free(LStr);
-    free(RStr);
+void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+    char* L = typeToStr(Node->l->dt, "");
+    char* R = typeToStr(Node->r->dt, "");
+    analyzerError(ctx, Node, "type mismatch between %s and %s for %s", L, R, o);
+    free(L);
+    free(R);
 }
 
 void errorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expected, int found, const char* where) {
