@@ -204,10 +204,8 @@ static valueResult analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
             errorTypeExpected(ctx, !typeIsEquality(L.dt) ? Node->l : Node->r,
                               Node->o, "comparable type");
 
-    if (!typeIsCompatible(L.dt, R.dt)) {
+    if (!typeIsCompatible(L.dt, R.dt))
         errorMismatch(ctx, Node, Node->o);
-        Node->dt = typeCreateInvalid();
-    }
 
     /*Result*/
 
