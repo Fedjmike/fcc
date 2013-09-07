@@ -54,12 +54,12 @@ typedef enum {
 typedef enum {
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
-    typeNumeric    = 1 << 0,
+    typeNumeric = 1 << 0,
     ///Ordinal describes whether it has a defined order, and therefore
     ///can be compared with <, <=, >, >=
-    typeOrdinal    = 1 << 1,
+    typeOrdinal = 1 << 1,
     ///Equality describes whether equality can be tested with != and ==
-    typeEquality   = 1 << 2,
+    typeEquality = 1 << 2,
     ///Assignment describes whether you can assign new values directly
     ///with =
     typeAssignment = 1 << 3,
