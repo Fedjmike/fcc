@@ -26,7 +26,7 @@ Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
-         | <Int> | <Bool> | <Str> | <Ident>
+         | <Int> | <Bool> | <Str> | <Char> | <Ident>
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )

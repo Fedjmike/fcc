@@ -24,6 +24,7 @@ typedef enum {
     literalUndefined,
     literalIdent,
     literalInt,
+    literalChar,
     literalBool,
     literalStr,
     literalCompound,

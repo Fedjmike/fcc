@@ -14,6 +14,7 @@ bool tokenIsPunct (const struct parserCtx* ctx, punctTag punct);
 bool tokenIsIdent (const struct parserCtx* ctx);
 bool tokenIsInt (const struct parserCtx* ctx);
 bool tokenIsString (const struct parserCtx* ctx);
+bool tokenIsChar (const struct parserCtx* ctx);
 bool tokenIsDecl (const struct parserCtx* ctx);
 
 /*::::*/
@@ -39,3 +40,5 @@ int tokenMatchInt (struct parserCtx* ctx);
 char* tokenMatchIdent (struct parserCtx* ctx);
 
 char* tokenMatchStr (struct parserCtx* ctx);
+
+char tokenMatchChar (struct parserCtx* ctx);

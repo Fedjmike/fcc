@@ -9,14 +9,14 @@ High importance:
     [ ] Structs
     [ ] Structs in unions
 [ ] const
-[-] char
+[x] char
 [ ] Review type compatibility
 [ ] Numeric type coercion: widening & narrowing
 [ ] Type completeness
 [-] Varargs
 [-] enum
 [ ] extern
-[ ] argc & argv passing
+[x] argc & argv passing
 [ ] continue
 [-] static
     [ ] Function linkage
@@ -41,6 +41,11 @@ Low:
 [ ] New IR
     - Expression only (to start with)
 [ ] Designated initializers in compound literals
+[ ] Lexer errors
+    [ ] Multichar
+    [ ] EOF without EOL
+    [ ] Unended comment / string / char
+    [ ] Unrecognised escape
 
 
 

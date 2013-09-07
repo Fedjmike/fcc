@@ -292,7 +292,7 @@ static ast* parserObject (parserCtx* ctx) {
  *          | ( "(" Type ")" Unary )
  *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
- *          | <Int> | <Bool> | <Str> | <Ident>
+ *          | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");
@@ -359,13 +359,13 @@ static ast* parserFactor (parserCtx* ctx) {
 
         Node = astCreateSizeof(loc, Node);
 
-    /*Integer literal*/
+    /*Integer*/
     } else if (tokenIsInt(ctx)) {
         Node = astCreateLiteral(ctx->location, literalInt);
         Node->literal = malloc(sizeof(int));
         *(int*) Node->literal = tokenMatchInt(ctx);
 
-    /*Boolean literal*/
+    /*Boolean*/
     } else if (tokenIsKeyword(ctx, keywordTrue) || tokenIsKeyword(ctx, keywordFalse)) {
         Node = astCreateLiteral(ctx->location, literalBool);
         Node->literal = malloc(sizeof(char));
@@ -373,10 +373,16 @@ static ast* parserFactor (parserCtx* ctx) {
 
         tokenMatch(ctx);
 
-    /*String literal*/
+    /*String*/
     } else if (tokenIsString(ctx)) {
         Node = astCreateLiteral(ctx->location, literalStr);
         Node->literal = (void*) tokenMatchStr(ctx);
+
+    /*Character*/
+    } else if (tokenIsChar(ctx)) {
+        Node = astCreateLiteral(ctx->location, literalChar);
+        Node->literal = malloc(sizeof(char));
+        *(char*) Node->literal = tokenMatchChar(ctx);
 
     /*Identifier*/
     } else if (tokenIsIdent(ctx)) {

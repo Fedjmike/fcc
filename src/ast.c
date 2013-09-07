@@ -246,6 +246,7 @@ const char* literalTagGetStr (literalTag tag) {
     if (tag == literalUndefined) return "literalUndefined";
     else if (tag == literalIdent) return "literalIdent";
     else if (tag == literalInt) return "literalInt";
+    else if (tag == literalChar) return "literalChar";
     else if (tag == literalStr) return "literalStr";
     else if (tag == literalBool) return "literalBool";
     else if (tag == literalCompound) return "literalCompound";

@@ -163,12 +163,13 @@ void lexerNext (lexerCtx* ctx) {
         while (isdigit(ctx->stream->current))
             lexerEatNext(ctx);
 
-    /*String*/
-    } else if (ctx->stream->current == '"') {
-        ctx->token = tokenStr;
-        lexerEatNext(ctx);
+    /*String/character*/
+    } else if (   ctx->stream->current == '"'
+               || ctx->stream->current == '\'') {
+        ctx->token = ctx->stream->current == '"' ? tokenStr : tokenChar;
+        streamNext(ctx->stream);
 
-        while (   ctx->stream->current != '"'
+        while (   ctx->stream->current != (ctx->token == tokenStr ? '"' : '\'')
                && ctx->stream->current != 0) {
             if (ctx->stream->current == '\\')
                 lexerEatNext(ctx);
@@ -176,22 +177,7 @@ void lexerNext (lexerCtx* ctx) {
             lexerEatNext(ctx);
         }
 
-        lexerEatNext(ctx);
-
-    /*Character*/
-    } else if (ctx->stream->current == '\'') {
-        ctx->token = tokenChar;
-        lexerEatNext(ctx);
-
-        while (   ctx->stream->current != '\''
-               && ctx->stream->current != 0) {
-            if (ctx->stream->current == '\\')
-                lexerEatNext(ctx);
-
-            lexerEatNext(ctx);
-        }
-
-        lexerEatNext(ctx);
+        streamNext(ctx->stream);
 
     /*Other symbols or punctuation*/
     } else {

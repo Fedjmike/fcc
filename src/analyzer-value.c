@@ -499,6 +499,9 @@ static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     if (Node->litTag == literalInt)
         Node->dt = typeCreateBasic(ctx->types[builtinInt]);
 
+    else if (Node->litTag == literalChar)
+        Node->dt = typeCreateBasic(ctx->types[builtinChar]);
+
     else if (Node->litTag == literalBool)
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 

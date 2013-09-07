@@ -44,6 +44,10 @@ bool tokenIsString (const parserCtx* ctx) {
     return ctx->lexer->token == tokenStr;
 }
 
+bool tokenIsChar (const parserCtx* ctx) {
+    return ctx->lexer->token == tokenChar;
+}
+
 bool tokenIsDecl (const parserCtx* ctx) {
     sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
@@ -182,9 +186,7 @@ char* tokenMatchStr (parserCtx* ctx) {
     char* str = calloc(ctx->lexer->length, sizeof(char));
 
     if (tokenIsString(ctx)) {
-        /*Iterate through the string excluding the first and last
-          characters - the quotes*/
-        for (int i = 1, length = 0; i+2 < ctx->lexer->length; i++) {
+        for (int i = 0, length = 0; i+1 < ctx->lexer->length; i++) {
             /*Escape sequence*/
             if (ctx->lexer->buffer[i] == '\\') {
                 i++;
@@ -197,7 +199,7 @@ char* tokenMatchStr (parserCtx* ctx) {
 
                 /*An actual linebreak mid string? Escaped, ignore it*/
                 } else if (   ctx->lexer->buffer[i] == '\n'
-                         || ctx->lexer->buffer[i] == '\r')
+                           || ctx->lexer->buffer[i] == '\r')
                     i++;
 
                 /*Unrecognised escape: ignore*/
@@ -214,4 +216,27 @@ char* tokenMatchStr (parserCtx* ctx) {
         errorExpected(ctx, "string");
 
     return str;
+}
+
+char tokenMatchChar (parserCtx* ctx) {
+    char ret = 0;
+
+    if (tokenIsChar(ctx)) {
+        if (ctx->lexer->buffer[0] == '\\') {
+            if (ctx->lexer->buffer[1] == 'n') ret = '\n';
+            else if (ctx->lexer->buffer[1] == 'r') ret = '\r';
+            else if (ctx->lexer->buffer[1] == 't') ret = '\t';
+            else if (ctx->lexer->buffer[1] == '\\') ret = '\\';
+            else if (ctx->lexer->buffer[1] == '\'') ret = '\'';
+            else if (ctx->lexer->buffer[1] == '"') ret = '"';
+
+        } else
+            ret = ctx->lexer->buffer[0];
+
+        tokenMatch(ctx);
+
+    } else
+        errorExpected(ctx, "string");
+
+    return ret;
 }

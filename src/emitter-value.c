@@ -581,6 +581,9 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
     if (Node->litTag == literalInt)
         Value = operandCreateLiteral(*(int*) Node->literal);
 
+    else if (Node->litTag == literalChar)
+        Value = operandCreateLiteral(*(char*) Node->literal);
+
     else if (Node->litTag == literalBool)
         Value = operandCreateLiteral(*(char*) Node->literal);
 
