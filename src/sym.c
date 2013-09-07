@@ -80,6 +80,9 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
     if (tag == symStruct)
         Symbol->typeMask = typeAssignment;
 
+    else if (tag == symEnum)
+        Symbol->typeMask = typeOrdinal | typeEquality | typeAssignment;
+
     return Symbol;
 }
 
@@ -122,14 +125,6 @@ sym* symChild (const sym* Scope, const char* look) {
 
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
-
-        /*Children of enums are visible from their parents scope*/
-        if (Current->tag == symEnum) {
-            sym* Found = symChild(Current, look);
-
-            if (Found)
-                return Found;
-        }
     }
 
     return 0;
