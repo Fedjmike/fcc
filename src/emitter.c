@@ -168,6 +168,9 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
     else if (Node->tag == astBreak)
         asmJump(ctx->Asm, ctx->labelBreakTo);
 
+    else if (Node->tag == astContinue)
+        asmJump(ctx->Asm, ctx->labelContinueTo);
+
     else if (Node->tag == astDecl)
         emitterDecl(ctx, Node);
 
@@ -254,10 +257,11 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
 
     /*The place to return to loop again (after confirming condition)*/
     operand LoopLabel = labelCreate(labelUndefined);
-    /*Push old break label before erasing*/
+
     operand OldBreakTo = ctx->labelBreakTo;
-    /*To exit the loop (or break, anywhere)*/
+    operand OldContinueTo = ctx->labelContinueTo;
     operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
+    ctx->labelContinueTo = labelCreate(labelUndefined);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -265,15 +269,23 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
     ast* cond = isDo ? Node->r : Node->l;
     ast* code = isDo ? Node->l : Node->r;
 
+    /*Condition*/
+
     if (!isDo)
         asmBranch(ctx->Asm,
                   emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
                   EndLabel);
 
+    /*Code*/
+
     asmLabel(ctx->Asm, LoopLabel);
     emitterCode(ctx, code);
 
     asmComment(ctx->Asm, "");
+
+    /*Condition*/
+
+    asmLabel(ctx->Asm, ctx->labelContinueTo);
 
     asmBranch(ctx->Asm,
               emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
@@ -283,6 +295,7 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, EndLabel);
 
     ctx->labelBreakTo = OldBreakTo;
+    ctx->labelContinueTo = OldContinueTo;
 
     debugLeave();
 }
@@ -295,8 +308,11 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     ast* iter = cond->nextSibling;
 
     operand LoopLabel = labelCreate(labelUndefined);
+
     operand OldBreakTo = ctx->labelBreakTo;
+    operand OldContinueTo = ctx->labelContinueTo;
     operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
+    ctx->labelContinueTo = labelCreate(labelUndefined);
 
     /*Initialize stuff*/
 
@@ -328,6 +344,8 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
 
     /*Iterate*/
 
+    asmLabel(ctx->Asm, ctx->labelContinueTo);
+
     if (iter->tag != astEmpty) {
         operandFree(emitterValue(ctx, iter, operandCreate(operandUndefined)));
         asmComment(ctx->Asm, "");
@@ -339,6 +357,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, EndLabel);
 
     ctx->labelBreakTo = OldBreakTo;
+    ctx->labelContinueTo = OldContinueTo;
 
     debugLeave();
 }

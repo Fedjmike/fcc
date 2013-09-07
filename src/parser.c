@@ -165,7 +165,7 @@ ast* parserCode (parserCtx* ctx) {
 }
 
 /**
- * Line = If | While | DoWhile | For | Code | Decl# | ( [ ( "return" Value ) | "break" | Value ] ";" )
+ * Line = If | While | DoWhile | For | Code | Decl# | ( [ ( "return" Value ) | "break" | "continue" | Value ] ";" )
  */
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
@@ -199,13 +199,24 @@ static ast* parserLine (parserCtx* ctx) {
                 Node->r = parserValue(ctx);
 
         } else if (tokenIsKeyword(ctx, keywordBreak)) {
-            if (ctx->breakLevel == 0)
+            if (ctx->breakLevel == 0) {
                 errorIllegalOutside(ctx, "break", "a loop");
+                tokenNext(ctx);
 
-            else
+            } else
                 tokenMatch(ctx);
 
             Node = astCreate(astBreak, ctx->location);
+
+        } else if (tokenIsKeyword(ctx, keywordContinue)) {
+            if (ctx->breakLevel == 0) {
+                errorIllegalOutside(ctx, "continue", "a loop");
+                tokenNext(ctx);
+
+            } else
+                tokenMatch(ctx);
+
+            Node = astCreate(astContinue, ctx->location);
 
         /*Allow empty lines, ";"*/
         } else if (tokenIsPunct(ctx, punctSemicolon))

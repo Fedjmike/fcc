@@ -15,7 +15,7 @@ typedef enum {
     astUsing,
     astFnImpl,
     astType, astDecl, astParam, astStruct, astUnion, astEnum,
-    astCode, astBranch, astLoop, astIter, astReturn, astBreak,
+    astCode, astBranch, astLoop, astIter, astReturn, astBreak, astContinue,
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
     astEllipsis
 } astTag;

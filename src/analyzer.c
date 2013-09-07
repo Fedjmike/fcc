@@ -90,8 +90,8 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
     else if (Node->tag == astReturn)
         analyzerReturn(ctx, Node);
 
-    else if (Node->tag == astBreak)
-        ; /*Nothing to check (inside breakable block is a parsing issue)*/
+    else if (Node->tag == astBreak || Node->tag == astContinue)
+        ; /*Nothing to check (inside loop is a parsing issue)*/
 
     else if (astIsValueTag(Node->tag))
         /*TODO: Check not throwing away value*/

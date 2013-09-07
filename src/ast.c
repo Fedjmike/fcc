@@ -224,6 +224,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astIter) return "astIter";
     else if (tag == astReturn) return "astReturn";
     else if (tag == astBreak) return "astBreak";
+    else if (tag == astContinue) return "astContinue";
     else if (tag == astBOP) return "astBOP";
     else if (tag == astUOP) return "astUOP";
     else if (tag == astTOP) return "astTOP";

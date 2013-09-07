@@ -10,6 +10,7 @@ typedef struct emitterCtx {
 
     operand labelReturnTo;
     operand labelBreakTo;
+    operand labelContinueTo;
 } emitterCtx;
 
 void emitter (const struct ast* Tree, const char* output, const architecture* arch);
