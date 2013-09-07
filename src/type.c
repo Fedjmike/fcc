@@ -137,8 +137,11 @@ type* typeDeriveFrom (const type* DT) {
 }
 
 type* typeDeriveFromTwo (const type* L, const type* R) {
-    if (typeIsInvalid(L) || typeIsInvalid(R))
-        return typeCreateInvalid();
+    if (typeIsInvalid(L))
+        return typeDeepDuplicate(R);
+
+    else if (typeIsInvalid(R))
+        return typeDeepDuplicate(L);
 
     else {
         debugAssert("typeDeriveFromTwo", "type compatibility", typeIsCompatible(L, R));
@@ -147,8 +150,11 @@ type* typeDeriveFromTwo (const type* L, const type* R) {
 }
 
 type* typeDeriveUnified (const type* L, const type* R) {
-    if (typeIsInvalid(L) || typeIsInvalid(R))
-        return typeCreateInvalid();
+    if (typeIsInvalid(L))
+        return typeDeepDuplicate(R);
+
+    else if (typeIsInvalid(R))
+        return typeDeepDuplicate(L);
 
     else {
         debugAssert("typeDeriveUnified", "type compatibility", typeIsCompatible(L, R));
@@ -195,6 +201,10 @@ type* typeDeriveReturn (const type* fn) {
 }
 
 /*:::: TYPE CLASSIFICATION ::::*/
+
+bool typeIs (const type* DT, typeTag tag) {
+    return DT->tag = tag || typeIsInvalid(DT);
+}
 
 bool typeIsBasic (const type* DT) {
     return DT->tag == typeBasic || typeIsInvalid(DT);
@@ -341,7 +351,7 @@ const char* typeTagGetStr (typeTag tag) {
 
 int typeGetSize (const architecture* arch, const type* DT) {
     debugAssert("typeGetSize", "null parameter", DT != 0);
-    
+
     if (typeIsInvalid(DT))
         return 0;
 
