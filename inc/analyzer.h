@@ -42,8 +42,7 @@ typedef struct {
  * Assumes a well formed AST in terms of fields filled and constraints on
  * what fills them upheld. For example, the children of a value tag are
  * assumed to all be value tags themselves. The o string in a BOP is
- * assumed to be a valid operator. A full description of these constraints
- * is in ast.h.
+ * assumed to be a valid operator.
  */
 analyzerResult analyzer (struct ast* Tree, struct sym** Types);
 
