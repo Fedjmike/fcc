@@ -217,6 +217,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astParam) return "astParam";
     else if (tag == astStruct) return "astStruct";
     else if (tag == astUnion) return "astUnion";
+    else if (tag == astEnum) return "astEnum";
     else if (tag == astType) return "astType";
     else if (tag == astCode) return "astCode";
     else if (tag == astBranch) return "astBranch";
