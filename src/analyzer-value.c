@@ -241,6 +241,7 @@ static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     valueResult L = analyzerValue(ctx, Node->l);
 
+    /*Record, or ptr to record? Irrespective of which we actually need*/
     if (!(   typeIsRecord(L.dt)
           || (L.dt->tag == typePtr && typeIsRecord(L.dt->base)))) {
         if (isDerefBOP(Node->o))
@@ -252,8 +253,11 @@ static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeCreateInvalid();
 
     } else {
+        /*Right level of indirection*/
         if (isDerefBOP(Node->o) && !typeIsPtr(L.dt))
             errorTypeExpected(ctx, Node->l, Node->o, "pointer");
+
+        /*Try to find the field inside record and get return type*/
 
         sym* recordSym = typeGetRecordSym(L.dt);
 
