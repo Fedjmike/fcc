@@ -71,7 +71,7 @@ void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     parserError(ctx, "'%s' redeclared as %s", Symbol->ident, symTagGetStr(tag));
 
     tokenLocationMsg(first->location);
-    printf("       first declaration here as %s\n", symTagGetStr(Symbol->tag));
+    printf("first declaration here as %s\n", symTagGetStr(Symbol->tag));
 }
 
 void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
@@ -79,7 +79,7 @@ void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
           Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
 
     tokenLocationMsg(Symbol->impl->location);
-    puts("       first implementation here");
+    puts("first implementation here");
 }
 
 void errorFileNotFound (parserCtx* ctx, const char* name) {
@@ -150,22 +150,28 @@ void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym*
 
         if (Current->location.line != Node->location.line) {
             tokenLocationMsg(Current->location);
-            printf("       also declared here\n");
+            printf("also declared here\n");
         }
     }
 }
 
-void errorRedeclaredVar (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
-    char* symStr = typeToStr(Symbol->dt, Symbol->ident);
-    analyzerError(ctx, Node, "%s redeclared", symStr);
-    free(symStr);
+void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
+    if (Symbol->tag == symId || Symbol->tag == symParam) {
+        char* symStr = typeToStr(Symbol->dt, Symbol->ident);
+        analyzerError(ctx, Node, "%s redeclared", symStr);
+        free(symStr);
+
+    } else
+        analyzerError(ctx, Node, "%s %s redeclared", symTagGetStr(Symbol->tag), Symbol->ident);
 
     for (int n = 0; n < Symbol->decls.length; n++) {
         const ast* Current = (const ast*) vectorGet(&Symbol->decls, n);
 
-        if (Current->location.line != Node->location.line)
+        if (   Current->location.line != Node->location.line
+            || Current->location.filename != Node->location.filename) {
             tokenLocationMsg(Current->location);
-            printf("       also declared here\n");
+            printf("also declared here\n");
+        }
     }
 }
 

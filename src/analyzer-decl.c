@@ -53,7 +53,7 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
             /*Even if types match, not allowed to be redeclared unless a
               function*/
             else if (!typeIsFunction(DT))
-                errorRedeclaredVar(ctx, Node, Current->symbol);
+                errorRedeclared(ctx, Node, Current->symbol);
 
         } else
             reportType(DT);
