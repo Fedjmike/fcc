@@ -17,6 +17,7 @@ static void analyzerParam (analyzerCtx* ctx, ast* Node);
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
 static void analyzerStruct (analyzerCtx* ctx, ast* Node);
 static void analyzerUnion (analyzerCtx* ctx, ast* Node);
+static void analyzerEnum (analyzerCtx* ctx, ast* Node);
 
 /**
  * Handles any node tag that parserDeclExpr may produce by passing it
@@ -98,6 +99,9 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
     else if (Node->tag == astUnion)
         analyzerUnion(ctx, Node);
 
+    else if (Node->tag == astEnum)
+        analyzerEnum(ctx, Node);
+
     else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             Node->dt = typeCreateBasic(Node->symbol);
@@ -146,6 +150,22 @@ static void analyzerUnion (analyzerCtx* ctx, ast* Node) {
     }
 
     Node->dt = typeCreateBasic(Node->symbol);
+
+    debugLeave();
+}
+
+static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
+    (void) ctx;
+
+    debugEnter("Enum");
+
+    Node->dt = typeCreateBasic(Node->symbol);
+
+    for (ast* Current = Node->firstChild;
+         Current;
+         Current = Current->nextSibling) {
+        Current->symbol->dt = typeDeepDuplicate(Node->dt);
+    }
 
     debugLeave();
 }
