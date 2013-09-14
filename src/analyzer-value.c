@@ -443,8 +443,14 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
                  Current = Current->nextSibling, n++) {
                 valueResult Param = analyzerValue(ctx, Current);
 
-                if (!typeIsCompatible(Param.dt, fn->paramTypes[n]))
-                    errorParamMismatch(ctx, Current, n, fn->paramTypes[n], Param.dt);
+                if (!typeIsCompatible(Param.dt, fn->paramTypes[n])) {
+                    if (Node->l->symbol)
+                        errorNamedParamMismatch(ctx, Current, n, Node->l->symbol, Param.dt);
+
+                    else
+                        errorParamMismatch(ctx, Current, n, fn->paramTypes[n], Param.dt);
+
+                }
             }
 
             /*Analyze the rest of the given params even if there were

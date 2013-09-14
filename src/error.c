@@ -119,10 +119,20 @@ void errorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expe
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* expected, const type* found) {
     char* expectedStr = typeToStr(expected, "");
     char* foundStr = typeToStr(found, "");
-    analyzerError(ctx, Node, "type mismatch at parameter %d: expected %s, found %s", n+1, expectedStr, foundStr);
+    analyzerError(ctx, Node, "type mismatch at parameter %d, %s: found %s", n+1, expectedStr, foundStr);
     free(expectedStr);
     free(foundStr);
 }
+
+void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const sym* fn, const type* found) {
+    char* foundStr = typeToStr(found, "");
+    const sym* param = symGetChild(fn, n);
+    char* paramStr = typeToStr(param->dt, param->ident ? param->ident : "");
+    analyzerError(ctx, Node, "type mismatch at parameter %d of %s, %s: found %s", n+1, fn->ident, paramStr, foundStr);
+    free(foundStr);
+    free(paramStr);
+}
+
 
 void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
     char* recordStr = typeToStr(record, "");

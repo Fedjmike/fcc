@@ -111,6 +111,17 @@ static void symAddChild (sym* Parent, sym* Child) {
     Parent->children++;
 }
 
+const sym* symGetChild (const sym* Parent, int n) {
+    sym* Current = Parent->firstChild;
+
+    for (int i = 0;
+         i < n && Current;
+         i++, Current = Current->nextSibling)
+        {}
+
+    return Current;
+}
+
 sym* symChild (const sym* Scope, const char* look) {
     debugAssert("symChild", "null scope", Scope != 0);
     debugAssert("symChild", "null string", look != 0);

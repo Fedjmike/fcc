@@ -123,6 +123,11 @@ sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMa
 sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
 
 /**
+ * Get the nth child of a symbol, returning 0 if there are fewer
+ */
+const sym* symGetChild (const sym* Parent, int n);
+
+/**
  * Attempt to find a symbol directly accessible from a scope. Will search
  * inside contained enums, anon. unions but will not look at parent scopes.
  * @return Symbol, or null on failure.
