@@ -30,7 +30,7 @@ static parserCtx parserInit (const char* filename, char* fullname, sym* global, 
     vectorPush(searchPaths, fgetpath(fullname));
 
     return (parserCtx) {lexer, {0, 0, 0},
-                        strdup(filename), fullname, searchPaths,
+                        fstripname(filename), fullname, searchPaths,
                         global,
                         0,
                         0, 0};

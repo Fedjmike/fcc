@@ -60,6 +60,53 @@ char* fgetname (const char* fullname) {
     return ret;
 }
 
+char* fstripname (const char* fullname) {
+    char* stripped = malloc(strlen(fullname));
+    int copied = 0;
+
+    /*Iterate through the full name, keeping track of:
+        - the beginning of this "segment"
+        - the slash that ends it
+        - the slash that ends the segment after that
+      Moving up one segment at a time
+
+      aaaaa/bbbbb/ccccc
+      ^    ^     ^
+      |    |     |
+      |    slash |
+      fullname   nextslash*/
+    for (const char *slash = fullname-1, *nextslash = strchr(fullname, '/');
+         fullname;
+         fullname = slash ? slash+1 : 0, slash = nextslash) {
+        /*Final segment (no slashes left)*/
+        if (!slash) {
+            strcpy(stripped+copied, fullname);
+            copied += strlen(fullname);
+
+        } else {
+            nextslash = strchr(slash+1, '/');
+
+            /*Is the next segment '..'*/
+            if (   slash[1] == '.' && slash[2] == '.'
+                && (nextslash ? nextslash-slash == 3
+                              : slash[3] == 0)) {
+                /*Then move past this segment*/
+                fullname = slash+1;
+                slash = nextslash;
+
+            } else {
+                /*Otherwise copy the current segment (with trailing slash)*/
+                int segmentLength = (int)(slash-fullname) + 1;
+                strncpy(stripped+copied, fullname, segmentLength);
+                copied += segmentLength;
+            }
+        }
+    }
+
+    stripped[copied] = 0;
+    return stripped;
+}
+
 bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }

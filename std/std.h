@@ -24,6 +24,7 @@ bool fexists (const char* filename);
 
 char* fgetpath (const char* fullname);
 char* fgetname (const char* fullname);
+char* fstripname (const char* fullname);
 
 bool strprefix (const char* str, const char* prefix);
 
