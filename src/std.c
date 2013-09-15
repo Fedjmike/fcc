@@ -48,16 +48,28 @@ bool fexists (const char* filename) {
 }
 
 char* fgetpath (const char* fullname) {
-    int index = (int)(strrchr(fullname, (int) '/') - fullname);
-    char* ret = strncpy(malloc(index+1), fullname, index);
-    ret[index] = 0;
-    return ret;
+    const char* found = strrchr(fullname, (int) '/');
+
+    if (found) {
+        int index = (int)(found-fullname);
+        char* ret = strncpy(malloc(index+1), fullname, index);
+        ret[index] = 0;
+        return ret;
+
+    } else
+        return strdup(fullname);
 }
 
 char* fgetname (const char* fullname) {
-    int index = (int)(strrchr(fullname, (int) '/') - fullname);
-    char* ret = strcpy(malloc(strlen(fullname)-index), fullname+index+1);
-    return ret;
+    const char* found = strrchr(fullname, (int) '/');
+
+    if (found) {
+        int index = (int)(found-fullname);
+        char* ret = strcpy(malloc(strlen(fullname)-index), fullname+index+1);
+        return ret;
+
+    } else
+        return strdup(fullname);
 }
 
 char* fstripname (const char* fullname) {
