@@ -133,7 +133,6 @@ void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const sy
     free(paramStr);
 }
 
-
 void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
     char* recordStr = typeToStr(record, "");
     analyzerError(ctx, Node, "%s expected field of %s, found %s", o, recordStr, Node->literal);
