@@ -17,7 +17,7 @@ High importance:
 [-] enum
 [ ] extern
 [x] argc & argv passing
-[ ] continue
+[x] continue
 [-] static
     [ ] Function linkage
     [ ] Disallow all others?
@@ -46,7 +46,8 @@ Low:
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
-
+[ ] Modules
+    [ ] header & using, special meaning?
 
 
 Other issues:
@@ -77,7 +78,7 @@ Semantic analyzer:
 [ ] Array size detection (basic x[] = {...})
 [x] Do analyzerArrayLiteral lits properly
 [ ] Check that fn impl and var init are semantically valid
-[ ] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
+[x] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
     Why not?
     Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
@@ -104,3 +105,5 @@ Emitter:
     - Maybe: have a layer that takes expressions and an operation,
       sends them off to emitterValue, handles operands and reg
       placement.
+[ ] Use temporary file (or pipe?) for output unless -[sSx]
+[ ] Move big pushes code into asm-amd64.c
