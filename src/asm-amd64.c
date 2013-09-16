@@ -77,9 +77,16 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
 }
 
 void asmPush (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "push %s", LStr);
-    free(LStr);
+    if (L.tag == operandFlags) {
+        asmPush(ctx, operandCreateLiteral(1));
+        operand top = operandCreateMem(ctx->stackPtr.reg, 0, ctx->arch->wordsize);
+        asmConditionalMove(ctx, L, top, operandCreateLiteral(0));
+
+    } else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "push %s", LStr);
+        free(LStr);
+    }
 }
 
 void asmPop (asmCtx* ctx, operand L) {
