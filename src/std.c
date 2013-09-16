@@ -73,7 +73,7 @@ char* fgetname (const char* fullname) {
 }
 
 char* fstripname (const char* fullname) {
-    char* stripped = malloc(strlen(fullname));
+    char* stripped = malloc(strlen(fullname)+1);
     int copied = 0;
 
     /*Iterate through the full name, keeping track of:
