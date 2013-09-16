@@ -186,36 +186,39 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
 static void emitterReturn (emitterCtx* ctx, const ast* Node) {
     debugEnter("Return");
 
-    operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
-    int retSize = typeGetSize(ctx->arch, Node->r->dt);
+    /*Non void return?*/
+    if (Node->r) {
+        operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        int retSize = typeGetSize(ctx->arch, Node->r->dt);
 
-    bool retInTemp = retSize > ctx->arch->wordsize;
+        bool retInTemp = retSize > ctx->arch->wordsize;
 
-    /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
-    if (retInTemp) {
-        operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
+        /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
+        if (retInTemp) {
+            operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
-        /*Dereference the temporary*/
-        asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
-        /*Copy over the value*/
-        asmMove(ctx->Asm, operandCreateMem(tempRef.reg, 0, retSize), Ret);
+            /*Dereference the temporary*/
+            asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
+            /*Copy over the value*/
+            asmMove(ctx->Asm, operandCreateMem(tempRef.reg, 0, retSize), Ret);
+            operandFree(Ret);
+
+            /*Return the temporary reference*/
+            Ret = tempRef;
+        }
+
+        reg* rax;
+
+        /*Returning either the return value itself or a reference to it*/
+        if ((rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize)) != 0) {
+            asmMove(ctx->Asm, operandCreateReg(rax), Ret);
+            regFree(rax);
+
+        } else if (Ret.reg != &regs[regRAX])
+            debugError("emitterLine", "unable to allocate RAX for return");
+
         operandFree(Ret);
-
-        /*Return the temporary reference*/
-        Ret = tempRef;
     }
-
-    reg* rax;
-
-    /*Returning either the return value itself or a reference to it*/
-    if ((rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize)) != 0) {
-        asmMove(ctx->Asm, operandCreateReg(rax), Ret);
-        regFree(rax);
-
-    } else if (Ret.reg != &regs[regRAX])
-        debugError("emitterLine", "unable to allocate RAX for return");
-
-    operandFree(Ret);
 
     asmJump(ctx->Asm, ctx->labelReturnTo);
 
