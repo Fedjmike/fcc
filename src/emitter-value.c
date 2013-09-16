@@ -276,19 +276,17 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("LogicalBOP");
 
-    operand L, R, Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-
-    /*Set up the short circuit value*/
-    asmMove(ctx->Asm, Value, operandCreateLiteral(
-                !strcmp(Node->o, "&&") ? 0 : 1));
-
     /*Label to jump to if circuit gets shorted*/
     operand ShortLabel = labelCreate(labelUndefined);
 
     /*Left*/
     asmEnter(ctx->Asm);
-    L = emitterValue(ctx, Node->l, operandCreate(operandFlags));
+    operand L = emitterValue(ctx, Node->l, operandCreate(operandFlags));
     asmLeave(ctx->Asm);
+
+    /*Set up the short circuit value*/
+    operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+    asmMove(ctx->Asm, Value, operandCreateLiteral(!strcmp(Node->o, "&&") ? 0 : 1));
 
     /*Check initial condition*/
 
@@ -299,13 +297,13 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 
     /*Right*/
     asmEnter(ctx->Asm);
-    R = emitterValue(ctx, Node->r, operandCreate(operandFlags));
+    operand R = emitterValue(ctx, Node->r, operandCreate(operandFlags));
     asmLeave(ctx->Asm);
 
     if (!strcmp(Node->o, "&&"))
         R.condition = conditionNegate(R.condition);
 
-    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(1));
+    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(!strcmp(Node->o, "||") ? 0 : 1));
     asmLabel(ctx->Asm, ShortLabel);
 
     debugLeave();
