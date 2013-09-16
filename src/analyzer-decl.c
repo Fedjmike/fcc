@@ -38,27 +38,8 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
 
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling) {
-        const type* DT = analyzerDeclNode(ctx, Current, BasicDT);
-
-        if (Current->symbol) {
-            /*Assign the type*/
-            if (!Current->symbol->dt) {
-                Current->symbol->dt = typeDeepDuplicate(DT);
-                reportSymbol(Current->symbol);
-
-            /*Not the first declaration of this symbol, check type matches*/
-            } else if (!typeIsEqual(Current->symbol->dt, DT))
-                errorConflictingDeclarations(ctx, Current, Current->symbol, DT);
-
-            /*Even if types match, not allowed to be redeclared unless a
-              function*/
-            else if (!typeIsFunction(DT))
-                errorRedeclared(ctx, Node, Current->symbol);
-
-        } else
-            reportType(DT);
-    }
+         Current = Current->nextSibling)
+        analyzerDeclNode(ctx, Current, BasicDT);
 
     debugLeave();
 }
@@ -80,17 +61,10 @@ static void analyzerParam (analyzerCtx* ctx, ast* Node) {
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
     Node->dt = typeDeepDuplicate(analyzerDeclNode(ctx, Node->r, BasicDT));
 
-    /*Don't bother checking types if already assigned
-      Any conflicts will be reported by the function itself*/
-    if (Node->symbol && !Node->symbol->dt)
-        Node->symbol->dt = typeDeepDuplicate(Node->dt);
-
     debugLeave();
 }
 
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
-    (void) ctx;
-
     debugEnter("DeclBasic");
 
     if (Node->tag == astStruct)
@@ -155,8 +129,6 @@ static void analyzerUnion (analyzerCtx* ctx, ast* Node) {
 }
 
 static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
-    (void) ctx;
-
     debugEnter("Enum");
 
     Node->dt = typeCreateBasic(Node->symbol);
@@ -164,7 +136,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        Current->symbol->dt = typeDeepDuplicate(Node->dt);
+        analyzerDeclNode(ctx, Current, Node->dt);
     }
 
     debugLeave();
@@ -313,11 +285,32 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* b
 }
 
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const type* base) {
-    (void) ctx;
-
     debugEnter("DeclIdentLiteral");
 
     Node->dt = typeDeepDuplicate(base);
+
+    if (Node->symbol) {
+        /*Assign the type*/
+        if (!Node->symbol->dt)
+            Node->symbol->dt = typeDeepDuplicate(base);
+
+        /*Don't bother checking types if param
+          Any conflicts will be reported by the function itself*/
+        else if (Node->symbol->tag == symParam)
+            ;
+
+        /*Not the first declaration of this symbol, check type matches*/
+        else if (!typeIsEqual(Node->symbol->dt, base))
+            errorConflictingDeclarations(ctx, Node, Node->symbol, base);
+
+        /*Even if types match, not allowed to be redeclared if a variable*/
+        else if (Node->symbol->tag == symId && !typeIsFunction(base))
+            errorRedeclared(ctx, Node, Node->symbol);
+
+        reportSymbol(Node->symbol);
+
+    } else
+        reportType(base);
 
     debugLeave();
 
