@@ -202,10 +202,6 @@ type* typeDeriveReturn (const type* fn) {
 
 /*:::: TYPE CLASSIFICATION ::::*/
 
-bool typeIs (const type* DT, typeTag tag) {
-    return DT->tag = tag || typeIsInvalid(DT);
-}
-
 bool typeIsBasic (const type* DT) {
     return DT->tag == typeBasic || typeIsInvalid(DT);
 }
