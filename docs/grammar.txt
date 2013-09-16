@@ -44,5 +44,5 @@ DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
 DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
-TypeAtom = [ ( "(" DeclExpr ")" ) | Name ]
+DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

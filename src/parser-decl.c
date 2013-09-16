@@ -388,7 +388,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
 }
 
 /**
- * TypeAtom = [ ( "(" DeclExpr ")" ) | Name ]
+ * DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
  *
  * This is where the inDecl/tag stuff we've been keeping track of
  * comes into play. If outside a declaration, idents are not allowed.
