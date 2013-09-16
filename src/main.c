@@ -45,7 +45,7 @@ static int driver (config conf) {
         }
 
         if (conf.mode == modeNoLink)
-            vsystem("gcc %s", intermediates);
+            vsystem("gcc -c %s", intermediates);
 
         else {
             int linkfail = vsystem("gcc %s -o %s", intermediates, conf.output);
