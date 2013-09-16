@@ -56,11 +56,13 @@ static void emitterStruct (emitterCtx* ctx, ast* Node) {
     for (sym* Current = Node->symbol->firstChild;
          Current;
          Current = Current->nextSibling) {
-        Current->offset = Node->symbol->size;
-        /*Add the size of this field, rounded up to the nearest word boundary*/
-        int alignment = ctx->arch->wordsize;
-        Node->symbol->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
-        reportSymbol(Current);
+        if (Current->tag == symId) {
+            Current->offset = Node->symbol->size;
+            /*Add the size of this field, rounded up to the nearest word boundary*/
+            int alignment = ctx->arch->wordsize;
+            Node->symbol->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
+            reportSymbol(Current);
+        }
     }
 
     reportSymbol(Node->symbol);
@@ -74,9 +76,11 @@ static void emitterUnion (emitterCtx* ctx, ast* Node) {
     for (sym* Current = Node->symbol->firstChild;
          Current;
          Current = Current->nextSibling) {
-        Current->offset = 0;
-        Node->symbol->size = max(Node->symbol->size, typeGetSize(ctx->arch, Current->dt));
-        reportSymbol(Current);
+        if (Current->tag == symId) {
+            Current->offset = 0;
+            Node->symbol->size = max(Node->symbol->size, typeGetSize(ctx->arch, Current->dt));
+            reportSymbol(Current);
+        }
     }
 
     reportSymbol(Node->symbol);
