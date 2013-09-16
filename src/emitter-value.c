@@ -555,11 +555,17 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
         Value = Node->symbol->label;
 
     else /*var or param*/ {
-        if (typeIsArray(Node->symbol->dt))
+        /*Enum constant*/
+        if (Node->symbol->tag == symEnumConstant)
+            Value = operandCreateLiteral(Node->symbol->constValue);
+
+        /*Array*/
+        else if (typeIsArray(Node->symbol->dt))
             Value = operandCreateMemRef(&regs[regRBP],
                                         Node->symbol->offset,
                                         typeGetSize(ctx->arch, Node->symbol->dt->base));
 
+        /*Regular stack allocated var/param*/
         else
             Value = operandCreateMem(&regs[regRBP],
                                      Node->symbol->offset,

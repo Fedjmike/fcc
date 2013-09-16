@@ -250,7 +250,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
     /*Body?*/
     if (tokenTryMatchPunct(ctx, punctLBrace)) {
         if (!tokenIsPunct(ctx, punctRBrace)) do {
-            astAddChild(Node, parserName(ctx, true, symId));
+            astAddChild(Node, parserName(ctx, true, symEnumConstant));
         } while (tokenTryMatchPunct(ctx, punctComma));
 
         tokenMatchPunct(ctx, punctRBrace);

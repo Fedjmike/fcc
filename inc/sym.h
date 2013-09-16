@@ -31,6 +31,7 @@ typedef enum {
     symStruct,
     symUnion,
     symEnum,
+    symEnumConstant,
     symId,
     symParam
 } symTag;
@@ -104,6 +105,7 @@ typedef struct sym {
     operand label;  ///Label associated with this symbol in the assembly
     int offset;  ///Offset, in bytes, for stack stored vars/parameters and non
                  ///static fields
+    int constValue; ///For enum constants
 } sym;
 
 /**

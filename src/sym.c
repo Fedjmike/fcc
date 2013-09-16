@@ -174,6 +174,7 @@ const char* symTagGetStr (symTag tag) {
     else if (tag == symStruct) return "struct";
     else if (tag == symUnion) return "union";
     else if (tag == symEnum) return "enum";
+    else if (tag == symEnumConstant) return "enum constant";
     else if (tag == symId) return "id";
     else if (tag == symParam) return "parameter";
     else {
