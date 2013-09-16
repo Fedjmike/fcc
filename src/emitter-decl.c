@@ -18,6 +18,7 @@
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStruct (emitterCtx* ctx, ast* Node);
 static void emitterUnion (emitterCtx* ctx, ast* Node);
+static void emitterEnum (emitterCtx* ctx, ast* Node);
 
 static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
@@ -42,6 +43,9 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
 
     else if (Node->tag == astUnion)
         emitterUnion(ctx, Node);
+
+    else if (Node->tag == astEnum)
+        emitterEnum(ctx, Node);
 
     else if (Node->tag == astLiteral)
         ;
@@ -83,6 +87,15 @@ static void emitterUnion (emitterCtx* ctx, ast* Node) {
         }
     }
 
+    reportSymbol(Node->symbol);
+
+    debugLeave();
+}
+
+static void emitterEnum (emitterCtx* ctx, ast* Node) {
+    debugEnter("Enum");
+
+    Node->symbol->size = ctx->arch->wordsize;
     reportSymbol(Node->symbol);
 
     debugLeave();
