@@ -83,7 +83,7 @@ void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
 }
 
 void errorFileNotFound (parserCtx* ctx, const char* name) {
-    parserError(ctx, "File not found, '%s'", name);
+    parserError(ctx, "file not found, '%s'", name);
 }
 
 /*:::: ANALYZER ERRORS ::::*/
