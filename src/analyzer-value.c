@@ -518,7 +518,7 @@ static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
 
     else if (Node->litTag == literalIdent) {
-        if (Node->symbol->tag == symId || Node->symbol->tag == symParam) {
+        if (Node->symbol->tag == symEnumConstant || Node->symbol->tag == symId || Node->symbol->tag == symParam) {
             if (Node->symbol->dt)
                 Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
