@@ -57,19 +57,22 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
 static void emitterStruct (emitterCtx* ctx, ast* Node) {
     debugEnter("Struct");
 
-    for (sym* Current = Node->symbol->firstChild;
+    sym* Struct = Node->symbol;
+    Struct->size = 0;
+
+    for (sym* Current = Struct->firstChild;
          Current;
          Current = Current->nextSibling) {
         if (Current->tag == symId) {
-            Current->offset = Node->symbol->size;
+            Current->offset = Struct->size;
             /*Add the size of this field, rounded up to the nearest word boundary*/
             int alignment = ctx->arch->wordsize;
-            Node->symbol->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
+            Struct->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
             reportSymbol(Current);
         }
     }
 
-    reportSymbol(Node->symbol);
+    reportSymbol(Struct);
 
     debugLeave();
 }
