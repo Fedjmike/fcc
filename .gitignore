@@ -7,3 +7,5 @@
 /fcc.cbp
 /fcc.depend
 /fcc.layout
+/*.o
+/*.s
