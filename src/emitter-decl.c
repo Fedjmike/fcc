@@ -99,15 +99,6 @@ static void emitterEnum (emitterCtx* ctx, ast* Node) {
     debugEnter("Enum");
 
     Node->symbol->size = ctx->arch->wordsize;
-
-    ast* Current;
-    int i;
-
-    for (Current = Node->firstChild, i = 0;
-         Current;
-         Current = Current->nextSibling, i++)
-        Current->symbol->constValue = i;
-
     reportSymbol(Node->symbol);
 
     debugLeave();

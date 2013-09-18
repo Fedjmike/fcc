@@ -11,6 +11,7 @@
 #include "../inc/parser-value.h"
 
 static ast* parserField (parserCtx* ctx);
+static ast* parserEnumField (parserCtx* ctx);
 static ast* parserParam (parserCtx* ctx, bool inDecl);
 
 static storageTag parserStorage (parserCtx* ctx);
@@ -115,6 +116,26 @@ static ast* parserField (parserCtx* ctx) {
     } while (tokenTryMatchPunct(ctx, punctComma));
 
     tokenMatchPunct(ctx, punctSemicolon);
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * EnumField = Name# [ "=" AssignValue ]
+ */
+static ast* parserEnumField (parserCtx* ctx) {
+    debugEnter("EnumField");
+
+    ast* Node = parserName(ctx, true, symEnumConstant);
+
+    if (tokenIsPunct(ctx, punctAssign)) {
+        tokenLocation loc = ctx->location;
+        char* o = tokenDupMatch(ctx);
+        Node = astCreateBOP(loc, Node, o, parserAssignValue(ctx));
+        Node->symbol = Node->l->symbol;
+    }
 
     debugLeave();
 
@@ -237,7 +258,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 }
 
 /**
- * Enum = "enum" Name# [ "{" Name# [{ "," Name# }] "}" ]
+ * Enum = "enum" Name# [ "{" EnumField [{ "," EnumField }] "}" ]
  */
 static struct ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
@@ -250,7 +271,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
     /*Body?*/
     if (tokenTryMatchPunct(ctx, punctLBrace)) {
         if (!tokenIsPunct(ctx, punctRBrace)) do {
-            astAddChild(Node, parserName(ctx, true, symEnumConstant));
+            astAddChild(Node, parserEnumField(ctx));
         } while (tokenTryMatchPunct(ctx, punctComma));
 
         tokenMatchPunct(ctx, punctRBrace);

@@ -133,10 +133,22 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 
     Node->dt = typeCreateBasic(Node->symbol);
 
+    int lastConst = 0;
+
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        analyzerDeclNode(ctx, Current, Node->dt);
+        if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
+            /*valueResult R =*/ analyzerValue(ctx, Current->r);
+
+        } else if (   (Current->tag != astLiteral || Current->litTag != literalIdent)
+                   && Current->tag != astInvalid)
+            debugErrorUnhandled("analyzerEnum", "AST tag", astTagGetStr(Current->tag));
+
+        if (Current->symbol) {
+            analyzerDeclNode(ctx, Current, Node->dt);
+            Current->symbol->constValue = lastConst++;
+        }
     }
 
     debugLeave();

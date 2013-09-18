@@ -33,12 +33,13 @@ Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
 									       | Code# )
 
 Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
+EnumField = Name# [ "=" AssignValue ]
 Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
-Enum = "enum" Name# [ "{" Name# [{ "," Name# }] "}" ]
+Enum = "enum" Name# [ "{" EnumField [{ "," EnumField }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject
