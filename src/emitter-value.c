@@ -465,10 +465,13 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     /*The return will be passed in a temporary position (stack) allocated by
       the caller.*/
     bool retInTemp = typeGetSize(ctx->arch, Node->dt) > ctx->arch->wordsize;
+    int tempWords = 0;
 
-    if (retInTemp)
+    if (retInTemp) {
         /*Allocate the temporary space (rounded up to the nearest word)*/
-        asmPushN(ctx->Asm, (typeGetSize(ctx->arch, Node->dt)-1)/ctx->arch->wordsize + 1);
+        tempWords = (typeGetSize(ctx->arch, Node->dt)-1)/ctx->arch->wordsize + 1;
+        asmPushN(ctx->Asm, tempWords);
+    }
 
     /*Save the general registers in use*/
     for (int r = regRAX; r <= regR15; r++)
@@ -522,7 +525,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateVoid();
 
     /*Pop the args (and temporary return pointer)*/
-    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + (retInTemp ? 1 : 0));
+    asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + tempWords);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (regIndex r = regR15; r >= regRAX; r--)
