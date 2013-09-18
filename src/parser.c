@@ -79,7 +79,7 @@ parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searc
 
     } else
         return (parserResult) {astCreateInvalid((tokenLocation) {0,  0, 0}),
-                               1, 0, true};
+                               0, 0, true};
 }
 
 /**
