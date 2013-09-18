@@ -68,7 +68,7 @@ ast* astCreateFnImpl (tokenLocation location, ast* decl);
 
 ast* astCreateType (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateDecl (tokenLocation location, ast* basic);
-ast* astCreateParam (tokenLocation location, ast* basic, ast* declExpr);
+ast* astCreateParam (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateStruct (tokenLocation location, ast* name);
 ast* astCreateUnion (tokenLocation location, ast* name);
 ast* astCreateEnum (tokenLocation location, ast* name);
