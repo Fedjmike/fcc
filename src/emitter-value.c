@@ -671,8 +671,8 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
             operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
             asmLeave(ctx->Asm);
 
-            L.offset += elementSize;
             asmMove(ctx->Asm, L, R);
+            L.offset += elementSize;
             operandFree(R);
         }
 
