@@ -2,7 +2,7 @@
 
 #include "compat.h"
 
-char* strdup (const char* Str);	
+char* strdup (const char* Str);
 
 /*Non standard (mine)*/
 
