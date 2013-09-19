@@ -187,3 +187,9 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
     analyzerError(ctx, Node, "cannot use a %s as a value", symTagGetStr(Symbol->tag));
 }
+
+void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const char* what) {
+    char* SymStr = typeToStr(Symbol->dt, Symbol->ident);
+    analyzerError(ctx, Node, "declaration of %s needed a compile-time known %s", SymStr, what);
+    free(SymStr);
+}

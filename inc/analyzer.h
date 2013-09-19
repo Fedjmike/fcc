@@ -18,6 +18,9 @@ typedef struct analyzerFnCtx {
 typedef struct analyzerCtx {
     ///An array of built-in types
     struct sym** types;
+    ///Architecture, used only for compile time evaluation of array
+    ///sizes and, in turn, enum constants
+    const struct architecture* arch;
 
     ///Current function context
     analyzerFnCtx fnctx;
@@ -44,7 +47,7 @@ typedef struct {
  * assumed to all be value tags themselves. The o string in a BOP is
  * assumed to be a valid operator.
  */
-analyzerResult analyzer (struct ast* Tree, struct sym** Types);
+analyzerResult analyzer (struct ast* Tree, struct sym** Types, const struct architecture* arch);
 
 /**
  * Handles any node tag by passing it off to one of the following

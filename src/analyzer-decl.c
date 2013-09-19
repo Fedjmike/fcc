@@ -6,6 +6,8 @@
 #include "../inc/sym.h"
 #include "../inc/error.h"
 
+#include "../inc/eval.h"
+
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-value.h"
 
@@ -279,14 +281,15 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* b
         Node->dt = typeCreatePtr(typeDeepDuplicate(base));
 
     else {
-        /*!!!*/
         analyzerValue(ctx, Node->r);
-        int size =      Node->r->tag == astLiteral
-                     && Node->r->litTag == literalInt
-                   ? *(int*) Node->r->literal
-                   : 10; //lol
+        evalResult size = eval(ctx->arch, Node->r);
 
-        Node->dt = typeCreateArray(typeDeepDuplicate(base), size);
+        if (!size.known) {
+            errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "array size");
+            size.value = -2;
+        }
+
+        Node->dt = typeCreateArray(typeDeepDuplicate(base), size.value);
     }
 
     const type* DT = analyzerDeclNode(ctx, Node->l, Node->dt);

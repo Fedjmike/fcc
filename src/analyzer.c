@@ -5,6 +5,7 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/error.h"
+#include "../inc/architecture.h"
 
 #include "../inc/analyzer-value.h"
 #include "../inc/analyzer-decl.h"
@@ -22,9 +23,10 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node);
 static void analyzerIter (analyzerCtx* ctx, ast* Node);
 static void analyzerReturn (analyzerCtx* ctx, ast* Node);
 
-static analyzerCtx* analyzerInit (sym** Types) {
+static analyzerCtx* analyzerInit (sym** Types, const architecture* arch) {
     analyzerCtx* ctx = malloc(sizeof(analyzerCtx));
     ctx->types = Types;
+    ctx->arch = arch;
 
     ctx->errors = 0;
     ctx->warnings = 0;
@@ -46,8 +48,8 @@ static void analyzerPopFnctx (analyzerCtx* ctx, analyzerFnCtx old) {
     ctx->fnctx = old;
 }
 
-analyzerResult analyzer (ast* Tree, sym** Types) {
-    analyzerCtx* ctx = analyzerInit(Types);
+analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch) {
+    analyzerCtx* ctx = analyzerInit(Types, arch);
 
     analyzerNode(ctx, Tree);
     analyzerResult result = {ctx->errors, ctx->warnings};

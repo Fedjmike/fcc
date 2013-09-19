@@ -35,6 +35,7 @@ typedef struct type {
             ///Size of the array
             ///-1 to indicate unspecified size in a declaration e.g. int x[] = {1, 2};
             ///NOT as a synonym for * e.g. void (*)(int[]) == void (*)(int*)
+            ///-2 indicates an error finding the size
             int array;
         };
         /*typeFunction*/

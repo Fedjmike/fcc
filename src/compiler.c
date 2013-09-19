@@ -5,6 +5,8 @@
 #include "../inc/debug.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+#include "../inc/architecture.h"
+
 #include "../inc/parser.h"
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
@@ -47,7 +49,7 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
     /*Semantic analysis*/
 
     {
-        analyzerResult res = analyzer(Tree, Types);
+        analyzerResult res = analyzer(Tree, Types, &arch);
         errors += res.errors;
         warnings += res.warnings;
     }
