@@ -8,6 +8,14 @@ High importance:
     [ ] Unions
     [ ] Structs
     [ ] Structs in unions
+[ ] Compile time evaluation
+    [ ] enum constants
+    [ ] Array sizes
+    [ ] sizeof
+    [ ] Side effects!
+    [ ] Expand?
+        [ ] String literals and indexing
+        [ ] Records and arrays
 [ ] const
 [x] char
 [ ] Review type compatibility
@@ -22,7 +30,7 @@ High importance:
     [ ] Function linkage
     [ ] Disallow all others?
 [ ] Disallow global variables
-[ ] Modules
+[-] Modules
     [ ] Separated namespaces
     [ ] Include once only
     [ ] Different dialect?
@@ -58,24 +66,25 @@ Lexer:
 
 [ ] Lexing of pp
 [ ] More on char and str lexing
+    More?
 
 Parser:
 
-[ ] Param name clash
+[ ] Param name clash !!!!
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
 [ ] Line that starts with undeclared ident... assume decl?
 [ ] Complain about keywords as idents
-[ ] Disallow initializations inside regular expressions
+[ ] Disallow initializations inside normal expressions
 [ ] Search paths are still broken
     - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
 
 Semantic analyzer:
 
-[ ] Check constness of array sizes, enum values etc
 [ ] Array size detection (basic x[] = {...})
+    - analyzer-decl.c
 [x] Do analyzerArrayLiteral lits properly
 [ ] Check that fn impl and var init are semantically valid
 [x] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
@@ -107,3 +116,4 @@ Emitter:
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
 [ ] Move big pushes code into asm-amd64.c
+[ ] Registers saving (possibly other ABI issues)
