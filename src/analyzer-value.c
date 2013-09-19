@@ -111,7 +111,7 @@ valueResult analyzerValue (analyzerCtx* ctx, ast* Node) {
 
         else {
             debugErrorUnhandled("analyzerValue", "operator", Node->o);
-            return (valueResult) {Node->dt = typeCreateInvalid(), true};
+            return (valueResult) {Node->dt = typeCreateInvalid(), true, true};
         }
 
     } else if (Node->tag == astUOP)
@@ -141,11 +141,11 @@ valueResult analyzerValue (analyzerCtx* ctx, ast* Node) {
 
     } else if (Node->tag == astInvalid) {
         debugMsg("Invalid");
-        return (valueResult) {Node->dt = typeCreateInvalid(), true};
+        return (valueResult) {Node->dt = typeCreateInvalid(), true, true};
 
     } else {
         debugErrorUnhandled("analyzerValue", "AST tag", astTagGetStr(Node->tag));
-        return (valueResult) {Node->dt = typeCreateInvalid(), true};
+        return (valueResult) {Node->dt = typeCreateInvalid(), true, true};
     }
 }
 
@@ -183,7 +183,8 @@ static valueResult analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    /*Known at compile time if both are known, or just the RHS for assignment*/
+    return (valueResult) {Node->dt, false, (L.known || !strcmp(Node->o, "=")) && R.known};
 }
 
 static valueResult analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
@@ -213,7 +214,7 @@ static valueResult analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    return (valueResult) {Node->dt, false, L.known && R.known};
 }
 
 static valueResult analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
@@ -233,7 +234,7 @@ static valueResult analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    return (valueResult) {Node->dt, false, L.known && R.known};
 }
 
 static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
@@ -280,9 +281,7 @@ static valueResult analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     /*if '->': lvalue (ptr dereferenced)
       if '.': lvalueness matches the struct it came from*/
-    return (valueResult) {Node->dt,   isDerefBOP(Node->o)
-                                    ? true
-                                    : L.lvalue};
+    return (valueResult) {Node->dt, isDerefBOP(Node->o) ? true : L.lvalue, false};
 }
 
 static valueResult analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
@@ -290,16 +289,19 @@ static valueResult analyzerCommaBOP (analyzerCtx* ctx, ast* Node) {
 
     analyzerValue(ctx, Node->l);
     valueResult R = analyzerValue(ctx, Node->r);
+    Node->dt = typeDeepDuplicate(R.dt);
 
     debugLeave();
 
-    return (valueResult) {Node->dt = typeDeepDuplicate(R.dt), R.lvalue};
+    /*Same value as the RHS*/
+    return (valueResult) {Node->dt, R.lvalue, R.known};
 }
 
 static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
     debugEnter("UOP");
 
     valueResult R = analyzerValue(ctx, Node->r);
+    bool known = false;
 
     /*Numeric operator*/
     if (   !strcmp(Node->o, "+") || !strcmp(Node->o, "-")
@@ -318,12 +320,15 @@ static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
             Node->dt = typeDeriveFrom(R.dt);
         }
 
+        known = R.known;
+
     /*Logical negation*/
     } else if (!strcmp(Node->o, "!")) {
         if (!typeIsCondition(R.dt))
             errorTypeExpected(ctx, Node->r, Node->o, "condition");
 
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
+        known = R.known;
 
     /*Dereferencing a pointer*/
     } else if (!strcmp(Node->o, "*")) {
@@ -349,8 +354,7 @@ static valueResult analyzerUOP (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    /*returns lvalue iff dereference*/
-    return (valueResult) {Node->dt, !strcmp(Node->o, "*")};
+    return (valueResult) {Node->dt, !strcmp(Node->o, "*"), known};
 }
 
 static valueResult analyzerTernary (analyzerCtx* ctx, ast* Node) {
@@ -377,8 +381,9 @@ static valueResult analyzerTernary (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    /*Unify types: returns an lvalue is both operands are*/
-    return (valueResult) {Node->dt, L.lvalue && R.lvalue};
+    /*Unify types: returns an lvalue is both operands are
+      Known iff all known (some false negatives, could expand)*/
+    return (valueResult) {Node->dt, L.lvalue && R.lvalue, Cond.known && L.known && R.known};
 }
 
 static valueResult analyzerIndex (analyzerCtx* ctx, ast* Node) {
@@ -400,8 +405,8 @@ static valueResult analyzerIndex (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    /*lvalueness matches LHS*/
-    return (valueResult) {Node->dt, L.lvalue};
+    /*lvalue & knownness match LHS*/
+    return (valueResult) {Node->dt, L.lvalue, L.known};
 }
 
 static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
@@ -409,7 +414,6 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     valueResult L = analyzerValue(ctx, Node->l);
 
-    /*Callable*/
     if (!typeIsCallable(L.dt)) {
         errorTypeExpected(ctx, Node->l, "()", "function");
         Node->dt = typeCreateInvalid();
@@ -462,7 +466,7 @@ static valueResult analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    return (valueResult) {Node->dt, false, false};
 }
 
 static valueResult analyzerCast (analyzerCtx* ctx, ast* Node) {
@@ -478,8 +482,8 @@ static valueResult analyzerCast (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    /*LHS's type, RHS's lvalueness*/
-    return (valueResult) {Node->dt, R.lvalue};
+    /*LHS's type, RHS's value*/
+    return (valueResult) {Node->dt, R.lvalue, R.known};
 }
 
 static valueResult analyzerSizeof (analyzerCtx* ctx, ast* Node) {
@@ -498,7 +502,7 @@ static valueResult analyzerSizeof (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    return (valueResult) {Node->dt, false, true};
 }
 
 static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
@@ -539,7 +543,9 @@ static valueResult analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, Node->litTag == literalIdent};
+    return (valueResult) {Node->dt,
+                          Node->litTag == literalIdent,
+                          Node->litTag != literalIdent || Node->symbol->tag == symEnumConstant};
 }
 
 static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
@@ -550,7 +556,7 @@ static valueResult analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
 
     debugLeave();
 
-    return (valueResult) {Node->dt, true};
+    return (valueResult) {Node->dt, true, false};
 }
 
 valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT) {
@@ -623,5 +629,5 @@ valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     debugLeave();
 
-    return (valueResult) {Node->dt, false};
+    return (valueResult) {Node->dt, false, false};
 }

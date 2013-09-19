@@ -8,6 +8,8 @@ struct analyzerCtx;
 typedef struct value {
     const struct type* dt;
     bool lvalue;
+    ///Known at compile time?
+    bool known;
 } valueResult;
 
 valueResult analyzerValue (struct analyzerCtx* ctx, struct ast* Node);
