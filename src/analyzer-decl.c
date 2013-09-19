@@ -135,13 +135,20 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 
     Node->dt = typeCreateBasic(Node->symbol);
 
-    int lastConst = 0;
+    int nextConst = 0;
 
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
         if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
-            /*valueResult R =*/ analyzerValue(ctx, Current->r);
+            analyzerValue(ctx, Current->r);
+            evalResult constant = eval(ctx->arch, Current->r);
+
+            if (constant.known)
+                nextConst = constant.value;
+
+            else
+                errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "enum constant");
 
         } else if (   (Current->tag != astLiteral || Current->litTag != literalIdent)
                    && Current->tag != astInvalid)
@@ -149,7 +156,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 
         if (Current->symbol) {
             analyzerDeclNode(ctx, Current, Node->dt);
-            Current->symbol->constValue = lastConst++;
+            Current->symbol->constValue = nextConst++;
         }
     }
 
