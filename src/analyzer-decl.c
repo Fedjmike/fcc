@@ -159,6 +159,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
     if (Node->tag == astInvalid) {
         debugMsg("Invalid");
+        Node->symbol->dt = typeCreateInvalid();
         return Node->dt = typeCreateInvalid();
 
     } else if (Node->tag == astEmpty)
