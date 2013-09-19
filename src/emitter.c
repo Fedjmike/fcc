@@ -6,6 +6,7 @@
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+#include "../inc/architecture.h"
 #include "../inc/operand.h"
 #include "../inc/asm.h"
 #include "../inc/asm-amd64.h"
