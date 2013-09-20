@@ -139,9 +139,9 @@ void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* 
     free(recordStr);
 }
 
-void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* structSym, const sym* fieldSym, const type* found) {
+void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* structSym, const sym* fieldSym) {
     char* fieldStr = typeToStr(fieldSym->dt, fieldSym->ident);
-    char* foundStr = typeToStr(found, "");
+    char* foundStr = typeToStr(Node->dt, Node->symbol && Node->symbol->ident ? Node->symbol->ident : "");
     analyzerError(ctx, Node, "type mismatch: %s given for initialization of field %s in %s %s", foundStr, fieldStr, symTagGetStr(structSym->tag), structSym->ident);
     free(fieldStr);
     free(foundStr);
@@ -185,7 +185,9 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
 }
 
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
-    analyzerError(ctx, Node, "cannot use a %s as a value", symTagGetStr(Symbol->tag));
+    char* SymStr = typeToStr(Symbol->dt, Symbol->ident);
+    analyzerError(ctx, Node, "cannot use %s %s as a value", symTagGetStr(Symbol->tag), SymStr);
+    free(SymStr);
 }
 
 void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const char* what) {

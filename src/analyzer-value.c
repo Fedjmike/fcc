@@ -569,22 +569,21 @@ valueResult analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             errorDegree(ctx, Node, "fields", structSym->children, Node->children, structSym->ident);
 
         else {
-            ast* curNode;
+            ast* current;
             sym* field;
 
-            for (curNode = Node->firstChild, field = structSym->firstChild;
-                 curNode && field;
-                 curNode = curNode->nextSibling, field = field->nextSibling) {
-                valueResult curValue;
+            for (current = Node->firstChild, field = structSym->firstChild;
+                 current && field;
+                 current = current->nextSibling, field = field->nextSibling) {
 
-                if (curNode->tag == astLiteral && curNode->litTag == literalInit)
-                    curValue = analyzerInitOrCompoundLiteral(ctx, curNode, field->dt);
+                if (current->tag == astLiteral && current->litTag == literalInit)
+                    analyzerInitOrCompoundLiteral(ctx, current, field->dt);
 
                 else
-                    curValue = analyzerValue(ctx, curNode);
+                    analyzerValue(ctx, current);
 
-                if (!typeIsCompatible(curValue.dt, field->dt))
-                    errorInitFieldMismatch(ctx, curNode, structSym, field, curValue.dt);
+                if (!typeIsCompatible(current->dt, field->dt))
+                    errorInitFieldMismatch(ctx, current, structSym, field);
             }
         }
 

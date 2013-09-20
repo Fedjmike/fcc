@@ -22,7 +22,7 @@ void errorDegree (struct analyzerCtx* ctx, const struct ast* Node, const char* t
 void errorMember (struct analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* record);
 void errorParamMismatch (struct analyzerCtx* ctx, const struct ast* Node, int n, const struct type* expected, const struct type* found);
 void errorNamedParamMismatch (struct analyzerCtx* ctx, const struct ast* Node, int n, const sym* param, const struct type* found);
-void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node, const sym* structSym, const sym* fieldSym, const struct type* found);
+void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node, const sym* structSym, const sym* fieldSym);
 void errorConflictingDeclarations (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol, const struct type* found);
 void errorRedeclared (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol);
 void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol);
