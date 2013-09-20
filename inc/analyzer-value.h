@@ -5,7 +5,7 @@ struct ast;
 
 struct analyzerCtx;
 
-typedef struct value {
+typedef struct valueResult {
     const struct type* dt;
     bool lvalue;
 } valueResult;
