@@ -136,6 +136,13 @@ sym* symChild (const sym* Scope, const char* look) {
 
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
+
+        if (Current->ident && Current->ident[0] == 0) {
+            sym* Found = symChild(Current, look);
+
+            if (Found)
+                return Found;
+        }
     }
 
     return 0;

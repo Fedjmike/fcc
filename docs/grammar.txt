@@ -38,7 +38,7 @@ Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = <Ident> | StructOrUnion | Enum
-StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
+StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
 Enum = "enum" Name# [ "{" EnumField [{ "," EnumField }] "}" ]
 
 DeclExpr = DeclUnary [ "=" AssignValue ]

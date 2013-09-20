@@ -217,7 +217,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 }
 
 /**
- * StructOrUnion = "struct" | "union" Name# [ "{" [{ Field }] "}" ]
+ * StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
  *
  * Name is told to create a symbol of the tag indicated by the first
  * token.
@@ -225,17 +225,35 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 static struct ast* parserStructOrUnion (parserCtx* ctx) {
     debugEnter("StructOrUnion");
 
+    tokenLocation loc = ctx->location;
+
     symTag tag =   tokenTryMatchKeyword(ctx, keywordStruct)
                  ? symStruct
                  : (tokenMatchKeyword(ctx, keywordUnion), symUnion);
 
+    ast* name;
+
+    /*Name*/
+
+    if (tokenIsIdent(ctx))
+        name = parserName(ctx, true, tag);
+
+    /*Anonymous struct, will require a body*/
+    else {
+        name = astCreateEmpty(loc);
+        name->literal = strdup("");
+        name->symbol = symCreateNamed(tag, ctx->scope, "");
+    }
+
     ast* Node = (tag == symStruct ? astCreateStruct : astCreateUnion)
-                (ctx->location, parserName(ctx, true, tag));
+                (loc, name);
     Node->symbol = Node->l->symbol;
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    /*Body?*/
-    if (tokenTryMatchPunct(ctx, punctLBrace)) {
+    /*Body*/
+    if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
+        tokenMatchPunct(ctx, punctLBrace);
+
         /*Only error if not already errored for wrong tag*/
         if (Node->symbol->impl && Node->symbol->tag == tag)
             errorReimplementedSym(ctx, Node->symbol);
