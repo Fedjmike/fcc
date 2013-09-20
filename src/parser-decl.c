@@ -480,7 +480,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
 
         /*Check for a collision only in this scope, will shadow any
           other declarations elsewhere.*/
-        sym* Symbol = symChild(ctx->scope, (char*) Node->literal);
+        sym* Symbol = symFind(ctx->scope, (char*) Node->literal);
 
         if (Symbol) {
             Node->symbol = Symbol;
