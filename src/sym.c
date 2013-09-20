@@ -81,7 +81,7 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
         Symbol->typeMask = typeAssignment;
 
     else if (tag == symEnum)
-        Symbol->typeMask = typeOrdinal | typeEquality | typeAssignment;
+        Symbol->typeMask = typeNumeric | typeOrdinal | typeEquality | typeAssignment;
 
     return Symbol;
 }
