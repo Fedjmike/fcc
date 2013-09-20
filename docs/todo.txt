@@ -4,18 +4,12 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 High importance:
 
 [x] Compound literals
-[ ] Anonymous:
-    [ ] Unions
-    [ ] Structs
-    [ ] Structs in unions
-[ ] Compile time evaluation
-    [ ] enum constants
-    [ ] Array sizes
-    [ ] sizeof
-    [ ] Side effects!
-    [ ] Expand?
-        [ ] String literals and indexing
-        [ ] Records and arrays
+[x] Anonymous unions and structs
+[-] Compile time evaluation
+    [x] enum constants
+    [x] Array sizes
+    [x] sizeof
+    [ ] Side effects
 [ ] const
 [x] char
 [ ] Review type compatibility
@@ -56,6 +50,10 @@ Low:
     [ ] Unrecognised escape
 [ ] Modules
     [ ] header & using, special meaning?
+[ ] Initializing arrays from strings
+[ ] Expand eval.c
+    [ ] String literals and indexing
+    [ ] Records and arrays
 
 
 Other issues:
