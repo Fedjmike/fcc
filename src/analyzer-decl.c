@@ -155,7 +155,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
             debugErrorUnhandled("analyzerEnum", "AST tag", astTagGetStr(Current->tag));
 
         if (Current->symbol) {
-            analyzerDeclNode(ctx, Current, Node->dt);
+            analyzerDeclIdentLiteral(ctx, Current, Node->dt);
             Current->symbol->constValue = nextConst++;
         }
     }
