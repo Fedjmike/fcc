@@ -121,27 +121,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
                     printf("emitterValue(): unable to convert non lvalue operand tag, %s.\n", operandTagGetStr(Value.tag));
 
             } else if (Dest.tag == operandStack) {
-                /*Larger than a word?*/
-                if (Value.tag == operandMem && Value.size > ctx->arch->wordsize) {
-                    int total = Value.size;
-
-                    /*Then push on *backwards* in word chunks.
-                      Start at the highest address*/
-                    Value.offset += total - ctx->arch->wordsize;
-                    Value.size = ctx->arch->wordsize;
-
-                    for (int i = 0; i < total; i += ctx->arch->wordsize) {
-                        asmPush(ctx->Asm, Value);
-                        Value.offset -= ctx->arch->wordsize;
-                    }
-
-                    Dest.size = total;
-
-                } else {
-                    asmPush(ctx->Asm, Value);
-                    operandFree(Value);
-                    Dest.size = ctx->arch->wordsize;
-                }
+                asmPush(ctx->Asm, Value);
+                operandFree(Value);
 
             } else if (Value.tag == operandUndefined)
                 printf("emitterValue(): expected value, void given.\n");

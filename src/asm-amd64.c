@@ -77,10 +77,34 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
 }
 
 void asmPush (asmCtx* ctx, operand L) {
+    /*Flags*/
     if (L.tag == operandFlags) {
         asmPush(ctx, operandCreateLiteral(1));
         operand top = operandCreateMem(ctx->stackPtr.reg, 0, ctx->arch->wordsize);
         asmConditionalMove(ctx, L, top, operandCreateLiteral(0));
+
+    /*Larger than word*/
+    } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
+        debugAssert("asmPush", "memory operand", L.tag == operandMem);
+
+        int size = operandGetSize(ctx->arch, L);
+
+        /*Push on *backwards* in word chunks.
+          Start at the highest address*/
+        L.offset += size;
+        L.size = ctx->arch->wordsize;
+
+        for (int i = 0; i < size; i += ctx->arch->wordsize) {
+            L.offset -= ctx->arch->wordsize;
+            asmPush(ctx, L);
+        }
+
+    /*Smaller than a word*/
+    } else if (L.tag == operandMem && operandGetSize(ctx->arch, L) < ctx->arch->wordsize) {
+        operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
+        asmMove(ctx, intermediate, L);
+        asmPush(ctx, intermediate);
+        operandFree(intermediate);
 
     } else {
         char* LStr = operandToStr(L);

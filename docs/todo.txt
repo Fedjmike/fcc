@@ -113,5 +113,5 @@ Emitter:
       sends them off to emitterValue, handles operands and reg
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
-[ ] Move big pushes code into asm-amd64.c
+[x] Move big pushes code into asm-amd64.c
 [ ] Registers saving (possibly other ABI issues)
