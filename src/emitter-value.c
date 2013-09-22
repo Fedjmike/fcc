@@ -122,6 +122,13 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
 
             } else if (Dest.tag == operandStack) {
                 asmPush(ctx->Asm, Value);
+
+                if (Value.tag == operandMem)
+                    Dest.size = operandGetSize(ctx->arch, Value);
+
+                else
+                    Dest.size = ctx->arch->wordsize;
+
                 operandFree(Value);
 
             } else if (Value.tag == operandUndefined)
