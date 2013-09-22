@@ -37,7 +37,7 @@ typedef enum {
 typedef struct operand {
     operandTag tag;
 
-    struct reg* reg;
+    struct reg* base;
     struct reg* index;
     int factor;
     int offset;
@@ -57,8 +57,8 @@ operand operandCreateInvalid ();
 operand operandCreateVoid ();
 operand operandCreateFlags (conditionTag cond);
 operand operandCreateReg (struct reg* r);
-operand operandCreateMem (struct reg* r, int offset, int size);
-operand operandCreateMemRef (struct reg* r, int offset, int size);
+operand operandCreateMem (struct reg* base, int offset, int size);
+operand operandCreateMemRef (struct reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
 operand operandCreateLabel (int label);
 operand operandCreateLabelOffset (operand label);

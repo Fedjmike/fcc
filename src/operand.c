@@ -16,7 +16,7 @@ int labelNo = 1;
 operand operandCreate (operandTag tag) {
     operand ret;
     ret.tag = tag;
-    ret.reg = regUndefined;
+    ret.base = regUndefined;
     ret.index = regUndefined;
     ret.factor = 0;
     ret.offset = 0;
@@ -43,13 +43,13 @@ operand operandCreateFlags (conditionTag cond) {
 
 operand operandCreateReg (reg* r) {
     operand ret = operandCreate(operandReg);
-    ret.reg = r;
+    ret.base = r;
     return ret;
 }
 
-operand operandCreateMem (reg* r, int offset, int size) {
+operand operandCreateMem (reg* base, int offset, int size) {
     operand ret = operandCreate(operandMem);
-    ret.reg = r;
+    ret.base = base;
     ret.index = regUndefined;
     ret.factor = 0;
     ret.offset = offset;
@@ -57,9 +57,9 @@ operand operandCreateMem (reg* r, int offset, int size) {
     return ret;
 }
 
-operand operandCreateMemRef (reg* r, int offset, int size) {
+operand operandCreateMemRef (reg* base, int offset, int size) {
     operand ret = operandCreate(operandMemRef);
-    ret.reg = r;
+    ret.base = base;
     ret.index = regUndefined;
     ret.factor = 0;
     ret.offset = offset;
@@ -87,11 +87,11 @@ operand operandCreateLabelOffset (operand label) {
 
 void operandFree (operand Value) {
     if (Value.tag == operandReg)
-        regFree(Value.reg);
+        regFree(Value.base);
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef) {
-        if (Value.reg != 0 && Value.reg != &regs[regRBP])
-            regFree(Value.reg);
+        if (Value.base != 0 && Value.base != &regs[regRBP])
+            regFree(Value.base);
 
         if (Value.index != 0)
             regFree(Value.index);
@@ -112,7 +112,7 @@ int operandGetSize (const architecture* arch, operand Value) {
         return 0;
 
     else if (Value.tag == operandReg)
-        return Value.reg->allocatedAs;
+        return Value.base->allocatedAs;
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef)
         return Value.size;
@@ -146,7 +146,7 @@ char* operandToStr (operand Value) {
         strncpy(ret, conditions[Value.condition], 32);
 
     else if (Value.tag == operandReg)
-        strncpy(ret, regToStr(Value.reg), 32);
+        strncpy(ret, regToStr(Value.base), 32);
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef) {
         const char* sizestr;
@@ -166,13 +166,13 @@ char* operandToStr (operand Value) {
 
         if (Value.index == regUndefined || Value.factor == 0)
             if (Value.offset == 0)
-                snprintf(ret, 32, "%s ptr [%s]", sizestr, regToStr(Value.reg));
+                snprintf(ret, 32, "%s ptr [%s]", sizestr, regToStr(Value.base));
 
             else
-                snprintf(ret, 32, "%s ptr [%s%+d]", sizestr, regToStr(Value.reg), Value.offset);
+                snprintf(ret, 32, "%s ptr [%s%+d]", sizestr, regToStr(Value.base), Value.offset);
 
         else
-            snprintf(ret, 32, "%s ptr [%s%+d*%s%+d]", sizestr, regToStr(Value.reg),
+            snprintf(ret, 32, "%s ptr [%s%+d*%s%+d]", sizestr, regToStr(Value.base),
                                                             Value.factor, regToStr(Value.index),
                                                             Value.offset);
 

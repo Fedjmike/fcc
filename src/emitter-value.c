@@ -106,8 +106,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
 
             } else if (Dest.tag == operandReg) {
                 /*If a specific register wasn't requested, allocate one*/
-                if (Dest.reg == regUndefined)
-                    Dest.reg = regAlloc(typeGetSize(ctx->arch, Node->dt));
+                if (Dest.base == regUndefined)
+                    Dest.base = regAlloc(typeGetSize(ctx->arch, Node->dt));
 
                 asmMove(ctx->Asm, Dest, Value);
                 operandFree(Value);
@@ -140,8 +140,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
             }
 
         } else if (   Dest.tag == operandReg
-                   && Dest.reg != Value.reg
-                   && Dest.reg != regUndefined) {
+                   && Dest.base != Value.base
+                   && Dest.base != regUndefined) {
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
 
@@ -172,7 +172,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
         asmLeave(ctx->Asm);
 
-        Value = operandCreateMem(L.reg,
+        Value = operandCreateMem(L.base,
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->dt));
 
@@ -341,7 +341,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     } else if (!strcmp(Node->o, "*")) {
         operand Ptr = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
-        Value = operandCreateMem(Ptr.reg, 0, typeGetSize(ctx->arch, Node->dt));
+        Value = operandCreateMem(Ptr.base, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else if (!strcmp(Node->o, "&")) {
         asmEnter(ctx->Asm);
@@ -411,7 +411,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
 
         } else if (R.tag == operandReg) {
             Value = L;
-            Value.index = R.reg;
+            Value.index = R.base;
             Value.factor = typeGetSize(ctx->arch, Node->l->dt->base);
 
         } else {
@@ -420,7 +420,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
             operandFree(R);
 
             Value = L;
-            Value.index = index.reg;
+            Value.index = index.base;
             Value.factor = typeGetSize(ctx->arch, Node->l->dt->base);
         }
 
@@ -438,7 +438,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
         asmBOP(ctx->Asm, bopAdd, R, L);
         operandFree(L);
 
-        Value = operandCreateMem(R.reg, 0, typeGetSize(ctx->arch, Node->dt));
+        Value = operandCreateMem(R.base, 0, typeGetSize(ctx->arch, Node->dt));
     }
 
     debugLeave();
@@ -508,7 +508,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
         /*The temporary's pointer is returned to us*/
         if (retInTemp)
-            Value = operandCreateMem(Value.reg, 0, typeGetSize(ctx->arch, Node->dt));
+            Value = operandCreateMem(Value.base, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else
         Value = operandCreateVoid();
@@ -519,7 +519,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (regIndex r = regR15; r >= regRAX; r--)
         /*Attempt to restore all but the one we just allocated for the ret value*/
-        if (regIsUsed(r) && &regs[r] != Value.reg)
+        if (regIsUsed(r) && &regs[r] != Value.base)
             asmPop(ctx->Asm, operandCreateReg(&regs[r]));
 
     debugLeave();

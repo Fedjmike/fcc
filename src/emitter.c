@@ -201,7 +201,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
             /*Dereference the temporary*/
             asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
             /*Copy over the value*/
-            asmMove(ctx->Asm, operandCreateMem(tempRef.reg, 0, retSize), Ret);
+            asmMove(ctx->Asm, operandCreateMem(tempRef.base, 0, retSize), Ret);
             operandFree(Ret);
 
             /*Return the temporary reference*/
@@ -215,7 +215,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
             asmMove(ctx->Asm, operandCreateReg(rax), Ret);
             regFree(rax);
 
-        } else if (Ret.reg != &regs[regRAX])
+        } else if (Ret.base != &regs[regRAX])
             debugError("emitterLine", "unable to allocate RAX for return");
 
         operandFree(Ret);

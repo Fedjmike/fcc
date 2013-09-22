@@ -80,7 +80,7 @@ void asmPush (asmCtx* ctx, operand L) {
     /*Flags*/
     if (L.tag == operandFlags) {
         asmPush(ctx, operandCreateLiteral(1));
-        operand top = operandCreateMem(ctx->stackPtr.reg, 0, ctx->arch->wordsize);
+        operand top = operandCreateMem(ctx->stackPtr.base, 0, ctx->arch->wordsize);
         asmConditionalMove(ctx, L, top, operandCreateLiteral(0));
 
     /*Larger than word*/
