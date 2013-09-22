@@ -133,7 +133,7 @@ static evalResult evalTernary (const architecture* arch, ast* Node) {
 
     /*Condition and the right operand known*/
     if (Cond.known)
-        return (evalResult) {Cond.known && Cond.value ? L.known : R.known,
+        return (evalResult) {Cond.known && (Cond.value ? L.known : R.known),
                              Cond.value ? L.value : R.value};
 
     /*Both operands, and they're equal*/
