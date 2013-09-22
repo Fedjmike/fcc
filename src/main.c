@@ -23,10 +23,13 @@ static int driver (config conf) {
     }
 
     if (errors != 0 || warnings != 0)
-        printf("Compilation complete with %d error(s) and %d warning(s)\n", errors, warnings);
+        printf("Compilation complete with %d error%s and %d warning%s\n",
+               errors, errors == 1 ? "" : "s",
+               warnings, warnings == 1 ? "" : "s");
 
     else if (internalErrors)
-        printf("Compilation complete with %d internal error(s)\n", internalErrors);
+        printf("Compilation complete with %d internal error%s\n",
+               internalErrors, internalErrors == 1 ? "" : "s");
 
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {
