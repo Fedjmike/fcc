@@ -451,8 +451,8 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
 
     operand Value;
 
-    /*The return will be passed in a temporary position (stack) allocated by
-      the caller.*/
+    /*If larger than a word, the return will be passed in a temporary position
+      (stack) allocated by the caller.*/
     bool retInTemp = typeGetSize(ctx->arch, Node->dt) > ctx->arch->wordsize;
     int tempWords = 0;
 
@@ -495,7 +495,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
         int size = retInTemp ? ctx->arch->wordsize : typeGetSize(ctx->arch, Node->dt);
 
         /*If RAX is already in use (currently backed up to the stack), relocate the
-          return value to another free reg before RAXs value is restored.*/
+          return value to another free reg before RAX's value is restored.*/
         if (regIsUsed(regRAX)) {
             Value = operandCreateReg(regAlloc(size));
             int tmp = regs[regRAX].allocatedAs;
