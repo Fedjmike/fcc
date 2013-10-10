@@ -59,6 +59,7 @@ Low:
 Other issues:
 
 [ ] Add symbol size back to debug output
+[ ] Use jump tables in tag string lookup
 
 Lexer:
 
