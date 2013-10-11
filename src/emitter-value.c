@@ -513,7 +513,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     } else
         Value = operandCreateVoid();
 
-    /*Pop the args (and temporary return pointer)*/
+    /*Pop the args (and temporary return space)*/
     asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + tempWords);
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
