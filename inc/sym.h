@@ -1,8 +1,14 @@
 #pragma once
 
+#include "../std/std.h"
+
 #include "vector.h"
 
 #include "operand.h"
+
+using "vector.h";
+
+using "operand.h";
 
 struct type;
 struct ast;
@@ -12,7 +18,7 @@ struct ast;
  * main and the semantic analyzer.
  * @see main @see analyzer
  */
-typedef enum {
+typedef enum builtinTypeIndex {
     builtinVoid,
     builtinBool,
     builtinChar,
@@ -23,7 +29,7 @@ typedef enum {
  * Symbol tags
  * @see sym @see sym::tag
  */
-typedef enum {
+typedef enum symTag {
     symUndefined,
     symScope,
     symType,
@@ -39,7 +45,7 @@ typedef enum {
 /**
  * Storage tags for a symbol, defining their linkage and lifetime
  */
-typedef enum {
+typedef enum storageTag {
     storageUndefined,
     storageAuto,
     storageRegister,
@@ -52,7 +58,7 @@ typedef enum {
  * Bitmask attributes for types and structs defining their operations
  * @see sym::typeMask
  */
-typedef enum {
+typedef enum symTypeMask {
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
     typeNumeric = 1 << 0,

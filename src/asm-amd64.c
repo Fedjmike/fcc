@@ -37,6 +37,10 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     asmPush(ctx, ctx->basePtr);
     asmMove(ctx, ctx->basePtr, ctx->stackPtr);
 
+    asmOutLn(ctx, "push ebx");
+    asmOutLn(ctx, "push esi");
+    asmOutLn(ctx, "push edi");
+
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 }
@@ -44,12 +48,15 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
 void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
     /*Exit stack frame*/
     asmOutLn(ctx, "%s:", labelGet(EndLabel));
+    asmOutLn(ctx, "pop edi");
+    asmOutLn(ctx, "pop esi");
+    asmOutLn(ctx, "pop ebx");
     asmMove(ctx, ctx->stackPtr, ctx->basePtr);
     asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
 }
 
-void asmStringConstant (struct asmCtx* ctx, operand label, char* str) {
+void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
     asmOutLn(ctx, "%s:", labelGet(label));
     asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
@@ -120,11 +127,13 @@ void asmPop (asmCtx* ctx, operand L) {
 }
 
 void asmPushN (asmCtx* ctx, int n) {
-    asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+    if (n)
+        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmPopN (asmCtx* ctx, int n) {
-    asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+    if (n)
+        asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {

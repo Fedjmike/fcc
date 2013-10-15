@@ -3,13 +3,16 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+using "stdio.h";
+using "stdarg.h";
+
 struct type;
 struct ast;
 struct sym;
 struct operand;
 struct architecture;
 
-typedef enum {
+typedef enum debugMode {
     debugFull,
     debugCompressed,
     debugMinimal,

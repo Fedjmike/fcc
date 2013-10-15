@@ -1,12 +1,12 @@
 #pragma once
 
-typedef struct {
+typedef struct vector {
     int length, capacity;
     void** buffer;
 } vector;
 
-typedef void (*dtorType)(void*); ///For use with vectorDestroyObjs
-typedef void* (*mapType)(void*); ///For use with vectorMap
+typedef void (*vectorDtor)(void*); ///For use with vectorDestroyObjs
+typedef void* (*vectorMapper)(void*); ///For use with vectorMap
 
 vector vectorCreate (int initialCapacity);
 

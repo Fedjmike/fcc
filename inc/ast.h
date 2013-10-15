@@ -4,10 +4,12 @@
 
 #include "parser.h"
 
-struct type;
-struct sym;
+using "parser.h";
 
-typedef enum {
+typedef struct type type;
+typedef struct sym sym;
+
+typedef enum astTag {
     astUndefined,
     astInvalid,
     astEmpty,
@@ -20,7 +22,7 @@ typedef enum {
     astEllipsis
 } astTag;
 
-typedef enum {
+typedef enum literalTag {
     literalUndefined,
     literalIdent,
     literalInt,
@@ -31,25 +33,27 @@ typedef enum {
     literalInit
 } literalTag;
 
+typedef struct ast ast;
+
 typedef struct ast {
     astTag tag;
 
     tokenLocation location;
 
     /*Linked list for container nodes like a module or parameter list and children of containers*/
-    struct ast* firstChild;
-    struct ast* lastChild;
-    struct ast* nextSibling;
-    struct ast* prevSibling;
+    ast* firstChild;
+    ast* lastChild;
+    ast* nextSibling;
+    ast* prevSibling;
     int children;
 
     /*Binary tree*/
-    struct ast* l;
+    ast* l;
     char* o;
-    struct ast* r;      /*Always used for unary operators*/
-    struct type* dt;    /*Result data type*/
+    ast* r;      /*Always used for unary operators*/
+    type* dt;    /*Result data type*/
 
-    struct sym* symbol;
+    sym* symbol;
 
     /*Literals*/
     literalTag litTag;

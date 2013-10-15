@@ -11,6 +11,15 @@
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
 
+compilerCtx* compilerInit () {
+
+}
+
+
+void compilerEnd (compilerCtx* ctx);
+
+compilerResult compiler (compilerCtx* ctx, const char* input, const char* output, const char* parent);
+
 compilerResult compiler (const char* input, const char* output, vector/*<char*>*/* searchPaths) {
     architecture arch = {4};
 

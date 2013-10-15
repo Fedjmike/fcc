@@ -1,10 +1,19 @@
 #include "../inc/ast.h"
 
 #include "../inc/debug.h"
-#include "../inc/type.h"
+//#include "../inc/type.h"
+void typeDestroy (struct type* DT);
 
 #include "stdio.h"
 #include "stdlib.h"
+
+using "../inc/ast.h";
+
+using "../inc/debug.h";
+
+using "std.h";
+using "stdio.h";
+using "stdlib.h";
 
 ast* astCreate (astTag tag, tokenLocation location) {
     ast* Node = malloc(sizeof(ast));
@@ -236,7 +245,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astLiteral) return "astLiteral";
     else if (tag == astEllipsis) return "astEllipsis";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("astTagGetStr", "AST tag", str);
         free(str);
@@ -254,7 +263,7 @@ const char* literalTagGetStr (literalTag tag) {
     else if (tag == literalCompound) return "literalCompound";
     else if (tag == literalInit) return "literalInit";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("literalTagGetStr", "literal tag", str);
         free(str);

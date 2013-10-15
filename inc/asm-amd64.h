@@ -46,7 +46,7 @@ void asmFnEpilogue (struct asmCtx* ctx, operand EndLabel);
 /**
  * Place a string constant in the rodata section with the given label
  */
-void asmStringConstant (struct asmCtx* ctx, operand label, char* str);
+void asmStringConstant (struct asmCtx* ctx, operand label, const char* str);
 
 /**
  * Place a previously named label in the output

@@ -1,11 +1,21 @@
 #include "../inc/sym.h"
 
 #include "../inc/debug.h"
-#include "../inc/type.h"
+//#include "../inc/type.h"
+void typeDestroy (struct type* DT);
 
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+
+using "../inc/sym.h";
+
+using "../inc/debug.h";
+
+using "std.h";
+using "stdio.h";
+using "string.h";
+using "stdlib.h";
 
 static sym* symCreate (symTag tag, sym* Parent);
 static void symDestroy (sym* Symbol);
@@ -137,7 +147,7 @@ sym* symChild (const sym* Scope, const char* look) {
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
 
-        if (Current->ident && Current->ident[0] == 0) {
+        if (Current->ident && Current->ident[0] == (char) 0) {
             sym* Found = symChild(Current, look);
 
             if (Found)
@@ -185,7 +195,7 @@ const char* symTagGetStr (symTag tag) {
     else if (tag == symId) return "id";
     else if (tag == symParam) return "parameter";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("symTagGetStr", "symbol tag", str);
         free(str);
@@ -201,7 +211,7 @@ const char* storageTagGetStr (storageTag tag) {
     else if (tag == storageExtern) return "storageExtern";
     else if (tag == storageTypedef) return "storageTypedef";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("storageTagGetStr", "storage tag", str);
         free(str);

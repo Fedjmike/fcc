@@ -14,6 +14,22 @@
 #include "stdlib.h"
 #include "string.h"
 
+using "../inc/parser.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/sym.h";
+using "../inc/ast.h";
+using "../inc/error.h";
+
+using "../inc/lexer.h";
+using "../inc/parser-helpers.h";
+using "../inc/parser-value.h";
+using "../inc/parser-decl.h";
+
+using "stdlib.h";
+using "string.h";
+
 static ast* parserModule (parserCtx* ctx);
 static ast* parserUsing (parserCtx* ctx);
 

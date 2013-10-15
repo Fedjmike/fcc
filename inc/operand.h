@@ -3,7 +3,7 @@
 struct reg;
 struct architecture;
 
-typedef enum {
+typedef enum operandTag {
     operandUndefined,
     operandInvalid,
     operandVoid,
@@ -17,7 +17,7 @@ typedef enum {
     operandStack
 } operandTag;
 
-typedef enum {
+typedef enum conditionTag {
     conditionUndefined,
     conditionEqual,
     conditionNotEqual,
@@ -27,7 +27,7 @@ typedef enum {
     conditionLessEqual
 } conditionTag;
 
-typedef enum {
+typedef enum labelTag {
     labelUndefined,
     labelReturn,
     labelBreak,

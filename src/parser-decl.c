@@ -186,6 +186,8 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
     ast* Node = 0;
 
+    tokenTryMatchKeyword(ctx, keywordConst);
+
     if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
         Node = parserStructOrUnion(ctx);
 
@@ -252,14 +254,14 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
-        tokenMatchPunct(ctx, punctLBrace);
-
         /*Only error if not already errored for wrong tag*/
         if (Node->symbol->impl && Node->symbol->tag == tag)
             errorReimplementedSym(ctx, Node->symbol);
 
         else
             Node->symbol->impl = Node;
+
+        tokenMatchPunct(ctx, punctLBrace);
 
         /*Eat fields*/
         while (!tokenIsPunct(ctx, punctRBrace))
@@ -343,6 +345,7 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
     if (tokenIsPunct(ctx, punctTimes)) {
         tokenLocation loc = ctx->location;
         char* o = tokenDupMatch(ctx);
+        tokenTryMatchKeyword(ctx, keywordConst);
         Node = astCreateUOP(loc, o, parserDeclUnary(ctx, inDecl, tag));
         Node->symbol = Node->r->symbol;
 

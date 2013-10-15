@@ -2,28 +2,26 @@
 
 #include "../std/std.h"
 
-#include "vector.h"
+typedef struct vector vector;
+typedef struct ast ast;
+typedef struct sym sym;
+typedef struct lexerCtx lexerCtx;
 
-struct ast;
-struct sym;
-
-struct lexerCtx;
-
-typedef struct {
+typedef struct tokenLocation {
     char* filename; ///< Only the tokenLocation of the astModule of the file in question owns this
     int line;
     int lineChar;
 } tokenLocation;
 
 typedef struct parserCtx {
-    struct lexerCtx* lexer;
+    lexerCtx* lexer;
     tokenLocation location;
 
     char* filename; ///< Ownership is taken by the tokenLocation of the astModule of the file
     char* fullname;
     vector/*<char*>*/* searchPaths;
 
-    struct sym* scope;
+    sym* scope;
 
     /*The levels of break-able control flows currently in*/
     int breakLevel;
@@ -32,13 +30,13 @@ typedef struct parserCtx {
     int warnings;
 } parserCtx;
 
-typedef struct {
+typedef struct parserResult {
     struct ast* tree;
     int errors;
     int warnings;
     bool notfound;
 } parserResult;
 
-parserResult parser (const char* filename, struct sym* global, vector/*<char*>*/* searchPaths);
+parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searchPaths);
 
-struct ast* parserCode (parserCtx* ctx);
+ast* parserCode (parserCtx* ctx);
