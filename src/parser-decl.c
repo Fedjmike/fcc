@@ -171,7 +171,7 @@ static storageTag parserStorage (parserCtx* ctx) {
     storageTag storage = tokenTryMatchKeyword(ctx, keywordStatic) ? storageStatic :
                          tokenTryMatchKeyword(ctx, keywordExtern) ? storageExtern :
                          tokenTryMatchKeyword(ctx, keywordTypedef) ? storageTypedef :
-                         (tokenTryMatchKeyword(ctx, keywordAuto), storage = storageAuto);
+                         (tokenTryMatchKeyword(ctx, keywordAuto), storageAuto);
 
     debugLeave();
 
