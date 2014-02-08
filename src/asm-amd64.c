@@ -199,6 +199,7 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
 
     } else {
         char* LStr = operandToStr(L);
+		R.size = ctx->arch->wordsize;
         char* RStr = operandToStr(R);
         asmOutLn(ctx, "lea %s, %s", LStr, RStr);
         free(LStr);
