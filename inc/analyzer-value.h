@@ -5,10 +5,5 @@ struct ast;
 
 struct analyzerCtx;
 
-typedef struct valueResult {
-    const struct type* dt;
-    bool lvalue;
-} valueResult;
-
-valueResult analyzerValue (struct analyzerCtx* ctx, struct ast* Node);
-valueResult analyzerInitOrCompoundLiteral (struct analyzerCtx* ctx, struct ast* Node, const struct type* DT);
+const struct type* analyzerValue (struct analyzerCtx* ctx, struct ast* Node);
+const struct type* analyzerInitOrCompoundLiteral (struct analyzerCtx* ctx, struct ast* Node, const struct type* DT);

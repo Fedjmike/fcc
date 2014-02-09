@@ -242,9 +242,9 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
     /*Return type, if any, matches?*/
 
     if (Node->r) {
-        valueResult R = analyzerValue(ctx, Node->r);
+        const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R.dt, ctx->fnctx.returnType))
+        if (!typeIsCompatible(R, ctx->fnctx.returnType))
             errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
 
     } else if (!typeIsVoid(ctx->fnctx.returnType)) {
