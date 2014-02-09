@@ -583,9 +583,8 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateLiteral(*(char*) Node->literal);
 
     else if (Node->litTag == literalStr) {
-        operand ConstLabel = labelCreate(labelROData);
-        asmStringConstant(ctx->Asm, ConstLabel, (char*) Node->literal);
-        Value = operandCreateLabelOffset(ConstLabel);
+        Value = labelCreate(labelROData);
+        asmStringConstant(ctx->Asm, Value, (char*) Node->literal);
 
     } else {
         debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));

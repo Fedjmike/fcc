@@ -79,12 +79,6 @@ operand operandCreateLabel (int label) {
     return ret;
 }
 
-operand operandCreateLabelOffset (operand label) {
-    operand ret = operandCreate(operandLabelOffset);
-    ret.label = label.label;
-    return ret;
-}
-
 void operandFree (operand Value) {
     if (Value.tag == operandReg)
         regFree(Value.base);
@@ -99,7 +93,7 @@ void operandFree (operand Value) {
     } else if (   Value.tag == operandUndefined || Value.tag == operandInvalid
                || Value.tag == operandVoid || Value.tag == operandFlags
                || Value.tag == operandLiteral || Value.tag == operandLabel
-               || Value.tag == operandLabelOffset || Value.tag == operandStack)
+               || Value.tag == operandStack)
         /*Nothing to do*/;
 
     else
@@ -120,7 +114,7 @@ int operandGetSize (const architecture* arch, operand Value) {
     else if (Value.tag == operandLiteral)
         return 1;
 
-    else if (Value.tag == operandLabelOffset)
+    else if (Value.tag == operandLabel)
         return arch->wordsize;
 
     else
@@ -180,9 +174,6 @@ char* operandToStr (operand Value) {
         snprintf(ret, 32, "%d", Value.literal);
 
     else if (Value.tag == operandLabel)
-        strncpy(ret, labelGet(Value), 32);
-
-    else if (Value.tag == operandLabelOffset)
         snprintf(ret, 32, "offset %s", labelGet(Value));
 
     else
@@ -201,7 +192,6 @@ const char* operandTagGetStr (operandTag tag) {
     else if (tag == operandMemRef) return "operandMemRef";
     else if (tag == operandLiteral) return "operandLiteral";
     else if (tag == operandLabel) return "operandLabel";
-    else if (tag == operandLabelOffset) return "operandLabelOffset";
     else if (tag == operandStack) return "operandStack";
     else {
         char* str = malloc(logi(tag, 10)+2);
@@ -263,7 +253,7 @@ operand labelNamed (const char* name) {
 }
 
 const char* labelGet (operand label) {
-    if (label.tag == operandLabel || label.tag == operandLabelOffset)
+    if (label.tag == operandLabel)
         return labels[label.label];
 
     else {

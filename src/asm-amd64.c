@@ -57,23 +57,33 @@ void asmStringConstant (struct asmCtx* ctx, operand label, char* str) {
 }
 
 void asmLabel (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "%s:", LStr);
-    free(LStr);
+    asmOutLn(ctx, "%s:", labelGet(L));
 }
 
 void asmJump (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "jmp %s", LStr);
-    free(LStr);
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "jmp %s", labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "jmp %s", LStr);
+        free(LStr);
+    }
 }
 
 void asmBranch (asmCtx* ctx, operand Condition, operand L) {
     char* CStr = operandToStr(Condition);
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "j%s %s", CStr, LStr);
+
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "j%s %s", CStr, labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "j%s %s", CStr, LStr);
+        free(LStr);
+    }
+
     free(CStr);
-    free(LStr);
 }
 
 void asmPush (asmCtx* ctx, operand L) {
@@ -300,7 +310,12 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
 }
 
 void asmCall (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "call %s", LStr);
-    free(LStr);
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "call %s", labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "call %s", LStr);
+        free(LStr);
+    }
 }
