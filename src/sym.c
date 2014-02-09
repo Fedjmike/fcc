@@ -138,7 +138,10 @@ sym* symChild (const sym* Scope, const char* look) {
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
 
-        if (Current->ident && Current->ident[0] == 0) {
+        /*Anonymous inside a struct/union?*/
+        if (   Current->ident && Current->ident[0] == 0
+            && (   Current->parent->tag == symStruct
+                || Current->parent->tag == symUnion)) {
             sym* Found = symChild(Current, look);
 
             if (Found)
