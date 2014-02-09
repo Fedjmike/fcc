@@ -2,7 +2,7 @@
 
 #include "vector.h"
 
-typedef struct {
+typedef struct compilerResult {
     int errors, warnings;
 } compilerResult;
 

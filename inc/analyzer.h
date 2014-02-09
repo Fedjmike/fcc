@@ -32,7 +32,7 @@ typedef struct analyzerCtx {
 /**
  * Semantic analysis result
  */
-typedef struct {
+typedef struct analyzerResult {
     int errors;
     int warnings;
 } analyzerResult;
