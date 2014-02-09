@@ -43,8 +43,11 @@ static int driver (config conf) {
             intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
             int charno = strlen(intermediates);
 
-            for (int i = 1; i < conf.intermediates.length; i++)
-                sprintf(intermediates+charno, " %s", (char*) vectorGet(&conf.intermediates, i));
+            for (int i = 1; i < conf.intermediates.length; i++) {
+                char* current = vectorGet(&conf.intermediates, i);
+                sprintf(intermediates+charno, " %s", current);
+                charno += strlen(current)+1;
+            }
         }
 
         if (conf.mode == modeNoLink)
