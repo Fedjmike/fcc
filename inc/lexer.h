@@ -57,7 +57,7 @@ typedef enum {
     punctMinus, punctMinusAssign, punctMinusMinus, punctArrow,
     punctTimes, punctTimesAssign,
     punctDivide, punctDivideAssign,
-    punctModulo, punctModuloAssign,
+    punctModulo, punctModuloAssign
 } punctTag;
 
 typedef struct lexerCtx {
