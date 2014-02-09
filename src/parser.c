@@ -43,10 +43,8 @@ static ast* parserFor (parserCtx* ctx);
 static parserCtx parserInit (const char* filename, char* fullname, sym* global, vector/*<char*>*/* searchPaths) {
     lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
 
-    vectorPush(searchPaths, fgetpath(fullname));
-
     return (parserCtx) {lexer, {0, 0, 0},
-                        fstripname(filename), fullname, searchPaths,
+                        fstripname(filename), fullname, fgetpath(fullname), searchPaths,
                         global,
                         0,
                         0, 0};
@@ -54,14 +52,25 @@ static parserCtx parserInit (const char* filename, char* fullname, sym* global, 
 
 static void parserEnd (parserCtx ctx) {
     free(ctx.fullname);
-    free(vectorPop(ctx.searchPaths));
+    free(ctx.path);
     lexerEnd(ctx.lexer);
 }
 
-static char* parserFindFile (const char* filename, vector/*<char*>*/* searchPaths) {
+static char* parserFindFile (const char* filename, const char* initialPath, vector/*<char*>*/* searchPaths) {
     int filenameLength = strlen(filename);
 
-    for (int i = 0; i < searchPaths->length; i++) {
+    if (initialPath && initialPath[0] != 0) {
+        char* fullname = malloc(strlen(initialPath)+1+filenameLength+1);
+        sprintf(fullname, "%s/%s", initialPath, filename);
+
+        if (fexists(fullname))
+            return fullname;
+
+        else
+            free(fullname);
+    }
+
+    for (int i = searchPaths->length-1; i >= 0; i--) {
         const char* path = vectorGet(searchPaths, i);
         char* fullname;
 
@@ -82,8 +91,9 @@ static char* parserFindFile (const char* filename, vector/*<char*>*/* searchPath
     return 0;
 }
 
-parserResult parser (const char* filename, sym* global, vector/*<char*>*/* searchPaths) {
-    char* fullname = parserFindFile(filename, searchPaths);
+parserResult parser (const char* filename, sym* global,
+                     const char* initialPath, vector/*<char*>*/* searchPaths) {
+    char* fullname = parserFindFile(filename, initialPath, searchPaths);
 
     if (fullname) {
         parserCtx ctx = parserInit(filename, fullname, global, searchPaths);
@@ -139,7 +149,7 @@ static ast* parserUsing (parserCtx* ctx) {
 
     if (name[0] != 0) {
         //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
-        parserResult res = parser(name, ctx->scope, ctx->searchPaths);
+        parserResult res = parser(name, ctx->scope, ctx->path, ctx->searchPaths);
 
         ctx->errors += res.errors;
         ctx->warnings += res.warnings;

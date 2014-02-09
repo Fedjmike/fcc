@@ -29,7 +29,7 @@ $(OUT): $(OBJS)
 	@du -hs bin/$(CONFIG)/fcc*
 	
 clean:
-	rm -rf obj/*/*
+	rm -rf obj/*/*.o
 	rm -f bin/*/fcc*
 	
 print:

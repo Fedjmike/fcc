@@ -32,3 +32,17 @@ Makefile targets:
 - `all clean print`
 
 This puts an fcc binary in `<fcc>/bin/$CONFIG`
+
+Running
+-------
+
+The command line interface is similar to that of GCC:
+
+Usage: `fcc [--version] [--help] [-cS] [-o <file>] <files...>`
+- `-c`         Compile and assemble only, do not link
+- `--help`     Display command line information
+- `-I`         Add a directory to be searched for headers
+- `-o <file>`  Output into a specific file
+- `-s`         Keep temporary assembly output after compilation
+- `-S`         Compile only, do not assemble or link
+- `--version`  Display version information

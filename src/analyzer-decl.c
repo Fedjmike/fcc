@@ -221,9 +221,9 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
         analyzerInitOrCompoundLiteral(ctx, Node->r, L);
 
     else {
-        valueResult R = analyzerValue(ctx, Node->r);
+        const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R.dt, L))
+        if (!typeIsCompatible(R, L))
             errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
 
         //TODO: is assignable?

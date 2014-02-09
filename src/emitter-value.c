@@ -346,13 +346,12 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     } else if (!strcmp(Node->o, "&")) {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, operandCreate(operandMem));
-        R.size = ctx->arch->wordsize;
         asmLeave(ctx->Asm);
 
         Value = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
         asmEvalAddress(ctx->Asm, Value, R);
-        //TODO: free R?
+        operandFree(R);
 
     } else {
         debugErrorUnhandled("emitterUOP", "operator", Node->o);
