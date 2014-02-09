@@ -231,8 +231,8 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
     asmEnter(ctx->Asm);
-    operand Value, L = emitterValue(ctx, Node->l, operandCreate(operandMem)),
-                   R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+    operand Value, R = emitterValue(ctx, Node->r, operandCreate(operandUndefined)),
+                   L = emitterValue(ctx, Node->l, operandCreate(operandMem));
     asmLeave(ctx->Asm);
 
     boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
