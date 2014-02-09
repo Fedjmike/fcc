@@ -207,11 +207,29 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     }
 }
 
+void asmCompare (asmCtx* ctx, operand L, operand R) {
+    if (   (L.tag == operandMem && R.tag == operandMem)
+        || (L.tag == operandLiteral && R.tag == operandLiteral)) {
+        operand intermediate = operandCreateReg(regAlloc(L.tag == operandMem ? max(L.size, R.size)
+                                                                             : ctx->arch->wordsize));
+        asmMove(ctx, intermediate, L);
+        asmCompare(ctx, intermediate, R);
+        operandFree(intermediate);
+
+    } else if (L.tag == operandLiteral)
+        asmCompare(ctx, R, L);
+
+    else {
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
+        asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        free(LStr);
+        free(RStr);
+    }
+}
+
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
-        /*Unlike lea, perform the op after the move. This is because these
-          ops affect the flags (particularly cmp)
-          !!!WHO EXPLOITS THIS?!!! DOESNT WORK AS BELOW*/
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
@@ -243,8 +261,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
 
-        const char* OpStr = Op == bopCmp ? "cmp" :
-                            Op == bopAdd ? "add" :
+        const char* OpStr = Op == bopAdd ? "add" :
                             Op == bopSub ? "sub" :
                             Op == bopMul ? "imul" :
                             Op == bopBitAnd ? "and" :

@@ -4,7 +4,6 @@ struct asmCtx;
 
 typedef enum {
 	bopUndefined,
-	bopCmp,
 	bopAdd,
 	bopSub,
 	bopMul,
@@ -85,6 +84,8 @@ void asmMove (struct asmCtx* ctx, operand Dest, operand Src);
 void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src);
 
 void asmEvalAddress (struct asmCtx* ctx, operand L, operand R);
+
+void asmCompare (struct asmCtx* ctx, operand L, operand R);
 
 /**
  * Perform a binary operation (e.g. add, mul, or)

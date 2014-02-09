@@ -99,7 +99,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     if (Dest.tag != operandUndefined) {
         if (Dest.tag != Value.tag) {
             if (Dest.tag == operandFlags) {
-                asmBOP(ctx->Asm, bopCmp, Value, operandCreateLiteral(0));
+                asmCompare(ctx->Asm, Value, operandCreateLiteral(0));
                 operandFree(Value);
 
                 Dest = operandCreateFlags(conditionEqual);
@@ -188,7 +188,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         asmLeave(ctx->Asm);
 
         Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
-        asmBOP(ctx->Asm, bopCmp, L, R);
+        asmCompare(ctx->Asm, L, R);
         operandFree(L);
         operandFree(R);
 
@@ -330,7 +330,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         asmLeave(ctx->Asm);
 
         if (!strcmp(Node->o, "!")) {
-            asmBOP(ctx->Asm, bopCmp, R, operandCreateLiteral(0));
+            asmCompare(ctx->Asm, R, operandCreateLiteral(0));
             Value = operandCreateFlags(conditionNotEqual);
             operandFree(R);
 
