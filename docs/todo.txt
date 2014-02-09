@@ -60,6 +60,8 @@ Other issues:
 
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
+[ ] Use enums for BOPs and UOPs
+[ ] vsystem -> systemf
 
 Lexer:
 
@@ -79,6 +81,8 @@ Parser:
 [x] Search paths are still broken
     - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
+[ ] Error for unnamed structs/unions that don't define variables
+	- OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
 
 Semantic analyzer:
 
@@ -94,6 +98,7 @@ Semantic analyzer:
 [ ] Initialization of extern and typedef
 [x] Use the DT of passed node in analyzer errors
 [ ] '' in errors
+[ ] Evaluate casts properly
 
 Emitter:
 
