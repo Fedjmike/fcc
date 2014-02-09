@@ -33,7 +33,7 @@ bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword);
 void tokenMatchPunct (struct parserCtx* ctx, punctTag punct);
 bool tokenTryMatchPunct (struct parserCtx* ctx, punctTag punct);
 
-void tokenMatchToken (struct parserCtx* ctx, tokenTag Match);;
+void tokenMatchToken (struct parserCtx* ctx, tokenTag Match);
 
 int tokenMatchInt (struct parserCtx* ctx);
 
