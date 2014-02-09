@@ -276,18 +276,34 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 }
 
 /**
- * Enum = "enum" Name# [ "{" EnumField [{ "," EnumField }] "}" ]
+ * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
  */
 static struct ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
 
+    tokenLocation loc = ctx->location;
     tokenMatchKeyword(ctx, keywordEnum);
 
-    ast* Node = astCreateEnum(ctx->location, parserName(ctx, true, symEnum));
+    /*Name*/
+
+    ast* name;
+
+    if (tokenIsIdent(ctx))
+        name = parserName(ctx, true, symEnum);
+
+    else {
+        name = astCreateEmpty(loc);
+        name->literal = strdup("");
+        name->symbol = symCreateNamed(symEnum, ctx->scope, "");
+    }
+
+    ast* Node = astCreateEnum(loc, name);
     Node->symbol = Node->l->symbol;
 
-    /*Body?*/
-    if (tokenTryMatchPunct(ctx, punctLBrace)) {
+    /*Body*/
+    if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
+        tokenMatchPunct(ctx, punctLBrace);
+
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));
         } while (tokenTryMatchPunct(ctx, punctComma));
