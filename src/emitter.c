@@ -72,6 +72,9 @@ static void emitterModule (emitterCtx* ctx, const ast* Tree) {
         else if (Current->tag == astDecl)
             emitterDecl(ctx, Current);
 
+        else if (Current->tag == astEmpty)
+            debugMsg("Empty");
+
         else
             debugErrorUnhandled("emitterModule", "AST tag", astTagGetStr(Current->tag));
     }
@@ -163,6 +166,9 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
     else if (Node->tag == astIter)
         emitterIter(ctx, Node);
 
+    else if (Node->tag == astCode)
+        emitterCode(ctx, Node);
+
     else if (Node->tag == astReturn)
         emitterReturn(ctx, Node);
 
@@ -177,6 +183,9 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
 
     else if (astIsValueTag(Node->tag))
         operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
+
+    else if (Node->tag == astEmpty)
+        debugMsg("Empty");
 
     else
         debugErrorUnhandled("emitterLine", "AST tag", astTagGetStr(Node->tag));
