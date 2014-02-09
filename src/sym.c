@@ -37,6 +37,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->firstChild = 0;
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
+    Symbol->children = 0;
 
     Symbol->label = operandCreateLabel(0);
     Symbol->offset = 0;
