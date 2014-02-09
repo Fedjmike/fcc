@@ -37,7 +37,7 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
     /*Parse the module*/
 
     ast* Tree = 0; {
-        parserResult res = parser(input, Global, searchPaths);
+        parserResult res = parser(input, Global, "", searchPaths);
         errors += res.errors;
         warnings += res.warnings;
         Tree = res.tree;

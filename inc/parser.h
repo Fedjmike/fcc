@@ -21,6 +21,7 @@ typedef struct parserCtx {
 
     char* filename; ///< Ownership is taken by the tokenLocation of the astModule of the file
     char* fullname;
+    char* path;
     vector/*<char*>*/* searchPaths;
 
     struct sym* scope;
@@ -39,6 +40,7 @@ typedef struct {
     bool notfound;
 } parserResult;
 
-parserResult parser (const char* filename, struct sym* global, vector/*<char*>*/* searchPaths);
+parserResult parser (const char* filename, struct sym* global,
+                     const char* initialPath, vector/*<char*>*/* searchPaths);
 
 struct ast* parserCode (parserCtx* ctx);

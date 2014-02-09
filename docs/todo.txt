@@ -76,7 +76,7 @@ Parser:
 [ ] Line that starts with undeclared ident... assume decl?
 [ ] Complain about keywords as idents
 [ ] Disallow initializations inside normal expressions
-[ ] Search paths are still broken
+[x] Search paths are still broken
     - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
 
