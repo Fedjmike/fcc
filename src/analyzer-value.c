@@ -185,14 +185,10 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
     else if (Node->tag == astSizeof)
         return analyzerSizeof(ctx, Node);
 
-    else if (Node->tag == astLiteral) {
-        if (Node->litTag == literalCompound)
-            return analyzerCompoundLiteral(ctx, Node);
+    else if (Node->tag == astLiteral)
+        return analyzerLiteral(ctx, Node);
 
-        else
-            return analyzerLiteral(ctx, Node);
-
-    } else if (Node->tag == astInvalid) {
+    else if (Node->tag == astInvalid) {
         debugMsg("Invalid");
         return Node->dt = typeCreateInvalid();
 
@@ -578,6 +574,13 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
             errorIllegalSymAsValue(ctx, Node, Node->symbol);
             Node->dt = typeCreateInvalid();
         }
+
+    } else if (Node->litTag == literalCompound)
+        analyzerCompoundLiteral(ctx, Node);
+
+    else if (Node->litTag == literalInit) {
+        errorCompoundLiteralWithoutType(ctx, Node);
+        Node->dt = typeCreateInvalid();
 
     } else {
         debugErrorUnhandled("analyzerLiteral", "literal tag", literalTagGetStr(Node->litTag));

@@ -35,3 +35,4 @@ void errorRedeclared (struct analyzerCtx* ctx, const struct ast* Node, const sym
 void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol);
 void errorCompileTimeKnown (struct analyzerCtx* ctx, const struct ast* Node,
                             const sym* Symbol, const char* what);
+void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node);

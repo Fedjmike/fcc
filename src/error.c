@@ -204,3 +204,7 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
     analyzerError(ctx, Node, "declaration of %s needed a compile-time known %s", SymStr, what);
     free(SymStr);
 }
+
+void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node) {
+    analyzerError(ctx, Node, "compound literal without explicit type");
+}
