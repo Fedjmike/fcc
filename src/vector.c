@@ -18,7 +18,7 @@ void vectorDestroy (vector* v) {
     v->buffer = 0;
 }
 
-void vectorDestroyObjs (vector* v, dtorType dtor) {
+void vectorDestroyObjs (vector* v, vectorDtor dtor) {
     /*This will mess up the vector, watevs*/
     vectorMap(v, (vectorMapper) dtor, v);
     vectorDestroy(v);
@@ -52,7 +52,7 @@ int vectorSet (vector* v, int n, void* value) {
         return true;
 }
 
-void vectorMap (vector* dest, mapType f, vector* src) {
+void vectorMap (vector* dest, vectorMapper f, vector* src) {
     for (int n = 0; n < src->length; n++)
         dest->buffer[n] = f(src->buffer[n]);
 }
