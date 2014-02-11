@@ -88,23 +88,23 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 
 /*:::: ANALYZER ERRORS ::::*/
 
-void errorTypeExpected (struct analyzerCtx* ctx, const struct ast* Node, const char* where, const char* expected) {
+void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
     char* found = typeToStr(Node->dt, "");
     analyzerError(ctx, Node, "%s requires %s, found '%s'", where, expected, found);
     free(found);
 }
 
-void errorTypeExpectedType (struct analyzerCtx* ctx, const struct ast* Node, const char* where, const struct type* expected) {
+void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
     char* expectedStr = typeToStr(expected, "");
     errorTypeExpected(ctx, Node, where, expectedStr);
     free(expectedStr);
 }
 
-void errorLvalue (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+void errorLvalue (analyzerCtx* ctx, const ast* Node, const char* o) {
     analyzerError(ctx, Node, "%s requires lvalue", o);
 }
 
-void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
     char* L = typeToStr(Node->l->dt, "");
     char* R = typeToStr(Node->r->dt, "");
     analyzerError(ctx, Node, "type mismatch between %s and %s for %s", L, R, o);
@@ -112,23 +112,28 @@ void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char*
     free(R);
 }
 
-void errorDegree (analyzerCtx* ctx, const ast* Node, const char* thing, int expected, int found, const char* where) {
+void errorDegree (analyzerCtx* ctx, const ast* Node,
+                  const char* thing, int expected, int found, const char* where) {
     analyzerError(ctx, Node, "%s expected %d %s, %d given", where, expected, thing, found);
 }
 
-void errorParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const type* expected, const type* found) {
+void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
+                         int n, const type* expected, const type* found) {
     char* expectedStr = typeToStr(expected, "");
     char* foundStr = typeToStr(found, "");
-    analyzerError(ctx, Node, "type mismatch at parameter %d, %s: found %s", n+1, expectedStr, foundStr);
+    analyzerError(ctx, Node, "type mismatch at parameter %d, %s: found %s",
+                  n+1, expectedStr, foundStr);
     free(expectedStr);
     free(foundStr);
 }
 
-void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node, int n, const sym* fn, const type* found) {
+void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
+                              int n, const sym* fn, const type* found) {
     char* foundStr = typeToStr(found, "");
     const sym* param = symGetChild(fn, n);
     char* paramStr = typeToStr(param->dt, param->ident ? param->ident : "");
-    analyzerError(ctx, Node, "type mismatch at parameter %d of %s, %s: found %s", n+1, fn->ident, paramStr, foundStr);
+    analyzerError(ctx, Node, "type mismatch at parameter %d of %s, %s: found %s",
+                  n+1, fn->ident, paramStr, foundStr);
     free(foundStr);
     free(paramStr);
 }
@@ -139,15 +144,19 @@ void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* 
     free(recordStr);
 }
 
-void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* structSym, const sym* fieldSym) {
+void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
+                             const sym* structSym, const sym* fieldSym) {
     char* fieldStr = typeToStr(fieldSym->dt, fieldSym->ident);
-    char* foundStr = typeToStr(Node->dt, Node->symbol && Node->symbol->ident ? Node->symbol->ident : "");
-    analyzerError(ctx, Node, "type mismatch: %s given for initialization of field %s in %s %s", foundStr, fieldStr, symTagGetStr(structSym->tag), structSym->ident);
+    char* foundStr = typeToStr(Node->dt,   (Node->symbol && Node->symbol->ident)
+                                         ? Node->symbol->ident : "");
+    analyzerError(ctx, Node, "type mismatch: %s given for initialization of field %s in %s %s",
+                  foundStr, fieldStr, symTagGetStr(structSym->tag), structSym->ident);
     free(fieldStr);
     free(foundStr);
 }
 
-void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const type* found) {
+void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
+                                   const sym* Symbol, const type* found) {
     char* expectedStr = typeToStr(Symbol->dt, Symbol->ident);
     char* foundStr = typeToStr(found, "");
     analyzerError(ctx, Node, "%s redeclared as conflicting type %s", expectedStr, foundStr);
