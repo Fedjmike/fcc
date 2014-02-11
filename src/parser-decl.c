@@ -69,12 +69,12 @@ ast* parserDecl (parserCtx* ctx, bool module) {
         symTag symt = storage == storageTypedef ? symTypedef : symId;
 
         astAddChild(Node, parserDeclExpr(ctx, true, symt));
+        Node->lastChild->symbol->storage = storage;
 
         if (tokenIsPunct(ctx, punctLBrace)) {
             loc = ctx->location;
             Node = astCreateFnImpl(loc, Node);
             Node->symbol = Node->l->firstChild->symbol;
-            Node->symbol->storage = storage;
 
             if (Node->symbol->impl)
                 errorReimplementedSym(ctx, Node->symbol);
