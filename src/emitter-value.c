@@ -31,7 +31,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
 
-operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
+operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
     operand Value;
 
     /*Calculate the value*/
@@ -64,7 +64,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
         Value = emitterCall(ctx, Node);
 
     else if (Node->tag == astCast)
-        Value = emitterValue(ctx, Node->r, Dest);
+        Value = emitterValue(ctx, Node->r, request);
 
     else if (Node->tag == astSizeof)
         Value = emitterSizeof(ctx, Node);
@@ -81,7 +81,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
 
     } else {
         debugErrorUnhandled("emitterValue", "AST tag", astTagGetStr(Node->tag));
-        return Dest;
+        return operandCreate(operandUndefined);
     }
 
     /*Put it where requested*/
@@ -89,67 +89,78 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, operand Dest) {
     /*If they haven't specifically asked for the reference as memory
       then they're unaware it's held as a reference at all
       so make it a plain ol' value*/
-    if (Value.tag == operandMemRef && Dest.tag != operandMem) {
+    if (Value.tag == operandMemRef && request != requestMem) {
         operand nValue = operandCreateReg(regAlloc(ctx->arch->wordsize));
         asmEvalAddress(ctx->Asm, nValue, Value);
         operandFree(Value);
         Value = nValue;
     }
 
-    if (Dest.tag != operandUndefined) {
-        if (Dest.tag != Value.tag) {
-            if (Dest.tag == operandFlags) {
-                asmCompare(ctx->Asm, Value, operandCreateLiteral(0));
-                operandFree(Value);
+    operand Dest;
 
-                Dest = operandCreateFlags(conditionEqual);
+    if (request == requestAny)
+        Dest = Value;
 
-            } else if (Dest.tag == operandReg) {
-                /*If a specific register wasn't requested, allocate one*/
-                if (Dest.base == regUndefined)
-                    Dest.base = regAlloc(typeGetSize(ctx->arch, Node->dt));
+    else if (request == requestReg) {
+        /*Not in a reg, or wrong one*/
+        if (   Value.tag != operandReg
+            ){//|| (request.specific != regUndefined && request.specific != Value.base)) {
+            Dest = operandCreateReg(  //Value.tag == operandReg
+                                    //? request.specific
+                                    regAlloc(typeGetSize(ctx->arch, Node->dt)));
 
-                asmMove(ctx->Asm, Dest, Value);
-                operandFree(Value);
-
-            } else if (Dest.tag == operandMem) {
-                if (Value.tag == operandMemRef) {
-                    Dest = Value;
-                    Dest.tag = operandMem;
-
-                } else
-                    printf("emitterValue(): unable to convert non lvalue operand tag, %s.\n", operandTagGetStr(Value.tag));
-
-            } else if (Dest.tag == operandStack) {
-                asmPush(ctx->Asm, Value);
-
-                if (Value.tag == operandMem)
-                    Dest.size = operandGetSize(ctx->arch, Value);
-
-                else
-                    Dest.size = ctx->arch->wordsize;
-
-                operandFree(Value);
-
-            } else if (Value.tag == operandUndefined)
-                printf("emitterValue(): expected value, void given.\n");
-
-            else {
-                debugErrorUnhandled("emitterValue", "operand tag", operandTagGetStr(Value.tag));
-                debugErrorUnhandled("emitterValue", "operand tag", operandTagGetStr(Dest.tag));
-            }
-
-        } else if (   Dest.tag == operandReg
-                   && Dest.base != Value.base
-                   && Dest.base != regUndefined) {
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
 
         } else
             Dest = Value;
 
-    } else
+    } else if (request == requestMem) {
+        if (Value.tag != operandMem && Value.tag != operandMemRef)
+            debugError("emitterValue", "unable to convert non lvalue operand tag, %s", operandTagGetStr(Value.tag));
+
         Dest = Value;
+
+    } else if (request == requestOperable) {
+        if (   Value.tag == operandLiteral || Value.tag == operandReg
+            || Value.tag == operandMem || Value.tag == operandLabel)
+            Dest = Value;
+
+        else if (Value.tag == operandMemRef || Value.tag == operandFlags) {
+            Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+            asmMove(ctx->Asm, Dest, Value);
+            operandFree(Value);
+
+        } else
+            debugError("emitterValue", "unable to convert %s to operable", operandTagGetStr(Value.tag));
+
+    } else if (request == requestFlags) {
+        if (Value.tag != operandFlags) {
+            asmCompare(ctx->Asm, Value, operandCreateLiteral(0));
+            operandFree(Value);
+
+            Dest = operandCreateFlags(conditionEqual);
+
+        } else
+            Dest = Value;
+
+    } else if (request == requestStack) {
+        if (Value.tag != operandStack) {
+            Dest = operandCreate(operandStack);
+
+            if (Value.tag == operandMem)
+                Dest.size = operandGetSize(ctx->arch, Value);
+
+            else
+                Dest.size = ctx->arch->wordsize;
+
+            asmPush(ctx->Asm, Value);
+            operandFree(Value);
+
+        } else
+            Dest = Value;
+
+    }
 
     return Dest;
 }
@@ -161,7 +172,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 
     if (!strcmp(Node->o, ".")) {
         asmEnter(ctx->Asm);
-        Value = L = emitterValue(ctx, Node->l, operandCreate(operandMem));
+        Value = L = emitterValue(ctx, Node->l, requestMem);
         asmLeave(ctx->Asm);
 
         Value.offset += Node->symbol->offset;
@@ -169,7 +180,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 
     } else if (!strcmp(Node->o, "->")) {
         asmEnter(ctx->Asm);
-        L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
+        L = emitterValue(ctx, Node->l, requestReg);
         asmLeave(ctx->Asm);
 
         Value = operandCreateMem(L.base,
@@ -183,8 +194,8 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
                || !strcmp(Node->o, ">" )
                || !strcmp(Node->o, ">=")) {
         asmEnter(ctx->Asm);
-        L = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        L = emitterValue(ctx, Node->l, requestOperable);
+        R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
         Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
@@ -194,14 +205,14 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 
     } else if (!strcmp(Node->o, ",")) {
         asmEnter(ctx->Asm);
-        operandFree(emitterValue(ctx, Node->l, operandCreate(operandUndefined)));
-        Value = R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        operandFree(emitterValue(ctx, Node->l, requestAny));
+        Value = R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
     } else {
         asmEnter(ctx->Asm);
-        Value = L = emitterValue(ctx, Node->l, operandCreateReg(regUndefined));
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        Value = L = emitterValue(ctx, Node->l, requestReg);
+        R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
         boperation bop = !strcmp(Node->o, "+") ? bopAdd :
@@ -231,8 +242,8 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
     asmEnter(ctx->Asm);
-    operand Value, R = emitterValue(ctx, Node->r, operandCreate(operandUndefined)),
-                   L = emitterValue(ctx, Node->l, operandCreate(operandMem));
+    operand Value, R = emitterValue(ctx, Node->r, requestOperable),
+                   L = emitterValue(ctx, Node->l, requestMem);
     asmLeave(ctx->Asm);
 
     boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
@@ -270,7 +281,7 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 
     /*Left*/
     asmEnter(ctx->Asm);
-    operand L = emitterValue(ctx, Node->l, operandCreate(operandFlags));
+    operand L = emitterValue(ctx, Node->l, requestFlags);
     asmLeave(ctx->Asm);
 
     /*Set up the short circuit value*/
@@ -286,7 +297,7 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 
     /*Right*/
     asmEnter(ctx->Asm);
-    operand R = emitterValue(ctx, Node->r, operandCreate(operandFlags));
+    operand R = emitterValue(ctx, Node->r, requestFlags);
     asmLeave(ctx->Asm);
 
     if (!strcmp(Node->o, "&&"))
@@ -307,12 +318,12 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     if (   !strcmp(Node->o, "++")
         || !strcmp(Node->o, "--")) {
-        /*Specifically ask it to be stored in a register so that it's previous
-          value is returned*/
         asmEnter(ctx->Asm);
-        Value = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        R = emitterValue(ctx, Node->r, requestMem);
         asmLeave(ctx->Asm);
+
+        Value = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
+        asmMove(ctx->Asm, Value, R);
 
         if (!strcmp(Node->o, "++"))
             asmUOP(ctx->Asm, uopInc, R);
@@ -326,7 +337,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
                || !strcmp(Node->o, "~")
                || !strcmp(Node->o, "!")) {
         asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
+        R = emitterValue(ctx, Node->r, requestReg);
         asmLeave(ctx->Asm);
 
         if (!strcmp(Node->o, "!")) {
@@ -340,12 +351,12 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         }
 
     } else if (!strcmp(Node->o, "*")) {
-        operand Ptr = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
+        operand Ptr = emitterValue(ctx, Node->r, requestReg);
         Value = operandCreateMem(Ptr.base, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else if (!strcmp(Node->o, "&")) {
         asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreate(operandMem));
+        R = emitterValue(ctx, Node->r, requestMem);
         asmLeave(ctx->Asm);
 
         Value = operandCreateReg(regAlloc(ctx->arch->wordsize));
@@ -368,22 +379,28 @@ static operand emitterTOP (emitterCtx* ctx, const ast* Node) {
 
     operand ElseLabel = labelCreate(labelUndefined);
     operand EndLabel = labelCreate(labelUndefined);
-    operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
 
     asmBranch(ctx->Asm,
-              emitterValue(ctx,
-                           Node->firstChild,
-                           operandCreateFlags(conditionUndefined)),
+              emitterValue(ctx, Node->firstChild, requestFlags),
               ElseLabel);
 
-    /*Assert returns Value*/
-    emitterValue(ctx, Node->l, Value);
+    operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+
+    {
+        operand tmp = emitterValue(ctx, Node->l, requestAny);
+        asmMove(ctx->Asm, Value, tmp);
+        operandFree(tmp);
+    }
 
     asmComment(ctx->Asm, "");
     asmJump(ctx->Asm, EndLabel);
     asmLabel(ctx->Asm, ElseLabel);
 
-    emitterValue(ctx, Node->r, Value);
+    {
+        operand tmp = emitterValue(ctx, Node->r, requestAny);
+        asmMove(ctx->Asm, Value, tmp);
+        operandFree(tmp);
+    }
 
     asmLabel(ctx->Asm, EndLabel);
 
@@ -400,8 +417,8 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     /*Is it an array? Are we directly offsetting the address*/
     if (typeIsArray(Node->l->dt)) {
         asmEnter(ctx->Asm);
-        L = emitterValue(ctx, Node->l, operandCreate(operandMem));
-        R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        L = emitterValue(ctx, Node->l, requestMem);
+        R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
         if (R.tag == operandLiteral) {
@@ -428,11 +445,11 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     /*Is it instead a pointer? Get value and offset*/
     } else /*if (typeIsPtr(Node->l->dt)*/ {
         asmEnter(ctx->Asm);
-        R = emitterValue(ctx, Node->r, operandCreateReg(regUndefined));
+        R = emitterValue(ctx, Node->r, requestReg);
         asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(typeGetSize(ctx->arch, Node->l->dt->base)));
         asmLeave(ctx->Asm);
 
-        L = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
+        L = emitterValue(ctx, Node->l, requestOperable);
 
         asmBOP(ctx->Asm, bopAdd, R, L);
         operandFree(L);
@@ -472,7 +489,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     for (ast* Current = Node->lastChild;
          Current;
          Current = Current->prevSibling) {
-        operand Arg = emitterValue(ctx, Current, operandCreate(operandStack));
+        operand Arg = emitterValue(ctx, Current, requestStack);
         argSize += Arg.size;
     }
 
@@ -486,7 +503,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     }
 
     /*Get the address (usually, as a label) of the proc*/
-    operand Proc = emitterValue(ctx, Node->l, operandCreate(operandUndefined));
+    operand Proc = emitterValue(ctx, Node->l, requestOperable);
     asmCall(ctx->Asm, Proc);
     operandFree(Proc);
 
@@ -636,7 +653,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
             /*Regular value*/
             } else {
                 asmEnter(ctx->Asm);
-                operand R = emitterValue(ctx, value, operandCreate(operandUndefined));
+                operand R = emitterValue(ctx, value, requestOperable);
                 asmLeave(ctx->Asm);
 
                 asmMove(ctx->Asm, L, R);
@@ -655,7 +672,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
              Current;
              Current = Current->nextSibling) {
             asmEnter(ctx->Asm);
-            operand R = emitterValue(ctx, Current, operandCreate(operandUndefined));
+            operand R = emitterValue(ctx, Current, requestOperable);
             asmLeave(ctx->Asm);
 
             asmMove(ctx->Asm, L, R);
@@ -666,7 +683,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
     /*Scalar*/
     } else {
         asmEnter(ctx->Asm);
-        operand R = emitterValue(ctx, Node->firstChild, operandCreate(operandUndefined));
+        operand R = emitterValue(ctx, Node->firstChild, requestOperable);
         asmLeave(ctx->Asm);
         asmMove(ctx->Asm, base, R);
         operandFree(R);

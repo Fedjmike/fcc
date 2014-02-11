@@ -182,7 +182,7 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
         emitterDecl(ctx, Node);
 
     else if (astIsValueTag(Node->tag))
-        operandFree(emitterValue(ctx, Node, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, Node, requestAny));
 
     else if (Node->tag == astEmpty)
         debugMsg("Empty");
@@ -198,7 +198,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
 
     /*Non void return?*/
     if (Node->r) {
-        operand Ret = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+        operand Ret = emitterValue(ctx, Node->r, requestOperable);
         int retSize = typeGetSize(ctx->arch, Node->r->dt);
 
         bool retInTemp = retSize > ctx->arch->wordsize;
@@ -243,9 +243,7 @@ static void emitterBranch (emitterCtx* ctx, const ast* Node) {
 
     /*Compute the condition, requesting it be placed in the flags*/
     asmBranch(ctx->Asm,
-              emitterValue(ctx,
-                           Node->firstChild,
-                           operandCreateFlags(conditionUndefined)),
+              emitterValue(ctx, Node->firstChild, requestFlags),
               ElseLabel);
 
     emitterCode(ctx, Node->l);
@@ -286,7 +284,7 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
 
     if (!isDo)
         asmBranch(ctx->Asm,
-                  emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
+                  emitterValue(ctx, cond, requestFlags),
                   EndLabel);
 
     /*Code*/
@@ -301,7 +299,7 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, ctx->labelContinueTo);
 
     asmBranch(ctx->Asm,
-              emitterValue(ctx, cond, operandCreateFlags(conditionUndefined)),
+              emitterValue(ctx, cond, requestFlags),
               EndLabel);
 
     asmJump(ctx->Asm, LoopLabel);
@@ -334,7 +332,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
         asmComment(ctx->Asm, "");
 
     } else if (astIsValueTag(init->tag)) {
-        operandFree(emitterValue(ctx, init, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, init, requestAny));
         asmComment(ctx->Asm, "");
 
     } else if (init->tag != astEmpty)
@@ -346,7 +344,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, LoopLabel);
 
     if (cond->tag != astEmpty) {
-        operand Condition = emitterValue(ctx, cond, operandCreateFlags(conditionUndefined));
+        operand Condition = emitterValue(ctx, cond, requestFlags);
         asmBranch(ctx->Asm, Condition, EndLabel);
     }
 
@@ -360,7 +358,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, ctx->labelContinueTo);
 
     if (iter->tag != astEmpty) {
-        operandFree(emitterValue(ctx, iter, operandCreate(operandUndefined)));
+        operandFree(emitterValue(ctx, iter, requestAny));
         asmComment(ctx->Asm, "");
     }
 

@@ -161,7 +161,7 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     else {
         if (Node->symbol->storage == storageAuto) {
             asmEnter(ctx->Asm);
-            operand R = emitterValue(ctx, Node->r, operandCreate(operandUndefined));
+            operand R = emitterValue(ctx, Node->r, requestOperable);
             asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
             operandFree(R);

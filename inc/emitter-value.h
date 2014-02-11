@@ -3,5 +3,14 @@
 struct ast;
 struct emitterCtx;
 
-operand emitterValue (struct emitterCtx* ctx, const struct ast* Node, operand Dest);
+typedef enum emitterRequestTag {
+    requestAny,
+    requestReg,
+    requestMem,
+    requestOperable,
+    requestFlags,
+    requestStack,
+} emitterRequest;
+
+operand emitterValue (struct emitterCtx* ctx, const struct ast* Node, emitterRequest request);
 void emitterInitOrCompoundLiteral (struct emitterCtx* ctx, const struct ast* Node, operand base);
