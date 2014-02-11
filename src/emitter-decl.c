@@ -23,7 +23,7 @@ static void emitterEnum (emitterCtx* ctx, ast* Node);
 
 static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
-static void emitterDeclCall (emitterCtx* ctx, const ast* Node);
+static void emitterDeclName (emitterCtx* ctx, const ast* Node);
 
 void emitterDecl (emitterCtx* ctx, const ast* Node) {
     debugEnter("Decl");
@@ -124,7 +124,8 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
             debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
 
     } else if (Node->tag == astCall)
-        emitterDeclCall(ctx, Node);
+        /*Nothing to do with the params*/
+        emitterDeclNode(ctx, Node->l);
 
     else if (Node->tag == astIndex)
         /*The emitter does nothing the size of the array, so only go
@@ -133,7 +134,7 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
 
     else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
-            ;
+            emitterDeclName(ctx, Node);
 
         else
             debugErrorUnhandled("emitterDeclNode", "literal tag", literalTagGetStr(Node->litTag));
@@ -173,11 +174,10 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 }
 
-static void emitterDeclCall (emitterCtx* ctx, const ast* Node) {
-    debugEnter("DeclCall");
+static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
+    (void) ctx;
 
-    /*Nothing to do with the params*/
-    emitterDeclNode(ctx, Node->l);
+    debugEnter("DeclName");
 
     if (Node->symbol->label.label == 0)
         Node->symbol->label = labelNamed(Node->symbol->ident);

@@ -123,10 +123,11 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
 
     } else if (request == requestOperable) {
         if (   Value.tag == operandLiteral || Value.tag == operandReg
-            || Value.tag == operandMem || Value.tag == operandLabel)
+            || Value.tag == operandMem)
             Dest = Value;
 
-        else if (Value.tag == operandMemRef || Value.tag == operandFlags) {
+        else if (    Value.tag == operandMemRef || Value.tag == operandFlags
+                  || Value.tag == operandLabel) {
             Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
@@ -562,22 +563,32 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
     if (typeIsFunction(Node->symbol->dt))
         Value = Node->symbol->label;
 
-    else /*var or param*/ {
-        /*Enum constant*/
+    else {
+        /*enum constant*/
         if (Node->symbol->tag == symEnumConstant)
             Value = operandCreateLiteral(Node->symbol->constValue);
 
-        /*Array*/
+        /*array*/
         else if (typeIsArray(Node->symbol->dt))
             Value = operandCreateMemRef(&regs[regRBP],
                                         Node->symbol->offset,
                                         typeGetSize(ctx->arch, Node->symbol->dt->base));
 
-        /*Regular stack allocated var/param*/
-        else
-            Value = operandCreateMem(&regs[regRBP],
+        /*regular variable*/
+        else {
+            if (Node->symbol->storage == storageAuto)
+                Value = operandCreateMem(&regs[regRBP],
                                      Node->symbol->offset,
                                      typeGetSize(ctx->arch, Node->symbol->dt));
+
+            else if (   Node->symbol->storage == storageStatic
+                     || Node->symbol->storage == storageExtern)
+                Value = Node->symbol->label;
+
+            else
+                debugErrorUnhandled("emitterSymbol", "storage", storageTagGetStr(Node->symbol->tag));
+        }
+
     }
 
     debugLeave();
