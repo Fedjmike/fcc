@@ -16,6 +16,7 @@ static type* typeCreate ();
 static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
     DT->tag = tag;
+
     DT->basic = 0;
 
     DT->base = 0;
@@ -24,6 +25,7 @@ static type* typeCreate (typeTag tag) {
     DT->returnType = 0;
     DT->paramTypes = 0;
     DT->params = 0;
+    DT->variadic = false;
 
     return DT;
 }
