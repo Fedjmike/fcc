@@ -49,7 +49,7 @@ void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
     asmOutLn(ctx, "ret");
 }
 
-void asmStringConstant (struct asmCtx* ctx, operand label, char* str) {
+void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
     asmOutLn(ctx, "%s:", labelGet(label));
     asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
@@ -130,11 +130,13 @@ void asmPop (asmCtx* ctx, operand L) {
 }
 
 void asmPushN (asmCtx* ctx, int n) {
-    asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+    if (n)
+        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmPopN (asmCtx* ctx, int n) {
-    asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+    if (n)
+        asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
 void asmMove (asmCtx* ctx, operand Dest, operand Src) {
