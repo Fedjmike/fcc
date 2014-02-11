@@ -252,14 +252,14 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
-        tokenMatchPunct(ctx, punctLBrace);
-
         /*Only error if not already errored for wrong tag*/
         if (Node->symbol->impl && Node->symbol->tag == tag)
             errorReimplementedSym(ctx, Node->symbol);
 
         else
             Node->symbol->impl = Node;
+
+        tokenMatchPunct(ctx, punctLBrace);
 
         /*Eat fields*/
         while (!tokenIsPunct(ctx, punctRBrace))
