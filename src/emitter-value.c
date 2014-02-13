@@ -586,7 +586,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
                 Value = Node->symbol->label;
 
             else
-                debugErrorUnhandled("emitterSymbol", "storage", storageTagGetStr(Node->symbol->tag));
+                debugErrorUnhandled("emitterSymbol", "storage", storageTagGetStr(Node->symbol->storage));
         }
 
     }
