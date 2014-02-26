@@ -208,7 +208,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     } else if (!strcmp(Node->o, ",")) {
         asmEnter(ctx->Asm);
         operandFree(emitterValue(ctx, Node->l, requestAny));
-        Value = R = emitterValue(ctx, Node->r, requestOperable);
+        Value = R = emitterValue(ctx, Node->r, requestAny);
         asmLeave(ctx->Asm);
 
     } else {
@@ -505,7 +505,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     }
 
     /*Get the address (usually, as a label) of the proc*/
-    operand Proc = emitterValue(ctx, Node->l, requestOperable);
+    operand Proc = emitterValue(ctx, Node->l, requestAny);
     asmCall(ctx->Asm, Proc);
     operandFree(Proc);
 
