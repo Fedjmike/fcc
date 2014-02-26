@@ -123,7 +123,7 @@ bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }
 
-int vsystem (const char* format, ...) {
+int systemf (const char* format, ...) {
     int size = 128;
     char* command = malloc(size);
 

@@ -61,7 +61,7 @@ Other issues:
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
 [ ] Use enums for BOPs and UOPs
-[ ] vsystem -> systemf
+[x] vsystem -> systemf
 
 Lexer:
 

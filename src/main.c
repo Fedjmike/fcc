@@ -51,13 +51,13 @@ static int driver (config conf) {
         }
 
         if (conf.mode == modeNoLink)
-            vsystem("gcc -c %s", intermediates);
+            systemf("gcc -c %s", intermediates);
 
         else {
-            int linkfail = vsystem("gcc %s -o %s", intermediates, conf.output);
+            int linkfail = systemf("gcc %s -o %s", intermediates, conf.output);
 
             if (conf.deleteAsm && !linkfail)
-                vsystem("rm %s", intermediates);
+                systemf("rm %s", intermediates);
         }
 
         free(intermediates);
