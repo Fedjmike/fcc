@@ -50,6 +50,9 @@ void asmPopN (struct asmCtx* ctx, int n);
 void asmMove (struct asmCtx* ctx, operand Dest, operand Src);
 void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src);
 
+operand asmWiden (struct asmCtx* ctx, operand R, int size);
+operand asmNarrow (struct asmCtx* ctx, operand R, int size);
+
 void asmEvalAddress (struct asmCtx* ctx, operand L, operand R);
 
 void asmCompare (struct asmCtx* ctx, operand L, operand R);

@@ -26,6 +26,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, const ast* Node);
 static operand emitterIndex (emitterCtx* ctx, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, const ast* Node);
+static operand emitterCast (emitterCtx* ctx, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, const ast* Node);
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
@@ -64,7 +65,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
         Value = emitterCall(ctx, Node);
 
     else if (Node->tag == astCast)
-        Value = emitterValue(ctx, Node->r, request);
+        Value = emitterCast(ctx, Node);
 
     else if (Node->tag == astSizeof)
         Value = emitterSizeof(ctx, Node);
@@ -542,6 +543,22 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 
     return Value;
+}
+
+static operand emitterCast (emitterCtx* ctx, const ast* Node) {
+    debugEnter("Cast");
+
+    operand R = emitterValue(ctx, Node->r, requestOperable);
+
+    int from = typeGetSize(ctx->arch, Node->r->dt),
+        to = typeGetSize(ctx->arch, Node->dt);
+
+    if (from != to)
+        R = (from < to ? asmWiden : asmNarrow)(ctx->Asm, R, to);
+
+    debugLeave();
+
+    return R;
 }
 
 static operand emitterSizeof (emitterCtx* ctx, const ast* Node) {
