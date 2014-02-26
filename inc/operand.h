@@ -13,6 +13,8 @@ typedef enum {
     operandMemRef,
     operandLiteral,
     operandLabel,
+    operandLabelMem,
+    operandLabelOffset,
     operandStack
 } operandTag;
 
@@ -60,6 +62,8 @@ operand operandCreateMem (struct reg* base, int offset, int size);
 operand operandCreateMemRef (struct reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
 operand operandCreateLabel (int label);
+operand operandCreateLabelMem (int label, int size);
+operand operandCreateLabelOffset (int label);
 
 void operandFree (operand Value);
 

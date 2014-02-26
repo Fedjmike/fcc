@@ -128,7 +128,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
             Dest = Value;
 
         else if (    Value.tag == operandMemRef || Value.tag == operandFlags
-                  || Value.tag == operandLabel) {
+                  || Value.tag == operandLabel || Value.tag == operandLabelMem
+                  || Value.tag == operandLabelOffset) {
             Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
@@ -593,16 +594,17 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
 
         /*regular variable*/
         else {
+            int size = typeGetSize(ctx->arch, Node->symbol->dt);
+
             if (Node->symbol->storage == storageAuto)
-                Value = operandCreateMem(&regs[regRBP],
-                                     Node->symbol->offset,
-                                     typeGetSize(ctx->arch, Node->symbol->dt));
+                Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
 
             else if (   Node->symbol->storage == storageStatic
-                     || Node->symbol->storage == storageExtern)
+                     || Node->symbol->storage == storageExtern) {
                 Value = Node->symbol->label;
+                Value = operandCreateLabelMem(Value.label, size);
 
-            else
+            } else
                 debugErrorUnhandled("emitterSymbol", "storage", storageTagGetStr(Node->symbol->storage));
         }
 
@@ -629,6 +631,7 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
 
     else if (Node->litTag == literalStr) {
         Value = labelCreate(labelROData);
+        Value.tag = operandLabelOffset;
         asmStringConstant(ctx->Asm, Value, (char*) Node->literal);
 
     } else {
@@ -645,8 +648,8 @@ static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node) {
     debugEnter("CompoundLiteral");
 
     operand Value = operandCreateMem(&regs[regRBP],
-                                 Node->symbol->offset,
-                                 typeGetSize(ctx->arch, Node->symbol->dt));
+                                     Node->symbol->offset,
+                                     typeGetSize(ctx->arch, Node->symbol->dt));
 
     emitterInitOrCompoundLiteral(ctx, Node, Value);
 
