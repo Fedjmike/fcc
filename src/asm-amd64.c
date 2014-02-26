@@ -37,6 +37,10 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     asmPush(ctx, ctx->basePtr);
     asmMove(ctx, ctx->basePtr, ctx->stackPtr);
 
+    asmOutLn(ctx, "push ebx");
+    asmOutLn(ctx, "push esi");
+    asmOutLn(ctx, "push edi");
+
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 }
@@ -44,6 +48,9 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
 void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
     /*Exit stack frame*/
     asmOutLn(ctx, "%s:", labelGet(EndLabel));
+    asmOutLn(ctx, "pop edi");
+    asmOutLn(ctx, "pop esi");
+    asmOutLn(ctx, "pop ebx");
     asmMove(ctx, ctx->stackPtr, ctx->basePtr);
     asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
@@ -84,6 +91,17 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
     }
 
     free(CStr);
+}
+
+void asmCall (asmCtx* ctx, operand L) {
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "call %s", labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "call %s", LStr);
+        free(LStr);
+    }
 }
 
 void asmPush (asmCtx* ctx, operand L) {
@@ -352,15 +370,4 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
         printf("asmUOP(): unhandled operator tag, %d", Op);
 
     free(RStr);
-}
-
-void asmCall (asmCtx* ctx, operand L) {
-    if (L.tag == operandLabel)
-        asmOutLn(ctx, "call %s", labelGet(L));
-
-    else {
-        char* LStr = operandToStr(L);
-        asmOutLn(ctx, "call %s", LStr);
-        free(LStr);
-    }
 }

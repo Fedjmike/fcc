@@ -41,6 +41,11 @@ void asmLabel (struct asmCtx* ctx, operand L);
 void asmJump (struct asmCtx* ctx, operand L);
 void asmBranch (struct asmCtx* ctx, operand Condition, operand L);
 
+/**
+ * Call a function with the arguments currently on the stack
+ */
+void asmCall (struct asmCtx* ctx, operand L);
+
 void asmPush (struct asmCtx* ctx, operand L);
 void asmPop (struct asmCtx* ctx, operand L);
 
@@ -59,8 +64,3 @@ void asmCompare (struct asmCtx* ctx, operand L, operand R);
 
 void asmBOP (struct asmCtx* ctx, boperation Op, operand L, operand R);
 void asmUOP (struct asmCtx* ctx, uoperation Op, operand R);
-
-/**
- * Call a function with the arguments currently on the stack
- */
-void asmCall (struct asmCtx* ctx, operand L);
