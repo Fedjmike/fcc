@@ -178,6 +178,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
@@ -187,6 +188,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
@@ -202,11 +204,13 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
     } else {
         debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
+        Node->symbol->dt = typeCreateInvalid();
         return Node->dt = typeCreateInvalid();
     }
 }
