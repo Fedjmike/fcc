@@ -277,7 +277,11 @@ bool typeIsCompatible (const type* DT, const type* Model) {
 
     /*If function requested, match params and return*/
     else if (typeIsFunction(Model)) {
-        if (!typeIsFunction(DT) || Model->params != DT->params)
+        /*fn ptr <=> fn*/
+        if (typeIsPtr(DT) && typeIsFunction(DT->base))
+            typeIsCompatible(DT->base, Model);
+
+        else if (!typeIsFunction(DT) || Model->params != DT->params)
             return false;
 
         for (int i = 0; i < Model->params; i++)
@@ -290,8 +294,13 @@ bool typeIsCompatible (const type* DT, const type* Model) {
 
     /*If pointer requested, allow pointers and arrays and basic numeric types*/
     } else if (typeIsPtr(Model))
-        return    typeIsPtr(DT) || typeIsArray(DT)
-               || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
+        /*Except for fn pointers*/
+        if (typeIsFunction(Model->base) && typeIsFunction(DT))
+            return typeIsCompatible(DT, Model->base);
+
+        else
+            return    typeIsPtr(DT) || typeIsArray(DT)
+                   || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
     else if (typeIsArray(Model))
