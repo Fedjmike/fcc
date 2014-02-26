@@ -133,7 +133,7 @@ static bool isNodeLvalue (ast* Node) {
 
     else if (Node->tag == astLiteral)
         /*Refers to an object?*/
-        return    Node->litTag == literalIdent
+        return    (Node->litTag == literalIdent && !typeIsFunction(Node->dt))
                || Node->litTag == literalCompound;
 
     else if (Node->tag == astInvalid) {
