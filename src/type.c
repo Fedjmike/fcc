@@ -305,7 +305,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     /*If array requested, accept only arrays of matching size and type*/
     else if (typeIsArray(Model))
         return    typeIsArray(DT)
-               && ((DT->array == Model->array) || Model->array == -1)
+               && (DT->array == Model->array || Model->array < 0 || DT->array < 0)
                && typeIsCompatible(DT->base, Model->base);
 
     /*Basic type*/
@@ -332,7 +332,7 @@ bool typeIsEqual (const type* L, const type* R) {
         return typeIsEqual(L->base, R->base);
 
     else if (typeIsArray(L))
-        return    L->array == R->array
+        return    (L->array == R->array || L->array < 0 || R->array < 0)
                && typeIsEqual(L->base, R->base);
 
     else /*(typeIsBasic(L))*/
