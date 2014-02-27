@@ -54,11 +54,11 @@ void errorExpected (parserCtx* ctx, const char* expected) {
 }
 
 void errorUndefSym (parserCtx* ctx) {
-    parserError(ctx, "undefined symbol '%s'", ctx->lexer->buffer);
+    parserError(ctx, "'%s' undefined", ctx->lexer->buffer);
 }
 
 void errorUndefType (parserCtx* ctx) {
-    parserError(ctx, "undefined symbol '%s', expected type", ctx->lexer->buffer);
+    parserError(ctx, "'%s' undefined, expected type", ctx->lexer->buffer);
 }
 
 void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
