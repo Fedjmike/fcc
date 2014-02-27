@@ -17,9 +17,8 @@
 #include "string.h"
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
-static void emitterStruct (emitterCtx* ctx, ast* Node);
-static void emitterUnion (emitterCtx* ctx, ast* Node);
-static void emitterEnum (emitterCtx* ctx, ast* Node);
+static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
+static void emitterEnum (emitterCtx* ctx, sym* Symbol);
 
 static void emitterDeclNode (emitterCtx* ctx, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
@@ -39,14 +38,11 @@ void emitterDecl (emitterCtx* ctx, const ast* Node) {
 }
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
-    if (Node->tag == astStruct)
-        emitterStruct(ctx, Node);
-
-    else if (Node->tag == astUnion)
-        emitterUnion(ctx, Node);
+    if (Node->tag == astStruct || Node->tag == astUnion)
+        emitterStructOrUnion(ctx, Node->symbol, 0);
 
     else if (Node->tag == astEnum)
-        emitterEnum(ctx, Node);
+        emitterEnum(ctx, Node->symbol);
 
     else if (Node->tag == astLiteral)
         ;
@@ -55,52 +51,59 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
         debugErrorUnhandled("emitterDeclBasic", "AST tag", astTagGetStr(Node->tag));
 }
 
-static void emitterStruct (emitterCtx* ctx, ast* Node) {
-    debugEnter("Struct");
+static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) {
+    debugEnter("StructOrUnion");
 
-    sym* Struct = Node->symbol;
-    Struct->size = 0;
+    record->size = 0;
 
-    for (sym* Current = Struct->firstChild;
+    for (sym* Current = record->firstChild;
          Current;
          Current = Current->nextSibling) {
+        int fieldSize;
+
         if (Current->tag == symId) {
-            Current->offset = Struct->size;
+            fieldSize = typeGetSize(ctx->arch, Current->dt);
+
+        } else if (Current->tag == symStruct || Current->tag == symUnion) {
+            bool anonymous = Current->ident[0] == 0;
+            emitterStructOrUnion(ctx, Current, anonymous ? nextOffset : 0);
+            fieldSize = Current->size;
+
+        } else if (Current->tag == symEnum) {
+            emitterEnum(ctx, Current);
+            continue;
+
+        } else {
+            debugErrorUnhandled("emitterStructOrUnion", "symbol", symTagGetStr(Current->tag));
+            continue;
+        }
+
+        if (record->tag == symStruct) {
+            Current->offset = nextOffset;
             /*Add the size of this field, rounded up to the nearest word boundary*/
             int alignment = ctx->arch->wordsize;
-            Struct->size += ((typeGetSize(ctx->arch, Current->dt) - 1)/alignment)*alignment + alignment;
-            reportSymbol(Current);
+            fieldSize = ((fieldSize-1)/alignment+1)*alignment;
+            record->size += fieldSize;
+            nextOffset += fieldSize;
+
+        } else /*(record->tag == symUnion)*/ {
+            Current->offset = nextOffset;
+            record->size = max(record->size, fieldSize);
         }
+
+        reportSymbol(Current);
     }
 
-    reportSymbol(Struct);
+    reportSymbol(record);
 
     debugLeave();
 }
 
-static void emitterUnion (emitterCtx* ctx, ast* Node) {
-    debugEnter("Union");
-
-    for (sym* Current = Node->symbol->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        if (Current->tag == symId) {
-            Current->offset = 0;
-            Node->symbol->size = max(Node->symbol->size, typeGetSize(ctx->arch, Current->dt));
-            reportSymbol(Current);
-        }
-    }
-
-    reportSymbol(Node->symbol);
-
-    debugLeave();
-}
-
-static void emitterEnum (emitterCtx* ctx, ast* Node) {
+static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
     debugEnter("Enum");
 
-    Node->symbol->size = ctx->arch->wordsize;
-    reportSymbol(Node->symbol);
+    Symbol->size = ctx->arch->wordsize;
+    reportSymbol(Symbol);
 
     debugLeave();
 }
