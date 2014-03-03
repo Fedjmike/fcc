@@ -6,7 +6,7 @@ License
 
 Unless otherwise stated, a source file in this package is under the GNU GPL V3 license.
 
-Fedjmike's C Compiler Copyright (C) 2012, 2013 Sam Nipps
+Fedjmike's C Compiler Copyright (C) 2012-2014 Sam Nipps
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -38,10 +38,10 @@ Running
 
 The command line interface is similar to that of GCC:
 
-Usage: `fcc [--version] [--help] [-cS] [-o <file>] <files...>`
+Usage: `fcc [--version] [--help] [-csS] [-I <dir>] [-o <file>] <files...>`
 - `-c`         Compile and assemble only, do not link
 - `--help`     Display command line information
-- `-I`         Add a directory to be searched for headers
+- `-I <dir>`   Add a directory to be searched for headers
 - `-o <file>`  Output into a specific file
 - `-s`         Keep temporary assembly output after compilation
 - `-S`         Compile only, do not assemble or link

@@ -79,12 +79,12 @@ int main (int argc, char** argv) {
 
     else if (conf.mode == modeVersion) {
         puts("Fedjmike's C Compiler (fcc) v0.01b");
-        puts("Copyright 2013 Sam Nipps.");
+        puts("Copyright 2014 Sam Nipps.");
         puts("This is free software; see the source for copying conditions.  There is NO");
         puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 
     } else if (conf.mode == modeHelp) {
-        puts("Usage: fcc [--version] [--help] [-cS] [-o <file>] <files...>");
+        puts("Usage: fcc [--version] [--help] [-csS] [-o <file>] <files...>");
         puts("Options:");
         puts("  -c         Compile and assemble only, do not link");
         puts("  --help     Display command line information");
