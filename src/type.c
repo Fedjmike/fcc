@@ -9,7 +9,7 @@
 #include "string.h"
 #include "stdio.h"
 
-static type* typeCreate ();
+static type* typeCreate (typeTag tag);
 
 /*:::: TYPE CTORS/DTOR ::::*/
 
