@@ -42,7 +42,6 @@ typedef enum {
 typedef enum {
     storageUndefined,
     storageAuto,
-    storageRegister,
     storageStatic,
     storageExtern,
     storageTypedef

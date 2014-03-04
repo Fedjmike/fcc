@@ -200,7 +200,6 @@ const char* symTagGetStr (symTag tag) {
 const char* storageTagGetStr (storageTag tag) {
     if (tag == storageUndefined) return "storageUndefined";
     else if (tag == storageAuto) return "storageAuto";
-    else if (tag == storageRegister) return "storageRegister";
     else if (tag == storageStatic) return "storageStatic";
     else if (tag == storageExtern) return "storageExtern";
     else if (tag == storageTypedef) return "storageTypedef";
