@@ -639,7 +639,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*Array: check that all are of the right type, complain only once*/
     } else if (typeIsArray(DT)) {
-        if (DT->array != -1 && DT->array < Node->children)
+        if (DT->array >= 0 && DT->array < Node->children)
             errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
 
         for (ast* curNode = Node->firstChild;
