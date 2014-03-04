@@ -363,7 +363,11 @@ int typeGetSize (const architecture* arch, const type* DT) {
         return 0;
 
     else if (typeIsArray(DT))
-        return DT->array * typeGetSize(arch, DT->base);
+        if (DT->array < 0)
+            return 0;
+
+        else
+            return DT->array * typeGetSize(arch, DT->base);
 
     else if (typeIsPtr(DT) || typeIsFunction(DT))
         return arch->wordsize;
@@ -460,10 +464,10 @@ char* typeToStr (const type* DT, const char* embedded) {
                 sprintf(format, "*%s", embedded);
 
         } else /*if (typeIsArray(DT))*/ {
-            format = malloc(strlen(embedded) +
-                            logi(DT->array, 10)+4);
+            format = malloc(  strlen(embedded)
+                            + (DT->array < 0 ? 0 : logi(DT->array, 10)) + 4);
 
-            if (DT->array == -1)
+            if (DT->array < 0)
                 sprintf(format, "%s[]", embedded);
 
             else
