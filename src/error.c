@@ -23,16 +23,30 @@ const char* consoleMagenta = "\033[1;35m";
 const char* consoleCyan    = "\033[1;36m";
 const char* consoleWhite   = "\033[1;37m";
 
+static void tokenLocationMsg (tokenLocation loc);
+static void errorf (const char* format, ...);
+static void verrorf (const char* format, va_list args);
+static void errorParser (parserCtx* ctx, const char* format, ...);
+static void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...);
+
 static void tokenLocationMsg (tokenLocation loc) {
     printf("%s:%d:%d: ", loc.filename, loc.line, loc.lineChar);
 }
 
-static void errorHighlighted (const char* format, va_list args) {
+static void errorf (const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    verrorf(format, args);
+    va_end(args);
+}
+
+static void verrorf (const char* format, va_list args) {
     const char* colourString = consoleWhite;
     const char* colourNumber = consoleMagenta;
     const char* colourOp = consoleCyan;
     const char* colourType = consoleGreen;
     const char* colourIdent = consoleWhite;
+    const char* colourTag = consoleGreen;
 
     int flen = strlen(format);
 
@@ -60,16 +74,36 @@ static void errorHighlighted (const char* format, va_list args) {
                 printf("%s%s%s", colourType, typeStr, consoleNormal);
                 free(typeStr);
 
-            /*Type with symbol name*/
+            /*Named symbol*/
             } else if (format[i+1] == 'n') {
-                type* DT = va_arg(args, type*);
-                char* ident = va_arg(args, char*);
-                char* identStr = malloc(strlen(colourIdent)+strlen(ident)+strlen(colourType)+1);
-                sprintf(identStr, "%s%s%s", colourIdent, ident, colourType);
-                char* typeStr = typeToStr(DT, identStr);
-                printf("%s%s%s", colourType, typeStr, consoleNormal);
-                free(identStr);
-                free(typeStr);
+                const sym* Symbol = va_arg(args, sym*);
+                const char* ident = Symbol->ident ? Symbol->ident : "";
+
+                if ((Symbol->tag == symId || Symbol->tag == symParam)) {
+                    if (Symbol->dt) {
+                        char* identStr = malloc(strlen(colourIdent)+strlen(ident)+strlen(colourType)+1);
+                        sprintf(identStr, "%s%s%s", colourIdent, ident, colourType);
+                        char* typeStr = typeToStr(Symbol->dt, identStr);
+                        printf("%s%s%s", colourType, typeStr, consoleNormal);
+                        free(identStr);
+                        free(typeStr);
+
+                    } else
+                        printf("%s%s%s", colourIdent, ident, consoleNormal);
+
+                } else
+                    printf("%s%s%s %s%s", colourTag, symTagGetStr(Symbol->tag), colourIdent, ident, consoleNormal);
+
+            /*Symbol tag, semantic "class"*/
+            } else if (format[i+1] == 'c') {
+                const sym* Symbol = va_arg(args, sym*);
+                const char* classStr =   (Symbol->tag == symId || Symbol->tag == symParam)
+                                       ?   Symbol->dt && !typeIsInvalid(Symbol->dt)
+                                         ? typeIsFunction(Symbol->dt) ? "function" : "variable"
+                                         : "\b"
+                                       : symTagGetStr(Symbol->tag);
+
+                printf("%s%s%s", colourTag, classStr, consoleNormal);
 
             } else if (format[i+1] == '\0')
                 break;
@@ -91,7 +125,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
 
     va_list args;
     va_start(args, format);
-    errorHighlighted(format, args);
+    verrorf(format, args);
     va_end(args);
 
     putchar('\n');
@@ -106,7 +140,7 @@ static void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format
 
     va_list args;
     va_start(args, format);
-    errorHighlighted(format, args);
+    verrorf(format, args);
     va_end(args);
 
     putchar('\n');
@@ -139,12 +173,11 @@ void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     errorParser(ctx, "'$h' redeclared as $h", Symbol->ident, symTagGetStr(tag));
 
     tokenLocationMsg(first->location);
-    printf("first declaration here as $h\n", symTagGetStr(Symbol->tag));
+    errorf("first declaration here as $c\n", Symbol);
 }
 
 void errorReimplementedSym (parserCtx* ctx, const sym* Symbol) {
-    errorParser(ctx, "$h '$h' reimplemented",
-          Symbol->tag == symId ? "function" : symTagGetStr(Symbol->tag), Symbol->ident);
+    errorParser(ctx, "$n reimplemented", Symbol);
 
     tokenLocationMsg(Symbol->impl->location);
     puts("first implementation here");
@@ -175,7 +208,8 @@ void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
 
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
-    errorAnalyzer(ctx, Node, "$h expected $d $s, $d given", where, expected, thing, found);
+    errorAnalyzer(ctx, Node, "$h expected $d $s$s, $d given",
+                  where, expected, thing, expected == 1 ? "" : "s", found);
 }
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
@@ -188,7 +222,7 @@ void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
                               int n, const sym* fn, const type* found) {
     const sym* param = symGetChild(fn, n);
     errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
-                  n+1, fn->ident, param->dt, param->ident ? param->ident : "", found);
+                  n+1, fn->ident, param, found);
 }
 
 void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
@@ -197,15 +231,13 @@ void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* 
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
                              const sym* structSym, const sym* fieldSym) {
-    errorAnalyzer(ctx, Node, "type mismatch: $n given for initialization of field $n in $h $h",
-                  Node->dt, (Node->symbol && Node->symbol->ident) ? Node->symbol->ident : "",
-                  fieldSym->dt, fieldSym->ident,
-                  symTagGetStr(structSym->tag), structSym->ident);
+    errorAnalyzer(ctx, Node, "type mismatch: $t given for initialization of field $n in $n",
+                  Node->dt, fieldSym, structSym);
 }
 
 void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
                                    const sym* Symbol, const type* found) {
-    errorAnalyzer(ctx, Node, "$n redeclared as conflicting type $t", Symbol->dt, Symbol->ident, found);
+    errorAnalyzer(ctx, Node, "$n redeclared as conflicting type $t", Symbol, found);
 
     for (int n = 0; n < Symbol->decls.length; n++) {
         const ast* Current = (const ast*) vectorGet(&Symbol->decls, n);
@@ -218,11 +250,7 @@ void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
 }
 
 void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
-    if (Symbol->tag == symId || Symbol->tag == symParam)
-        errorAnalyzer(ctx, Node, "$n redeclared", Symbol->dt, Symbol->ident);
-
-    else
-        errorAnalyzer(ctx, Node, "$h $h redeclared", symTagGetStr(Symbol->tag), Symbol->ident);
+    errorAnalyzer(ctx, Node, "$n redeclared", Symbol);
 
     for (int n = 0; n < Symbol->decls.length; n++) {
         const ast* Current = (const ast*) vectorGet(&Symbol->decls, n);
@@ -236,7 +264,7 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
 }
 
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
-    errorAnalyzer(ctx, Node, "cannot use $h $n as a value", symTagGetStr(Symbol->tag), Symbol->dt, Symbol->ident);
+    errorAnalyzer(ctx, Node, "cannot use $n as a value", Symbol);
 }
 
 void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const char* what) {
