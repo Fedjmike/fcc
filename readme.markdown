@@ -14,6 +14,52 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
 
+Features
+--------
+
+The compiler implements a language quite similar to C, however there are some major differences. The following list is not exhaustive.
+
+- Addition of:
+  - Simple module system
+  - `bool` type
+- Different semantics:
+  - Unified variable/typedef/struct/union/enum namespace
+  - Logical operators (`||` and `&&`) return `bool`
+  - Ternary (`?:`) can return lvalues (as in C++)
+- The features of C99 and C11 supported:
+  - Anonymous structs/unions
+  - Compound literals
+  - Intermingled code/declarations including for-loop declarations
+  - C++ comments
+- No support for / features removed:
+  - Preprocessor
+  - `switch`
+  - Floating point types
+  - Unsigned integers
+  - Wide characters
+  - Bitfields
+  - Implicit casts / coercion between integral types
+  - `goto` and labels
+  - Some numerical operators including divide (`/`) and modulo (`%`)
+  - Designated initializers for initializers and compound literals
+  - `typedef`
+  - `volatile`
+  - `register` storage class
+
+The compiler is advanced enough to selfhost much of itself, with the rest compiled with GCC. As the compiler matures, experimental additions to the language considered:
+
+- Type polymorphism as in ML/Haskell
+- Lambdas/closures
+- Options types (`option` in ML, `Maybe` in Haskell)
+- Algebraic types (a more general solution to option types)
+
+Output
+------
+
+The compiler generates assembly for x86 (32-bit) CPUs. 64-bit AMD64 is experimental. The compiler does very little optimization before emitting straight to assembly.
+
+The ABI is largely compatible GCC's, however passing and returning structs as values will often not work. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another.
+
 Building
 --------
 
@@ -38,11 +84,11 @@ Running
 
 The command line interface is similar to that of GCC:
 
-Usage: `fcc [--version] [--help] [-csS] [-I <dir>] [-o <file>] <files...>`
-- `-c`         Compile and assemble only, do not link
-- `--help`     Display command line information
+Usage: `fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>`
 - `-I <dir>`   Add a directory to be searched for headers
-- `-o <file>`  Output into a specific file
-- `-s`         Keep temporary assembly output after compilation
+- `-c`         Compile and assemble only, do not link
 - `-S`         Compile only, do not assemble or link
+- `-s`         Keep temporary assembly output after compilation
+- `-o <file>`  Output into a specific file
+- `--help`     Display command line information
 - `--version`  Display version information

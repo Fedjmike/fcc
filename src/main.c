@@ -84,14 +84,14 @@ int main (int argc, char** argv) {
         puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 
     } else if (conf.mode == modeHelp) {
-        puts("Usage: fcc [--version] [--help] [-csS] [-I <dir>] [-o <file>] <files...>");
+        puts("Usage: fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>");
         puts("Options:");
-        puts("  -c         Compile and assemble only, do not link");
-        puts("  --help     Display command line information");
         puts("  -I <dir>   Add a directory to be searched for headers");
-        puts("  -o <file>  Output into a specific file");
-        puts("  -s         Keep temporary assembly output after compilation");
+        puts("  -c         Compile and assemble only, do not link");
         puts("  -S         Compile only, do not assemble or link");
+        puts("  -s         Keep temporary assembly output after compilation");
+        puts("  -o <file>  Output into a specific file");
+        puts("  --help     Display command line information");
         puts("  --version  Display version information");
 
     } else
