@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License along with thi
 Features
 --------
 
-The compiler implements a language quite similar to C, however there are some major differences. The following list is not exhaustive.
+The compiler implements a language quite similar to C, however there are some major differences. The following list is probably not exhaustive, but attempts to be.
 
 - Addition of:
   - Simple module system
@@ -25,6 +25,8 @@ The compiler implements a language quite similar to C, however there are some ma
 - Different semantics:
   - Unified variable/typedef/struct/union/enum namespace
   - Logical operators (`||` and `&&`) return `bool`
+  - Empty prototype parentheses means zero arguments
+  - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
 - The features of C99 and C11 supported:
   - Anonymous structs/unions
@@ -36,6 +38,7 @@ The compiler implements a language quite similar to C, however there are some ma
   - `switch`
   - Floating point types
   - Unsigned integers
+  - `long`
   - Wide characters
   - Bitfields
   - Implicit casts / coercion between integral types
