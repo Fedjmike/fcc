@@ -96,7 +96,7 @@ static ast* parserAssign (parserCtx* ctx) {
 }
 
 /**
- * Ternary = Bool [ "?" Ternary ":" Ternary ]
+ * Ternary = Bool [ "?" Value ":" Ternary ]
  */
 static ast* parserTernary (parserCtx* ctx) {
     debugEnter("Ternary");
@@ -104,7 +104,7 @@ static ast* parserTernary (parserCtx* ctx) {
     ast* Node = parserBool(ctx);
 
     if (tokenTryMatchPunct(ctx, punctQuestion)) {
-        ast* l = parserTernary(ctx);
+        ast* l = parserValue(ctx);
         tokenMatchPunct(ctx, punctColon);
         ast* r = parserTernary(ctx);
 

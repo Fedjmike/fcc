@@ -12,7 +12,7 @@ Value = Comma
 AssignValue = Assign
 Comma = Assign [{ "," Assign }]
 Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "|=" | "^=" Assign ]
-Ternary = Bool [ "?" Ternary ":" Ternary ]
+Ternary = Bool [ "?" Value ":" Ternary ]
 Bool = Equality [{ "&&" | "||" | "&" | "|" | "^" Equality }]
 Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
 Shift = Expr [{ ">>" | "<<" Expr }]
