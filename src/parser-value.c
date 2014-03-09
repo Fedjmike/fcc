@@ -98,7 +98,7 @@ static ast* parserAssign (parserCtx* ctx) {
 /**
  * Ternary = Bool [ "?" Ternary ":" Ternary ]
  */
-static ast* parserTernary (parserCtx* ctx ) {
+static ast* parserTernary (parserCtx* ctx) {
     debugEnter("Ternary");
 
     ast* Node = parserBool(ctx);
