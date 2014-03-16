@@ -37,12 +37,12 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     asmPush(ctx, ctx->basePtr);
     asmMove(ctx, ctx->basePtr, ctx->stackPtr);
 
+    if (localSize != 0)
+        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
+
     asmOutLn(ctx, "push ebx");
     asmOutLn(ctx, "push esi");
     asmOutLn(ctx, "push edi");
-
-    if (localSize != 0)
-        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 }
 
 void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
