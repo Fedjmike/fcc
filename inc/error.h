@@ -26,7 +26,7 @@ void errorMember (struct analyzerCtx* ctx, const char* o, const struct ast* Node
 void errorParamMismatch (struct analyzerCtx* ctx, const struct ast* Node,
                          int n, const struct type* expected, const struct type* found);
 void errorNamedParamMismatch (struct analyzerCtx* ctx, const struct ast* Node,
-                              int n, const sym* param, const struct type* found);
+                              const struct sym* fn, int n, const struct type* expected, const struct type* found);
 void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node,
                              const sym* structSym, const sym* fieldSym);
 void errorConflictingDeclarations (struct analyzerCtx* ctx, const struct ast* Node,

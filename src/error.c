@@ -219,10 +219,16 @@ void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
 }
 
 void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
-                              int n, const sym* fn, const type* found) {
+                              const sym* fn, int n, const type* expected, const type* found) {
     const sym* param = symGetChild(fn, n);
-    errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
-                  n+1, fn->ident, param, found);
+
+    if (param)
+        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
+                      n+1, fn->ident, param, found);
+
+    else
+        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, expected $t: found $t",
+                      n+1, fn->ident, expected, found);
 }
 
 void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
