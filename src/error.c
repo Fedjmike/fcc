@@ -46,7 +46,7 @@ static void verrorf (const char* format, va_list args) {
     const char* colourOp = consoleCyan;
     const char* colourType = consoleGreen;
     const char* colourIdent = consoleWhite;
-    const char* colourTag = consoleGreen;
+    const char* colourTag = consoleCyan;
 
     int flen = strlen(format);
 
@@ -170,7 +170,7 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
 void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
-    errorParser(ctx, "'$h' redeclared as $h", Symbol->ident, symTagGetStr(tag));
+    errorParser(ctx, "$h redeclared as $h", Symbol->ident, tag != symId ? symTagGetStr(tag) : "\b\b\b   ");
 
     tokenLocationMsg(first->location);
     errorf("first declaration here as $c\n", Symbol);
@@ -190,7 +190,7 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 /*:::: ANALYZER ERRORS ::::*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
-    errorAnalyzer(ctx, Node, "$s requires $s, found $t", where, expected, Node->dt);
+    errorAnalyzer(ctx, Node, "$o requires $s, found $t", where, expected, Node->dt);
 }
 
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
@@ -214,7 +214,7 @@ void errorDegree (analyzerCtx* ctx, const ast* Node,
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                          int n, const type* expected, const type* found) {
-    errorAnalyzer(ctx, Node, "type mismatch at parameter $d, $t: found $t",
+    errorAnalyzer(ctx, Node, "type mismatch at parameter $d, expected $t: found $t",
                   n+1, expected, found);
 }
 
