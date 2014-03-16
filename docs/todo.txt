@@ -29,15 +29,25 @@ High importance:
     [ ] Include once only
     [ ] Different dialect?
         - No impls
+		- No static
+		- No globals (except extern)
 
 Medium:
 
 [-] Typedef
+[ ] Pre increment/decrement
+	- char* o; -> enum
+[ ] x ?: y
+[ ] String literal concatenation
+[ ] % / >> <<
+[ ] Warnings
+	[ ] main conformance
+	[ ] Unused value
+	[ ] Statement without effect
+	[ ] Empty decl
 
 Low:
 
-[ ] main conformance
-[ ] % /
 [ ] Pretty printing control by command line
 [ ] string
 [ ] New IR
@@ -62,6 +72,7 @@ Other issues:
 [ ] Use jump tables in tag string lookup
 [ ] Use enums for BOPs and UOPs
 [x] vsystem -> systemf
+[ ] Use vector in ast/sym
 
 Lexer:
 
@@ -94,7 +105,6 @@ Semantic analyzer:
     Why not?
     Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
-[ ] Empty decl warning?
 [ ] Initialization of extern and typedef
 [x] Use the DT of passed node in analyzer errors
 [ ] '' in errors
@@ -121,3 +131,10 @@ Emitter:
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
 [x] Move big pushes code into asm-amd64.c
 [ ] Registers saving (possibly other ABI issues)
+[ ] Let asm stuff return operand?
+[ ] requestReturn for eax
+[ ] Cache sym size
+	=> move to analyzer?
+	=> as well as offset
+	=> offsetOf?
+	=> eval.c
