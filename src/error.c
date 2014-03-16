@@ -97,11 +97,17 @@ static void verrorf (const char* format, va_list args) {
             /*Symbol tag, semantic "class"*/
             } else if (format[i+1] == 'c') {
                 const sym* Symbol = va_arg(args, sym*);
-                const char* classStr =   (Symbol->tag == symId || Symbol->tag == symParam)
-                                       ?   Symbol->dt && !typeIsInvalid(Symbol->dt)
-                                         ? typeIsFunction(Symbol->dt) ? "function" : "variable"
-                                         : "\b"
-                                       : symTagGetStr(Symbol->tag);
+                const char* classStr;
+
+                if (Symbol->tag == symId || Symbol->tag == symParam) {
+                    if (Symbol->dt && !typeIsInvalid(Symbol->dt))
+                        classStr = typeIsFunction(Symbol->dt) ? "function" : "variable";
+
+                    else
+                        classStr = "\b";
+
+                } else
+                    classStr = symTagGetStr(Symbol->tag);
 
                 printf("%s%s%s", colourTag, classStr, consoleNormal);
 
