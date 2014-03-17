@@ -227,10 +227,11 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     else {
         const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R, L))
-            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
+        if (!typeIsAssignment(L))
+            errorTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
-        //TODO: is assignable?
+        else if (!typeIsCompatible(R, L))
+            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
     }
 
     Node->dt = typeDeepDuplicate(L);
