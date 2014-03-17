@@ -306,7 +306,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
                 errorTypeExpected(ctx, Node->l, Node->o, "pointer");
 
         } else
-            if (typeIsPtr(L))
+            if (!typeIsInvalid(L) && typeIsPtr(L))
                 errorTypeExpected(ctx, Node->l, Node->o, "direct structure or union");
 
         /*Try to find the field inside record and get return type*/
@@ -472,8 +472,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
         /*Right number of params?*/
         if (fn->variadic ? fn->params > Node->children :
                            fn->params != Node->children)
-            errorDegree(ctx, Node, "parameter(s)",
-                        fn->params, Node->children,
+            errorDegree(ctx, Node, "parameter", fn->params, Node->children,
                         Node->l->symbol ? Node->l->symbol->ident : "function");
 
         /*Do the parameter types match?*/
@@ -490,7 +489,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
 
                 if (!typeIsCompatible(Param, fn->paramTypes[n])) {
                     if (Node->l->symbol)
-                        errorNamedParamMismatch(ctx, Current, n, Node->l->symbol, Param);
+                        errorNamedParamMismatch(ctx, Current, Node->l->symbol, n, fn->paramTypes[n], Param);
 
                     else
                         errorParamMismatch(ctx, Current, n, fn->paramTypes[n], Param);
@@ -616,7 +615,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
         sym* structSym = DT->basic;
 
         if (structSym->children != Node->children)
-            errorDegree(ctx, Node, "fields", structSym->children, Node->children, structSym->ident);
+            errorDegree(ctx, Node, "field", structSym->children, Node->children, structSym->ident);
 
         else {
             ast* current;
@@ -640,7 +639,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
     /*Array: check that all are of the right type, complain only once*/
     } else if (typeIsArray(DT)) {
         if (DT->array >= 0 && DT->array < Node->children)
-            errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
+            errorDegree(ctx, Node, "element", DT->array, Node->children, "array");
 
         for (ast* curNode = Node->firstChild;
              curNode;
