@@ -407,7 +407,7 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* params = 0;
 
         if (DT->params != 0) {
-            char* paramStrs[DT->params];
+            char** paramStrs = calloc(DT->params, sizeof(char*));
             int length = 1;
 
             /*Get strings for all the params and count total string length*/
@@ -430,6 +430,7 @@ char* typeToStr (const type* DT, const char* embedded) {
             /*Cat the final one, sans the delimiting comma*/
             sprintf(params+charno, "%s", paramStrs[DT->params-1]);
             free(paramStrs[DT->params-1]);
+            free(paramStrs);
 
         } else
             params = strdup("void");
