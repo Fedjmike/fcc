@@ -45,7 +45,6 @@ The compiler implements a language quite similar to C, however there are some ma
   - `goto` and labels
   - Some numerical operators including divide (`/`) and modulo (`%`)
   - Designated initializers for initializers and compound literals
-  - `typedef`
   - `volatile`
   - `register` storage class
 
