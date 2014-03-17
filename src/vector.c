@@ -20,7 +20,7 @@ void vectorDestroy (vector* v) {
 
 void vectorDestroyObjs (vector* v, vectorDtor dtor) {
     /*This will mess up the vector, watevs*/
-    vectorMap(v, (mapType) dtor, v);
+    vectorMap(v, (vectorMapper) dtor, v);
     vectorDestroy(v);
 }
 

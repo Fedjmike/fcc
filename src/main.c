@@ -43,18 +43,21 @@ static int driver (config conf) {
             intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
             int charno = strlen(intermediates);
 
-            for (int i = 1; i < conf.intermediates.length; i++)
-                sprintf(intermediates+charno, " %s", (char*) vectorGet(&conf.intermediates, i));
+            for (int i = 1; i < conf.intermediates.length; i++) {
+                char* current = vectorGet(&conf.intermediates, i);
+                sprintf(intermediates+charno, " %s", current);
+                charno += strlen(current)+1;
+            }
         }
 
         if (conf.mode == modeNoLink)
-            vsystem("gcc -c %s", intermediates);
+            systemf("gcc -c %s", intermediates);
 
         else {
-            int linkfail = vsystem("gcc %s -o %s", intermediates, conf.output);
+            int linkfail = systemf("gcc %s -o %s", intermediates, conf.output);
 
             if (conf.deleteAsm && !linkfail)
-                vsystem("rm %s", intermediates);
+                systemf("rm %s", intermediates);
         }
 
         free(intermediates);
@@ -76,19 +79,19 @@ int main (int argc, char** argv) {
 
     else if (conf.mode == modeVersion) {
         puts("Fedjmike's C Compiler (fcc) v0.01b");
-        puts("Copyright 2013 Sam Nipps.");
+        puts("Copyright 2014 Sam Nipps.");
         puts("This is free software; see the source for copying conditions.  There is NO");
         puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 
     } else if (conf.mode == modeHelp) {
-        puts("Usage: fcc [--version] [--help] [-cS] [-o <file>] <files...>");
+        puts("Usage: fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>");
         puts("Options:");
+        puts("  -I <dir>   Add a directory to be searched for headers");
         puts("  -c         Compile and assemble only, do not link");
-        puts("  --help     Display command line information");
-        puts("  -I         Add a directory to be searched for headers");
-        puts("  -o <file>  Output into a specific file");
-        puts("  -s         Keep temporary assembly output after compilation");
         puts("  -S         Compile only, do not assemble or link");
+        puts("  -s         Keep temporary assembly output after compilation");
+        puts("  -o <file>  Output into a specific file");
+        puts("  --help     Display command line information");
         puts("  --version  Display version information");
 
     } else

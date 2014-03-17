@@ -51,7 +51,8 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     evalResult L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
-    if (!strcmp(Node->o, ",") || !strcmp(Node->o, "="))
+    if (   !strcmp(Node->o, ",") || !strcmp(Node->o, "=")
+        || !strcmp(Node->o, "->") || !strcmp(Node->o, "."))
         return R;
 
     else if (!strcmp(Node->o, "&&")) {
@@ -131,9 +132,9 @@ static evalResult evalTernary (const architecture* arch, ast* Node) {
                L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
-    /*Condition and the right operand known*/
+    /*Condition and the necessary operand known*/
     if (Cond.known)
-        return (evalResult) {Cond.known && (Cond.value ? L.known : R.known),
+        return (evalResult) {Cond.value ? L.known : R.known,
                              Cond.value ? L.value : R.value};
 
     /*Both operands, and they're equal*/
@@ -167,8 +168,8 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
 
     /*Only enum constants are known at compile time*/
     else if (Node->litTag == literalIdent)
-        return (evalResult) {Node->symbol->tag == symEnumConstant,
-                             Node->symbol->constValue};
+        return (evalResult) {Node->symbol && Node->symbol->tag == symEnumConstant,
+                             (int)(Node->symbol && Node->symbol->constValue)};
 
     else if (   Node->litTag == literalStr
              || Node->litTag == literalCompound

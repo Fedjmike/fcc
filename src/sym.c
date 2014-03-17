@@ -47,6 +47,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->firstChild = 0;
     Symbol->lastChild = 0;
     Symbol->nextSibling = 0;
+    Symbol->children = 0;
 
     Symbol->label = operandCreateLabel(0);
     Symbol->offset = 0;
@@ -91,7 +92,7 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
         Symbol->typeMask = typeAssignment;
 
     else if (tag == symEnum)
-        Symbol->typeMask = typeNumeric | typeOrdinal | typeEquality | typeAssignment;
+        Symbol->typeMask = typeIntegral;
 
     return Symbol;
 }
@@ -147,7 +148,10 @@ sym* symChild (const sym* Scope, const char* look) {
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
 
-        if (Current->ident && Current->ident[0] == (char) 0) {
+        /*Anonymous inside a struct/union?*/
+        if (   Current->ident && Current->ident[0] == (char) 0
+            && (   Current->parent->tag == symStruct
+                || Current->parent->tag == symUnion)) {
             sym* Found = symChild(Current, look);
 
             if (Found)
@@ -206,7 +210,6 @@ const char* symTagGetStr (symTag tag) {
 const char* storageTagGetStr (storageTag tag) {
     if (tag == storageUndefined) return "storageUndefined";
     else if (tag == storageAuto) return "storageAuto";
-    else if (tag == storageRegister) return "storageRegister";
     else if (tag == storageStatic) return "storageStatic";
     else if (tag == storageExtern) return "storageExtern";
     else if (tag == storageTypedef) return "storageTypedef";

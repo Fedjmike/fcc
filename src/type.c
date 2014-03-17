@@ -9,13 +9,16 @@
 #include "string.h"
 #include "stdio.h"
 
-static type* typeCreate ();
+static type* typeCreate (typeTag tag);
+
+static const type* typeTryThroughTypedef (const type* DT);
 
 /*:::: TYPE CTORS/DTOR ::::*/
 
 static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
     DT->tag = tag;
+
     DT->basic = 0;
 
     DT->base = 0;
@@ -24,6 +27,7 @@ static type* typeCreate (typeTag tag) {
     DT->returnType = 0;
     DT->paramTypes = 0;
     DT->params = 0;
+    DT->variadic = false;
 
     return DT;
 }
@@ -63,13 +67,13 @@ type* typeCreateInvalid () {
 void typeDestroy (type* DT) {
     debugAssert("typeDestroy", "null parameter", DT != 0);
 
-    if (typeIsBasic(DT) || typeIsInvalid(DT))
+    if (DT->tag == typeBasic || DT->tag == typeInvalid)
         ;
 
-    else if (typeIsPtr(DT) || typeIsArray(DT))
+    else if (DT->tag == typePtr || DT->tag == typeArray)
         typeDestroy(DT->base);
 
-    else if (typeIsFunction(DT)) {
+    else if (DT->tag == typeFunction) {
         typeDestroy(DT->returnType);
 
         for (int i = 0; i < DT->params; i++)
@@ -84,19 +88,19 @@ void typeDestroy (type* DT) {
 type* typeDeepDuplicate (const type* DT) {
     debugAssert("typeDeepDuplicate", "null parameter", DT != 0);
 
-    if (typeIsInvalid(DT))
+    if (DT->tag == typeInvalid)
         return typeCreateInvalid();
 
-    else if (typeIsBasic(DT))
+    else if (DT->tag == typeBasic)
         return typeCreateBasic(DT->basic);
 
-    else if (typeIsPtr(DT))
+    else if (DT->tag == typePtr)
         return typeCreatePtr(typeDeepDuplicate(DT->base));
 
-    else if (typeIsArray(DT))
+    else if (DT->tag == typeArray)
         return typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
 
-    else if (typeIsFunction(DT)) {
+    else if (DT->tag == typeFunction) {
         type** paramTypes = calloc(DT->params, sizeof(type*));
 
         for (int i = 0; i < DT->params; i++)
@@ -110,9 +114,19 @@ type* typeDeepDuplicate (const type* DT) {
     }
 }
 
-/*:::: TYPE INTERNAL GETTERS ::::*/
+/*:::: TYPE MISC HELPERS ::::*/
+
+static const type* typeTryThroughTypedef (const type* DT) {
+    if (DT->tag == typeBasic && DT->basic->tag == symTypedef)
+        return typeTryThroughTypedef(DT->basic ? DT->basic->dt : 0);
+
+    else
+        return DT;
+}
 
 sym* typeGetRecordSym (const type* record) {
+    record = typeTryThroughTypedef(record);
+
     if (typeIsInvalid(record))
         return 0;
 
@@ -168,6 +182,8 @@ type* typeDeriveUnified (const type* L, const type* R) {
 }
 
 type* typeDeriveBase (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+
     if (typeIsInvalid(DT))
         return typeCreateInvalid();
 
@@ -186,6 +202,8 @@ type* typeDeriveArray (const type* base, int size) {
 }
 
 type* typeDeriveReturn (const type* fn) {
+    fn = typeTryThroughTypedef(fn);
+
     if (typeIsInvalid(fn))
         return typeCreateInvalid();
 
@@ -203,26 +221,32 @@ type* typeDeriveReturn (const type* fn) {
 /*:::: TYPE CLASSIFICATION ::::*/
 
 bool typeIsBasic (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return DT->tag == typeBasic || typeIsInvalid(DT);
 }
 
 bool typeIsPtr (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return DT->tag == typePtr || typeIsInvalid(DT);
 }
 
 bool typeIsArray (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return DT->tag == typeArray || typeIsInvalid(DT);
 }
 
 bool typeIsFunction (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return DT->tag == typeFunction || typeIsInvalid(DT);
 }
 
 bool typeIsInvalid (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return DT->tag == typeInvalid;
 }
 
 bool typeIsVoid (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     /*Is it a built in type of size zero (void)*/
     return    (   (DT->tag == typeBasic && DT->basic->tag == symType)
                && DT->basic->size == 0)
@@ -230,6 +254,7 @@ bool typeIsVoid (const type* DT) {
 }
 
 bool typeIsRecord (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (   DT->tag == typeBasic
                && (   DT->basic->tag == symStruct
                    || DT->basic->tag == symUnion))
@@ -237,32 +262,38 @@ bool typeIsRecord (const type* DT) {
 }
 
 bool typeIsCallable (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (   typeIsFunction(DT)
                || (DT->tag == typePtr && typeIsFunction(DT->base)))
            || typeIsInvalid(DT);
 }
 
 bool typeIsNumeric (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (DT->tag == typeBasic && (DT->basic->typeMask & typeNumeric))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsOrdinal (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (DT->tag == typeBasic && (DT->basic->typeMask & typeOrdinal))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsEquality (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (DT->tag == typeBasic && (DT->basic->typeMask & typeEquality))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsAssignment (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return    (DT->tag == typeBasic && (DT->basic->typeMask & typeAssignment))
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 bool typeIsCondition (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
     return (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition)) ||
             typeIsPtr(DT) || typeIsInvalid(DT);
 }
@@ -270,12 +301,19 @@ bool typeIsCondition (const type* DT) {
 /*:::: TYPE COMPARISON ::::*/
 
 bool typeIsCompatible (const type* DT, const type* Model) {
+    DT = typeTryThroughTypedef(DT);
+    Model = typeTryThroughTypedef(Model);
+
     if (typeIsInvalid(DT) || typeIsInvalid(Model))
         return true;
 
     /*If function requested, match params and return*/
     else if (typeIsFunction(Model)) {
-        if (!typeIsFunction(DT) || Model->params != DT->params)
+        /*fn ptr <=> fn*/
+        if (typeIsPtr(DT) && typeIsFunction(DT->base))
+            typeIsCompatible(DT->base, Model);
+
+        else if (!typeIsFunction(DT) || Model->params != DT->params)
             return false;
 
         for (int i = 0; i < Model->params; i++)
@@ -288,13 +326,18 @@ bool typeIsCompatible (const type* DT, const type* Model) {
 
     /*If pointer requested, allow pointers and arrays and basic numeric types*/
     } else if (typeIsPtr(Model))
-        return    typeIsPtr(DT) || typeIsArray(DT)
-               || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
+        /*Except for fn pointers*/
+        if (typeIsFunction(Model->base) && typeIsFunction(DT))
+            return typeIsCompatible(DT, Model->base);
+
+        else
+            return    typeIsPtr(DT) || typeIsArray(DT)
+                   || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
     else if (typeIsArray(Model))
         return    typeIsArray(DT)
-               && ((DT->array == Model->array) || Model->array == -1)
+               && (DT->array == Model->array || Model->array < 0 || DT->array < 0)
                && typeIsCompatible(DT->base, Model->base);
 
     /*Basic type*/
@@ -308,6 +351,9 @@ bool typeIsCompatible (const type* DT, const type* Model) {
 }
 
 bool typeIsEqual (const type* L, const type* R) {
+    L = typeTryThroughTypedef(L);
+    R = typeTryThroughTypedef(R);
+
     if (typeIsInvalid(L) || typeIsInvalid(R))
         return true;
 
@@ -321,7 +367,7 @@ bool typeIsEqual (const type* L, const type* R) {
         return typeIsEqual(L->base, R->base);
 
     else if (typeIsArray(L))
-        return    L->array == R->array
+        return    (L->array == R->array || L->array < 0 || R->array < 0)
                && typeIsEqual(L->base, R->base);
 
     else /*(typeIsBasic(L))*/
@@ -348,11 +394,17 @@ const char* typeTagGetStr (typeTag tag) {
 int typeGetSize (const architecture* arch, const type* DT) {
     debugAssert("typeGetSize", "null parameter", DT != 0);
 
+    DT = typeTryThroughTypedef(DT);
+
     if (typeIsInvalid(DT))
         return 0;
 
     else if (typeIsArray(DT))
-        return DT->array * typeGetSize(arch, DT->base);
+        if (DT->array < 0)
+            return 0;
+
+        else
+            return DT->array * typeGetSize(arch, DT->base);
 
     else if (typeIsPtr(DT) || typeIsFunction(DT))
         return arch->wordsize;
@@ -369,7 +421,7 @@ char* typeToStr (const type* DT, const char* embedded) {
             as to whether it is sensible to reprint types*/
 
     /*Basic type or invalid*/
-    if (typeIsInvalid(DT) || typeIsBasic(DT)) {
+    if (DT->tag == typeInvalid || DT->tag == typeBasic) {
         char* basicStr = typeIsInvalid(DT)
                             ? "<invalid>"
                             : DT->basic->ident;
@@ -386,13 +438,13 @@ char* typeToStr (const type* DT, const char* embedded) {
         }
 
     /*Function*/
-    } else if (typeIsFunction(DT)) {
+    } else if (DT->tag == typeFunction) {
         /*Get the param string that goes inside the parens*/
 
         char* params = 0;
 
         if (DT->params != 0) {
-            char* paramStrs[DT->params];
+            char** paramStrs = calloc(DT->params, sizeof(char*));
             int length = 1;
 
             /*Get strings for all the params and count total string length*/
@@ -415,6 +467,7 @@ char* typeToStr (const type* DT, const char* embedded) {
             /*Cat the final one, sans the delimiting comma*/
             sprintf(params+charno, "%s", paramStrs[DT->params-1]);
             free(paramStrs[DT->params-1]);
+            free(paramStrs);
 
         } else
             params = strdup("void");
@@ -449,10 +502,10 @@ char* typeToStr (const type* DT, const char* embedded) {
                 sprintf(format, "*%s", embedded);
 
         } else /*if (typeIsArray(DT))*/ {
-            format = malloc(strlen(embedded) +
-                            logi(DT->array, 10)+4);
+            format = malloc(  strlen(embedded)
+                            + (DT->array < 0 ? 0 : logi(DT->array, 10)) + 4);
 
-            if (DT->array == -1)
+            if (DT->array < 0)
                 sprintf(format, "%s[]", embedded);
 
             else

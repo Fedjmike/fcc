@@ -2,7 +2,7 @@
 
 #include "vector.h"
 
-typedef enum {
+typedef enum configMode {
     modeDefault,
     modeNoAssemble,
     modeNoLink,
@@ -10,7 +10,7 @@ typedef enum {
     modeHelp
 } configMode;
 
-typedef struct {
+typedef struct config {
     bool fail;
     configMode mode;
     bool deleteAsm;

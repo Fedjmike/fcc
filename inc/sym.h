@@ -48,7 +48,6 @@ typedef enum symTag {
 typedef enum storageTag {
     storageUndefined,
     storageAuto,
-    storageRegister,
     storageStatic,
     storageExtern,
     storageTypedef

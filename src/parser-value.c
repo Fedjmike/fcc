@@ -75,7 +75,7 @@ static ast* parserComma (parserCtx* ctx) {
 }
 
 /**
- * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "^=" Assign ]
+ * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "|=" | "^=" Assign ]
  */
 static ast* parserAssign (parserCtx* ctx) {
     debugEnter("Assign");
@@ -85,7 +85,7 @@ static ast* parserAssign (parserCtx* ctx) {
     if  (   tokenIsPunct(ctx, punctAssign)
          || tokenIsPunct(ctx, punctPlusAssign) || tokenIsPunct(ctx, punctMinusAssign)
          || tokenIsPunct(ctx, punctTimesAssign) || tokenIsPunct(ctx, punctDivideAssign)
-         || tokenIsPunct(ctx, punctBitwiseXorAssign)) {
+         || tokenIsPunct(ctx, punctBitwiseOrAssign) || tokenIsPunct(ctx, punctBitwiseXorAssign)) {
         char* o = tokenDupMatch(ctx);
         Node = astCreateBOP(ctx->location, Node, o, parserAssign(ctx));
     }
@@ -96,15 +96,15 @@ static ast* parserAssign (parserCtx* ctx) {
 }
 
 /**
- * Ternary = Bool [ "?" Ternary ":" Ternary ]
+ * Ternary = Bool [ "?" Value ":" Ternary ]
  */
-static ast* parserTernary (parserCtx* ctx ) {
+static ast* parserTernary (parserCtx* ctx) {
     debugEnter("Ternary");
 
     ast* Node = parserBool(ctx);
 
     if (tokenTryMatchPunct(ctx, punctQuestion)) {
-        ast* l = parserTernary(ctx);
+        ast* l = parserValue(ctx);
         tokenMatchPunct(ctx, punctColon);
         ast* r = parserTernary(ctx);
 

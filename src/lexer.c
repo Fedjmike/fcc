@@ -239,7 +239,7 @@ void lexerNext (lexerCtx* ctx) {
         case '|': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign :
                                lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
         case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
-        case '~': ctx->punct = punctBitwiseNot;
+        case '~': ctx->punct = punctBitwiseNot; break;
 
         case '+': ctx->punct = lexerTryEatNext(ctx, '=') ? punctPlusAssign :
                                lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;

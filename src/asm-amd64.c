@@ -43,6 +43,10 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
 
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
+
+    asmOutLn(ctx, "push ebx");
+    asmOutLn(ctx, "push esi");
+    asmOutLn(ctx, "push edi");
 }
 
 void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
@@ -64,23 +68,44 @@ void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
 }
 
 void asmLabel (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "%s:", LStr);
-    free(LStr);
+    asmOutLn(ctx, "%s:", labelGet(L));
 }
 
 void asmJump (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "jmp %s", LStr);
-    free(LStr);
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "jmp %s", labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "jmp %s", LStr);
+        free(LStr);
+    }
 }
 
 void asmBranch (asmCtx* ctx, operand Condition, operand L) {
     char* CStr = operandToStr(Condition);
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "j%s %s", CStr, LStr);
+
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "j%s %s", CStr, labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "j%s %s", CStr, LStr);
+        free(LStr);
+    }
+
     free(CStr);
-    free(LStr);
+}
+
+void asmCall (asmCtx* ctx, operand L) {
+    if (L.tag == operandLabel)
+        asmOutLn(ctx, "call %s", labelGet(L));
+
+    else {
+        char* LStr = operandToStr(L);
+        asmOutLn(ctx, "call %s", LStr);
+        free(LStr);
+    }
 }
 
 void asmPush (asmCtx* ctx, operand L) {
@@ -199,6 +224,49 @@ void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand
     asmLabel(ctx, FalseLabel);
 }
 
+operand asmWiden (struct asmCtx* ctx, operand R, int size) {
+    char* RStr = operandToStr(R);
+
+    operand L;
+
+    if (R.tag == operandReg) {
+        R.base->allocatedAs = size;
+        L = R;
+
+    } else
+        L = operandCreateReg(regAlloc(size));
+
+    char* LStr = operandToStr(L);
+    asmOutLn(ctx, "movsx %s, %s", LStr, RStr);
+    free(LStr);
+    free(RStr);
+
+    if (R.tag != operandReg)
+        operandFree(R);
+
+    return L;
+}
+
+operand asmNarrow (struct asmCtx* ctx, operand R, int size) {
+    operand L;
+
+    if (R.tag == operandReg)
+        L = R;
+
+    else {
+        L = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
+        asmOutLn(ctx, "mov %s, %s", LStr, RStr);
+        free(LStr);
+        free(RStr);
+        operandFree(R);
+    }
+
+    L.base->allocatedAs = size;
+    return L;
+}
+
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
@@ -216,11 +284,29 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     }
 }
 
+void asmCompare (asmCtx* ctx, operand L, operand R) {
+    if (   (L.tag == operandMem && R.tag == operandMem)
+        || (L.tag == operandLiteral && R.tag == operandLiteral)) {
+        operand intermediate = operandCreateReg(regAlloc(L.tag == operandMem ? max(L.size, R.size)
+                                                                             : ctx->arch->wordsize));
+        asmMove(ctx, intermediate, L);
+        asmCompare(ctx, intermediate, R);
+        operandFree(intermediate);
+
+    } else if (L.tag == operandLiteral)
+        asmCompare(ctx, R, L);
+
+    else {
+        char* LStr = operandToStr(L);
+        char* RStr = operandToStr(R);
+        asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        free(LStr);
+        free(RStr);
+    }
+}
+
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
-        /*Unlike lea, perform the op after the move. This is because these
-          ops affect the flags (particularly cmp)
-          !!!WHO EXPLOITS THIS?!!! DOESNT WORK AS BELOW*/
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ctx, intermediate, R);
         asmBOP(ctx, Op, L, intermediate);
@@ -252,8 +338,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
 
-        const char* OpStr = Op == bopCmp ? "cmp" :
-                            Op == bopAdd ? "add" :
+        const char* OpStr = Op == bopAdd ? "add" :
                             Op == bopSub ? "sub" :
                             Op == bopMul ? "imul" :
                             Op == bopBitAnd ? "and" :
@@ -289,10 +374,4 @@ void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
         printf("asmUOP(): unhandled operator tag, %d", Op);
 
     free(RStr);
-}
-
-void asmCall (asmCtx* ctx, operand L) {
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "call %s", LStr);
-    free(LStr);
 }

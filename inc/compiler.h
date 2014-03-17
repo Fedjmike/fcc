@@ -11,7 +11,7 @@ typedef struct {
     hashmap/*<char*, sym*>*/ modules;
 } compilerCtx;
 
-typedef struct {
+typedef struct compilerResult {
     int errors, warnings;
 } compilerResult;
 

@@ -2,7 +2,7 @@
 
 #include "stream.h"
 
-typedef enum {
+typedef enum tokenTag {
     tokenUndefined,
     tokenOther,
     tokenEOF,
@@ -14,7 +14,7 @@ typedef enum {
     tokenChar
 } tokenTag;
 
-typedef enum {
+typedef enum keywordTag {
     keywordUndefined,
     keywordUsing,
     keywordIf, keywordElse, keywordWhile, keywordDo, keywordFor,
@@ -27,7 +27,7 @@ typedef enum {
     keywordTrue, keywordFalse
 } keywordTag;
 
-typedef enum {
+typedef enum punctTag {
     punctUndefined,
 
     punctLBrace,
@@ -57,7 +57,7 @@ typedef enum {
     punctMinus, punctMinusAssign, punctMinusMinus, punctArrow,
     punctTimes, punctTimesAssign,
     punctDivide, punctDivideAssign,
-    punctModulo, punctModuloAssign,
+    punctModulo, punctModuloAssign
 } punctTag;
 
 typedef struct lexerCtx {

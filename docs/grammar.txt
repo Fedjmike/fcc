@@ -11,8 +11,8 @@ For := "for" "(" Decl# | ( [ Value ] ";" ) [ Value ] ";" [ Value ] ")" Code
 Value = Comma
 AssignValue = Assign
 Comma = Assign [{ "," Assign }]
-Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "^=" Assign ]
-Ternary = Bool [ "?" Ternary ":" Ternary ]
+Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "|=" | "^=" Assign ]
+Ternary = Bool [ "?" Value ":" Ternary ]
 Bool = Equality [{ "&&" | "||" | "&" | "|" | "^" Equality }]
 Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
 Shift = Expr [{ ">>" | "<<" Expr }]
@@ -39,11 +39,11 @@ Param = DeclBasic DeclExpr#
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
-Enum = "enum" Name# [ "{" EnumField [{ "," EnumField }] "}" ]
+Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
+DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

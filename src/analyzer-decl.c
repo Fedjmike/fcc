@@ -178,6 +178,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
@@ -187,6 +188,7 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
@@ -202,11 +204,13 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
 
         else {
             debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
+            Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
 
     } else {
         debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
+        Node->symbol->dt = typeCreateInvalid();
         return Node->dt = typeCreateInvalid();
     }
 }
@@ -223,10 +227,11 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     else {
         const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R, L))
-            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
+        if (!typeIsAssignment(L))
+            errorTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
-        //TODO: is assignable?
+        else if (!typeIsCompatible(R, L))
+            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
     }
 
     Node->dt = typeDeepDuplicate(L);
