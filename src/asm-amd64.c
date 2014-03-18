@@ -9,16 +9,12 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-void asmComment (asmCtx* ctx, char* format, ...) {
-    asmOutLn(ctx, ";");
-
-    va_list args;
-    va_start(args, format);
-    asmVarOut(ctx, format, args);
-    va_end(args);
+void asmComment (asmCtx* ctx, char* str) {
+    asmOutLn(ctx, ";%s", str);
 }
 
 void asmFilePrologue (asmCtx* ctx) {
+    asmOutLn(ctx, ".file 1 \"%s\"", ctx->filename);
     asmOutLn(ctx, ".intel_syntax noprefix");
 }
 
@@ -26,11 +22,11 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
+void asmFnPrologue (asmCtx* ctx, operand name, int localSize) {
     /*Symbol, linkage and alignment*/
     asmOutLn(ctx, ".balign 16");
-    asmOutLn(ctx, ".globl %s", labelGet(Name));
-    asmOutLn(ctx, "%s:", labelGet(Name));
+    asmOutLn(ctx, ".globl %s", labelGet(name));
+    asmOutLn(ctx, "%s:", labelGet(name));
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
@@ -45,9 +41,9 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     asmOutLn(ctx, "push edi");
 }
 
-void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
+void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     /*Exit stack frame*/
-    asmOutLn(ctx, "%s:", labelGet(EndLabel));
+    asmOutLn(ctx, "%s:", labelGet(labelEnd));
     asmOutLn(ctx, "pop edi");
     asmOutLn(ctx, "pop esi");
     asmOutLn(ctx, "pop ebx");

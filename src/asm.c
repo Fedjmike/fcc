@@ -10,7 +10,9 @@
 
 asmCtx* asmInit (const char* output, const architecture* arch) {
     asmCtx* ctx = malloc(sizeof(asmCtx));
+    ctx->filename = strdup(output);
     ctx->file = fopen(output, "w");
+    ctx->lineNo = 1;
     ctx->depth = 0;
     ctx->arch = arch;
     ctx->stackPtr = operandCreateReg(regRequest(regRSP, arch->wordsize));
@@ -19,6 +21,7 @@ asmCtx* asmInit (const char* output, const architecture* arch) {
 }
 
 void asmEnd (asmCtx* ctx) {
+    free(ctx->filename);
     fclose(ctx->file);
     operandFree(ctx->stackPtr);
     operandFree(ctx->basePtr);
@@ -31,18 +34,15 @@ void asmOutLn (asmCtx* ctx, char* format, ...) {
 
     va_list args;
     va_start(args, format);
-    asmVarOut(ctx, format, args);
+    debugVarMsg(format, args);
+    vfprintf(ctx->file, format, args);
     va_end(args);
 
     fputc('\n', ctx->file);
-}
+    ctx->lineNo++;
 
-void asmVarOut (asmCtx* ctx, char* format, va_list args) {
-    va_list argscpy;
-    va_copy(argscpy, args);
-    debugVarMsg(format, args);
-    vfprintf(ctx->file, format, argscpy);
-    va_end(argscpy);
+    if (ctx->lineNo % 2 == 0)
+        asmOutLn(ctx, ".loc 1 %d 0", ctx->lineNo+1);
 }
 
 void asmEnter (asmCtx* ctx) {

@@ -25,8 +25,8 @@ typedef enum {
 void asmFilePrologue (struct asmCtx* ctx);
 void asmFileEpilogue (struct asmCtx* ctx);
 
-void asmFnPrologue (struct asmCtx* ctx, operand Name, int localSize);
-void asmFnEpilogue (struct asmCtx* ctx, operand EndLabel);
+void asmFnPrologue (struct asmCtx* ctx, operand name, int localSize);
+void asmFnEpilogue (struct asmCtx* ctx, operand labelEnd);
 
 /**
  * Place a string constant in the rodata section with the given label
