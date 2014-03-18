@@ -432,16 +432,26 @@ char* typeToStr (const type* DT, const char* embedded) {
                             ? "<invalid>"
                             : DT->basic->ident;
 
+        char* ret = malloc(  strlen(embedded)
+                           + strlen(basicStr)
+                           + 2 + (DT->isConst ? 6 : 0));
+
         if (embedded[0] == 0)
-            return strdup(basicStr);
+            if (DT->isConst)
+                sprintf(ret, "const %s", basicStr);
+
+            else
+                strcpy(ret, basicStr);
 
         else {
-            char* ret = malloc(strlen(embedded) +
-                               strlen(basicStr)+2);
+            if (DT->isConst)
+                sprintf(ret, "const %s %s", basicStr, embedded);
 
-            sprintf(ret, "%s %s", basicStr, embedded);
-            return ret;
+            else
+                sprintf(ret, "%s %s", basicStr, embedded);
         }
+
+        return ret;
 
     /*Function*/
     } else if (DT->tag == typeFunction) {
@@ -499,13 +509,22 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* format = 0;
 
         if (typeIsPtr(DT)) {
-            format = malloc(strlen(embedded)+4);
+            format = malloc(strlen(embedded) + 4 + (DT->isConst ? 7 : 0));
 
-            if (DT->base->tag == typeFunction)
-                sprintf(format, "(*%s)", embedded);
+            if (DT->base->tag == typeFunction) {
+                if (DT->isConst)
+                    sprintf(format, "(* const %s)", embedded);
 
-            else
-                sprintf(format, "*%s", embedded);
+                else
+                    sprintf(format, "(*%s)", embedded);
+
+            } else {
+                if (DT->isConst)
+                    sprintf(format, "* const %s", embedded);
+
+                else
+                    sprintf(format, "*%s", embedded);
+            }
 
         } else /*if (typeIsArray(DT))*/ {
             format = malloc(  strlen(embedded)
