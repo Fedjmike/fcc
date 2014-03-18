@@ -214,8 +214,13 @@ void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
 
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
-    errorAnalyzer(ctx, Node, "$h expected $d $s$s, $d given",
-                  where, expected, thing, expected == 1 ? "" : "s", found);
+    if (expected > found)
+        errorAnalyzer(ctx, Node, "too few $s$s given to $h: expected $d, given $d",
+                      thing, expected == 1 ? "" : "s", where, expected, found);
+
+    else
+        errorAnalyzer(ctx, Node, "too many $s$s given to $h: expected $d, given $d",
+                      thing, expected == 1 ? "" : "s", where, expected, found);
 }
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
