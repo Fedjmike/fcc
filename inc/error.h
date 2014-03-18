@@ -32,6 +32,8 @@ void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node,
 void errorConflictingDeclarations (struct analyzerCtx* ctx, const struct ast* Node,
                                    const sym* Symbol, const struct type* found);
 void errorRedeclared (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol);
+void errorAlreadyConst (struct analyzerCtx* ctx, const struct ast* Node);
+void errorIllegalConst (struct analyzerCtx* ctx, const struct ast* Node);
 void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, const sym* Symbol);
 void errorCompileTimeKnown (struct analyzerCtx* ctx, const struct ast* Node,
                             const sym* Symbol, const char* what);

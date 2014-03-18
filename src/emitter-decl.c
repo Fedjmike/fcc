@@ -44,6 +44,9 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
     else if (Node->tag == astEnum)
         emitterEnum(ctx, Node->symbol);
 
+    else if (Node->tag == astConst)
+        emitterDeclBasic(ctx, Node->r);
+
     else if (Node->tag == astLiteral)
         ;
 
@@ -119,7 +122,10 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
         else
             debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
 
-    } else if (Node->tag == astUOP) {
+    } else  if (Node->tag == astConst)
+        emitterDeclNode(ctx, Node->r);
+
+    else if (Node->tag == astUOP) {
         if (!strcmp(Node->o, "*"))
             emitterDeclNode(ctx, Node->r);
 

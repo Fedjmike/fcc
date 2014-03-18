@@ -22,7 +22,7 @@ typedef enum {
 typedef struct type {
     typeTag tag;
 
-    //bool const;
+    bool isConst;
 
     union {
         /*typeInvalid*/

@@ -179,12 +179,15 @@ static storageTag parserStorage (parserCtx* ctx) {
 }
 
 /**
- * DeclBasic = <Ident> | StructUnion | Enum
+ * DeclBasic = [ "const" ] <Ident> | StructUnion | Enum
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
 
     ast* Node = 0;
+
+    tokenLocation loc = ctx->location;
+    bool isConst = tokenTryMatchKeyword(ctx, keywordConst);
 
     if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
         Node = parserStructOrUnion(ctx);
@@ -209,6 +212,11 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
             Node = astCreateInvalid(ctx->location);
         }
+    }
+
+    if (isConst) {
+        Node = astCreateConst(loc, Node);
+        Node->symbol = Node->r->symbol;
     }
 
     debugLeave();
@@ -349,17 +357,21 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
 }
 
 /**
- * DeclUnary = ( "*" DeclUnary ) | DeclObject
+ * DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
  */
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclUnary");
 
     ast* Node = 0;
+    tokenLocation loc = ctx->location;
 
     if (tokenIsPunct(ctx, punctTimes)) {
-        tokenLocation loc = ctx->location;
         char* o = tokenDupMatch(ctx);
         Node = astCreateUOP(loc, o, parserDeclUnary(ctx, inDecl, tag));
+        Node->symbol = Node->r->symbol;
+
+    } else if (tokenTryMatchKeyword(ctx, keywordConst)) {
+        Node = astCreateConst(ctx->location, parserDeclUnary(ctx, inDecl, tag));
         Node->symbol = Node->r->symbol;
 
     } else
@@ -407,7 +419,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 }
 
 /**
- * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ]  ")"
+ * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* atom) {
     (void) tag;

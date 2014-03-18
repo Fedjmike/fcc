@@ -37,12 +37,12 @@ EnumField = Name# [ "=" AssignValue ]
 Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
-DeclBasic = <Ident> | StructOrUnion | Enum
+DeclBasic = [ "const" ] <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
 Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
-DeclUnary = ( "*" DeclUnary ) | DeclObject
+DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
 DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]

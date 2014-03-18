@@ -275,6 +275,15 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
     }
 }
 
+void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
+    errorAnalyzer(ctx, Node, "type was already qualified with $h", "'const'");
+}
+
+void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
+    errorAnalyzer(ctx, Node, "cannot qualify $s as $h",
+                  Node->dt->tag == typeArray ? "array" : "function", "const");
+}
+
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
     errorAnalyzer(ctx, Node, "cannot use $n as a value", Symbol);
 }

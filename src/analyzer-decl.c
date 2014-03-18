@@ -28,6 +28,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node);
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base);
 
 static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base);
+static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base);
 static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base);
 static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType);
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base);
@@ -86,6 +87,10 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
             debugErrorUnhandled("analyzerDeclBasic", "literal tag", literalTagGetStr(Node->litTag));
             Node->dt = typeCreateInvalid();
         }
+
+    } else if (Node->tag == astConst) {
+        Node->dt = typeDeepDuplicate(analyzerDeclBasic(ctx, Node->r));
+        Node->dt->isConst = true;
 
     } else {
         if (Node->tag != astInvalid)
@@ -182,7 +187,10 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
             return Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->tag == astUOP) {
+    } else if (Node->tag == astConst)
+        return analyzerConst(ctx, Node, base);
+
+    else if (Node->tag == astUOP) {
         if (!strcmp(Node->o, "*"))
             return analyzerDeclPtrUOP(ctx, Node, base);
 
@@ -239,6 +247,25 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     debugLeave();
 
     return Node->dt;
+}
+
+static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base) {
+    debugEnter("Const");
+
+    Node->dt = typeDeepDuplicate(base);
+
+    if (Node->dt->isConst)
+        errorAlreadyConst(ctx, Node);
+
+    else if (Node->dt->tag == typeArray || Node->dt->tag == typeFunction)
+        errorIllegalConst(ctx, Node);
+
+    Node->dt->isConst = true;
+    const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
+
+    debugLeave();
+
+    return DT;
 }
 
 static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base) {

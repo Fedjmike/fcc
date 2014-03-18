@@ -115,6 +115,12 @@ ast* astCreateEnum (tokenLocation location, ast* name) {
     return Node;
 }
 
+ast* astCreateConst (tokenLocation location, ast* r) {
+    ast* Node = astCreate(astConst, location);
+    Node->r = r;
+    return Node;
+}
+
 ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r) {
     ast* Node = astCreate(astBOP, location);
     Node->l = l;
@@ -219,6 +225,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astUnion) return "astUnion";
     else if (tag == astEnum) return "astEnum";
     else if (tag == astType) return "astType";
+    else if (tag == astConst) return "astConst";
     else if (tag == astCode) return "astCode";
     else if (tag == astBranch) return "astBranch";
     else if (tag == astLoop) return "astLoop";

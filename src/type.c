@@ -18,6 +18,7 @@ static const type* typeTryThroughTypedef (const type* DT);
 static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
     DT->tag = tag;
+    DT->isConst = false;
 
     DT->basic = 0;
 
@@ -88,17 +89,19 @@ void typeDestroy (type* DT) {
 type* typeDeepDuplicate (const type* DT) {
     debugAssert("typeDeepDuplicate", "null parameter", DT != 0);
 
+    type* copy;
+
     if (DT->tag == typeInvalid)
-        return typeCreateInvalid();
+        copy = typeCreateInvalid();
 
     else if (DT->tag == typeBasic)
-        return typeCreateBasic(DT->basic);
+        copy = typeCreateBasic(DT->basic);
 
     else if (DT->tag == typePtr)
-        return typeCreatePtr(typeDeepDuplicate(DT->base));
+        copy = typeCreatePtr(typeDeepDuplicate(DT->base));
 
     else if (DT->tag == typeArray)
-        return typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
+        copy = typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
 
     else if (DT->tag == typeFunction) {
         type** paramTypes = calloc(DT->params, sizeof(type*));
@@ -106,12 +109,15 @@ type* typeDeepDuplicate (const type* DT) {
         for (int i = 0; i < DT->params; i++)
             paramTypes[i] = typeDeepDuplicate(DT->paramTypes[i]);
 
-        return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params, DT->variadic);
+        copy = typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params, DT->variadic);
 
     } else {
         debugErrorUnhandled("typeDeepDuplicate", "type tag", typeTagGetStr(DT->tag));
-        return typeCreateInvalid();
+        copy = typeCreateInvalid();
     }
+
+    copy->isConst = DT->isConst;
+    return copy;
 }
 
 /*:::: TYPE MISC HELPERS ::::*/
