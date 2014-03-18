@@ -68,6 +68,8 @@ typedef enum {
     typeCondition = 1 << 4,
     ///Combination of attributes for integral types
     typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition
+    typeStruct = typeAssignment,
+    typeEnum = typeIntegral
 } symTypeMask;
 
 /**

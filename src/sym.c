@@ -79,10 +79,10 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
     Symbol->ident = strdup(ident);
 
     if (tag == symStruct)
-        Symbol->typeMask = typeAssignment;
+        Symbol->typeMask = typeStruct;
 
     else if (tag == symEnum)
-        Symbol->typeMask = typeIntegral;
+        Symbol->typeMask = typeEnum;
 
     return Symbol;
 }
