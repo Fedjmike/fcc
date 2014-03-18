@@ -276,7 +276,11 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
 }
 
 void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
-    errorAnalyzer(ctx, Node, "type was already qualified with $h", "'const'");
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$h was already qualified with $h", Node->symbol->ident, "'const'");
+
+    else
+        errorAnalyzer(ctx, Node, "type was already qualified with $h", "'const'");
 }
 
 void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
