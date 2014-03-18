@@ -311,7 +311,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
         /*Try to find the field inside record and get return type*/
 
-        sym* recordSym = typeGetRecordSym(L);
+        const sym* recordSym = typeGetRecordSym(L);
 
         if (recordSym) {
             Node->symbol = symChild(recordSym, (char*) Node->r->literal);
@@ -612,7 +612,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*struct: check each field in order, check lengths match*/
     else if (DT->tag == typeBasic && DT->basic->tag == symStruct) {
-        sym* structSym = DT->basic;
+        const sym* structSym = DT->basic;
 
         if (structSym->children != Node->children)
             errorDegree(ctx, Node, "field", structSym->children, Node->children, structSym->ident);

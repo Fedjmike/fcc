@@ -27,7 +27,7 @@ typedef struct type {
     union {
         /*typeInvalid*/
         /*typeBasic*/
-        struct sym* basic;
+        const struct sym* basic;
         /*typePtr
           typeArray*/
         struct {
@@ -48,7 +48,7 @@ typedef struct type {
     };
 } type;
 
-type* typeCreateBasic (struct sym* basic);
+type* typeCreateBasic (const struct sym* basic);
 type* typeCreatePtr (type* base);
 type* typeCreateArray (type* base, int size);
 type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool variadic);
@@ -58,7 +58,7 @@ void typeDestroy (type* DT);
 
 type* typeDeepDuplicate (const type* DT);
 
-struct sym* typeGetRecordSym (const type* record);
+const struct sym* typeGetRecordSym (const type* record);
 
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);

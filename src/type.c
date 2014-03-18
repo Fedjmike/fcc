@@ -32,7 +32,7 @@ static type* typeCreate (typeTag tag) {
     return DT;
 }
 
-type* typeCreateBasic (struct sym* basic) {
+type* typeCreateBasic (const sym* basic) {
     type* DT = typeCreate(typeBasic);
     DT->basic = basic;
     return DT;
@@ -124,7 +124,7 @@ static const type* typeTryThroughTypedef (const type* DT) {
         return DT;
 }
 
-sym* typeGetRecordSym (const type* record) {
+const sym* typeGetRecordSym (const type* record) {
     record = typeTryThroughTypedef(record);
 
     if (typeIsInvalid(record))
