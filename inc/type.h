@@ -16,13 +16,17 @@ typedef enum {
     typeInvalid
 } typeTag;
 
+typedef struct typeQualifiers {
+    bool isConst;
+} typeQualifiers;
+
 /**
  *
  */
 typedef struct type {
     typeTag tag;
 
-    bool isConst;
+    typeQualifiers qual;
 
     union {
         /*typeInvalid*/
@@ -83,6 +87,7 @@ bool typeIsInvalid (const type* DT);
 bool typeIsVoid (const type* DT);
 bool typeIsRecord (const type* DT);
 bool typeIsCallable (const type* DT);
+bool typeIsAssignable (const type* DT);
 
 bool typeIsNumeric (const type* DT);
 bool typeIsOrdinal (const type* DT);

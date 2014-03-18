@@ -9,16 +9,38 @@
 #include "string.h"
 #include "stdio.h"
 
+static typeQualifiers typeQualifiersCreate ();
 static type* typeCreate (typeTag tag);
 
+/**
+ * Jump through (immediate) typedefs, possibly recursively, to actual type
+ */
 static const type* typeTryThroughTypedef (const type* DT);
 
+/**
+ * As above, but collects qualifiers, e.g.
+ *
+ *    typedef int x;
+ *    typedef volatile x* y;
+ *    typedef const y z;
+ *    z a;
+ * ->
+ *    TryThroughTypedefQual(z) == {volatile x*, const}
+ */
+static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
+
+static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded);
+
 /*:::: TYPE CTORS/DTOR ::::*/
+
+static typeQualifiers typeQualifiersCreate () {
+    return (typeQualifiers) {false};
+}
 
 static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
     DT->tag = tag;
-    DT->isConst = false;
+    DT->qual.isConst = false;
 
     DT->basic = 0;
 
@@ -116,15 +138,26 @@ type* typeDeepDuplicate (const type* DT) {
         copy = typeCreateInvalid();
     }
 
-    copy->isConst = DT->isConst;
+    copy->qual = DT->qual;
     return copy;
 }
 
 /*:::: TYPE MISC HELPERS ::::*/
 
 static const type* typeTryThroughTypedef (const type* DT) {
-    if (DT->tag == typeBasic && DT->basic->tag == symTypedef)
-        return typeTryThroughTypedef(DT->basic ? DT->basic->dt : 0);
+    if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
+        return typeTryThroughTypedef(DT->basic->dt);
+
+    else
+        return DT;
+}
+
+static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
+    if (qualOut)
+        qualOut->isConst = qualOut->isConst || DT->qual.isConst;
+
+    if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
+        return typeTryThroughTypedefQual(DT->basic->dt, qualOut);
 
     else
         return DT;
@@ -272,6 +305,12 @@ bool typeIsCallable (const type* DT) {
     return    (   typeIsFunction(DT)
                || (DT->tag == typePtr && typeIsFunction(DT->base)))
            || typeIsInvalid(DT);
+}
+
+bool typeIsAssignable (const type* DT) {
+    typeQualifiers qual = typeQualifiersCreate();
+    DT = typeTryThroughTypedefQual(DT, &qual);
+    return typeIsAssignment(DT) && !qual.isConst;
 }
 
 bool typeIsNumeric (const type* DT) {
@@ -432,26 +471,19 @@ char* typeToStr (const type* DT, const char* embedded) {
                             ? "<invalid>"
                             : DT->basic->ident;
 
-        char* ret = malloc(  strlen(embedded)
-                           + strlen(basicStr)
-                           + 2 + (DT->isConst ? 6 : 0));
+        char* qualified = typeQualifiersToStr(DT->qual, basicStr);
 
-        if (embedded[0] == 0)
-            if (DT->isConst)
-                sprintf(ret, "const %s", basicStr);
-
-            else
-                strcpy(ret, basicStr);
+        if (embedded[0] == (char) 0)
+            return qualified;
 
         else {
-            if (DT->isConst)
-                sprintf(ret, "const %s %s", basicStr, embedded);
-
-            else
-                sprintf(ret, "%s %s", basicStr, embedded);
+            char* ret = malloc(  strlen(embedded)
+                   + strlen(basicStr)
+                   + 2 + (DT->qual.isConst ? 6 : 0));
+            sprintf(ret, "%s %s", qualified, embedded);
+            free(qualified);
+            return ret;
         }
-
-        return ret;
 
     /*Function*/
     } else if (DT->tag == typeFunction) {
@@ -509,22 +541,17 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* format = 0;
 
         if (typeIsPtr(DT)) {
-            format = malloc(strlen(embedded) + 4 + (DT->isConst ? 7 : 0));
+            format = malloc(strlen(embedded) + 4 + (DT->qual.isConst ? 7 : 0));
 
-            if (DT->base->tag == typeFunction) {
-                if (DT->isConst)
-                    sprintf(format, "(* const %s)", embedded);
+            char* qualified = typeQualifiersToStr(DT->qual, embedded);
 
-                else
-                    sprintf(format, "(*%s)", embedded);
+            if (DT->base->tag == typeFunction)
+                sprintf(format, "(*%s)", qualified);
 
-            } else {
-                if (DT->isConst)
-                    sprintf(format, "* const %s", embedded);
+            else
+                sprintf(format, "*%s", qualified);
 
-                else
-                    sprintf(format, "*%s", embedded);
-            }
+            free(qualified);
 
         } else /*if (typeIsArray(DT))*/ {
             format = malloc(  strlen(embedded)
@@ -541,4 +568,21 @@ char* typeToStr (const type* DT, const char* embedded) {
         free(format);
         return ret;
     }
+}
+
+static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded) {
+    if (qual.isConst) {
+        char* ret = malloc(  strlen("const ")
+                           + strlen(embedded) + 1);
+
+        if (embedded[0])
+            sprintf(ret, "const %s", embedded);
+
+        else
+            strcpy(ret, "const");
+
+        return ret;
+
+    } else
+        return strdup(embedded);
 }

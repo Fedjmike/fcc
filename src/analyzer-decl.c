@@ -90,7 +90,7 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
 
     } else if (Node->tag == astConst) {
         Node->dt = typeDeepDuplicate(analyzerDeclBasic(ctx, Node->r));
-        Node->dt->isConst = true;
+        Node->dt->qual.isConst = true;
 
     } else {
         if (Node->tag != astInvalid)
@@ -254,13 +254,13 @@ static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base)
 
     Node->dt = typeDeepDuplicate(base);
 
-    if (Node->dt->isConst)
+    if (Node->dt->qual.isConst)
         errorAlreadyConst(ctx, Node);
 
     else if (Node->dt->tag == typeArray || Node->dt->tag == typeFunction)
         errorIllegalConst(ctx, Node);
 
-    Node->dt->isConst = true;
+    Node->dt->qual.isConst = true;
     const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
 
     debugLeave();
