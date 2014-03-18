@@ -36,7 +36,6 @@ static emitterCtx* emitterInit (const char* output, const architecture* arch) {
     ctx->arch = arch;
     ctx->labelReturnTo = operandCreate(operandUndefined);
     ctx->labelBreakTo = operandCreate(operandUndefined);
-
     return ctx;
 }
 

@@ -605,7 +605,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
                 Value = operandCreateLabelMem(Value.label, size);
 
             } else
-                debugErrorUnhandled("emitterSymbol", "storage", storageTagGetStr(Node->symbol->storage));
+                debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
         }
 
     }
@@ -663,7 +663,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
 
     /*Struct initialization*/
     if (Node->dt->tag == typeBasic && Node->dt->basic->tag == symStruct) {
-        sym* structSym = Node->dt->basic;
+        const sym* structSym = Node->dt->basic;
 
         ast* value;
         sym* field;

@@ -77,7 +77,7 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             continue;
 
         } else {
-            debugErrorUnhandled("emitterStructOrUnion", "symbol", symTagGetStr(Current->tag));
+            debugErrorUnhandled("emitterStructOrUnion", "symbol tag", symTagGetStr(Current->tag));
             continue;
         }
 
