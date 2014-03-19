@@ -103,13 +103,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
         Dest = Value;
 
     else if (request == requestReg) {
-        /*Not in a reg, or wrong one*/
-        if (   Value.tag != operandReg
-            ){//|| (request.specific != regUndefined && request.specific != Value.base)) {
-            Dest = operandCreateReg(  //Value.tag == operandReg
-                                    //? request.specific
-                                    regAlloc(typeGetSize(ctx->arch, Node->dt)));
-
+        if (Value.tag != operandReg){
+            Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);
 
