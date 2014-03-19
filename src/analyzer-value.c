@@ -302,8 +302,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
     const type* L = analyzerValue(ctx, Node->l);
 
     /*Record, or ptr to record? Irrespective of which we actually need*/
-    if (!(   typeIsRecord(L)
-          || (L->tag == typePtr && typeIsRecord(L->base)))) {
+    if (!typeIsRecord(L)) {
         errorTypeExpected(ctx, Node->l, Node->o,
                           isDerefBOP(Node->o) ? "structure or union pointer"
                                               : "structure or union type");
