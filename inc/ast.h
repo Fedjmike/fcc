@@ -72,6 +72,7 @@ ast* astCreateParam (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateStruct (tokenLocation location, ast* name);
 ast* astCreateUnion (tokenLocation location, ast* name);
 ast* astCreateEnum (tokenLocation location, ast* name);
+ast* astCreateConst (tokenLocation location, ast* r);
 
 ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r);
 ast* astCreateUOP (tokenLocation location, char* o, ast* r);
