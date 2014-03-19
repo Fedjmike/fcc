@@ -316,7 +316,12 @@ static ast* parserFactor (parserCtx* ctx) {
                 Node->l = tmp;
 
                 do {
-                    astAddChild(Node, parserAssignValue(ctx));
+                    /*Skipped field/element*/
+                    if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
+                        astAddChild(Node, astCreateEmpty(ctx->location));
+
+                    else
+                        astAddChild(Node, parserAssignValue(ctx));
                 } while (tokenTryMatchPunct(ctx, punctComma));
 
                 tokenMatchPunct(ctx, punctRBrace);
@@ -331,12 +336,17 @@ static ast* parserFactor (parserCtx* ctx) {
             tokenMatchPunct(ctx, punctRParen);
         }
 
-    /*Struct/array initialiazer*/
+    /*Struct/array initializer*/
     } else if (tokenTryMatchPunct(ctx, punctLBrace)) {
         Node = astCreateLiteral(loc, literalInit);
 
         do {
-            astAddChild(Node, parserAssignValue(ctx));
+            /*Skipped field/element*/
+            if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
+                astAddChild(Node, astCreateEmpty(ctx->location));
+
+            else
+                astAddChild(Node, parserAssignValue(ctx));
         } while (tokenTryMatchPunct(ctx, punctComma));
 
         tokenMatchPunct(ctx, punctRBrace);

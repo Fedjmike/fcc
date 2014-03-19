@@ -640,8 +640,10 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             for (current = Node->firstChild, field = structSym->firstChild;
                  current && field;
                  current = current->nextSibling, field = field->nextSibling) {
+                if (current->tag == astEmpty)
+                    continue;
 
-                if (current->tag == astLiteral && current->litTag == literalInit)
+                else if (current->tag == astLiteral && current->litTag == literalInit)
                     analyzerInitOrCompoundLiteral(ctx, current, field->dt, false);
 
                 else
@@ -663,7 +665,10 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
              curNode = curNode->nextSibling) {
             const type* curValue;
 
-            if (curNode->tag == astLiteral && curNode->litTag == literalInit)
+            if (curNode->tag == astEmpty)
+                continue;
+
+            else if (curNode->tag == astLiteral && curNode->litTag == literalInit)
                 curValue = analyzerInitOrCompoundLiteral(ctx, curNode, DT->base, false);
 
             else

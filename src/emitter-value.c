@@ -677,8 +677,11 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
             L.size = typeGetSize(ctx->arch, field->dt);
             L.offset += field->offset;
 
+            if (value->tag == astEmpty)
+                ;
+
             /*Recursive initialization*/
-            if (value->tag == astLiteral && value->litTag == literalInit) {
+            else if (value->tag == astLiteral && value->litTag == literalInit) {
                 emitterInitOrCompoundLiteral(ctx, value, L);
 
             /*Regular value*/
@@ -702,13 +705,19 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
         for (ast* Current = Node->firstChild;
              Current;
              Current = Current->nextSibling) {
-            asmEnter(ctx->Asm);
-            operand R = emitterValue(ctx, Current, requestOperable);
-            asmLeave(ctx->Asm);
+            if (Current->tag == astEmpty)
+                ;
 
-            asmMove(ctx->Asm, L, R);
+            else {
+                asmEnter(ctx->Asm);
+                operand R = emitterValue(ctx, Current, requestOperable);
+                asmLeave(ctx->Asm);
+
+                asmMove(ctx->Asm, L, R);
+                operandFree(R);
+            }
+
             L.offset += elementSize;
-            operandFree(R);
         }
 
     /*Scalar*/
