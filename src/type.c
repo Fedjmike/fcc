@@ -284,6 +284,11 @@ bool typeIsInvalid (const type* DT) {
     return DT->tag == typeInvalid;
 }
 
+bool typeIsComplete (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return !(DT->tag == typeBasic && !DT->basic->complete);
+}
+
 bool typeIsVoid (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     /*Is it a built in type of size zero (void)*/

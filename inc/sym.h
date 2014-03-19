@@ -94,6 +94,7 @@ typedef struct sym {
     /*Types and structs only*/
     int size;  ///Size in bytes
     symTypeMask typeMask;  ///A mask defining operator capabilities
+    bool complete;
 
     /*Linked list of symbols in our namespace
       Including parameters for functions and constants in enums*/

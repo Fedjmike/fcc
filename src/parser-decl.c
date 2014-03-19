@@ -269,6 +269,8 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 
         tokenMatchPunct(ctx, punctLBrace);
 
+        Node->symbol->complete = true;
+
         /*Eat fields*/
         while (!tokenIsPunct(ctx, punctRBrace))
             astAddChild(Node, parserField(ctx));
@@ -311,6 +313,8 @@ static struct ast* parserEnum (parserCtx* ctx) {
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
         tokenMatchPunct(ctx, punctLBrace);
+
+        Node->symbol->complete = true;
 
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));

@@ -84,6 +84,7 @@ bool typeIsArray (const type* DT);
 bool typeIsFunction (const type* DT);
 bool typeIsInvalid (const type* DT);
 
+bool typeIsComplete (const type* DT);
 bool typeIsVoid (const type* DT);
 bool typeIsRecord (const type* DT);
 bool typeIsStruct (const type* DT);
