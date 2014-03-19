@@ -3,13 +3,13 @@
 struct ast;
 struct emitterCtx;
 
-typedef enum emitterRequestTag {
+typedef enum emitterRequest {
     requestAny,
     requestReg,
     requestMem,
     requestOperable,
     requestFlags,
-    requestStack,
+    requestStack
 } emitterRequest;
 
 operand emitterValue (struct emitterCtx* ctx, const struct ast* Node, emitterRequest request);
