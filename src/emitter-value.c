@@ -708,6 +708,11 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
             if (Current->tag == astEmpty)
                 ;
 
+            /*Recursive initialization*/
+            else if (Current->tag == astLiteral && Current->litTag == literalInit)
+                emitterInitOrCompoundLiteral(ctx, Current, L);
+
+            /*Regular value*/
             else {
                 asmEnter(ctx->Asm);
                 operand R = emitterValue(ctx, Current, requestOperable);
