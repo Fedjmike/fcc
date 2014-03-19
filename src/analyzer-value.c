@@ -324,16 +324,26 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
         const sym* recordSym = typeGetRecordSym(L);
 
         if (recordSym) {
-            Node->symbol = symChild(recordSym, (char*) Node->r->literal);
+            /*Incomplete, won't find any fields*/
+            if (!recordSym->complete) {
+                /*Only error if it was a pointer, otherwise the true mistake
+                  probably lies elsewhere and will already have errored*/
+                if (typeIsPtr(L))
+                    errorIncompletePtr(ctx, Node->l, Node->o);
 
-            if (Node->symbol)
-                Node->dt = typeDeepDuplicate(Node->symbol->dt);
-
-            else {
-                errorMember(ctx, Node->o, Node->r, L);
                 Node->dt = typeCreateInvalid();
-            }
 
+            } else {
+                Node->symbol = symChild(recordSym, (char*) Node->r->literal);
+
+                if (Node->symbol)
+                    Node->dt = typeDeepDuplicate(Node->symbol->dt);
+
+                else {
+                    errorMember(ctx, Node, (char*) Node->r->literal);
+                    Node->dt = typeCreateInvalid();
+                }
+            }
         } else
             Node->dt = typeCreateInvalid();
     }
@@ -386,10 +396,13 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
 
     /*Dereferencing a pointer*/
     } else if (!strcmp(Node->o, "*")) {
-        if (typeIsPtr(R))
+        if (typeIsPtr(R)) {
             Node->dt = typeDeriveBase(R);
 
-        else {
+            if (!typeIsComplete(Node->dt))
+                errorIncompletePtr(ctx, Node->r, Node->o);
+
+        } else {
             errorTypeExpected(ctx, Node->r, Node->o, "pointer");
             Node->dt = typeCreateInvalid();
         }

@@ -300,3 +300,11 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
 void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node) {
     errorAnalyzer(ctx, Node, "compound literal without explicit type");
 }
+
+void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, const char* o) {
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $n", o, Node->symbol);
+
+    else
+        errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $t", o, Node->dt);
+}

@@ -38,3 +38,4 @@ void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, co
 void errorCompileTimeKnown (struct analyzerCtx* ctx, const struct ast* Node,
                             const sym* Symbol, const char* what);
 void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node);
+void errorIncompletePtr (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
