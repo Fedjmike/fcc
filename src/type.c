@@ -154,7 +154,7 @@ static const type* typeTryThroughTypedef (const type* DT) {
 
 static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
     if (qualOut)
-        qualOut->isConst = qualOut->isConst || DT->qual.isConst;
+        qualOut->isConst |= DT->qual.isConst;
 
     if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
         return typeTryThroughTypedefQual(DT->basic->dt, qualOut);

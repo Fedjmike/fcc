@@ -30,7 +30,7 @@ static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
  * Returns whether the (binary) operator is one that can only act on
  * numeric types (e.g. int, char, not bool, not x*)
  */
-static bool isNumericBOP (char* o) {
+static bool isNumericBOP (const char* o) {
     return    !strcmp(o, "+") || !strcmp(o, "-")
            || !strcmp(o, "*") || !strcmp(o, "/")
            || !strcmp(o, "%")
@@ -45,19 +45,24 @@ static bool isNumericBOP (char* o) {
            || !strcmp(o, "<<=") || !strcmp(o, ">>=");
 }
 
+static bool isBitwiseBOP (const char* o) {
+    return    !strcmp(o, "&") || !strcmp(o, "|")
+           || !strcmp(o, "&=") || !strcmp(o, "|=");
+}
+
 /**
  * Is it an ordinal operator (defines an ordering...)?
  */
-static bool isOrdinalBOP (char* o) {
+static bool isOrdinalBOP (const char* o) {
     return    !strcmp(o, ">") || !strcmp(o, "<")
            || !strcmp(o, ">=") || !strcmp(o, "<=");
 }
 
-static bool isEqualityBOP (char* o) {
+static bool isEqualityBOP (const char* o) {
     return !strcmp(o, "==") || !strcmp(o, "!=");
 }
 
-static bool isAssignmentBOP (char* o) {
+static bool isAssignmentBOP (const char* o) {
     return    !strcmp(o, "=")
            || !strcmp(o, "+=") || !strcmp(o, "-=")
            || !strcmp(o, "*=") || !strcmp(o, "/=")
@@ -67,32 +72,32 @@ static bool isAssignmentBOP (char* o) {
            || !strcmp(o, "<<=") || !strcmp(o, ">>=");
 }
 
-static bool isLogicalBOP (char* o) {
+static bool isLogicalBOP (const char* o) {
     return !strcmp(o, "&&") || !strcmp(o, "||");
 }
 
 /**
  * Does this operator access struct/class members of its LHS?
  */
-static bool isMemberBOP (char* o) {
+static bool isMemberBOP (const char* o) {
     return !strcmp(o, ".") || !strcmp(o, "->");
 }
 
 /**
  * Does this member dereference its LHS?
  */
-static bool isDerefBOP (char* o) {
+static bool isDerefBOP (const char* o) {
     return !strcmp(o, "->");
 }
 
 /**
  * Is this the ',' operator? Yes, a bit trivial, this class
  */
-static bool isCommaBOP (char* o) {
+static bool isCommaBOP (const char* o) {
     return !strcmp(o, ",");
 }
 
-static bool isNodeLvalue (ast* Node) {
+static bool isNodeLvalue (const ast* Node) {
     if (Node->tag == astBOP) {
         if (   isNumericBOP(Node->o) || isOrdinalBOP(Node->o)
             || isEqualityBOP(Node->o) || isLogicalBOP(Node->o))
@@ -206,7 +211,13 @@ static const type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Check that the operation are allowed on the operands given*/
 
-    if (isNumericBOP(Node->o))
+    if (isBitwiseBOP(Node->o)) {
+        if (   !(typeIsNumeric(L) || typeIsCondition(L))
+            || !(typeIsNumeric(R) || (typeIsCondition(R))))
+            errorTypeExpected(ctx, !(typeIsNumeric(L) || typeIsCondition(L)) ? Node->l : Node->r,
+                              Node->o, "numeric type");
+
+    } else if (isNumericBOP(Node->o))
         if (!typeIsNumeric(L) || !typeIsNumeric(R))
             errorTypeExpected(ctx, !typeIsNumeric(L) ? Node->l : Node->r,
                               Node->o, "numeric type");
