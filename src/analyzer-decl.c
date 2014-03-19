@@ -230,7 +230,7 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
 
     /*Struct/array initializer?*/
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        analyzerInitOrCompoundLiteral(ctx, Node->r, L);
+        analyzerInitOrCompoundLiteral(ctx, Node->r, L, true);
 
     else {
         const type* R = analyzerValue(ctx, Node->r);

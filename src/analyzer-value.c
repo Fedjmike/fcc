@@ -605,7 +605,7 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("CompoundLiteral");
 
-    analyzerInitOrCompoundLiteral(ctx, Node, analyzerType(ctx, Node->l));
+    analyzerInitOrCompoundLiteral(ctx, Node, analyzerType(ctx, Node->l), false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
 
     debugLeave();
@@ -613,7 +613,7 @@ static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT) {
+const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit) {
     debugEnter("InitOrCompoundtLiteral");
 
     Node->dt = typeDeepDuplicate(DT);
@@ -625,7 +625,12 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
     else if (DT->tag == typeBasic && DT->basic->tag == symStruct) {
         const sym* structSym = DT->basic;
 
-        if (structSym->children != Node->children)
+        /*Only force direct initializations (excl. compound literals) to specify
+          no fields*/
+        if (Node->children == 0 && !directInit)
+            ;
+
+        else if (structSym->children != Node->children)
             errorDegree(ctx, Node, "field", structSym->children, Node->children, structSym->ident);
 
         else {
@@ -637,7 +642,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                  current = current->nextSibling, field = field->nextSibling) {
 
                 if (current->tag == astLiteral && current->litTag == literalInit)
-                    analyzerInitOrCompoundLiteral(ctx, current, field->dt);
+                    analyzerInitOrCompoundLiteral(ctx, current, field->dt, false);
 
                 else
                     analyzerValue(ctx, current);
@@ -649,6 +654,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*Array: check that all are of the right type, complain only once*/
     } else if (typeIsArray(DT)) {
+        /*Allow as many inits as elements, but not more*/
         if (DT->array >= 0 && DT->array < Node->children)
             errorDegree(ctx, Node, "element", DT->array, Node->children, "array");
 
@@ -658,7 +664,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             const type* curValue;
 
             if (curNode->tag == astLiteral && curNode->litTag == literalInit)
-                curValue = analyzerInitOrCompoundLiteral(ctx, curNode, DT->base);
+                curValue = analyzerInitOrCompoundLiteral(ctx, curNode, DT->base, false);
 
             else
                 curValue = analyzerValue(ctx, curNode);
@@ -669,7 +675,10 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*Scalar*/
     } else {
-        if (Node->children != 1)
+        if (Node->children == 0 && !directInit)
+            ;
+
+        else if (Node->children != 1)
             errorDegree(ctx, Node, "element", 1, Node->children, "scalar");
 
         else {
