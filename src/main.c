@@ -8,9 +8,10 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-static int driver (config conf);
+static bool driver (config conf);
 
-static int driver (config conf) {
+static bool driver (config conf) {
+    bool fail = false;
     int errors = 0, warnings = 0;
 
     /*Compile each of the inputs to assembly*/
@@ -51,19 +52,19 @@ static int driver (config conf) {
         }
 
         if (conf.mode == modeNoLink)
-            systemf("gcc -c %s", intermediates);
+            fail |= (bool) systemf("gcc -c %s", intermediates);
 
         else {
-            int linkfail = systemf("gcc %s -o %s", intermediates, conf.output);
+            fail |= (bool) systemf("gcc %s -o %s", intermediates, conf.output);
 
-            if (conf.deleteAsm && !linkfail)
+            if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
         }
 
         free(intermediates);
     }
 
-    return errors != 0;
+    return fail || errors != 0;
 }
 
 int main (int argc, char** argv) {
