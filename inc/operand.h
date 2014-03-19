@@ -75,13 +75,13 @@ const char* operandTagGetStr (operandTag tag);
 
 /* ::::CONDITIONS:::: */
 
-int conditionFromStr (char* cond);
+conditionTag conditionFromStr (char* cond);
 
-int conditionNegate (int cond);
+conditionTag conditionNegate (conditionTag cond);
 
 /* ::::LABELS:::: */
 
-operand labelCreate (int tag);
+operand labelCreate (labelTag tag);
 
 operand labelNamed (const char* name);
 

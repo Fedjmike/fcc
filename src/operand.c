@@ -225,7 +225,7 @@ const char* operandTagGetStr (operandTag tag) {
 
 /* ::::CONDITIONS:::: */
 
-int conditionFromStr (char* cond) {
+conditionTag conditionFromStr (char* cond) {
     if (!strcmp(cond, "==")) return conditionEqual;
     else if (!strcmp(cond, "!=")) return conditionNotEqual;
     else if (!strcmp(cond, ">")) return conditionGreater;
@@ -235,7 +235,7 @@ int conditionFromStr (char* cond) {
     else return conditionUndefined;
 }
 
-int conditionNegate (int cond) {
+conditionTag conditionNegate (conditionTag cond) {
     if (cond == conditionEqual) return conditionNotEqual;
     else if (cond == conditionNotEqual) return conditionEqual;
     else if (cond == conditionGreater) return conditionLessEqual;
@@ -247,7 +247,7 @@ int conditionNegate (int cond) {
 
 /* ::::LABELS:::: */
 
-operand labelCreate (int tag) {
+operand labelCreate (labelTag tag) {
     char* label = malloc(12);
 
     if (tag == labelReturn)
