@@ -73,6 +73,7 @@ sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMa
     Symbol->ident = strdup(ident);
     Symbol->size = size;
     Symbol->typeMask = typeMask;
+    Symbol->complete = true;
     return Symbol;
 }
 
