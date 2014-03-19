@@ -121,6 +121,7 @@ Semantic analyzer:
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
+[ ] Look for ways use to use named symbols in errors where can, in place of just type
 
 Emitter:
 

@@ -196,7 +196,11 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 /*:::: ANALYZER ERRORS ::::*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
-    errorAnalyzer(ctx, Node, "$o requires $s, found $t", where, expected, Node->dt);
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$o requires $s, found $n", where, expected, Node->symbol);
+
+    else
+        errorAnalyzer(ctx, Node, "$o requires $s, found $t", where, expected, Node->dt);
 }
 
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
@@ -238,8 +242,12 @@ void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
                       n+1, fn->ident, expected, found);
 }
 
-void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
-    errorAnalyzer(ctx, Node, "$o expected field of $t, found $h", o, record, Node->literal);
+void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
+    if (Node->l->symbol && Node->l->symbol->ident)
+        errorAnalyzer(ctx, Node, "$o expected field of $n, found $h", Node->o, Node->l->symbol, field);
+
+    else
+        errorAnalyzer(ctx, Node, "$o expected field of $t, found $h", Node->o, Node->l->dt, field);
 }
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
@@ -285,8 +293,13 @@ void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
 }
 
 void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
-    errorAnalyzer(ctx, Node, "cannot qualify $s as $h",
-                  Node->dt->tag == typeArray ? "array" : "function", "const");
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "illegal qualification of a $s, $n, as $h",
+                      typeIsArray(Node->dt) ? "array" : "function", Node->symbol, "const");
+
+    else
+        errorAnalyzer(ctx, Node, "illegal qualification of a , $s, as $h",
+                      typeIsArray(Node->dt) ? "array" : "function", "const");
 }
 
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
@@ -297,7 +310,7 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
     errorAnalyzer(ctx, Node, "declaration of $h needed a compile-time known $s", Symbol->ident, what);
 }
 
-void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node) {
+void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
     errorAnalyzer(ctx, Node, "compound literal without explicit type");
 }
 

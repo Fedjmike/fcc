@@ -22,7 +22,7 @@ void errorLvalue (struct analyzerCtx* ctx, const struct ast* Node, const char* o
 void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
 void errorDegree (struct analyzerCtx* ctx, const struct ast* Node,
                   const char* thing, int expected, int found, const char* where);
-void errorMember (struct analyzerCtx* ctx, const char* o, const struct ast* Node, const struct type* record);
+void errorMember (struct analyzerCtx* ctx, const struct ast* Node, const char* field);
 void errorParamMismatch (struct analyzerCtx* ctx, const struct ast* Node,
                          int n, const struct type* expected, const struct type* found);
 void errorNamedParamMismatch (struct analyzerCtx* ctx, const struct ast* Node,
