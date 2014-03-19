@@ -86,6 +86,7 @@ bool typeIsInvalid (const type* DT);
 
 bool typeIsVoid (const type* DT);
 bool typeIsRecord (const type* DT);
+bool typeIsStruct (const type* DT);
 bool typeIsCallable (const type* DT);
 bool typeIsAssignable (const type* DT);
 

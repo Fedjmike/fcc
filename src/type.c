@@ -300,6 +300,12 @@ bool typeIsRecord (const type* DT) {
            || typeIsInvalid(DT);
 }
 
+bool typeIsStruct (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return    (   DT->tag == typeBasic && DT->basic->tag == symStruct)
+           || typeIsInvalid(DT);
+}
+
 bool typeIsCallable (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return    (   typeIsFunction(DT)

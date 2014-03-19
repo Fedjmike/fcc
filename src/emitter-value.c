@@ -662,7 +662,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
     debugEnter("InitOrCompoundLiteral");
 
     /*Struct initialization*/
-    if (Node->dt->tag == typeBasic && Node->dt->basic->tag == symStruct) {
+    if (typeIsStruct(Node->dt)) {
         const sym* structSym = Node->dt->basic;
 
         ast* value;

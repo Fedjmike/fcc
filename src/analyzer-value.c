@@ -622,7 +622,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
         ;
 
     /*struct: check each field in order, check lengths match*/
-    else if (DT->tag == typeBasic && DT->basic->tag == symStruct) {
+    else if (typeIsStruct(DT)) {
         const sym* structSym = DT->basic;
 
         /*Only force direct initializations (excl. compound literals) to specify
