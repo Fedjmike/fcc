@@ -52,6 +52,7 @@ typedef enum {
  * @see sym::typeMask
  */
 typedef enum {
+    typeNone,
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
     typeNumeric = 1 << 0,

@@ -32,8 +32,9 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->dt = 0;
 
     Symbol->size = 0;
+    Symbol->typeMask = typeNone;
     Symbol->complete = false;
-    
+
     symAddChild(Parent, Symbol);
     Symbol->firstChild = 0;
     Symbol->lastChild = 0;
