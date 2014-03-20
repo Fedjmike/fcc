@@ -506,6 +506,9 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
     ast* Node = astCreateCall(ctx->location, atom);
     /*Propogate the declared symbol up the chain*/
     Node->symbol = atom->symbol;
+    /*The proper param symbols are created just before the parsing of the body,
+      prototype params go in the bin, but exist for diagnostics*/
+    sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
 
     if (!tokenIsPunct(ctx, punctRParen)) do {
         if (tokenIsPunct(ctx, punctEllipsis)) {
@@ -514,13 +517,13 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
             break;
 
         } else
-            /*Param symbols are created just before the parsing of the body
-              Never for prototypes*/
-            astAddChild(Node, parserParam(ctx, false));
+            astAddChild(Node, parserParam(ctx, inDecl));
 
     } while (tokenTryMatchPunct(ctx, punctComma));
 
     tokenMatchPunct(ctx, punctRParen);
+
+    ctx->scope = OldScope;
 
     debugLeave();
 
