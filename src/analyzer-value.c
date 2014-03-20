@@ -508,13 +508,8 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
                  Current = Current->nextSibling, n++) {
                 const type* Param = analyzerValue(ctx, Current);
 
-                if (!typeIsCompatible(Param, fn->paramTypes[n])) {
-                    if (Node->l->symbol)
-                        errorNamedParamMismatch(ctx, Current, Node->l->symbol, n, fn->paramTypes[n], Param);
-
-                    else
-                        errorParamMismatch(ctx, Current, n, fn->paramTypes[n], Param);
-                }
+                if (!typeIsCompatible(Param, fn->paramTypes[n]))
+                    errorParamMismatch(ctx, Current, Node, n, fn->paramTypes[n], Param);
             }
 
             /*Analyze the rest of the given params even if there were

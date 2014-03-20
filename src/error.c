@@ -230,22 +230,21 @@ void errorDegree (analyzerCtx* ctx, const ast* Node,
 }
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
-                         int n, const type* expected, const type* found) {
-    errorAnalyzer(ctx, Node, "type mismatch at parameter $d, expected $t: found $t",
+                         const ast* fn, int n, const type* expected, const type* found) {
+    if (fn->symbol) {
+        const sym* param = symGetChild(fn->symbol, n);
+
+        if (param)
+            errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
+                          n+1, fn->symbol->ident, param, found);
+
+        else
+            errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, expected $t: found $t",
+                          n+1, fn->symbol->ident, expected, found);
+
+    } else
+        errorAnalyzer(ctx, Node, "type mismatch at parameter $d, expected $t: found $t",
                   n+1, expected, found);
-}
-
-void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
-                              const sym* fn, int n, const type* expected, const type* found) {
-    const sym* param = symGetChild(fn, n);
-
-    if (param)
-        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
-                      n+1, fn->ident, param, found);
-
-    else
-        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, expected $t: found $t",
-                      n+1, fn->ident, expected, found);
 }
 
 void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
