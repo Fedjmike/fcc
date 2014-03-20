@@ -301,8 +301,10 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     const type* L = analyzerValue(ctx, Node->l);
 
+    const sym* record = typeGetRecord(L);
+
     /*Record, or ptr to record? Irrespective of which we actually need*/
-    if (!typeIsRecord(L)) {
+    if (!record) {
         errorTypeExpected(ctx, Node->l, Node->o,
                           isDerefBOP(Node->o) ? "structure or union pointer"
                                               : "structure or union type");
@@ -319,33 +321,27 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
             if (!typeIsInvalid(L) && typeIsPtr(L))
                 errorTypeExpected(ctx, Node->l, Node->o, "direct structure or union");
 
-        /*Try to find the field inside record and get return type*/
+        /*Incomplete, won't find any fields*/
+        if (!record->complete) {
+            /*Only error if it was a pointer, otherwise the true mistake
+              probably lies elsewhere and will already have errored*/
+            if (typeIsPtr(L))
+                errorIncompletePtr(ctx, Node->l, Node->o);
 
-        const sym* recordSym = typeGetRecordSym(L);
-
-        if (recordSym) {
-            /*Incomplete, won't find any fields*/
-            if (!recordSym->complete) {
-                /*Only error if it was a pointer, otherwise the true mistake
-                  probably lies elsewhere and will already have errored*/
-                if (typeIsPtr(L))
-                    errorIncompletePtr(ctx, Node->l, Node->o);
-
-                Node->dt = typeCreateInvalid();
-
-            } else {
-                Node->symbol = symChild(recordSym, (char*) Node->r->literal);
-
-                if (Node->symbol)
-                    Node->dt = typeDeepDuplicate(Node->symbol->dt);
-
-                else {
-                    errorMember(ctx, Node, (char*) Node->r->literal);
-                    Node->dt = typeCreateInvalid();
-                }
-            }
-        } else
             Node->dt = typeCreateInvalid();
+
+        /*Try to find the field inside record and get return type*/
+        } else {
+            Node->symbol = symChild(record, (char*) Node->r->literal);
+
+            if (Node->symbol)
+                Node->dt = typeDeepDuplicate(Node->symbol->dt);
+
+            else {
+                errorMember(ctx, Node, (char*) Node->r->literal);
+                Node->dt = typeCreateInvalid();
+            }
+        }
     }
 
     debugLeave();

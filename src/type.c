@@ -163,21 +163,19 @@ static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qu
         return DT;
 }
 
-const sym* typeGetRecordSym (const type* record) {
-    record = typeTryThroughTypedef(record);
+const sym* typeGetRecord (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
 
-    if (typeIsInvalid(record))
+    if (    DT->tag == typeBasic && DT->basic
+        && (   DT->basic->tag == symStruct
+            || DT->basic->tag == symUnion))
+        return DT->basic;
+
+    else if (DT->tag == typePtr && typeIsBasic(DT->base))
+        return typeGetRecord(DT->base);
+
+    else
         return 0;
-
-    else {
-        debugAssert("typeGetRecordSym", "record param", typeIsRecord(record));
-
-        if (typeIsPtr(record))
-            return record->base->basic;
-
-        else
-            return record->basic;
-    }
 }
 
 const type* typeGetCallable (const type* DT) {
@@ -299,14 +297,6 @@ bool typeIsStruct (const type* DT) {
 bool typeIsUnion (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return    (   DT->tag == typeBasic && DT->basic->tag == symUnion)
-           || typeIsInvalid(DT);
-}
-
-bool typeIsRecord (const type* DT) {
-    DT = typeTryThroughTypedef(DT);
-    return    typeIsStruct(DT) || typeIsUnion(DT)
-           || (   DT->tag == typePtr
-               && (typeIsStruct(DT->base) || typeIsUnion(DT->base)))
            || typeIsInvalid(DT);
 }
 

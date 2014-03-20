@@ -62,7 +62,7 @@ void typeDestroy (type* DT);
 
 type* typeDeepDuplicate (const type* DT);
 
-const struct sym* typeGetRecordSym (const type* record);
+const struct sym* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
 
 type* typeDeriveFrom (const type* DT);
@@ -76,8 +76,7 @@ type* typeDeriveReturn (const type* fn);
 /*All the following typeIsXXX respond positively when given a
   typeInvalid, so that one error doesn't cascade. If it is important
   to know the actual tag of a type (e.g. directly accessing a field)
-  first check for typeInvalid then continue. See impl. of typeIsEqual
-  and others.*/
+  first check for typeInvalid then continue.*/
 
 bool typeIsBasic (const type* DT);
 bool typeIsPtr (const type* DT);
@@ -89,7 +88,6 @@ bool typeIsComplete (const type* DT);
 bool typeIsVoid (const type* DT);
 bool typeIsStruct (const type* DT);
 bool typeIsUnion (const type* DT);
-bool typeIsRecord (const type* DT);
 bool typeIsAssignable (const type* DT);
 
 bool typeIsNumeric (const type* DT);
