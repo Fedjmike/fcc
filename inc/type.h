@@ -63,6 +63,7 @@ void typeDestroy (type* DT);
 type* typeDeepDuplicate (const type* DT);
 
 const struct sym* typeGetRecordSym (const type* record);
+const type* typeGetCallable (const type* DT);
 
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);
@@ -89,7 +90,6 @@ bool typeIsVoid (const type* DT);
 bool typeIsStruct (const type* DT);
 bool typeIsUnion (const type* DT);
 bool typeIsRecord (const type* DT);
-bool typeIsCallable (const type* DT);
 bool typeIsAssignable (const type* DT);
 
 bool typeIsNumeric (const type* DT);

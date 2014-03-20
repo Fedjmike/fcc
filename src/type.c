@@ -180,6 +180,12 @@ const sym* typeGetRecordSym (const type* record) {
     }
 }
 
+const type* typeGetCallable (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeFunction ? DT :
+           DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
+}
+
 /*:::: TYPE DERIVATION ::::*/
 
 type* typeDeriveFrom (const type* DT) {
@@ -239,20 +245,9 @@ type* typeDeriveArray (const type* base, int size) {
 }
 
 type* typeDeriveReturn (const type* fn) {
-    fn = typeTryThroughTypedef(fn);
-
-    if (typeIsInvalid(fn))
-        return typeCreateInvalid();
-
-    else {
-        debugAssert("typeDeriveReturn", "callable param", typeIsCallable(fn));
-
-        if (typeIsPtr(fn))
-            return typeDeriveReturn(fn->base);
-
-        else
-            return typeDeepDuplicate(fn->returnType);
-    }
+    fn = typeGetCallable(fn);
+    debugAssert("typeDeriveReturn", "callable param", fn != 0);
+    return typeDeepDuplicate(fn->returnType);
 }
 
 /*:::: TYPE CLASSIFICATION ::::*/
@@ -312,13 +307,6 @@ bool typeIsRecord (const type* DT) {
     return    typeIsStruct(DT) || typeIsUnion(DT)
            || (   DT->tag == typePtr
                && (typeIsStruct(DT->base) || typeIsUnion(DT->base)))
-           || typeIsInvalid(DT);
-}
-
-bool typeIsCallable (const type* DT) {
-    DT = typeTryThroughTypedef(DT);
-    return    (   typeIsFunction(DT)
-               || (DT->tag == typePtr && typeIsFunction(DT->base)))
            || typeIsInvalid(DT);
 }
 

@@ -478,19 +478,18 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     const type* L = analyzerValue(ctx, Node->l);
 
-    if (!typeIsCallable(L)) {
+    /*Find a typeFunction, if possible*/
+    const type* fn = typeGetCallable(L);
+
+    if (typeIsInvalid(L))
+        Node->dt = typeCreateInvalid();
+
+    else if (!fn) {
         errorTypeExpected(ctx, Node->l, "()", "function");
         Node->dt = typeCreateInvalid();
 
-    } else if (typeIsInvalid(L))
-        Node->dt = typeCreateInvalid();
-
-    else {
-        /*If callable, then a result type can be derived,
-          regardless of parameter matches*/
-        Node->dt = typeDeriveReturn(L);
-
-        const type* fn = typeIsPtr(L) ? L->base : L;
+    } else {
+        Node->dt = fn->returnType;
 
         /*Right number of params?*/
         if (fn->variadic ? fn->params > Node->children :
