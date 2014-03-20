@@ -45,6 +45,74 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
     return Node;
 }
 
+static void parserCreateParamSymbols (ast* Node, sym* scope) {
+    /*Trace up the AST to find the astCall*/
+
+    ast* call = Node;
+
+    while (call->tag != astCall) {
+        if (!call)
+            return;
+
+        else if (call->tag == astBOP || call->tag == astIndex)
+            call = call->l;
+
+        else if (call->tag == astUOP || call->tag == astConst)
+            call = call->r;
+
+        else
+            return;
+    }
+
+    /*For each param*/
+    for (ast* param = call->firstChild;
+         param;
+         param = param->nextSibling) {
+        /*Trace up to find the identifier*/
+
+        ast* ident = param;
+
+        while (ident->tag != astLiteral) {
+            if (!ident)
+                break;
+
+            else if (ident->tag == astBOP || ident->tag == astIndex)
+                ident = ident->l;
+
+            else if (   ident->tag == astUOP || ident->tag == astConst
+                     || ident->tag == astParam)
+                ident = ident->r;
+
+            else {
+                ident = 0;
+                break;
+            }
+        }
+
+        /*Found the ident, create the symbol*/
+        if (ident && ident->litTag == literalIdent)
+            param->symbol = symCreateNamed(symParam, scope, (char*) ident->literal);
+
+        /*Trace back up, assigning the symbol to all the nodes*/
+        for (ident = param; ident;) {
+            if (!ident)
+                break;
+
+            ident->symbol = param->symbol;
+
+            if (ident->tag == astBOP || ident->tag == astIndex)
+                ident = ident->l;
+
+            else if (   ident->tag == astUOP || ident->tag == astConst
+                     || ident->tag == astParam)
+                ident = ident->r;
+
+            else
+                break;
+        }
+    }
+}
+
 /**
  * Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
  *                                            | Code# )
@@ -79,8 +147,11 @@ ast* parserDecl (parserCtx* ctx, bool module) {
             if (Node->symbol->impl)
                 errorReimplementedSym(ctx, Node->symbol);
 
-            else
+            else {
                 Node->symbol->impl = Node;
+                /*Now that we have the implementation, create param symbols*/
+                parserCreateParamSymbols(Node->l->firstChild, Node->symbol);
+            }
 
             if (!module)
                 errorIllegalOutside(ctx, "function implementation", "module level code");
@@ -426,7 +497,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
  * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* atom) {
-    (void) tag;
+    (void) tag, (void) inDecl;
 
     debugEnter("DeclFunction");
 
@@ -436,8 +507,6 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
     /*Propogate the declared symbol up the chain*/
     Node->symbol = atom->symbol;
 
-    sym* OldScope = scopeSet(ctx, atom->symbol);
-
     if (!tokenIsPunct(ctx, punctRParen)) do {
         if (tokenIsPunct(ctx, punctEllipsis)) {
             astAddChild(Node, astCreateEllipsis(ctx->location));
@@ -445,11 +514,11 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* at
             break;
 
         } else
-            astAddChild(Node, parserParam(ctx, inDecl));
+            /*Param symbols are created just before the parsing of the body
+              Never for prototypes*/
+            astAddChild(Node, parserParam(ctx, false));
 
     } while (tokenTryMatchPunct(ctx, punctComma));
-
-    ctx->scope = OldScope;
 
     tokenMatchPunct(ctx, punctRParen);
 
@@ -537,9 +606,10 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
         } else if (inDecl)
             Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
 
-        /*Can't tell whether this is a duplicate declaration
-          or a (matching) redefinition*/
-        vectorPush(&Node->symbol->decls, Node);
+        if (Node->symbol)
+            /*Can't tell whether this is a duplicate declaration
+              or a (matching) redefinition*/
+            vectorPush(&Node->symbol->decls, Node);
 
     } else {
         errorExpected(ctx, "name");
