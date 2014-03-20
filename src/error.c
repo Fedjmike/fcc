@@ -94,6 +94,16 @@ static void verrorf (const char* format, va_list args) {
                 } else
                     printf("%s%s%s %s%s", colourTag, symTagGetStr(Symbol->tag), colourIdent, ident, consoleNormal);
 
+            /*AST node*/
+            } else if (format[i+1] == 'a') {
+                const ast* Node = va_arg(args, sym*);
+
+                if (Node->symbol && Node->symbol->ident)
+                    errorf("$n", Node->symbol);
+
+                else
+                    errorf("$t", Node->dt);
+
             /*Symbol tag, semantic "class"*/
             } else if (format[i+1] == 'c') {
                 const sym* Symbol = va_arg(args, sym*);
@@ -196,11 +206,7 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 /*:::: ANALYZER ERRORS ::::*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
-    if (Node->symbol && Node->symbol->ident)
-        errorAnalyzer(ctx, Node, "$o requires $s, found $n", where, expected, Node->symbol);
-
-    else
-        errorAnalyzer(ctx, Node, "$o requires $s, found $t", where, expected, Node->dt);
+    errorAnalyzer(ctx, Node, "$o requires $s, found $a", where, expected, Node);
 }
 
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
@@ -243,11 +249,7 @@ void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
 }
 
 void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
-    if (Node->l->symbol && Node->l->symbol->ident)
-        errorAnalyzer(ctx, Node, "$o expected field of $n, found $h", Node->o, Node->l->symbol, field);
-
-    else
-        errorAnalyzer(ctx, Node, "$o expected field of $t, found $h", Node->o, Node->l->dt, field);
+    errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", Node->o, Node->l, field);
 }
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
@@ -315,9 +317,5 @@ void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
 }
 
 void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, const char* o) {
-    if (Node->symbol && Node->symbol->ident)
-        errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $n", o, Node->symbol);
-
-    else
-        errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $t", o, Node->dt);
+    errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $a", o, Node);
 }
