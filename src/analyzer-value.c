@@ -229,6 +229,9 @@ static const type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
 
         if (!isNodeLvalue(Node->l))
             errorLvalue(ctx, Node->l, Node->o);
+
+        else if (!typeIsMutable(L))
+            errorConstAssignment(ctx, Node->l, Node->o);
     }
 
     /*Work out the type of the result*/
@@ -376,9 +379,13 @@ static const type* analyzerUOP (analyzerCtx* ctx, ast* Node) {
 
         } else {
             /*Assignment operator*/
-            if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--"))
+            if (!strcmp(Node->o, "++") || !strcmp(Node->o, "--")) {
                 if (!isNodeLvalue(Node->r))
                     errorLvalue(ctx, Node->r, Node->o);
+
+                else if (!typeIsMutable(R))
+                    errorConstAssignment(ctx, Node->r, Node->o);
+            }
 
             Node->dt = typeDeriveFrom(R);
         }

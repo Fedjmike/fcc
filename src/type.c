@@ -300,10 +300,10 @@ bool typeIsUnion (const type* DT) {
            || typeIsInvalid(DT);
 }
 
-bool typeIsAssignable (const type* DT) {
+bool typeIsMutable (const type* DT) {
     typeQualifiers qual = typeQualifiersCreate();
     DT = typeTryThroughTypedefQual(DT, &qual);
-    return typeIsAssignment(DT) && !qual.isConst;
+    return !qual.isConst || typeIsInvalid(DT);
 }
 
 bool typeIsNumeric (const type* DT) {

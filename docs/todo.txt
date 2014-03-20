@@ -14,7 +14,7 @@ High importance:
 	[x] Parsing
 	[x] Type annotation
 	[ ] Type compatibility/equality
-	[ ] Assignable
+	[x] Assignable
 [x] char
 [ ] Review type compatibility
 [ ] Numeric type coercion: widening & narrowing

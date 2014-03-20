@@ -345,3 +345,7 @@ void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn,
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt) {
     errorAnalyzer(ctx, Node, "function $n declared with incomplete return type $t", Node->symbol, dt);
 }
+
+void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+    errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
+}

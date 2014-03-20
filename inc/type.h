@@ -88,7 +88,7 @@ bool typeIsComplete (const type* DT);
 bool typeIsVoid (const type* DT);
 bool typeIsStruct (const type* DT);
 bool typeIsUnion (const type* DT);
-bool typeIsAssignable (const type* DT);
+bool typeIsMutable (const type* DT);
 
 bool typeIsNumeric (const type* DT);
 bool typeIsOrdinal (const type* DT);

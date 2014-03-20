@@ -40,3 +40,4 @@ void errorIncompletePtr (struct analyzerCtx* ctx, const struct ast* Node, const 
 void errorIncompleteDecl (struct analyzerCtx* ctx, const struct ast* Node);
 void errorIncompleteParamDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct ast* fn, int n);
 void errorIncompleteReturnDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct type* dt);
+void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
