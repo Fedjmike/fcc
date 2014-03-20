@@ -18,7 +18,7 @@ High importance:
 [x] char
 [ ] Review type compatibility
 [ ] Numeric type coercion: widening & narrowing
-[ ] Type completeness
+[-] Type completeness
 [-] Varargs
 [x] enum
 [-] extern

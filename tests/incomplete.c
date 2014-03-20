@@ -5,5 +5,7 @@ int main () {
 	Node.a;
 	Node->a;
 	current->a;
+	*current;
+	current[0];
 	return 0;
 }

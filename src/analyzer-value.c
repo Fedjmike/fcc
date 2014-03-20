@@ -456,10 +456,13 @@ static const type* analyzerIndex (analyzerCtx* ctx, ast* Node) {
     if (!typeIsNumeric(R))
         errorTypeExpected(ctx, Node->r, "[]", "numeric index");
 
-    if (typeIsArray(L) || typeIsPtr(L))
+    if (typeIsArray(L) || typeIsPtr(L)) {
         Node->dt = typeDeriveBase(L);
 
-    else {
+        if (!typeIsComplete(Node->dt))
+            errorIncompletePtr(ctx, Node->r, "[]");
+
+    } else {
         errorTypeExpected(ctx, Node->l, "[]", "array or pointer");
         Node->dt = typeCreateInvalid();
     }
