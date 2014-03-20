@@ -318,3 +318,30 @@ void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
 void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, const char* o) {
     errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $a", o, Node);
 }
+
+void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node) {
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$n declared with incomplete type", Node->symbol);
+
+    else
+        errorAnalyzer(ctx, Node, "variable declared with incomplete type $t", Node->dt);
+}
+
+void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n) {
+    const char *of = "", *ident = "";
+
+    if (fn->symbol && fn->symbol->ident) {
+        of = " of function ";
+        ident = fn->symbol->ident;
+    }
+
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "parameter $d$s$h, $h declared with incomplete type $t", n, of, ident, Node->symbol->ident, Node->dt);
+
+    else
+        errorAnalyzer(ctx, Node, "parameter $d$s$h declared with incomplete type $t", n, of, ident, Node->dt);
+}
+
+void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt) {
+    errorAnalyzer(ctx, Node, "function $n declared with incomplete return type $t", Node->symbol, dt);
+}

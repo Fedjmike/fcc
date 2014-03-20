@@ -37,3 +37,6 @@ void errorCompileTimeKnown (struct analyzerCtx* ctx, const struct ast* Node,
                             const sym* Symbol, const char* what);
 void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node);
 void errorIncompletePtr (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
+void errorIncompleteDecl (struct analyzerCtx* ctx, const struct ast* Node);
+void errorIncompleteParamDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct ast* fn, int n);
+void errorIncompleteReturnDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct type* dt);

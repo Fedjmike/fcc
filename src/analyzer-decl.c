@@ -41,8 +41,14 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
 
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling)
-        analyzerDeclNode(ctx, Current, BasicDT);
+         Current = Current->nextSibling) {
+        const type* R = analyzerDeclNode(ctx, Current, BasicDT);
+
+        /*Complete? Avoid complaining about typedefs and the like (don't need to be)*/
+        if (   Current->symbol && Current->symbol->tag == symId
+            && !typeIsComplete(R))
+            errorIncompleteDecl(ctx, Current);
+    }
 
     debugLeave();
 }
@@ -282,6 +288,9 @@ static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* 
 static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType) {
     debugEnter("DeclCall");
 
+    if (!typeIsComplete(returnType))
+        errorIncompleteReturnDecl(ctx, Node, returnType);
+
     /*Param types*/
 
     bool variadic = false;
@@ -299,6 +308,9 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
         } else if (Current->tag == astParam) {
             analyzerParam(ctx, Current);
             paramTypes[i++] = typeDeepDuplicate(Current->dt);
+
+            if (!typeIsComplete(Current->dt))
+                errorIncompleteParamDecl(ctx, Current, Node, i);
 
         } else
             debugErrorUnhandled("analyzerDeclCall", "AST tag", astTagGetStr(Current->tag));
