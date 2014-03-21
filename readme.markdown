@@ -28,6 +28,7 @@ The compiler implements a language quite similar to C, however there are some ma
   - Empty prototype parentheses means zero arguments
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
+  - Comma (`,`) can return a constant expression
 - The features of C99 and C11 supported:
   - Anonymous structs/unions
   - Compound literals

@@ -51,8 +51,19 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     evalResult L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
-    if (   !strcmp(Node->o, ",") || !strcmp(Node->o, "=")
-        || !strcmp(Node->o, "->") || !strcmp(Node->o, "."))
+    if (   !strcmp(Node->o, "=")
+        || !strcmp(Node->o, "+=") || !strcmp(Node->o, "-=")
+        || !strcmp(Node->o, "*=") || !strcmp(Node->o, "/=")
+        || !strcmp(Node->o, "%=")
+        || !strcmp(Node->o, "&=") || !strcmp(Node->o, "|=")
+        || !strcmp(Node->o, "^=")
+        || !strcmp(Node->o, "<<=") || !strcmp(Node->o, ">>="))
+        return (evalResult) {false, 0};
+
+    else if (!strcmp(Node->o, ","))
+        return (evalResult) {L.known && R.known, R.value};
+
+    else if (!strcmp(Node->o, "->") || !strcmp(Node->o, "."))
         return R;
 
     else if (!strcmp(Node->o, "&&")) {
@@ -82,22 +93,22 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     } else {
         int result;
 
-        if (!strcmp(Node->o, "&") || !strcmp(Node->o, "&=")) result = L.value & R.value;
-        else if (!strcmp(Node->o, "|") || !strcmp(Node->o, "|=")) result = L.value | R.value;
-        else if (!strcmp(Node->o, "^") || !strcmp(Node->o, "^=")) result = L.value ^ R.value;
+        if (!strcmp(Node->o, "&")) result = L.value & R.value;
+        else if (!strcmp(Node->o, "|")) result = L.value | R.value;
+        else if (!strcmp(Node->o, "^")) result = L.value ^ R.value;
         else if (!strcmp(Node->o, "==")) result = L.value == R.value;
         else if (!strcmp(Node->o, "!=")) result = L.value != R.value;
         else if (!strcmp(Node->o, ">")) result = L.value > R.value;
         else if (!strcmp(Node->o, ">=")) result = L.value >= R.value;
         else if (!strcmp(Node->o, "<")) result = L.value < R.value;
         else if (!strcmp(Node->o, "<=")) result = L.value <= R.value;
-        else if (!strcmp(Node->o, ">>") || !strcmp(Node->o, ">>=")) result = L.value >> R.value;
-        else if (!strcmp(Node->o, "<<") || !strcmp(Node->o, "<<=")) result = L.value << R.value;
-        else if (!strcmp(Node->o, "+") || !strcmp(Node->o, "+=")) result = L.value + R.value;
-        else if (!strcmp(Node->o, "-") || !strcmp(Node->o, "-=")) result = L.value - R.value;
-        else if (!strcmp(Node->o, "*") || !strcmp(Node->o, "*=")) result = L.value * R.value;
-        else if (!strcmp(Node->o, "/") || !strcmp(Node->o, "/=")) result = L.value / R.value;
-        else if (!strcmp(Node->o, "%") || !strcmp(Node->o, "%=")) result = L.value % R.value;
+        else if (!strcmp(Node->o, ">>")) result = L.value >> R.value;
+        else if (!strcmp(Node->o, "<<")) result = L.value << R.value;
+        else if (!strcmp(Node->o, "+")) result = L.value + R.value;
+        else if (!strcmp(Node->o, "-")) result = L.value - R.value;
+        else if (!strcmp(Node->o, "*")) result = L.value * R.value;
+        else if (!strcmp(Node->o, "/")) result = L.value / R.value;
+        else if (!strcmp(Node->o, "%")) result = L.value % R.value;
         else {
             debugErrorUnhandled("evalBOP", "operator", Node->o);
             return (evalResult) {false, 0};
@@ -109,6 +120,7 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
 
 static evalResult evalUOP (const architecture* arch, ast* Node) {
     if (!strcmp(Node->o, "&") || !strcmp(Node->o, "*"))
+        || !strcmp(Node->o, "++") || !strcmp(Node->o, "--"))
         return (evalResult) {false, 0};
 
     else {
@@ -169,7 +181,7 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
     /*Only enum constants are known at compile time*/
     else if (Node->litTag == literalIdent)
         return (evalResult) {Node->symbol && Node->symbol->tag == symEnumConstant,
-                             (int)(Node->symbol && Node->symbol->constValue)};
+                             Node->symbol ? Node->symbol->constValue : 0};
 
     else if (   Node->litTag == literalStr
              || Node->litTag == literalCompound
