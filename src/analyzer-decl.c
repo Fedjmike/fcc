@@ -245,7 +245,7 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
             errorTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
         else if (!typeIsCompatible(R, L))
-            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
+            errorInitMismatch(ctx, Node->l, Node->r);
     }
 
     Node->dt = typeDeepDuplicate(L);

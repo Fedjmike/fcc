@@ -25,6 +25,7 @@ void errorDegree (struct analyzerCtx* ctx, const struct ast* Node,
 void errorMember (struct analyzerCtx* ctx, const struct ast* Node, const char* field);
 void errorParamMismatch (struct analyzerCtx* ctx, const struct ast* Node,
                          const struct ast* fn, int n, const struct type* expected, const struct type* found);
+void errorInitMismatch (struct analyzerCtx* ctx, const struct ast* variable, const struct ast* init);
 void errorInitFieldMismatch (struct analyzerCtx* ctx, const struct ast* Node,
                              const sym* structSym, const sym* fieldSym);
 void errorConflictingDeclarations (struct analyzerCtx* ctx, const struct ast* Node,

@@ -251,6 +251,10 @@ void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
     errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", Node->o, Node->l, field);
 }
 
+void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) {
+    errorAnalyzer(ctx, init, "incompatible initialization of $a from $a", variable, init);
+}
+
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
                              const sym* structSym, const sym* fieldSym) {
     errorAnalyzer(ctx, Node, "type mismatch: $t given for initialization of field $n in $n",
