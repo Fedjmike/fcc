@@ -28,18 +28,18 @@ config configCreate () {
     conf.fail = false;
     conf.mode = modeDefault;
     conf.deleteAsm = true;
-    conf.inputs = vectorCreate(32);
-    conf.intermediates = vectorCreate(32);
+    vectorInit(&conf.inputs, 32);
+    vectorInit(&conf.intermediates, 32);
     conf.output = 0;
-    conf.includeSearchPaths = vectorCreate(8);
+    vectorInit(&conf.includeSearchPaths, 8);
     vectorPush(&conf.includeSearchPaths, strdup(""));
     return conf;
 }
 
 void configDestroy (config conf) {
-    vectorDestroyObjs(&conf.inputs, free);
-    vectorDestroyObjs(&conf.intermediates, free);
-    vectorDestroyObjs(&conf.includeSearchPaths, free);
+    vectorFreeObjs(&conf.inputs, free);
+    vectorFreeObjs(&conf.intermediates, free);
+    vectorFreeObjs(&conf.includeSearchPaths, free);
     free(conf.output);
 }
 

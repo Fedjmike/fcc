@@ -25,7 +25,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->tag = tag;
     Symbol->ident = 0;
 
-    Symbol->decls = vectorCreate(2);
+    vectorInit(&Symbol->decls, 2);
     Symbol->impl = 0;
 
     Symbol->storage = storageAuto;
@@ -50,7 +50,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
 static void symDestroy (sym* Symbol) {
     free(Symbol->ident);
 
-    vectorDestroy(&Symbol->decls);
+    vectorFree(&Symbol->decls);
 
     if (Symbol->firstChild)
         symDestroy(Symbol->firstChild);

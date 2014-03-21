@@ -5,23 +5,22 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-vector vectorCreate (int initialCapacity) {
-    vector v;
-    v.length = 0;
-    v.capacity = initialCapacity;
-    v.buffer = malloc(initialCapacity*sizeof(void*));
+vector* vectorInit (vector* v, int initialCapacity) {
+    v->length = 0;
+    v->capacity = initialCapacity;
+    v->buffer = malloc(initialCapacity*sizeof(void*));
     return v;
 }
 
-void vectorDestroy (vector* v) {
+void vectorFree (vector* v) {
     free(v->buffer);
     v->buffer = 0;
 }
 
-void vectorDestroyObjs (vector* v, vectorDtor dtor) {
+void vectorFreeObjs (vector* v, vectorDtor dtor) {
     /*This will mess up the vector, watevs*/
     vectorMap(v, (vectorMapper) dtor, v);
-    vectorDestroy(v);
+    vectorFree(v);
 }
 
 void vectorPush (vector* v, void* item) {
@@ -43,7 +42,7 @@ void* vectorGet (const vector* v, int n) {
         return 0;
 }
 
-int vectorSet (vector* v, int n, void* value) {
+bool vectorSet (vector* v, int n, void* value) {
     if (n < v->length) {
         v->buffer[n] = value;
         return false;
