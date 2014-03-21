@@ -52,6 +52,8 @@ bool vectorSet (vector* v, int n, void* value) {
 }
 
 void vectorMap (vector* dest, vectorMapper f, vector* src) {
-    for (int n = 0; n < src->length; n++)
+    int upto = dest->length > src->length ? src->length : dest->length;
+
+    for (int n = 0; n < upto; n++)
         dest->buffer[n] = f(src->buffer[n]);
 }

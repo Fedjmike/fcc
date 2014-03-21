@@ -20,6 +20,7 @@ void vectorFree (vector* v);
 
 /**
  * As with vectorFree, but also call a given destructor on each contained element
+ * @see vectorDtor
  */
 void vectorFreeObjs (vector* v, void (*dtor)(void*));
 
@@ -37,9 +38,9 @@ void* vectorGet (const vector* v, int n);
 bool vectorSet (vector* v, int n, void* value);
 
 /**
- * Maps dest[n] to f(src[n]) for n in src->length.
+ * Maps dest[n] to f(src[n]) for n in min(dest->length, src->length).
  *
- * src and dest can match. Lengths not checked.
- * @see mapType
+ * src and dest can match.
+ * @see vectorMapper
  */
 void vectorMap (vector* dest, void* (*f)(void*), vector* src);
