@@ -54,7 +54,6 @@ typedef generalmap intset;
 
 /*:::: HASHMAP ::::*/
 
-//destroy key too maybs
 typedef void (*hashmapDtor)(char* key, void* value);
 
 hashmap* hashmapInit (hashmap* map, int size);
