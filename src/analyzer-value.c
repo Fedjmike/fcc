@@ -306,8 +306,11 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     const sym* record = typeGetRecord(L);
 
+    if (typeIsInvalid(L))
+        Node->dt = typeCreateInvalid();
+
     /*Record, or ptr to record? Irrespective of which we actually need*/
-    if (!record) {
+    else if (!record) {
         errorTypeExpected(ctx, Node->l, Node->o,
                           isDerefBOP(Node->o) ? "structure or union pointer"
                                               : "structure or union type");
