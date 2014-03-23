@@ -513,7 +513,8 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* params = 0;
 
         if (DT->params != 0) {
-            char** paramStrs = calloc(DT->params, sizeof(char*));
+            int paramNo = DT->params + (DT->variadic ? 1 : 0);
+            char** paramStrs = calloc(paramNo, sizeof(char*));
             int length = 1;
 
             /*Get strings for all the params and count total string length*/
@@ -522,20 +523,29 @@ char* typeToStr (const type* DT, const char* embedded) {
                 length += strlen(paramStrs[i])+2;
             }
 
+            if (DT->variadic) {
+                /*Won't free this one*/
+                paramStrs[DT->params] = "...";
+                length += 5;
+            }
+
             /*Cat them together*/
 
             params = malloc(length+1);
 
             int charno = 0;
 
-            for (int i = 0; i < DT->params-1; i++) {
+            for (int i = 0; i < paramNo-1; i++) {
                 charno += sprintf(params+charno, "%s, ", paramStrs[i]);
                 free(paramStrs[i]);
             }
 
             /*Cat the final one, sans the delimiting comma*/
-            sprintf(params+charno, "%s", paramStrs[DT->params-1]);
-            free(paramStrs[DT->params-1]);
+            sprintf(params+charno, "%s", paramStrs[paramNo-1]);
+
+            if (!DT->variadic)
+                free(paramStrs[paramNo-1]);
+
             free(paramStrs);
 
         } else
