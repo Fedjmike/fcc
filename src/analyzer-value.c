@@ -583,11 +583,12 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     else if (Node->litTag == literalBool)
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
-    else if (Node->litTag == literalStr)
-        /* char* */
+    else if (Node->litTag == literalStr) {
+        /* const char* */
         Node->dt = typeCreatePtr(typeCreateBasic(ctx->types[builtinChar]));
+        Node->dt->base->qual.isConst = true;
 
-    else if (Node->litTag == literalIdent) {
+    } else if (Node->litTag == literalIdent) {
         if (Node->symbol->tag == symEnumConstant || Node->symbol->tag == symId || Node->symbol->tag == symParam) {
             if (Node->symbol->dt)
                 Node->dt = typeDeepDuplicate(Node->symbol->dt);
