@@ -470,7 +470,7 @@ static const type* analyzerIndex (analyzerCtx* ctx, ast* Node) {
         Node->dt = typeDeriveBase(L);
 
         if (!typeIsComplete(Node->dt))
-            errorIncompletePtr(ctx, Node->r, "[]");
+            errorIncompletePtr(ctx, Node->l, "[]");
 
     } else {
         errorTypeExpected(ctx, Node->l, "[]", "array or pointer");
