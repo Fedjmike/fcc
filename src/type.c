@@ -486,7 +486,11 @@ char* typeToStr (const type* DT, const char* embedded) {
     if (DT->tag == typeInvalid || DT->tag == typeBasic) {
         char* basicStr = typeIsInvalid(DT)
                             ? "<invalid>"
-                            : DT->basic->ident;
+                            : (DT->basic->ident && DT->basic->ident[0])
+                                ? DT->basic->ident
+                                : DT->basic->tag == symStruct ? "<unnamed struct>" :
+                                  DT->basic->tag == symUnion ? "<unnamed union>" :
+                                  DT->basic->tag == symEnum ? "<unnamed enum>" : "<unnamed type>";
 
         char* qualified = typeQualifiersToStr(DT->qual, basicStr);
 
