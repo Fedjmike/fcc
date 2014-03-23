@@ -224,9 +224,8 @@ void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
 
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
-    errorAnalyzer(ctx, Node, "too $s $s$s given to $h: expected $d, given $d",
-                  expected > found ? "few" : "many",
-                  thing, expected == 1 ? "" : "s", where, expected, found);
+    errorAnalyzer(ctx, Node, "too $s $s given to $h: expected $d, given $d",
+                  expected > found ? "few" : "many", thing, where, expected, found);
 }
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
@@ -299,8 +298,8 @@ void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
 
 void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
     if (Node->symbol && Node->symbol->ident)
-        errorAnalyzer(ctx, Node, "illegal qualification of a $s, $n, as $h",
-                      typeIsArray(Node->dt) ? "array" : "function", Node->symbol, "const");
+        errorAnalyzer(ctx, Node, "illegal qualification of a$s, $n, as $h",
+                      typeIsArray(Node->dt) ? "n array" : " function", Node->symbol, "const");
 
     else
         errorAnalyzer(ctx, Node, "illegal qualification of a , $s, as $h",

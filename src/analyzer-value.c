@@ -503,7 +503,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
         /*Right number of params?*/
         if (fn->variadic ? fn->params > Node->children :
                            fn->params != Node->children)
-            errorDegree(ctx, Node, "parameter", fn->params, Node->children,
+            errorDegree(ctx, Node, "parameters", fn->params, Node->children,
                         Node->l->symbol ? Node->l->symbol->ident : "function");
 
         /*Do the parameter types match?*/
@@ -646,7 +646,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             ;
 
         else if (structSym->children != Node->children)
-            errorDegree(ctx, Node, "field", structSym->children, Node->children, structSym->ident);
+            errorDegree(ctx, Node, "fields", structSym->children, Node->children, structSym->ident);
 
         else {
             ast* current;
@@ -673,7 +673,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
     } else if (typeIsArray(DT)) {
         /*Allow as many inits as elements, but not more*/
         if (DT->array >= 0 && DT->array < Node->children)
-            errorDegree(ctx, Node, "element", DT->array, Node->children, "array");
+            errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
 
         for (ast* curNode = Node->firstChild;
              curNode;
@@ -699,7 +699,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
             ;
 
         else if (Node->children != 1)
-            errorDegree(ctx, Node, "element", 1, Node->children, "scalar");
+            errorDegree(ctx, Node, "elements", 1, Node->children, "scalar");
 
         else {
             const type* R = analyzerValue(ctx, Node->firstChild);
