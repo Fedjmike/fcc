@@ -493,7 +493,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 }
 
 /**
- * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
+ * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, tokenLocation loc, ast* atom) {
     (void) tag;

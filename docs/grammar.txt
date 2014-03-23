@@ -44,6 +44,6 @@ Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
+DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>
