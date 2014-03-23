@@ -20,10 +20,10 @@ void debugInit (FILE* log);
 
 debugMode debugSetMode (debugMode mode);
 
-void debugWait ();
+void debugWait (void);
 
 void debugEnter (const char* str);
-void debugLeave ();
+void debugLeave (void);
 void debugMsg (const char* format, ...);
 void debugVarMsg (const char* format, va_list args);
 void debugOut (const char* format, ...);
@@ -48,7 +48,7 @@ void report (const char* str);
 void reportType (const struct type* DT);
 void reportSymbol (const struct sym* Symbol);
 void reportNode (const struct ast* Node);
-void reportRegs ();
+void reportRegs (void);
 void reportOperand (const struct architecture* arch, const struct operand* R);
 
 extern int internalErrors;

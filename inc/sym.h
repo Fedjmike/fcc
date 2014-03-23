@@ -116,7 +116,7 @@ typedef struct sym {
  * @return the global namespace symbol
  * @see symEnd
  */
-sym* symInit ();
+sym* symInit (void);
 
 /**
  * Destroy a symbol table

@@ -54,8 +54,8 @@ typedef struct operand {
 extern const char *const conditions[];
 
 operand operandCreate (operandTag tag);
-operand operandCreateInvalid ();
-operand operandCreateVoid ();
+operand operandCreateInvalid (void);
+operand operandCreateVoid (void);
 operand operandCreateFlags (conditionTag cond);
 operand operandCreateReg (struct reg* r);
 operand operandCreateMem (struct reg* base, int offset, int size);
@@ -87,4 +87,4 @@ operand labelNamed (const char* name);
 
 const char* labelGet (operand label);
 
-void labelFreeAll ();
+void labelFreeAll (void);

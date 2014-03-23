@@ -56,7 +56,7 @@ type* typeCreateBasic (const struct sym* basic);
 type* typeCreatePtr (type* base);
 type* typeCreateArray (type* base, int size);
 type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool variadic);
-type* typeCreateInvalid ();
+type* typeCreateInvalid (void);
 
 void typeDestroy (type* DT);
 

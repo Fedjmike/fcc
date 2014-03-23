@@ -20,7 +20,7 @@ typedef struct config {
     vector/*<char*>*/ includeSearchPaths;
 } config;
 
-config configCreate ();
+config configCreate (void);
 void configDestroy (config conf);
 
 void optionsParse (config* conf, int argc, char** argv);

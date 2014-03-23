@@ -9,7 +9,7 @@
 #include "string.h"
 #include "stdio.h"
 
-static typeQualifiers typeQualifiersCreate ();
+static typeQualifiers typeQualifiersCreate (void);
 static type* typeCreate (typeTag tag);
 
 /**
