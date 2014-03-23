@@ -22,7 +22,7 @@ static ast* parserEnum (parserCtx* ctx);
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag);
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* atom);
+static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, tokenLocation loc, ast* atom);
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
@@ -463,14 +463,13 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
 static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclObject");
 
+    tokenLocation loc = ctx->location;
     ast* Node = parserDeclAtom(ctx, inDecl, tag);
 
     while (tokenIsPunct(ctx, punctLParen) || tokenIsPunct(ctx, punctLBracket)) {
-        tokenLocation loc = ctx->location;
-
         /*Function*/
         if (tokenIsPunct(ctx, punctLParen))
-            Node = parserDeclFunction(ctx, inDecl, tag, Node);
+            Node = parserDeclFunction(ctx, inDecl, tag, loc, Node);
 
         /*Array*/
         else if (tokenTryMatchPunct(ctx, punctLBracket)) {
@@ -496,14 +495,14 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 /**
  * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
  */
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, ast* atom) {
+static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, tokenLocation loc, ast* atom) {
     (void) tag, (void) inDecl;
 
     debugEnter("DeclFunction");
 
     tokenMatchPunct(ctx, punctLParen);
 
-    ast* Node = astCreateCall(ctx->location, atom);
+    ast* Node = astCreateCall(loc, atom);
     /*Propogate the declared symbol up the chain*/
     Node->symbol = atom->symbol;
     /*The proper param symbols are created just before the parsing of the body,
