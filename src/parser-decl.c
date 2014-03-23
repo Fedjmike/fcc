@@ -496,7 +496,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
  * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
  */
 static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, tokenLocation loc, ast* atom) {
-    (void) tag, (void) inDecl;
+    (void) tag;
 
     debugEnter("DeclFunction");
 
@@ -509,16 +509,38 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, symTag tag, tokenLo
       prototype params go in the bin, but exist for diagnostics*/
     sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
 
-    if (!tokenIsPunct(ctx, punctRParen)) do {
-        if (tokenIsPunct(ctx, punctEllipsis)) {
-            astAddChild(Node, astCreateEllipsis(ctx->location));
-            tokenMatch(ctx);
-            break;
+    if (!tokenIsPunct(ctx, punctRParen)) {
+        tokenLocation voidloc = ctx->location;
 
-        } else
-            astAddChild(Node, parserParam(ctx, inDecl));
+        bool end = false;
 
-    } while (tokenTryMatchPunct(ctx, punctComma));
+        /*Could be f(void), could be the beginning of a param decl*/
+        if (tokenTryMatchKeyword(ctx, keywordVoid)) {
+            if (!tokenIsPunct(ctx, punctRParen)) {
+                ast* basic = astCreateLiteralIdent(voidloc, strdup("void"));
+                ast* expr = parserDeclExpr(ctx, inDecl, symParam);
+                ast* param = astCreateParam(voidloc, basic, expr);
+                param->symbol = basic->symbol = symFind(ctx->scope, "void");
+                astAddChild(Node, param);
+
+                if (!tokenTryMatchPunct(ctx, punctComma))
+                    end = true;
+
+            } else
+                end = true;
+        }
+
+        if (!end) do {
+            if (tokenIsPunct(ctx, punctEllipsis)) {
+                astAddChild(Node, astCreateEllipsis(ctx->location));
+                tokenMatch(ctx);
+                break;
+
+            } else
+                astAddChild(Node, parserParam(ctx, inDecl));
+
+        } while (tokenTryMatchPunct(ctx, punctComma));
+    }
 
     tokenMatchPunct(ctx, punctRParen);
 
