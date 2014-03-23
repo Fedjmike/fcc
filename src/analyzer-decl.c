@@ -44,7 +44,8 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
          Current = Current->nextSibling) {
         const type* R = analyzerDeclNode(ctx, Current, BasicDT);
 
-        /*Complete? Avoid complaining about typedefs and the like (don't need to be)*/
+        /*Complete? Avoid complaining about typedefs and the like
+          (they don't need to be complete)*/
         if (   Current->symbol && Current->symbol->tag == symId
             && !typeIsComplete(R))
             errorIncompleteDecl(ctx, Current);

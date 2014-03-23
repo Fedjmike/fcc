@@ -163,6 +163,30 @@ static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qu
         return DT;
 }
 
+const sym* typeGetBasic (const type* DT) {
+    if (!DT)
+        return 0;
+
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeBasic ? DT->basic : 0;
+}
+
+const type* typeGetBase (const type* DT) {
+    if (!DT)
+        return 0;
+
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typePtr || DT->tag == typeArray ? DT->base : 0;
+}
+
+const type* typeGetReturn (const type* DT) {
+    if (!DT)
+        return 0;
+
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeFunction ? DT->returnType : 0;
+}
+
 const sym* typeGetRecord (const type* DT) {
     DT = typeTryThroughTypedef(DT);
 

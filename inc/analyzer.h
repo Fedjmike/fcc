@@ -18,12 +18,17 @@ typedef struct analyzerFnCtx {
 typedef struct analyzerCtx {
     ///An array of built-in types
     struct sym** types;
-    ///Architecture, used only for compile time evaluation of array
-    ///sizes and, in turn, enum constants
+    ///Architecture, used only for compile time evaluation of array sizes and,
+    ///in turn, enum constants
     const struct architecture* arch;
 
     ///Current function context
     analyzerFnCtx fnctx;
+
+    ///Incomplete types for which an incomplete decl or dereference error has
+    ///already been issued, and subsequent errors are to be suppressed
+    intset/*<const sym*>*/ incompleteDeclIgnore;
+    intset/*<const sym*>*/ incompletePtrIgnore;
 
     int errors;
     int warnings;

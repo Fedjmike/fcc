@@ -1,9 +1,13 @@
 struct ast;
 
-ast astCreate (ast, ast* x, ast const const y);
+ast astCreate
+	(ast,
+	 ast* x,
+	 ast const const y);
 
 int main () {
-	ast Node, *current;
+	ast Node,
+		*current;
 	Node.a;
 	Node->a;
 	current->a;
@@ -12,4 +16,5 @@ int main () {
 	return 0;
 }
 
-//9 errors expected, lines 3, 3, 3, 3, 6, 8, 9, 10, 11
+//5 errors expected, lines 3, 4, 6, 12, 13
+//4 elided on 6, 9, 14, 15

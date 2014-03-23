@@ -62,6 +62,9 @@ void typeDestroy (type* DT);
 
 type* typeDeepDuplicate (const type* DT);
 
+const struct sym* typeGetBasic (const type* DT);
+const type* typeGetBase (const type* DT);
+const type* typeGetReturn (const type* DT);
 const struct sym* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
 

@@ -28,12 +28,20 @@ static analyzerCtx* analyzerInit (sym** Types, const architecture* arch) {
     ctx->types = Types;
     ctx->arch = arch;
 
+    ctx->fnctx.fn = 0;
+    ctx->fnctx.returnType = 0;
+
+    intsetInit(&ctx->incompleteDeclIgnore, 17);
+    intsetInit(&ctx->incompletePtrIgnore, 17);
+
     ctx->errors = 0;
     ctx->warnings = 0;
     return ctx;
 }
 
 static void analyzerEnd (analyzerCtx* ctx) {
+    intsetFree(&ctx->incompleteDeclIgnore);
+    intsetFree(&ctx->incompletePtrIgnore);
     free(ctx);
 }
 
