@@ -490,12 +490,14 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
     /*Find a typeFunction, if possible*/
     const type* fn = typeGetCallable(L);
 
-    if (typeIsInvalid(L))
+    if (typeIsInvalid(L) || !fn) {
+        if (!typeIsInvalid(L))
+            errorTypeExpected(ctx, Node->l, "()", "function");
+
         Node->dt = typeCreateInvalid();
 
-    else if (!fn) {
-        errorTypeExpected(ctx, Node->l, "()", "function");
-        Node->dt = typeCreateInvalid();
+        for (ast* param = Node->firstChild; param; param = param->nextSibling)
+            analyzerValue(ctx, param);
 
     } else {
         Node->dt = fn->returnType;
