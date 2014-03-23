@@ -43,7 +43,7 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
         Tree = res.tree;
 
         if (res.notfound)
-            printf("error: File not found, '%s'\n", input);
+            printf("fcc: Input file '%s' doesn't exist\n", input);
     }
 
     /*Semantic analysis*/
@@ -56,10 +56,8 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
 
     /*Emit the assembly*/
 
-    if (errors == 0 && internalErrors == 0) {
-        debugWait();
+    if (errors == 0 && internalErrors == 0)
         emitter(Tree, output, &arch);
-    }
 
     /*Clean up*/
 

@@ -74,7 +74,7 @@ list_node* get_last (const list_node* first) {
 /**
  * Checks whether a node is the last element based on it and the previous
  */
-bool node_is_last (const list_node const * previous, const list_node* current) {
+bool node_is_last (const list_node const* previous, const list_node* current) {
     return (list_node*) current->xor_ptr == previous;
 }
 
@@ -183,6 +183,6 @@ int main () {
         printf("%d  ", current->item);
 
     puts("", 2);
-        
+	
     return 0;
 }

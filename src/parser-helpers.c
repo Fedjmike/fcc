@@ -15,10 +15,10 @@ static char* tokenTagGetStr (tokenTag Token);
 
 /*:::: SCOPE ::::*/
 
-sym* scopeSet (parserCtx* ctx, sym* Scope) {
-    sym* Old = ctx->scope;
-    ctx->scope = Scope;
-    return Old;
+sym* scopeSet (parserCtx* ctx, sym* scope) {
+    sym* old = ctx->scope;
+    ctx->scope = scope;
+    return old;
 }
 
 /*:::: TOKEN HANDLING ::::*/

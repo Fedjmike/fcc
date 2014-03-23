@@ -119,7 +119,7 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
 }
 
 static evalResult evalUOP (const architecture* arch, ast* Node) {
-    if (!strcmp(Node->o, "&") || !strcmp(Node->o, "*"))
+    if (   !strcmp(Node->o, "&") || !strcmp(Node->o, "*")
         || !strcmp(Node->o, "++") || !strcmp(Node->o, "--"))
         return (evalResult) {false, 0};
 

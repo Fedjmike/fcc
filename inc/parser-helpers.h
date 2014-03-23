@@ -5,7 +5,7 @@
 
 struct parserCtx;
 
-sym* scopeSet (struct parserCtx* ctx, sym* Scope);
+sym* scopeSet (struct parserCtx* ctx, sym* scope);
 
 /*::::*/
 

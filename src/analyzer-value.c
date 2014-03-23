@@ -329,7 +329,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
         /*Incomplete, won't find any fields*/
         if (!record->complete) {
-            /*Only error if it was a pointer, otherwise the true mistake
+            /*Only give an error if it was a pointer, otherwise the true mistake
               probably lies elsewhere and will already have errored*/
             if (typeIsPtr(L))
                 errorIncompletePtr(ctx, Node->l, Node->o);
@@ -510,24 +510,24 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
 
         /*Do the parameter types match?*/
         else {
-            ast* Current;
+            ast* param;
             int n;
 
             /*Traverse down the node list and params array at the same
               time, checking types*/
-            for (Current = Node->firstChild, n = 0;
-                 Current && n < fn->params;
-                 Current = Current->nextSibling, n++) {
-                const type* Param = analyzerValue(ctx, Current);
+            for (param = Node->firstChild, n = 0;
+                 param && n < fn->params;
+                 param = param->nextSibling, n++) {
+                const type* Param = analyzerValue(ctx, param);
 
                 if (!typeIsCompatible(Param, fn->paramTypes[n]))
-                    errorParamMismatch(ctx, Current, Node, n, fn->paramTypes[n], Param);
+                    errorParamMismatch(ctx, param, Node, n, fn->paramTypes[n], Param);
             }
 
             /*Analyze the rest of the given params even if there were
               fewer params in the prototype (as in a variadic fn).*/
-            for (; Current; Current = Current->nextSibling)
-                analyzerValue(ctx, Current);
+            for (; param; param = param->nextSibling)
+                analyzerValue(ctx, param);
         }
     }
 
@@ -677,22 +677,22 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
         if (DT->array >= 0 && DT->array < Node->children)
             errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
 
-        for (ast* curNode = Node->firstChild;
-             curNode;
-             curNode = curNode->nextSibling) {
-            const type* curValue;
+        for (ast* current = Node->firstChild;
+             current;
+             current = current->nextSibling) {
+            const type* value;
 
-            if (curNode->tag == astEmpty)
+            if (current->tag == astEmpty)
                 continue;
 
-            else if (curNode->tag == astLiteral && curNode->litTag == literalInit)
-                curValue = analyzerInitOrCompoundLiteral(ctx, curNode, DT->base, false);
+            else if (current->tag == astLiteral && current->litTag == literalInit)
+                value = analyzerInitOrCompoundLiteral(ctx, current, DT->base, false);
 
             else
-                curValue = analyzerValue(ctx, curNode);
+                value = analyzerValue(ctx, current);
 
-            if (!typeIsCompatible(curValue, DT->base))
-                errorTypeExpectedType(ctx, curNode, "array initialization", DT->base);
+            if (!typeIsCompatible(value, DT->base))
+                errorTypeExpectedType(ctx, current, "array initialization", DT->base);
         }
 
     /*Scalar*/

@@ -76,8 +76,7 @@ void debugOut (const char* format, ...) {
 }
 
 void debugVarOut (const char* format, va_list args) {
-    (void) args;
-    (void) format;
+    (void) args, (void) format;
 
     #ifdef FCC_DEBUGMODE
 
