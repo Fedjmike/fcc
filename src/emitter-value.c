@@ -407,10 +407,22 @@ static operand emitterTOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
+static operand emitterGetInReg (emitterCtx* ctx, operand src, int size) {
+    if (src.tag == operandReg)
+        return src;
+
+    operand dest = operandCreateReg(regAlloc(size));
+    asmMove(ctx->Asm, dest, src);
+    operandFree(src);
+    return dest;
+}
+
 static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
     debugEnter("Index");
 
     operand L, R, Value;
+
+    int size = typeGetSize(ctx->arch, Node->dt);
 
     /*Is it an array? Are we directly offsetting the address*/
     if (typeIsArray(Node->l->dt)) {
@@ -419,32 +431,62 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
         R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
+        /*Just a constant? Add to the offset*/
         if (R.tag == operandLiteral) {
             Value = L;
-            Value.offset += typeGetSize(ctx->arch, Node->l->dt->base) * R.literal;
+            Value.offset += size*R.literal;
 
-        } else if (R.tag == operandReg) {
+        /*Has an index but factor matches? Add to the index*/
+        } else if (L.index && L.factor == size) {
+            asmBOP(ctx->Asm, bopAdd, operandCreateReg(L.index), R);
+            operandFree(R);
             Value = L;
-            Value.index = R.base;
-            Value.factor = typeGetSize(ctx->arch, Node->l->dt->base);
 
         } else {
-            operand index = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->r->dt)));
-            asmMove(ctx->Asm, index, R);
-            operandFree(R);
+            R = emitterGetInReg(ctx, R, typeGetSize(ctx->arch, Node->r->dt));
 
-            Value = L;
-            Value.index = index.base;
-            Value.factor = typeGetSize(ctx->arch, Node->l->dt->base);
+            /*If L doesn't have an index, we can use it directly*/
+            if (!L.index) {
+                Value = L;
+                Value.tag = operandMem;
+
+            /*Evaluate the address, create use result as base of new operand*/
+            } else {
+                Value = operandCreateMem(regAlloc(ctx->arch->wordsize), 0, size);
+                asmEvalAddress(ctx->Asm, operandCreateReg(Value.base), L);
+                operandFree(L);
+            }
+
+            Value.index = R.base;
+
+            /*Use a convenient factor if the result too is an array*/
+            if (typeIsArray(Node->dt)) {
+                int baseSize = typeGetSize(ctx->arch, typeGetBase(Node->dt));
+
+                Value.factor =   baseSize == 1 || baseSize == 2 || baseSize == 4 || baseSize == 8
+                               ? baseSize : 1;
+
+            /*Or the size itself*/
+            } else if (size == 1 || size == 2 || size == 4 || size == 8)
+                Value.factor = size;
+
+            /*Just have to multiply it anyway*/
+            else
+                Value.factor = size % 4 == 0 ? size/4 : 1;
+
+            int multiplier = size/Value.factor;
+
+            if (multiplier != 1)
+                asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(multiplier));
         }
 
-        Value.size = typeGetSize(ctx->arch, Node->dt);
+        Value.size = size;
 
     /*Is it instead a pointer? Get value and offset*/
     } else /*if (typeIsPtr(Node->l->dt)*/ {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestReg);
-        asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(typeGetSize(ctx->arch, Node->l->dt->base)));
+        asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(size));
         asmLeave(ctx->Asm);
 
         L = emitterValue(ctx, Node->l, requestOperable);
@@ -452,7 +494,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
         asmBOP(ctx->Asm, bopAdd, R, L);
         operandFree(L);
 
-        Value = operandCreateMem(R.base, 0, typeGetSize(ctx->arch, Node->dt));
+        Value = operandCreateMem(R.base, 0, size);
     }
 
     debugLeave();
