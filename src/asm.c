@@ -32,11 +32,13 @@ void asmOutLn (asmCtx* ctx, char* format, ...) {
     for (int i = 0; i < 4*ctx->depth; i++)
         fputc(' ', ctx->file);
 
-    va_list args;
-    va_start(args, format);
-    debugVarMsg(format, args);
-    vfprintf(ctx->file, format, args);
-    va_end(args);
+    va_list args[2];
+    va_start(args[0], format);
+    va_copy(args[1], args[0]);
+    debugVarMsg(format, args[0]);
+    vfprintf(ctx->file, format, args[1]);
+    va_end(args[1]);
+    va_end(args[0]);
 
     fputc('\n', ctx->file);
     ctx->lineNo++;
