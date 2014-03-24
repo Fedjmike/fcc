@@ -139,66 +139,90 @@ int operandGetSize (const architecture* arch, operand Value) {
 }
 
 char* operandToStr (operand Value) {
-    char* ret = malloc(32);
-    ret[0] = 0;
-
     if (Value.tag == operandUndefined)
-        return strcpy(ret, "<undefined>");
+        return strdup("<undefined>");
 
     else if (Value.tag == operandInvalid)
-        return strcpy(ret, "<invalid>");
+        return strdup("<invalid>");
 
     else if (Value.tag == operandVoid)
-        return strcpy(ret, "<void>");
+        return strdup("<void>");
 
     else if (Value.tag == operandFlags)
-        strncpy(ret, conditions[Value.condition], 32);
+        return strdup(conditions[Value.condition]);
 
     else if (Value.tag == operandReg)
-        strncpy(ret, regToStr(Value.base), 32);
+        return strdup(regToStr(Value.base));
 
     else if (   Value.tag == operandMem || Value.tag == operandMemRef
              || Value.tag == operandLabelMem) {
-        const char* sizestr;
+        const char* sizeStr;
 
         if (Value.size == 1)
-            sizestr = "byte";
+            sizeStr = "byte";
         else if (Value.size == 2)
-            sizestr = "word";
+            sizeStr = "word";
         else if (Value.size == 4)
-            sizestr = "dword";
+            sizeStr = "dword";
         else if (Value.size == 8)
-            sizestr = "qword";
+            sizeStr = "qword";
         else if (Value.size == 16)
-            sizestr = "oword";
+            sizeStr = "oword";
         else
-            sizestr = "undefined";
+            sizeStr = "undefined";
 
-        if (Value.tag == operandLabelMem)
-            snprintf(ret, 32, "%s ptr [%s]", sizestr, labelGet(Value));
+        if (Value.tag == operandLabelMem) {
+            const char* label = labelGet(Value);
+            char* ret = malloc(  strlen(sizeStr)
+                               + strlen(label) + 9);
+            sprintf(ret, "%s ptr [%s]", sizeStr, label);
+            return ret;
 
-        else if (Value.index == regUndefined || Value.factor == 0)
-            if (Value.offset == 0)
-                snprintf(ret, 32, "%s ptr [%s]", sizestr, regToStr(Value.base));
+        } else if (Value.index == regUndefined || Value.factor == 0) {
+            if (Value.offset == 0) {
+                const char* regStr = regToStr(Value.base);
+                char* ret = malloc(  strlen(sizeStr)
+                                   + strlen(regStr) + 9);
+                sprintf(ret, "%s ptr [%s]", sizeStr, regStr);
+                return ret;
 
-            else
-                snprintf(ret, 32, "%s ptr [%s%+d]", sizestr, regToStr(Value.base), Value.offset);
+            } else {
+                const char* regStr = regToStr(Value.base);
+                char* ret = malloc(  strlen(sizeStr)
+                                   + strlen(regStr)
+                                   + logi(Value.offset, 10) + 2 + 9);
+                sprintf(ret, "%s ptr [%s%+d]", sizeStr, regStr, Value.offset);
+                return ret;
+            }
 
-        else
-            snprintf(ret, 32, "%s ptr [%s%+d*%s%+d]", sizestr, regToStr(Value.base),
-                                                            Value.factor, regToStr(Value.index),
-                                                            Value.offset);
+        } else {
+            const char* regStr = regToStr(Value.base);
+            const char* indexStr = regToStr(Value.index);
+            char* ret = malloc(  strlen(sizeStr)
+                               + strlen(regStr)
+                               + logi(Value.factor, 10) + 3
+                               + strlen(indexStr)
+                               + logi(Value.offset, 10) + 2 + 9);
+            sprintf(ret, "%s ptr [%s%+d*%s%+d]",
+                     sizeStr, regStr, Value.factor, indexStr, Value.offset);
+            return ret;
+        }
 
-    } else if (Value.tag == operandLiteral)
-        snprintf(ret, 32, "%d", Value.literal);
+    } else if (Value.tag == operandLiteral) {
+        char* ret = malloc(logi(Value.literal, 10)+3);
+        sprintf(ret, "%d", Value.literal);
+        return ret;
 
-    else if (Value.tag == operandLabel || Value.tag == operandLabelOffset)
-        snprintf(ret, 32, "offset %s", labelGet(Value));
+    } else if (Value.tag == operandLabel || Value.tag == operandLabelOffset) {
+        const char* label = labelGet(Value);
+        char* ret = malloc(strlen(label)+8);
+        sprintf(ret, "offset %s", label);
+        return ret;
 
-    else
+    } else {
         debugErrorUnhandled("operandToStr", "operand tag", operandTagGetStr(Value.tag));
-
-    return ret;
+        return strdup("<unhandled>");
+    }
 }
 
 const char* operandTagGetStr (operandTag tag) {
