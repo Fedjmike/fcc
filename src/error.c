@@ -96,7 +96,7 @@ static void verrorf (const char* format, va_list args) {
 
             /*AST node*/
             } else if (format[i+1] == 'a') {
-                const ast* Node = va_arg(args, sym*);
+                const ast* Node = va_arg(args, ast*);
 
                 if (Node->symbol && Node->symbol->ident)
                     errorf("$n", Node->symbol);
