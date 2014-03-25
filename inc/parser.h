@@ -31,6 +31,9 @@ typedef struct parserCtx {
 
     int errors;
     int warnings;
+
+    /*The last line that an error occurred on*/
+    int lastErrorLine;
 } parserCtx;
 
 typedef struct {

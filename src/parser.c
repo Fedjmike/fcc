@@ -31,7 +31,7 @@ static parserCtx parserInit (const char* filename, char* fullname, sym* global, 
                         fstripname(filename), fullname, fgetpath(fullname), searchPaths,
                         global,
                         0,
-                        0, 0};
+                        0, 0, 0};
 }
 
 static void parserEnd (parserCtx ctx) {

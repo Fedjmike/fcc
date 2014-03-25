@@ -136,6 +136,9 @@ static void verrorf (const char* format, va_list args) {
 }
 
 static void errorParser (parserCtx* ctx, const char* format, ...) {
+    if (ctx->location.line == ctx->lastErrorLine)
+        return;
+
     tokenLocationMsg(ctx->location);
     printf("%serror%s: ", consoleRed, consoleNormal);
 
@@ -147,6 +150,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
     putchar('\n');
 
     ctx->errors++;
+    ctx->lastErrorLine = ctx->location.line;
     debugWait();
 }
 
