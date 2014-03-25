@@ -1,3 +1,5 @@
+#include "hashmap.h"
+
 struct ast;
 struct sym;
 
