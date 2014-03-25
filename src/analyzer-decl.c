@@ -372,7 +372,9 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const 
             errorConflictingDeclarations(ctx, Node, Node->symbol, base);
 
         /*Even if types match, not allowed to be redeclared if a variable*/
-        else if (Node->symbol->tag == symId && !typeIsFunction(base))
+        else if (   Node->symbol->tag == symId && !typeIsFunction(base)
+                 && !(   Node->symbol->parent->tag == symStruct
+                      || Node->symbol->parent->tag == symUnion))
             errorRedeclared(ctx, Node, Node->symbol);
 
         reportSymbol(Node->symbol);
