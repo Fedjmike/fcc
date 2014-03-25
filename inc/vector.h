@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../std/std.h"
+
 typedef struct vector {
     int length, capacity;
     void** buffer;
