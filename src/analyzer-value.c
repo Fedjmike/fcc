@@ -500,7 +500,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
             analyzerValue(ctx, param);
 
     } else {
-        Node->dt = fn->returnType;
+        Node->dt = typeDeriveReturn(fn);
 
         /*Right number of params?*/
         if (fn->variadic ? fn->params > Node->children :
