@@ -146,7 +146,7 @@ void reportType (const type* DT) {
         /*String form*/
 
         if (!typeIsInvalid(DT)) {
-            char* Str = typeToStr(DT, "");
+            char* Str = typeToStr(DT);
             debugOut("str: %s   ", Str);
             free(Str);
         }
@@ -177,7 +177,7 @@ void reportSymbol (const sym* Symbol) {
     if (   (   Symbol->tag == symId
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
-        char* Str = typeToStr(Symbol->dt, "");
+        char* Str = typeToStr(Symbol->dt);
         debugOut("type: %s   ", Str);
         free(Str);
     }

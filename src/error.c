@@ -70,7 +70,7 @@ static void verrorf (const char* format, va_list args) {
 
             /*Raw type*/
             else if (format[i+1] == 't') {
-                char* typeStr = typeToStr(va_arg(args, type*), "");
+                char* typeStr = typeToStr(va_arg(args, type*));
                 printf("%s%s%s", colourType, typeStr, consoleNormal);
                 free(typeStr);
 
@@ -83,7 +83,7 @@ static void verrorf (const char* format, va_list args) {
                     if (Symbol->dt) {
                         char* identStr = malloc(strlen(colourIdent)+strlen(ident)+strlen(colourType)+1);
                         sprintf(identStr, "%s%s%s", colourIdent, ident, colourType);
-                        char* typeStr = typeToStr(Symbol->dt, identStr);
+                        char* typeStr = typeToStrEmbed(Symbol->dt, identStr);
                         printf("%s%s%s", colourType, typeStr, consoleNormal);
                         free(identStr);
                         free(typeStr);

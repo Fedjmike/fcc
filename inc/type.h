@@ -105,4 +105,6 @@ bool typeIsEqual (const type* L, const type* R);
 const char* typeTagGetStr (typeTag tag);
 
 int typeGetSize (const struct architecture* arch, const type* DT);
-char* typeToStr (const type* DT, const char* embedded);
+
+char* typeToStr (const type* DT);
+char* typeToStrEmbed (const type* DT, const char* embedded);

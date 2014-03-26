@@ -475,7 +475,11 @@ int typeGetSize (const architecture* arch, const type* DT) {
         return DT->basic->size;
 }
 
-char* typeToStr (const type* DT, const char* embedded) {
+char* typeToStr (const type* DT) {
+    return typeToStrEmbed(DT, "");
+}
+
+char* typeToStrEmbed (const type* DT, const char* embedded) {
     /*TODO: Jump through typedefs and offer akas
             Three modes: print as normal, print jumping through typedefs,
                          print both forms with akas at the correct positions
@@ -519,7 +523,7 @@ char* typeToStr (const type* DT, const char* embedded) {
 
             /*Get strings for all the params and count total string length*/
             for (int i = 0; i < DT->params; i++) {
-                paramStrs[i] = typeToStr(DT->paramTypes[i], "");
+                paramStrs[i] = typeToStr(DT->paramTypes[i]);
                 length += strlen(paramStrs[i])+2;
             }
 
@@ -563,7 +567,7 @@ char* typeToStr (const type* DT, const char* embedded) {
             sprintf(format, "%s(%s)", embedded, params);
 
         free(params);
-        char* ret = typeToStr(DT->returnType, format);
+        char* ret = typeToStrEmbed(DT->returnType, format);
         free(format);
         return ret;
 
@@ -595,7 +599,7 @@ char* typeToStr (const type* DT, const char* embedded) {
                 sprintf(format, "%s[%d]", embedded, DT->array);
         }
 
-        char* ret = typeToStr(DT->base, format);
+        char* ret = typeToStrEmbed(DT->base, format);
         free(format);
         return ret;
     }
