@@ -3,12 +3,19 @@
 #include "../std/std.h"
 
 #include "stdlib.h"
-#include "stdio.h"
+#include "string.h"
 
 vector* vectorInit (vector* v, int initialCapacity) {
     v->length = 0;
     v->capacity = initialCapacity;
     v->buffer = malloc(initialCapacity*sizeof(void*));
+    return v;
+}
+
+vector* vectorInitFromArray (vector* v, void** array, int length, int initialCapacity) {
+    vectorInit(v, initialCapacity);
+    memcpy(v->buffer, array, length*sizeof(void*));
+    v->length = length;
     return v;
 }
 
@@ -52,7 +59,7 @@ bool vectorSet (vector* v, int n, void* value) {
 }
 
 void vectorMap (vector* dest, vectorMapper f, vector* src) {
-    int upto = dest->length > src->length ? src->length : dest->length;
+    int upto = src->length > dest->capacity ? dest->capacity : src->length;
 
     for (int n = 0; n < upto; n++)
         dest->buffer[n] = f(src->buffer[n]);

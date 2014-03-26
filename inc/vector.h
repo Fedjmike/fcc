@@ -16,6 +16,14 @@ typedef void* (*vectorMapper)(void*); ///For use with vectorMap
 vector* vectorInit (vector* v, int initialCapacity);
 
 /**
+ * Initialize a vector from an array.
+ *
+ * initialCapacity must be greater than length.
+ * Won't modify array.
+ */
+vector* vectorInitFromArray (vector* v, void** array, int length, int initialCapacity);
+
+/**
  * Cleans up resources allocated by the vector but not the vector itself.
  */
 void vectorFree (vector* v);
