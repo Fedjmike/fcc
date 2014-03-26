@@ -123,6 +123,30 @@ bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }
 
+char* strjoin (char** strs, int n, const char* separator, void* (*allocator)(int)) {
+    if (n <= 0)
+        return calloc(1, sizeof(char));
+
+    /*Work out the eventual size*/
+
+    int seplen = strlen(separator),
+        firstlen = strlen(strs[0]),
+        length = firstlen + seplen*(n-1) + 1;
+
+    for (int i = 1; i < n; i++)
+        length += strlen(strs[i]);
+
+    /*Cat them together*/
+
+    char* joined = strcpy(allocator(length), strs[0]);
+    int charno = firstlen;
+
+    for (int i = 1; i < n; i++)
+        charno += sprintf(joined+charno, "%s%s", separator, strs[i]);
+
+    return joined;
+}
+
 int systemf (const char* format, ...) {
     int size = 128;
     char* command = malloc(size);

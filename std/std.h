@@ -6,7 +6,7 @@ char* strdup (const char* Str);
 
 /*Non standard (mine)*/
 
-//typedef enum {false = 0, true = 1} bool;
+typedef void* (*stdalloc)(int);
 
 /**
  * Modify a file names extension
@@ -27,6 +27,8 @@ char* fgetname (const char* fullname);
 char* fstripname (const char* fullname);
 
 bool strprefix (const char* str, const char* prefix);
+
+char* strjoin (char** strs, int n, const char* separator, void* (*allocator)(int));
 
 int systemf (const char* format, ...);
 
