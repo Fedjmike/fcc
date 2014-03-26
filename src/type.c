@@ -524,7 +524,11 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
             if (DT->variadic)
                 vectorPush(&paramStrs, "...");
 
-            params = strjoin((char**) paramStrs.buffer, paramStrs.length--, ", ", (stdalloc) malloc);
+            params = strjoin((char**) paramStrs.buffer, paramStrs.length, ", ", (stdalloc) malloc);
+
+            if (DT->variadic)
+                paramStrs.length--;
+
             vectorFreeObjs(&paramStrs, free);
 
         } else
