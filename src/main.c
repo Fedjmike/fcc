@@ -35,21 +35,8 @@ static bool driver (config conf) {
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
-        char* intermediates = 0; {
-            int length = 0;
-
-            for (int i = 0; i < conf.intermediates.length; i++)
-                length += 1+strlen((char*) vectorGet(&conf.intermediates, i));
-
-            intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
-            int charno = strlen(intermediates);
-
-            for (int i = 1; i < conf.intermediates.length; i++) {
-                char* current = vectorGet(&conf.intermediates, i);
-                sprintf(intermediates+charno, " %s", current);
-                charno += strlen(current)+1;
-            }
-        }
+        char* intermediates = strjoin((char**) conf.intermediates.buffer, conf.intermediates.length,
+                                      " ", (stdalloc) malloc);
 
         if (conf.mode == modeNoLink)
             fail |= (bool) systemf("gcc -c %s", intermediates);

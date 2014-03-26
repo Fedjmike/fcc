@@ -517,40 +517,15 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
         char* params = 0;
 
         if (DT->params != 0) {
-            int paramNo = DT->params + (DT->variadic ? 1 : 0);
-            char** paramStrs = calloc(paramNo, sizeof(char*));
-            int length = 1;
+            vector/*<char*>*/ paramStrs;
+            vectorInitFromArray(&paramStrs, (void**) DT->paramTypes, DT->params, DT->params+1);
+            vectorMap(&paramStrs, (vectorMapper) typeToStr, &paramStrs);
 
-            /*Get strings for all the params and count total string length*/
-            for (int i = 0; i < DT->params; i++) {
-                paramStrs[i] = typeToStr(DT->paramTypes[i]);
-                length += strlen(paramStrs[i])+2;
-            }
+            if (DT->variadic)
+                vectorPush(&paramStrs, "...");
 
-            if (DT->variadic) {
-                /*Won't free this one*/
-                paramStrs[DT->params] = "...";
-                length += 5;
-            }
-
-            /*Cat them together*/
-
-            params = malloc(length+1);
-
-            int charno = 0;
-
-            for (int i = 0; i < paramNo-1; i++) {
-                charno += sprintf(params+charno, "%s, ", paramStrs[i]);
-                free(paramStrs[i]);
-            }
-
-            /*Cat the final one, sans the delimiting comma*/
-            sprintf(params+charno, "%s", paramStrs[paramNo-1]);
-
-            if (!DT->variadic)
-                free(paramStrs[paramNo-1]);
-
-            free(paramStrs);
+            params = strjoin((char**) paramStrs.buffer, paramStrs.length--, ", ", (stdalloc) malloc);
+            vectorFreeObjs(&paramStrs, free);
 
         } else
             params = strdup("void");
