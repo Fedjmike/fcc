@@ -2,6 +2,7 @@
 
 struct reg;
 struct architecture;
+typedef enum opTag opTag;
 
 typedef enum {
     operandUndefined,
@@ -51,8 +52,6 @@ typedef struct operand {
     int label; 		/*Global label index*/
 } operand;
 
-extern const char *const conditions[];
-
 operand operandCreate (operandTag tag);
 operand operandCreateInvalid (void);
 operand operandCreateVoid (void);
@@ -75,7 +74,7 @@ const char* operandTagGetStr (operandTag tag);
 
 /* ::::CONDITIONS:::: */
 
-conditionTag conditionFromStr (char* cond);
+conditionTag conditionFromOp (opTag cond);
 
 conditionTag conditionNegate (conditionTag cond);
 

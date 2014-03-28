@@ -62,7 +62,7 @@ static void verrorf (const char* format, va_list args) {
 
             /*Operator*/
             else if (format[i+1] == 'o')
-                printf("%s%s%s", colourOp, va_arg(args, char*), consoleNormal);
+                printf("%s%s%s", colourOp, opTagGetStr(va_arg(args, opTag)), consoleNormal);
 
             /*Integer*/
             else if (format[i+1] == 'd')
@@ -210,18 +210,18 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 /*:::: ANALYZER ERRORS ::::*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
-    errorAnalyzer(ctx, Node, "$o requires $s, found $a", where, expected, Node);
+    errorAnalyzer(ctx, Node, "$h requires $s, found $a", where, expected, Node);
 }
 
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
     errorAnalyzer(ctx, Node, "$s requires $t, found $t", where, expected, Node->dt);
 }
 
-void errorLvalue (analyzerCtx* ctx, const ast* Node, const char* o) {
+void errorLvalue (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o requires lvalue", o);
 }
 
-void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
+void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "type mismatch between $t and $t for $o",
                   Node->l->dt, Node->r->dt, o);
 }
@@ -322,7 +322,7 @@ void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
     errorAnalyzer(ctx, Node, "compound literal without explicit type");
 }
 
-void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, const char* o) {
+void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o) {
     const sym* basic = typeGetBasic(typeGetBase(Node->dt));
 
     /*Only error once per incomplete type*/
@@ -368,6 +368,6 @@ void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* d
     errorAnalyzer(ctx, Node, "function $n declared with incomplete return type $t", Node->symbol, dt);
 }
 
-void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, const char* o) {
+void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }

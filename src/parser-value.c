@@ -65,11 +65,10 @@ static ast* parserComma (parserCtx* ctx) {
 
     ast* Node = parserAssign(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (tokenIsPunct(ctx, punctComma)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctComma) ? opComma : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserAssign(ctx));
-    }
 
     debugLeave();
 
@@ -84,14 +83,17 @@ static ast* parserAssign (parserCtx* ctx) {
 
     ast* Node = parserTernary(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    if  (   tokenIsPunct(ctx, punctAssign)
-         || tokenIsPunct(ctx, punctPlusAssign) || tokenIsPunct(ctx, punctMinusAssign)
-         || tokenIsPunct(ctx, punctTimesAssign) || tokenIsPunct(ctx, punctDivideAssign)
-         || tokenIsPunct(ctx, punctBitwiseOrAssign) || tokenIsPunct(ctx, punctBitwiseXorAssign)) {
-        char* o = tokenDupMatch(ctx);
+    if ((o = tokenTryMatchPunct(ctx, punctAssign) ? opAssign :
+             tokenTryMatchPunct(ctx, punctPlusAssign) ? opAddAssign :
+             tokenTryMatchPunct(ctx, punctMinusAssign) ? opSubtractAssign :
+             tokenTryMatchPunct(ctx, punctTimesAssign) ? opMultiplyAssign :
+             tokenTryMatchPunct(ctx, punctDivideAssign) ? opDivideAssign :
+             tokenTryMatchPunct(ctx, punctBitwiseAndAssign) ? opBitwiseAndAssign :
+             tokenTryMatchPunct(ctx, punctBitwiseOrAssign) ? opBitwiseOrAssign :
+             tokenTryMatchPunct(ctx, punctBitwiseXorAssign) ? opBitwiseXorAssign : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserAssign(ctx));
-    }
 
     debugLeave();
 
@@ -128,13 +130,14 @@ static ast* parserBool (parserCtx* ctx) {
 
     ast* Node = parserEquality(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (   tokenIsPunct(ctx, punctLogicalAnd) || tokenIsPunct(ctx, punctLogicalOr)
-           || tokenIsPunct(ctx, punctBitwiseAnd) || tokenIsPunct(ctx, punctBitwiseOr)
-           || tokenIsPunct(ctx, punctBitwiseXor)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctLogicalAnd) ? opLogicalAnd :
+                tokenTryMatchPunct(ctx, punctLogicalOr) ? opLogicalOr :
+                tokenTryMatchPunct(ctx, punctBitwiseAnd) ? opBitwiseAnd :
+                tokenTryMatchPunct(ctx, punctBitwiseOr) ? opBitwiseOr :
+                tokenTryMatchPunct(ctx, punctBitwiseXor) ? opBitwiseXor : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserEquality(ctx));
-    }
 
     debugLeave();
 
@@ -149,13 +152,15 @@ static ast* parserEquality (parserCtx* ctx) {
 
     ast* Node = parserShift(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (   tokenIsPunct(ctx, punctEqual) || tokenIsPunct(ctx, punctNotEqual)
-           || tokenIsPunct(ctx, punctGreater) || tokenIsPunct(ctx, punctGreaterEqual)
-           || tokenIsPunct(ctx, punctLess) || tokenIsPunct(ctx, punctLessEqual)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctEqual) ? opEqual :
+                tokenTryMatchPunct(ctx, punctNotEqual) ? opNotEqual :
+                tokenTryMatchPunct(ctx, punctGreater) ? opGreater :
+                tokenTryMatchPunct(ctx, punctGreaterEqual) ? opGreaterEqual :
+                tokenTryMatchPunct(ctx, punctLess) ? opLess :
+                tokenTryMatchPunct(ctx, punctLessEqual) ? opLessEqual : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserShift(ctx));
-    }
 
     debugLeave();
 
@@ -170,11 +175,11 @@ static ast* parserShift (parserCtx* ctx) {
 
     ast* Node = parserExpr(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (tokenIsPunct(ctx, punctShr) || tokenIsPunct(ctx, punctShl)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctShr) ? opShr :
+                tokenTryMatchPunct(ctx, punctShl) ? opShl : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserExpr(ctx));
-    }
 
     debugLeave();
 
@@ -189,11 +194,11 @@ static ast* parserExpr (parserCtx* ctx) {
 
     ast* Node = parserTerm(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (tokenIsPunct(ctx, punctPlus) || tokenIsPunct(ctx, punctMinus)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctPlus) ? opAdd :
+                tokenTryMatchPunct(ctx, punctMinus) ? opSubtract : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserTerm(ctx));
-    }
 
     debugLeave();
 
@@ -208,12 +213,12 @@ static ast* parserTerm (parserCtx* ctx) {
 
     ast* Node = parserUnary(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    while (   tokenIsPunct(ctx, punctTimes) || tokenIsPunct(ctx, punctDivide)
-           || tokenIsPunct(ctx, punctModulo)) {
-        char* o = tokenDupMatch(ctx);
+    while ((o = tokenTryMatchPunct(ctx, punctTimes) ? opMultiply :
+                tokenTryMatchPunct(ctx, punctDivide) ? opDivide :
+                tokenTryMatchPunct(ctx, punctModulo) ? opModulo : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserUnary(ctx));
-    }
 
     debugLeave();
 
@@ -221,23 +226,28 @@ static ast* parserTerm (parserCtx* ctx) {
 }
 
 /**
- * Unary = ( "!" | "~" | "-" | "*" | "&" | "++" | "--" Unary ) | PostUnary
+ * Unary = ( "!" | "~" | "+" | "-" | "*" | "&" | "++" | "--" Unary ) | PostUnary
  */
 static ast* parserUnary (parserCtx* ctx) {
     debugEnter("Unary");
 
     ast* Node = 0;
     tokenLocation loc = ctx->location;
+    opTag o;
 
-    if (   tokenIsPunct(ctx, punctLogicalNot) || tokenIsPunct(ctx, punctBitwiseNot)
-        || tokenIsPunct(ctx, punctMinus)
-        || tokenIsPunct(ctx, punctTimes) || tokenIsPunct(ctx, punctBitwiseAnd)) {
-        char* o = tokenDupMatch(ctx);
+    if ((o = tokenTryMatchPunct(ctx, punctLogicalNot) ? opLogicalNot :
+             tokenTryMatchPunct(ctx, punctBitwiseNot) ? opBitwiseNot :
+             tokenTryMatchPunct(ctx, punctPlus) ? opUnaryPlus :
+             tokenTryMatchPunct(ctx, punctMinus) ? opNegate :
+             tokenTryMatchPunct(ctx, punctTimes) ? opDeref :
+             tokenTryMatchPunct(ctx, punctBitwiseAnd) ? opAddressOf :
+             tokenTryMatchPunct(ctx, punctPlusPlus) ? opPreIncrement :
+             tokenTryMatchPunct(ctx, punctMinusMinus) ? opPreDecrement : opUndefined))
         Node = astCreateUOP(loc, o, parserUnary(ctx));
 
-    } else
+    else
         /*Interestingly, this call to parserObject parses itself*/
-        Node = parserObject(ctx);
+        Node = parserPostUnary(ctx);
 
     debugLeave();
 
@@ -252,9 +262,11 @@ static ast* parserPostUnary (parserCtx* ctx) {
 
     ast* Node = parserObject(ctx);
     tokenLocation loc = ctx->location;
-    
-    while (tokenIsPunct(ctx, punctPlusPlus) || tokenIsPunct(ctx, punctMinusMinus))
-        Node = astCreateUOP(ctx->location, tokenDupMatch(ctx), Node);
+    opTag o;
+
+    while ((o = tokenTryMatchPunct(ctx, punctPlusPlus) ? opPostIncrement :
+                tokenTryMatchPunct(ctx, punctMinusMinus) ? opPostDecrement : opUndefined))
+        Node = astCreateUOP(loc, o, Node);
 
     debugLeave();
 
@@ -271,6 +283,7 @@ static ast* parserObject (parserCtx* ctx) {
 
     ast* Node = parserFactor(ctx);
     tokenLocation loc = ctx->location;
+    opTag o;
 
     while (true) {
         /*Array or pointer indexing*/
@@ -290,9 +303,8 @@ static ast* parserObject (parserCtx* ctx) {
             tokenMatchPunct(ctx, punctRParen);
 
         /*struct[*] member access*/
-        } else if (tokenIsPunct(ctx, punctPeriod) || tokenIsPunct(ctx, punctArrow)) {
-            tokenLocation loc = ctx->location;
-            char* o = tokenDupMatch(ctx);
+        } else if ((o = tokenTryMatchPunct(ctx, punctPeriod) ? opMember :
+                        tokenTryMatchPunct(ctx, punctArrow) ? opMemberDeref : opUndefined)) {
             ast* field = astCreateLiteral(loc, literalIdent);
             Node = astCreateBOP(loc, Node, o, field);
             field->literal = (void*) strdup(ctx->lexer->buffer);

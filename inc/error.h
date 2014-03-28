@@ -18,8 +18,8 @@ void errorTypeExpected (struct analyzerCtx* ctx, const struct ast* Node,
                         const char* where, const char* expected);
 void errorTypeExpectedType (struct analyzerCtx* ctx, const struct ast* Node,
                             const char* where, const struct type* expected);
-void errorLvalue (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
-void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
+void errorLvalue (struct analyzerCtx* ctx, const struct ast* Node, opTag o);
+void errorMismatch (struct analyzerCtx* ctx, const struct ast* Node, opTag o);
 void errorDegree (struct analyzerCtx* ctx, const struct ast* Node,
                   const char* thing, int expected, int found, const char* where);
 void errorMember (struct analyzerCtx* ctx, const struct ast* Node, const char* field);
@@ -37,8 +37,8 @@ void errorIllegalSymAsValue (struct analyzerCtx* ctx, const struct ast* Node, co
 void errorCompileTimeKnown (struct analyzerCtx* ctx, const struct ast* Node,
                             const sym* Symbol, const char* what);
 void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node);
-void errorIncompletePtr (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
+void errorIncompletePtr (struct analyzerCtx* ctx, const struct ast* Node, opTag o);
 void errorIncompleteDecl (struct analyzerCtx* ctx, const struct ast* Node);
 void errorIncompleteParamDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct ast* fn, int n);
 void errorIncompleteReturnDecl (struct analyzerCtx* ctx, const struct ast* Node, const struct type* dt);
-void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, const char* o);
+void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, opTag o);

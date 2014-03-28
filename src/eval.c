@@ -51,22 +51,16 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     evalResult L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
-    if (   !strcmp(Node->o, "=")
-        || !strcmp(Node->o, "+=") || !strcmp(Node->o, "-=")
-        || !strcmp(Node->o, "*=") || !strcmp(Node->o, "/=")
-        || !strcmp(Node->o, "%=")
-        || !strcmp(Node->o, "&=") || !strcmp(Node->o, "|=")
-        || !strcmp(Node->o, "^=")
-        || !strcmp(Node->o, "<<=") || !strcmp(Node->o, ">>="))
+    if (opIsAssignment(Node->o))
         return (evalResult) {false, 0};
 
-    else if (!strcmp(Node->o, ","))
+    else if (Node->o == opComma)
         return (evalResult) {L.known && R.known, R.value};
 
-    else if (!strcmp(Node->o, "->") || !strcmp(Node->o, "."))
+    else if (opIsMember(Node->o))
         return R;
 
-    else if (!strcmp(Node->o, "&&")) {
+    else if (Node->o == opLogicalAnd) {
         /*Both known*/
         if (L.known && R.known)
             return (evalResult) {true, L.value && R.value};
@@ -78,7 +72,7 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
         else
             return (evalResult) {false, 0};
 
-    } else if (!strcmp(Node->o, "||")) {
+    } else if (Node->o == opLogicalOr) {
         /*Both known*/
         if (L.known && R.known)
             return (evalResult) {true, L.value && R.value};
@@ -93,24 +87,24 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     } else {
         int result;
 
-        if (!strcmp(Node->o, "&")) result = L.value & R.value;
-        else if (!strcmp(Node->o, "|")) result = L.value | R.value;
-        else if (!strcmp(Node->o, "^")) result = L.value ^ R.value;
-        else if (!strcmp(Node->o, "==")) result = L.value == R.value;
-        else if (!strcmp(Node->o, "!=")) result = L.value != R.value;
-        else if (!strcmp(Node->o, ">")) result = L.value > R.value;
-        else if (!strcmp(Node->o, ">=")) result = L.value >= R.value;
-        else if (!strcmp(Node->o, "<")) result = L.value < R.value;
-        else if (!strcmp(Node->o, "<=")) result = L.value <= R.value;
-        else if (!strcmp(Node->o, ">>")) result = L.value >> R.value;
-        else if (!strcmp(Node->o, "<<")) result = L.value << R.value;
-        else if (!strcmp(Node->o, "+")) result = L.value + R.value;
-        else if (!strcmp(Node->o, "-")) result = L.value - R.value;
-        else if (!strcmp(Node->o, "*")) result = L.value * R.value;
-        else if (!strcmp(Node->o, "/")) result = L.value / R.value;
-        else if (!strcmp(Node->o, "%")) result = L.value % R.value;
+        if (Node->o == opBitwiseAnd) result = L.value & R.value;
+        else if (Node->o == opBitwiseOr) result = L.value | R.value;
+        else if (Node->o == opBitwiseXor) result = L.value ^ R.value;
+        else if (Node->o == opEqual) result = (int)(L.value == R.value);
+        else if (Node->o == opNotEqual) result = (int)(L.value != R.value);
+        else if (Node->o == opGreater) result = (int)(L.value > R.value);
+        else if (Node->o == opGreaterEqual) result = (int)(L.value >= R.value);
+        else if (Node->o == opLess) result = (int)(L.value < R.value);
+        else if (Node->o == opLessEqual) result = (int)(L.value <= R.value);
+        else if (Node->o == opShr) result = L.value >> R.value;
+        else if (Node->o == opShl) result = L.value << R.value;
+        else if (Node->o == opAdd) result = L.value + R.value;
+        else if (Node->o == opSubtract) result = L.value - R.value;
+        else if (Node->o == opMultiply) result = L.value * R.value;
+        else if (Node->o == opDivide) result = L.value / R.value;
+        else if (Node->o == opModulo) result = L.value % R.value;
         else {
-            debugErrorUnhandled("evalBOP", "operator", Node->o);
+            debugErrorUnhandled("evalBOP", "operator", opTagGetStr(Node->o));
             return (evalResult) {false, 0};
         }
 
@@ -119,19 +113,20 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
 }
 
 static evalResult evalUOP (const architecture* arch, ast* Node) {
-    if (   !strcmp(Node->o, "&") || !strcmp(Node->o, "*")
-        || !strcmp(Node->o, "++") || !strcmp(Node->o, "--"))
+    if (Node->o == opAddressOf || Node->o == opDeref
+        || Node->o == opPostIncrement || Node->o == opPostDecrement
+        || Node->o == opPreIncrement || Node->o == opPreDecrement)
         return (evalResult) {false, 0};
 
     else {
         evalResult R = eval(arch, Node->r);
         int result;
 
-        if (!strcmp(Node->o, "!")) result = !R.value;
-        else if (!strcmp(Node->o, "~")) result = ~R.value;
-        else if (!strcmp(Node->o, "-")) result = -R.value;
+        if (Node->o == opLogicalNot) result = (int) !R.value;
+        else if (Node->o == opBitwiseNot) result = ~R.value;
+        else if (Node->o == opUnaryPlus) result = R.value;
         else {
-            debugErrorUnhandled("evalUOP", "operator", Node->o);
+            debugErrorUnhandled("evalUOP", "operator", opTagGetStr(Node->o));
             return (evalResult) {false, 0};
         }
 
@@ -189,7 +184,7 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
         return (evalResult) {false, 0};
 
     else {
-        debugErrorUnhandled("evalLiteral", "literal tag", Node->o);
+        debugErrorUnhandled("evalLiteral", "literal tag", opTagGetStr(Node->o));
         return (evalResult) {false, 0};
     }
 }

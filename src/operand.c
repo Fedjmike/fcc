@@ -5,6 +5,7 @@
 #include "stdio.h"
 
 #include "../inc/debug.h"
+#include "../inc/ast.h"
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
@@ -249,13 +250,13 @@ const char* operandTagGetStr (operandTag tag) {
 
 /* ::::CONDITIONS:::: */
 
-conditionTag conditionFromStr (char* cond) {
-    if (!strcmp(cond, "==")) return conditionEqual;
-    else if (!strcmp(cond, "!=")) return conditionNotEqual;
-    else if (!strcmp(cond, ">")) return conditionGreater;
-    else if (!strcmp(cond, ">=")) return conditionGreaterEqual;
-    else if (!strcmp(cond, "<")) return conditionLess;
-    else if (!strcmp(cond, "<=")) return conditionLessEqual;
+conditionTag conditionFromOp (opTag cond) {
+    if (cond == opEqual) return conditionEqual;
+    else if (cond == opNotEqual) return conditionNotEqual;
+    else if (cond == opGreater) return conditionGreater;
+    else if (cond == opGreaterEqual) return conditionGreaterEqual;
+    else if (cond == opLess) return conditionLess;
+    else if (cond == opLessEqual) return conditionLessEqual;
     else return conditionUndefined;
 }
 

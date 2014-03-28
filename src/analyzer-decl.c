@@ -12,7 +12,6 @@
 #include "../inc/analyzer-value.h"
 
 #include "stdlib.h"
-#include "string.h"
 
 static void analyzerParam (analyzerCtx* ctx, ast* Node);
 
@@ -152,7 +151,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
+        if (Current->tag == astBOP && Current->o == opAssign) {
             analyzerValue(ctx, Current->r);
             evalResult constant = eval(ctx->arch, Current->r);
 
@@ -185,11 +184,11 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         return Node->dt = typeDeepDuplicate(base);
 
     else if (Node->tag == astBOP) {
-        if (!strcmp(Node->o, "="))
+        if (Node->o == opAssign)
             return analyzerDeclAssignBOP(ctx, Node, base);
 
         else {
-            debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
             Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
@@ -198,11 +197,11 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         return analyzerConst(ctx, Node, base);
 
     else if (Node->tag == astUOP) {
-        if (!strcmp(Node->o, "*"))
+        if (Node->o == opDeref)
             return analyzerDeclPtrUOP(ctx, Node, base);
 
         else {
-            debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
+            debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
             Node->symbol->dt = typeCreateInvalid();
             return Node->dt = typeCreateInvalid();
         }
@@ -243,7 +242,7 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
         const type* R = analyzerValue(ctx, Node->r);
 
         if (!typeIsAssignment(L))
-            errorTypeExpected(ctx, Node->l, Node->o, "assignable type");
+            errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "assignable type");
 
         else if (!typeIsCompatible(R, L))
             errorInitMismatch(ctx, Node->l, Node->r);

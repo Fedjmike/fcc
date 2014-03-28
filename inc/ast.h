@@ -20,6 +20,24 @@ typedef enum {
     astEllipsis
 } astTag;
 
+typedef enum opTag {
+    opUndefined,
+    opComma,
+    opAssign,
+    opBitwiseAndAssign, opBitwiseOrAssign, opBitwiseXorAssign,
+    opTernary,
+    opShrAssign, opShlAssign,
+    opAddAssign, opSubtractAssign, opMultiplyAssign, opDivideAssign, opModuloAssign,
+    opLogicalAnd, opLogicalOr, opBitwiseAnd, opBitwiseOr, opBitwiseXor,
+    opEqual, opNotEqual, opGreater, opGreaterEqual, opLess, opLessEqual,
+    opShr, opShl,
+    opAdd, opSubtract, opMultiply, opDivide, opModulo,
+    opLogicalNot, opBitwiseNot, opUnaryPlus, opNegate, opDeref, opAddressOf,
+    opIndex,
+    opPreIncrement, opPreDecrement, opPostIncrement, opPostDecrement,
+    opMember, opMemberDeref
+} opTag;
+
 typedef enum {
     literalUndefined,
     literalIdent,
@@ -98,3 +116,32 @@ bool astIsValueTag (astTag tag);
 const char* astTagGetStr (astTag tag);
 
 const char* literalTagGetStr (literalTag tag);
+
+/**
+ * Returns whether the (binary) operator is one that can only act on
+ * numeric types (e.g. int, char, not bool, not x*)
+ */
+bool opIsNumeric (opTag o);
+
+bool opIsBitwise (opTag o);
+
+/**
+ * Is it an ordinal operator (defines an ordering...)?
+ */
+bool opIsOrdinal (opTag o);
+
+bool opIsEquality (opTag o);
+bool opIsAssignment (opTag o);
+bool opIsLogical (opTag o);
+
+/**
+ * Does this operator access struct/union members of its LHS?
+ */
+bool opIsMember (opTag o);
+
+/**
+ * Does it dereference its LHS?
+ */
+bool opIsDeref (opTag o);
+
+const char* opTagGetStr (opTag tag);

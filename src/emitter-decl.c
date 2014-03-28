@@ -14,8 +14,6 @@
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
-#include "string.h"
-
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
@@ -116,21 +114,21 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
         ;
 
     else if (Node->tag == astBOP) {
-        if (!strcmp(Node->o, "="))
+        if (Node->o == opAssign)
             emitterDeclAssignBOP(ctx, Node);
 
         else
-            debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
+            debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else  if (Node->tag == astConst)
         emitterDeclNode(ctx, Node->r);
 
     else if (Node->tag == astUOP) {
-        if (!strcmp(Node->o, "*"))
+        if (Node->o == opDeref)
             emitterDeclNode(ctx, Node->r);
 
         else
-            debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
+            debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astCall)
         /*Nothing to do with the params*/

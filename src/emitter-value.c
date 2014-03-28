@@ -14,7 +14,6 @@
 
 #include "../inc/emitter.h"
 
-#include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
 
@@ -38,15 +37,10 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
     /*Calculate the value*/
 
     if (Node->tag == astBOP) {
-        if (   !strcmp(Node->o, "=")
-            || !strcmp(Node->o, "+=") || !strcmp(Node->o, "-=")
-            || !strcmp(Node->o, "*=")
-            || !strcmp(Node->o, "&=") || !strcmp(Node->o, "|=")
-            || !strcmp(Node->o, "^=")
-            || !strcmp(Node->o, ">>=") || !strcmp(Node->o, "<<="))
+        if (opIsAssignment(Node->o))
             Value = emitterAssignmentBOP(ctx, Node);
 
-        else if (!strcmp(Node->o, "&&") || !strcmp(Node->o, "||"))
+        else if (opIsLogical(Node->o))
             Value = emitterLogicalBOP(ctx, Node);
 
         else
@@ -168,7 +162,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 
     operand L, R, Value;
 
-    if (!strcmp(Node->o, ".")) {
+    if (Node->o == opMember) {
         asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, requestMem);
         asmLeave(ctx->Asm);
@@ -176,7 +170,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         Value.offset += Node->symbol->offset;
         Value.size = typeGetSize(ctx->arch, Node->symbol->dt);
 
-    } else if (!strcmp(Node->o, "->")) {
+    } else if (Node->o == opMemberDeref) {
         asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestReg);
         asmLeave(ctx->Asm);
@@ -185,23 +179,18 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->dt));
 
-    } else if (   !strcmp(Node->o, "==")
-               || !strcmp(Node->o, "!=")
-               || !strcmp(Node->o, "<")
-               || !strcmp(Node->o, "<=")
-               || !strcmp(Node->o, ">" )
-               || !strcmp(Node->o, ">=")) {
+    } else if (opIsEquality(Node->o) || opIsOrdinal(Node->o)) {
         asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestOperable);
         R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
-        Value = operandCreateFlags(conditionNegate(conditionFromStr(Node->o)));
+        Value = operandCreateFlags(conditionNegate(conditionFromOp(Node->o)));
         asmCompare(ctx->Asm, L, R);
         operandFree(L);
         operandFree(R);
 
-    } else if (!strcmp(Node->o, ",")) {
+    } else if (Node->o == opComma) {
         asmEnter(ctx->Asm);
         operandFree(emitterValue(ctx, Node->l, requestAny));
         Value = R = emitterValue(ctx, Node->r, requestAny);
@@ -213,20 +202,20 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         R = emitterValue(ctx, Node->r, requestOperable);
         asmLeave(ctx->Asm);
 
-        boperation bop = !strcmp(Node->o, "+") ? bopAdd :
-                         !strcmp(Node->o, "-") ? bopSub :
-                         !strcmp(Node->o, "*") ? bopMul :
-                         !strcmp(Node->o, "&") ? bopBitAnd :
-                         !strcmp(Node->o, "|") ? bopBitOr :
-                         !strcmp(Node->o, "^") ? bopBitXor :
-                         !strcmp(Node->o, ">>") ? bopShR :
-                         !strcmp(Node->o, "<<") ? bopShL : bopUndefined;
+        boperation bop = Node->o == opAdd ? bopAdd :
+                         Node->o == opSubtract ? bopSub :
+                         Node->o == opMultiply ? bopMul :
+                         Node->o == opBitwiseAnd ? bopBitAnd :
+                         Node->o == opBitwiseOr ? bopBitOr :
+                         Node->o == opBitwiseXor ? bopBitXor :
+                         Node->o == opShr ? bopShR :
+                         Node->o == opShl ? bopShL : bopUndefined;
 
         if (bop)
             asmBOP(ctx->Asm, bop, L, R);
 
         else
-            debugErrorUnhandled("emitterBOP", "operator", Node->o);
+            debugErrorUnhandled("emitterBOP", "operator", opTagGetStr(Node->o));
 
         operandFree(R);
     }
@@ -244,16 +233,16 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
                    L = emitterValue(ctx, Node->l, requestMem);
     asmLeave(ctx->Asm);
 
-    boperation bop = !strcmp(Node->o, "+=") ? bopAdd :
-                     !strcmp(Node->o, "-=") ? bopSub :
-                     !strcmp(Node->o, "*=") ? bopMul :
-                     !strcmp(Node->o, "&=") ? bopBitAnd :
-                     !strcmp(Node->o, "|=") ? bopBitOr :
-                     !strcmp(Node->o, "^=") ? bopBitXor :
-                     !strcmp(Node->o, ">>=") ? bopShR :
-                     !strcmp(Node->o, "<<=") ? bopShL : bopUndefined;
+    boperation bop = Node->o == opAddAssign ? bopAdd :
+                     Node->o == opSubtractAssign ? bopSub :
+                     Node->o == opMultiplyAssign ? bopMul :
+                     Node->o == opBitwiseAndAssign ? bopBitAnd :
+                     Node->o == opBitwiseOrAssign ? bopBitOr :
+                     Node->o == opBitwiseXorAssign ? bopBitXor :
+                     Node->o == opShrAssign ? bopShR :
+                     Node->o == opShlAssign ? bopShL : bopUndefined;
 
-    if (!strcmp(Node->o, "=")) {
+    if (Node->o == opAssign) {
         Value = R;
         asmMove(ctx->Asm, L, R);
         operandFree(L);
@@ -264,7 +253,7 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
         operandFree(R);
 
     } else
-        debugErrorUnhandled("emitterAssignmentBOP", "operator", Node->o);
+        debugErrorUnhandled("emitterAssignmentBOP", "operator", opTagGetStr(Node->o));
 
     debugLeave();
 
@@ -284,11 +273,11 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
 
     /*Set up the short circuit value*/
     operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-    asmMove(ctx->Asm, Value, operandCreateLiteral(!strcmp(Node->o, "&&") ? 0 : 1));
+    asmMove(ctx->Asm, Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
 
     /*Check initial condition*/
 
-    if (!strcmp(Node->o, "||"))
+    if (Node->o == opLogicalOr)
         L.condition = conditionNegate(L.condition);
 
     asmBranch(ctx->Asm, L, ShortLabel);
@@ -298,10 +287,10 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     operand R = emitterValue(ctx, Node->r, requestFlags);
     asmLeave(ctx->Asm);
 
-    if (!strcmp(Node->o, "&&"))
+    if (Node->o == opLogicalAnd)
         R.condition = conditionNegate(R.condition);
 
-    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(!strcmp(Node->o, "||") ? 0 : 1));
+    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
     asmLabel(ctx->Asm, ShortLabel);
 
     debugLeave();
@@ -314,8 +303,8 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     operand R, Value;
 
-    if (   !strcmp(Node->o, "++")
-        || !strcmp(Node->o, "--")) {
+    /*Post ops, save a copy before inc/dec*/
+    if (Node->o == opPostIncrement || Node->o == opPostDecrement) {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestMem);
         asmLeave(ctx->Asm);
@@ -323,36 +312,35 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
         asmMove(ctx->Asm, Value, R);
 
-        if (!strcmp(Node->o, "++"))
+        if (Node->o == opPostIncrement)
             asmUOP(ctx->Asm, uopInc, R);
 
-        else /*if (!strcmp(Node->o, "--"))*/
+        else /*if (Node->o == opPostDecrement)*/
             asmUOP(ctx->Asm, uopDec, R);
 
         operandFree(R);
 
-    } else if (   !strcmp(Node->o, "-")
-               || !strcmp(Node->o, "~")
-               || !strcmp(Node->o, "!")) {
+    } else if (   Node->o == opNegate
+               || Node->o == opBitwiseNot || Node->o == opLogicalNot) {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestReg);
         asmLeave(ctx->Asm);
 
-        if (!strcmp(Node->o, "!")) {
+        if (Node->o == opLogicalNot) {
             asmCompare(ctx->Asm, R, operandCreateLiteral(0));
             Value = operandCreateFlags(conditionNotEqual);
             operandFree(R);
 
         } else {
-            asmUOP(ctx->Asm, !strcmp(Node->o, "-") ? uopNeg : uopBitwiseNot, R);
+            asmUOP(ctx->Asm, Node->o == opNegate ? uopNeg : uopBitwiseNot, R);
             Value = R;
         }
 
-    } else if (!strcmp(Node->o, "*")) {
+    } else if (Node->o == opDeref) {
         operand Ptr = emitterValue(ctx, Node->r, requestReg);
         Value = operandCreateMem(Ptr.base, 0, typeGetSize(ctx->arch, Node->dt));
 
-    } else if (!strcmp(Node->o, "&")) {
+    } else if (Node->o == opAddressOf) {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestMem);
         asmLeave(ctx->Asm);
@@ -363,7 +351,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         operandFree(R);
 
     } else {
-        debugErrorUnhandled("emitterUOP", "operator", Node->o);
+        debugErrorUnhandled("emitterUOP", "operator", opTagGetStr(Node->o));
         Value = operandCreateInvalid();
     }
 
