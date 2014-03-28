@@ -56,8 +56,6 @@ void compilerEnd (compilerCtx* ctx) {
     free(ctx->types);
 }
 
-    int errors = 0, warnings = 0;
-
 void compiler (compilerCtx* ctx, const char* input, const char* output) {
     /*Parse the module*/
 
