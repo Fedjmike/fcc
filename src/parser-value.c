@@ -63,10 +63,11 @@ static ast* parserComma (parserCtx* ctx) {
     debugEnter("Comma");
 
     ast* Node = parserAssign(ctx);
+    tokenLocation loc = ctx->location;
 
     while (tokenIsPunct(ctx, punctComma)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserAssign(ctx));
+        Node = astCreateBOP(loc, Node, o, parserAssign(ctx));
     }
 
     debugLeave();
@@ -81,13 +82,14 @@ static ast* parserAssign (parserCtx* ctx) {
     debugEnter("Assign");
 
     ast* Node = parserTernary(ctx);
+    tokenLocation loc = ctx->location;
 
     if  (   tokenIsPunct(ctx, punctAssign)
          || tokenIsPunct(ctx, punctPlusAssign) || tokenIsPunct(ctx, punctMinusAssign)
          || tokenIsPunct(ctx, punctTimesAssign) || tokenIsPunct(ctx, punctDivideAssign)
          || tokenIsPunct(ctx, punctBitwiseOrAssign) || tokenIsPunct(ctx, punctBitwiseXorAssign)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserAssign(ctx));
+        Node = astCreateBOP(loc, Node, o, parserAssign(ctx));
     }
 
     debugLeave();
@@ -102,13 +104,14 @@ static ast* parserTernary (parserCtx* ctx) {
     debugEnter("Ternary");
 
     ast* Node = parserBool(ctx);
+    tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctQuestion)) {
         ast* l = parserValue(ctx);
         tokenMatchPunct(ctx, punctColon);
         ast* r = parserTernary(ctx);
 
-        Node = astCreateTOP(ctx->location, Node, l, r);
+        Node = astCreateTOP(loc, Node, l, r);
     }
 
     debugLeave();
@@ -123,12 +126,13 @@ static ast* parserBool (parserCtx* ctx) {
     debugEnter("Bool");
 
     ast* Node = parserEquality(ctx);
+    tokenLocation loc = ctx->location;
 
     while (   tokenIsPunct(ctx, punctLogicalAnd) || tokenIsPunct(ctx, punctLogicalOr)
            || tokenIsPunct(ctx, punctBitwiseAnd) || tokenIsPunct(ctx, punctBitwiseOr)
            || tokenIsPunct(ctx, punctBitwiseXor)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserEquality(ctx));
+        Node = astCreateBOP(loc, Node, o, parserEquality(ctx));
     }
 
     debugLeave();
@@ -143,12 +147,13 @@ static ast* parserEquality (parserCtx* ctx) {
     debugEnter("Equality");
 
     ast* Node = parserShift(ctx);
+    tokenLocation loc = ctx->location;
 
     while (   tokenIsPunct(ctx, punctEqual) || tokenIsPunct(ctx, punctNotEqual)
            || tokenIsPunct(ctx, punctGreater) || tokenIsPunct(ctx, punctGreaterEqual)
            || tokenIsPunct(ctx, punctLess) || tokenIsPunct(ctx, punctLessEqual)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserShift(ctx));
+        Node = astCreateBOP(loc, Node, o, parserShift(ctx));
     }
 
     debugLeave();
@@ -163,10 +168,11 @@ static ast* parserShift (parserCtx* ctx) {
     debugEnter("Shift");
 
     ast* Node = parserExpr(ctx);
+    tokenLocation loc = ctx->location;
 
     while (tokenIsPunct(ctx, punctShr) || tokenIsPunct(ctx, punctShl)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserExpr(ctx));
+        Node = astCreateBOP(loc, Node, o, parserExpr(ctx));
     }
 
     debugLeave();
@@ -181,10 +187,11 @@ static ast* parserExpr (parserCtx* ctx) {
     debugEnter("Expr");
 
     ast* Node = parserTerm(ctx);
+    tokenLocation loc = ctx->location;
 
     while (tokenIsPunct(ctx, punctPlus) || tokenIsPunct(ctx, punctMinus)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserTerm(ctx));
+        Node = astCreateBOP(loc, Node, o, parserTerm(ctx));
     }
 
     debugLeave();
@@ -199,11 +206,12 @@ static ast* parserTerm (parserCtx* ctx) {
     debugEnter("Term");
 
     ast* Node = parserUnary(ctx);
+    tokenLocation loc = ctx->location;
 
     while (   tokenIsPunct(ctx, punctTimes) || tokenIsPunct(ctx, punctDivide)
            || tokenIsPunct(ctx, punctModulo)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateBOP(ctx->location, Node, o, parserUnary(ctx));
+        Node = astCreateBOP(loc, Node, o, parserUnary(ctx));
     }
 
     debugLeave();
@@ -218,12 +226,13 @@ static ast* parserUnary (parserCtx* ctx) {
     debugEnter("Unary");
 
     ast* Node = 0;
+    tokenLocation loc = ctx->location;
 
     if (   tokenIsPunct(ctx, punctLogicalNot) || tokenIsPunct(ctx, punctBitwiseNot)
         || tokenIsPunct(ctx, punctMinus)
         || tokenIsPunct(ctx, punctTimes) || tokenIsPunct(ctx, punctBitwiseAnd)) {
         char* o = tokenDupMatch(ctx);
-        Node = astCreateUOP(ctx->location, o, parserUnary(ctx));
+        Node = astCreateUOP(loc, o, parserUnary(ctx));
 
     } else
         /*Interestingly, this call to parserObject parses itself*/
@@ -246,16 +255,17 @@ static ast* parserObject (parserCtx* ctx) {
     debugEnter("Object");
 
     ast* Node = parserFactor(ctx);
+    tokenLocation loc = ctx->location;
 
     while (true) {
         /*Array or pointer indexing*/
         if (tokenTryMatchPunct(ctx, punctLBracket)) {
-            Node = astCreateIndex(ctx->location, Node, parserValue(ctx));
+            Node = astCreateIndex(loc, Node, parserValue(ctx));
             tokenMatchPunct(ctx, punctRBracket);
 
         /*Function call*/
         } else if (tokenTryMatchPunct(ctx, punctLParen)) {
-            Node = astCreateCall(ctx->location, Node);
+            Node = astCreateCall(loc, Node);
 
             /*Eat params*/
             if (!tokenIsPunct(ctx, punctRParen)) do {
@@ -268,9 +278,9 @@ static ast* parserObject (parserCtx* ctx) {
         } else if (tokenIsPunct(ctx, punctPeriod) || tokenIsPunct(ctx, punctArrow)) {
             tokenLocation loc = ctx->location;
             char* o = tokenDupMatch(ctx);
-            Node = astCreateBOP(loc, Node, o,
-                                astCreateLiteral(ctx->location, literalIdent));
-            Node->r->literal = (void*) strdup(ctx->lexer->buffer);
+            ast* field = astCreateLiteral(loc, literalIdent);
+            Node = astCreateBOP(loc, Node, o, field);
+            field->literal = (void*) strdup(ctx->lexer->buffer);
 
             if (tokenIsIdent(ctx))
                 tokenMatch(ctx);

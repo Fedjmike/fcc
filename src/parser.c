@@ -222,35 +222,31 @@ static ast* parserLine (parserCtx* ctx) {
 
     /*Statements (that which require ';')*/
     else {
+        tokenLocation loc = ctx->location;
+
         if (tokenTryMatchKeyword(ctx, keywordReturn)) {
-            Node = astCreate(astReturn, ctx->location);
+            Node = astCreate(astReturn, loc);
 
             if (!tokenIsPunct(ctx, punctSemicolon))
                 Node->r = parserValue(ctx);
 
         } else if (tokenIsKeyword(ctx, keywordBreak)) {
-            if (ctx->breakLevel == 0) {
+            if (ctx->breakLevel == 0)
                 errorIllegalOutside(ctx, "break", "a loop");
-                tokenNext(ctx);
 
-            } else
-                tokenMatch(ctx);
-
-            Node = astCreate(astBreak, ctx->location);
+            tokenMatch(ctx);
+            Node = astCreate(astBreak, loc);
 
         } else if (tokenIsKeyword(ctx, keywordContinue)) {
-            if (ctx->breakLevel == 0) {
+            if (ctx->breakLevel == 0)
                 errorIllegalOutside(ctx, "continue", "a loop");
-                tokenNext(ctx);
 
-            } else
-                tokenMatch(ctx);
-
-            Node = astCreate(astContinue, ctx->location);
+            tokenMatch(ctx);
+            Node = astCreate(astContinue, loc);
 
         /*Allow empty lines, ";"*/
         } else if (tokenIsPunct(ctx, punctSemicolon))
-            Node = astCreateEmpty(ctx->location);
+            Node = astCreateEmpty(loc);
 
         else
             Node = parserValue(ctx);

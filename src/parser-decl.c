@@ -140,8 +140,7 @@ ast* parserDecl (parserCtx* ctx, bool module) {
         Node->lastChild->symbol->storage = storage;
 
         if (tokenIsPunct(ctx, punctLBrace)) {
-            loc = ctx->location;
-            Node = astCreateFnImpl(loc, Node);
+            Node = astCreateFnImpl(ctx->location, Node);
             Node->symbol = Node->l->firstChild->symbol;
 
             if (Node->symbol->impl)
@@ -257,7 +256,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
 
     ast* Node = 0;
 
-    tokenLocation loc = ctx->location;
+    tokenLocation constloc = ctx->location;
     bool isConst = tokenTryMatchKeyword(ctx, keywordConst);
 
     if (tokenIsKeyword(ctx, keywordStruct) || tokenIsKeyword(ctx, keywordUnion))
@@ -267,10 +266,11 @@ static ast* parserDeclBasic (parserCtx* ctx) {
         Node = parserEnum(ctx);
 
     else {
+        tokenLocation loc = ctx->location;
         sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
 
         if (Symbol) {
-            Node = astCreateLiteralIdent(ctx->location, tokenDupMatch(ctx));
+            Node = astCreateLiteralIdent(loc, tokenDupMatch(ctx));
             Node->symbol = Symbol;
 
         } else {
@@ -281,12 +281,12 @@ static ast* parserDeclBasic (parserCtx* ctx) {
             } else
                 errorExpected(ctx, "type name");
 
-            Node = astCreateInvalid(ctx->location);
+            Node = astCreateInvalid(loc);
         }
     }
 
     if (isConst) {
-        Node = astCreateConst(loc, Node);
+        Node = astCreateConst(constloc, Node);
         Node->symbol = Node->r->symbol;
     }
 
@@ -412,18 +412,14 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclExpr");
 
     ast* Node = parserDeclUnary(ctx, inDecl, tag);
+    tokenLocation loc = ctx->location;
 
-    if (tokenIsPunct(ctx, punctAssign)) {
-        if (inDecl && tag == symId) {
-            tokenLocation loc = ctx->location;
-            char* o = tokenDupMatch(ctx);
-            Node = astCreateBOP(loc, Node, o, parserAssignValue(ctx));
-            Node->symbol = Node->l->symbol;
-
-        } else {
+    if (tokenTryMatchPunct(ctx, punctAssign)) {
+        if (!inDecl || tag != symId)
             errorIllegalOutside(ctx, "initializer", "a declaration");
-            Node = astCreateInvalid(ctx->location);
-        }
+
+        Node = astCreateBOP(loc, Node, opAssign, parserAssignValue(ctx));
+        Node->symbol = Node->l->symbol;
     }
 
     debugLeave();
@@ -446,7 +442,7 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
         Node->symbol = Node->r->symbol;
 
     } else if (tokenTryMatchKeyword(ctx, keywordConst)) {
-        Node = astCreateConst(ctx->location, parserDeclUnary(ctx, inDecl, tag));
+        Node = astCreateConst(loc, parserDeclUnary(ctx, inDecl, tag));
         Node->symbol = Node->r->symbol;
 
     } else
@@ -466,7 +462,7 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
     tokenLocation loc = ctx->location;
     ast* Node = parserDeclAtom(ctx, inDecl, tag);
 
-    while (tokenIsPunct(ctx, punctLParen) || tokenIsPunct(ctx, punctLBracket)) {
+    while (true) {
         /*Function*/
         if (tokenIsPunct(ctx, punctLParen))
             Node = parserDeclFunction(ctx, inDecl, tag, loc, Node);
@@ -484,7 +480,9 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
             }
 
             Node->symbol = Symbol;
-        }
+
+        } else
+            break;
     }
 
     debugLeave();
@@ -601,7 +599,8 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
     ast* Node = 0;
 
     if (tokenIsIdent(ctx)) {
-        Node = astCreateLiteralIdent(ctx->location, tokenDupMatch(ctx));
+        tokenLocation loc = ctx->location;
+        Node = astCreateLiteralIdent(loc, tokenDupMatch(ctx));
 
         /*Check for a collision only in this scope, will shadow any
           other declarations elsewhere.*/
