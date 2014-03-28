@@ -6,6 +6,8 @@
 #include "../inc/sym.h"
 #include "../inc/error.h"
 
+#include "../inc/compiler.h"
+
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-decl.h"
 
