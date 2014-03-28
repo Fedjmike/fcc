@@ -18,7 +18,8 @@ Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
 Shift = Expr [{ ">>" | "<<" Expr }]
 Expr = Term [{ "+" | "-" Term }]
 Term = Unary [{ "*" | "/" | "%" Unary }]
-Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
+Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | PostUnary
+PostUnary = Object [{ "++" | "--" }]
 Object = Factor [{   ( "[" Value "]" )
                    | ( "(" [ AssignValue [{ "," AssignValue }] ] ")" )
                    | ( "." | "->" <Ident> ) }]

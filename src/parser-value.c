@@ -23,6 +23,7 @@ static ast* parserShift (parserCtx* ctx);
 static ast* parserExpr (parserCtx* ctx);
 static ast* parserTerm (parserCtx* ctx);
 static ast* parserUnary (parserCtx* ctx);
+static ast* parserPostUnary (parserCtx* ctx);
 static ast* parserObject (parserCtx* ctx);
 static ast* parserFactor (parserCtx* ctx);
 
@@ -220,7 +221,7 @@ static ast* parserTerm (parserCtx* ctx) {
 }
 
 /**
- * Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
+ * Unary = ( "!" | "~" | "-" | "*" | "&" | "++" | "--" Unary ) | PostUnary
  */
 static ast* parserUnary (parserCtx* ctx) {
     debugEnter("Unary");
@@ -238,6 +239,20 @@ static ast* parserUnary (parserCtx* ctx) {
         /*Interestingly, this call to parserObject parses itself*/
         Node = parserObject(ctx);
 
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * PostUnary = Object [{ "++" | "--" }]
+ */
+static ast* parserPostUnary (parserCtx* ctx) {
+    debugEnter("PostUnary");
+
+    ast* Node = parserObject(ctx);
+    tokenLocation loc = ctx->location;
+    
     while (tokenIsPunct(ctx, punctPlusPlus) || tokenIsPunct(ctx, punctMinusMinus))
         Node = astCreateUOP(ctx->location, tokenDupMatch(ctx), Node);
 
