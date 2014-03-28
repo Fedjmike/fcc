@@ -125,6 +125,7 @@ static evalResult evalUOP (const architecture* arch, ast* Node) {
         if (Node->o == opLogicalNot) result = (int) !R.value;
         else if (Node->o == opBitwiseNot) result = ~R.value;
         else if (Node->o == opUnaryPlus) result = R.value;
+        else if (Node->o == opNegate) result = -R.value;
         else {
             debugErrorUnhandled("evalUOP", "operator", opTagGetStr(Node->o));
             return (evalResult) {false, 0};

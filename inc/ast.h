@@ -63,7 +63,7 @@ typedef struct ast {
 
     /*Binary tree*/
     struct ast* l;
-    char* o;
+    astTag o;
     struct ast* r;      /*Always used for unary operators*/
     struct type* dt;    /*Result data type*/
 
@@ -92,8 +92,8 @@ ast* astCreateUnion (tokenLocation location, ast* name);
 ast* astCreateEnum (tokenLocation location, ast* name);
 ast* astCreateConst (tokenLocation location, ast* r);
 
-ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r);
-ast* astCreateUOP (tokenLocation location, char* o, ast* r);
+ast* astCreateBOP (tokenLocation location, ast* l, opTag o, ast* r);
+ast* astCreateUOP (tokenLocation location, opTag o, ast* r);
 ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
