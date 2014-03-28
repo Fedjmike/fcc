@@ -22,6 +22,7 @@
  * specific interfaces, and avoid using the struct fields directly.
  *
  * Important notes on pointer ownership / cleanup:
+ *  - XXXFree does not free the map/set given to it.
  *  - hashXXXFree does not free the string keys given to it.
  *  - XXXmapFree does not free the void* values given to it.
  *  - XXXFreeObjs can be used to explicitly free these by providing destructor(s).
