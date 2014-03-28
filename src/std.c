@@ -153,16 +153,17 @@ int systemf (const char* format, ...) {
 
     va_list args;
     va_start(args, format);
-
     int length = vsnprintf(command, size, format, args);
+    va_end(args);
 
     if (length < 0 || length >= size) {
         free(command);
         command = malloc(size = length+1);
-        vsnprintf(command, size, format, args);
-    }
 
-    va_end(args);
+        va_start(args, format);
+        vsnprintf(command, size, format, args);
+        va_end(args);
+    }
 
     int ret = system(command);
     free(command);
