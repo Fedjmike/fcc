@@ -201,7 +201,6 @@ static ast* parserEnumField (parserCtx* ctx) {
     tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctAssign)) {
-        tokenLocation loc = ctx->location;
         Node = astCreateBOP(loc, Node, opAssign, parserAssignValue(ctx));
         Node->symbol = Node->l->symbol;
     }
