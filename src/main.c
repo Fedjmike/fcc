@@ -1,6 +1,7 @@
 #include "../std/std.h"
 
 #include "../inc/debug.h"
+#include "../inc/architecture.h"
 #include "../inc/options.h"
 #include "../inc/compiler.h"
 
@@ -12,21 +13,22 @@ static bool driver (config conf);
 
 static bool driver (config conf) {
     bool fail = false;
-    int errors = 0, warnings = 0;
+
+    compilerCtx comp;
+    compilerInit(&comp, &(architecture) {4}, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
-    for (int i = 0; i < conf.inputs.length; i++) {
-        compilerResult result = compiler(vectorGet(&conf.inputs, i),
-                                         vectorGet(&conf.intermediates, i),
-                                         &conf.includeSearchPaths);
-        errors += result.errors;
-        warnings += result.warnings;
-    }
+    for (int i = 0; i < conf.inputs.length; i++)
+        compiler(&comp,
+                 vectorGet(&conf.inputs, i),
+                 vectorGet(&conf.intermediates, i));
 
-    if (errors != 0 || warnings != 0)
+    compilerEnd(&comp);
+
+    if (comp.errors != 0 || comp.warnings != 0)
         printf("Compilation complete with %d error%s and %d warning%s\n",
-               errors, errors == 1 ? "" : "s",
-               warnings, warnings == 1 ? "" : "s");
+               comp.errors, comp.errors == 1 ? "" : "s",
+               comp.warnings, comp.warnings == 1 ? "" : "s");
 
     else if (internalErrors)
         printf("Compilation complete with %d internal error%s\n",
@@ -51,7 +53,7 @@ static bool driver (config conf) {
         free(intermediates);
     }
 
-    return fail || errors != 0;
+    return fail || comp.errors != 0 || internalErrors != 0;
 }
 
 int main (int argc, char** argv) {

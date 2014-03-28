@@ -7,6 +7,8 @@
 #include "../inc/error.h"
 #include "../inc/architecture.h"
 
+#include "../inc/compiler.h"
+
 #include "../inc/analyzer-value.h"
 #include "../inc/analyzer-decl.h"
 
@@ -127,7 +129,8 @@ static void analyzerModule (analyzerCtx* ctx, ast* Node) {
 static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
     debugEnter("Using");
 
-    analyzerNode(ctx, Node->r);
+    if (Node->r)
+        analyzerNode(ctx, Node->r);
 
     debugLeave();
 }

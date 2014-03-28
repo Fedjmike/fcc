@@ -8,18 +8,6 @@ struct type;
 struct ast;
 
 /**
- * Indices of certain built in symbols for arrays passed between
- * main and the semantic analyzer.
- * @see main @see analyzer
- */
-typedef enum {
-    builtinVoid,
-    builtinBool,
-    builtinChar,
-    builtinInt
-} builtinTypeIndex;
-
-/**
  * Symbol tags
  * @see sym @see sym::tag
  */
@@ -67,7 +55,7 @@ typedef enum {
     ///Condition describes whether the type can be tested for boolean
     ///truth
     typeCondition = 1 << 4,
-    ///Combination of attributes for integral types
+    ///Combination of attributes
     typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition,
     typeStruct = typeAssignment,
     typeEnum = typeIntegral

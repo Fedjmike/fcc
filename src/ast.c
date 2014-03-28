@@ -42,14 +42,11 @@ void astDestroy (ast* Node) {
     if (Node->l)
         astDestroy(Node->l);
 
-    if (Node->r)
+    if (Node->r && Node->tag != astUsing)
         astDestroy(Node->r);
 
     if (Node->dt)
         typeDestroy(Node->dt);
-
-    if (Node->tag == astModule)
-        free(Node->location.filename);
 
     free(Node->o);
     free(Node->literal);

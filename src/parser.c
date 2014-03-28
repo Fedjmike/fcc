@@ -6,6 +6,7 @@
 #include "../inc/ast.h"
 #include "../inc/error.h"
 
+#include "../inc/compiler.h"
 #include "../inc/lexer.h"
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
@@ -24,23 +25,22 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx parserInit (const char* filename, char* fullname, sym* global, vector/*<char*>*/* searchPaths) {
+static parserCtx parserInit (char* filename, char* fullname, compilerCtx* comp) {
     lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
 
     return (parserCtx) {lexer, {0, 0, 0},
-                        fstripname(filename), fullname, fgetpath(fullname), searchPaths,
-                        global,
+                        filename, fullname, fgetpath(fullname), comp,
+                        comp->global,
                         0,
                         0, 0, 0};
 }
 
 static void parserEnd (parserCtx ctx) {
-    free(ctx.fullname);
     free(ctx.path);
     lexerEnd(ctx.lexer);
 }
 
-static char* parserFindFile (const char* filename, const char* initialPath, vector/*<char*>*/* searchPaths) {
+static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
     int filenameLength = strlen(filename);
 
     if (initialPath && initialPath[0] != 0) {
@@ -75,21 +75,39 @@ static char* parserFindFile (const char* filename, const char* initialPath, vect
     return 0;
 }
 
-parserResult parser (const char* filename, sym* global,
-                     const char* initialPath, vector/*<char*>*/* searchPaths) {
-    char* fullname = parserFindFile(filename, initialPath, searchPaths);
+parserResult parser (const char* filename, const char* initialPath, compilerCtx* comp) {
+    char* fullname = parserFindFile(filename, initialPath, comp->searchPaths);
 
     if (fullname) {
-        parserCtx ctx = parserInit(filename, fullname, global, searchPaths);
-        tokenNext(&ctx);
-        ast* Module = parserModule(&ctx);
-        parserEnd(ctx);
+        parserResult* module = hashmapMap(&comp->modules, fullname);
 
-        return (parserResult) {Module, ctx.errors, ctx.warnings, false};
+        if (!module) {
+            parserCtx ctx = parserInit(fstripname(filename), fullname, comp);
+            tokenNext(&ctx);
+            ast* Module = parserModule(&ctx);
+            parserEnd(ctx);
+
+            module = malloc(sizeof(parserResult));
+            hashmapAdd(&comp->modules, fullname, module);
+
+            *module = (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, false, false};
+            return    (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, true, false};
+
+        } else {
+            free(fullname);
+            return *module;
+        }
 
     } else
-        return (parserResult) {astCreateInvalid((tokenLocation) {0,  0, 0}),
-                               0, 0, true};
+        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0, 0}),
+                               0, 0, 0, false, true};
+}
+
+void parserResultDestroy (parserResult* result) {
+    astDestroy(result->tree);
+
+    free(result->filename);
+    free(result);
 }
 
 /**
@@ -133,14 +151,16 @@ static ast* parserUsing (parserCtx* ctx) {
 
     if (name[0] != 0) {
         //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
-        parserResult res = parser(name, ctx->scope, ctx->path, ctx->searchPaths);
-
-        ctx->errors += res.errors;
-        ctx->warnings += res.warnings;
-        Node->r = res.tree;
+        parserResult res = parser(name, ctx->path, ctx->comp);
 
         if (res.notfound)
             errorFileNotFound(ctx, name);
+
+        else if (res.firsttime) {
+            ctx->errors += res.errors;
+            ctx->warnings += res.warnings;
+            Node->r = res.tree;
+        }
     }
 
     tokenMatchPunct(ctx, punctSemicolon);

@@ -18,7 +18,7 @@
 #include "string.h"
 #include "stdlib.h"
 
-static void emitterModule (emitterCtx* ctx, const ast* Tree);
+static void emitterModule (emitterCtx* ctx, const ast* Node);
 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
 static void emitterCode (emitterCtx* ctx, const ast* Node);
@@ -50,22 +50,21 @@ void emitter (const ast* Tree, const char* output, const architecture* arch) {
 
     emitterModule(ctx, Tree);
 
-    labelFreeAll();
-
     asmFileEpilogue(ctx->Asm);
     emitterEnd(ctx);
 }
 
-static void emitterModule (emitterCtx* ctx, const ast* Tree) {
+static void emitterModule (emitterCtx* ctx, const ast* Node) {
     debugEnter("Module");
 
-    for (ast* Current = Tree->firstChild;
+    for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        if (Current->tag == astUsing)
-            emitterModule(ctx, Current->r);
+        if (Current->tag == astUsing) {
+            if (Current->r)
+                emitterModule(ctx, Current->r);
 
-        else if (Current->tag == astFnImpl)
+        } else if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
         else if (Current->tag == astDecl)

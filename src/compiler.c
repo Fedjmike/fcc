@@ -2,45 +2,70 @@
 
 #include "../std/std.h"
 
+#include "../inc/hashmap.h"
 #include "../inc/debug.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
+#include "../inc/operand.h"
 #include "../inc/architecture.h"
 
 #include "../inc/parser.h"
 #include "../inc/analyzer.h"
 #include "../inc/emitter.h"
 
-compilerResult compiler (const char* input, const char* output, vector/*<char*>*/* searchPaths) {
-    architecture arch = {4};
+#include "stdlib.h"
 
+
+static void compilerInitSymbols (compilerCtx* ctx);
+
+static void compilerInitSymbols (compilerCtx* ctx) {
     /*Initialize symbol "table",
       make new built in data types and add them to the global namespace*/
 
-    sym* Global = symInit();
-    sym* Types[4];
-    Types[builtinVoid] = symCreateType(Global, "void", 0, 0);
-    Types[builtinBool] = symCreateType(Global, "bool", 4, typeEquality | typeAssignment | typeCondition);
-    Types[builtinChar] = symCreateType(Global, "char", 1, typeIntegral);
-    Types[builtinInt] = symCreateType(Global, "int", 4, typeIntegral);
+    ctx->global = symInit();
+    ctx->types = calloc((int) builtinTotal, sizeof(type*));
+    ctx->types[builtinVoid] = symCreateType(ctx->global, "void", 0, (symTypeMask) 0);
+    ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeEquality | typeAssignment | typeCondition);
+    ctx->types[builtinChar] = symCreateType(ctx->global, "char", 1, typeIntegral);
+    ctx->types[builtinInt] = symCreateType(ctx->global, "int", 4, typeIntegral);
 
-    symCreateType(Global, "int8_t", 1, typeIntegral);
-    symCreateType(Global, "int16_t", 2, typeIntegral);
-    symCreateType(Global, "int32_t", 4, typeIntegral);
-    symCreateType(Global, "intptr_t", arch.wordsize, typeIntegral);
+    symCreateType(ctx->global, "int8_t", 1, typeIntegral);
+    symCreateType(ctx->global, "int16_t", 2, typeIntegral);
+    symCreateType(ctx->global, "int32_t", 4, typeIntegral);
+    symCreateType(ctx->global, "intptr_t", ctx->arch->wordsize, typeIntegral);
 
-    if (arch.wordsize >= 8)
-        symCreateType(Global, "int64_t", 8, typeIntegral);
+    if (ctx->arch->wordsize >= 8)
+        symCreateType(ctx->global, "int64_t", 8, typeIntegral);
+}
+
+void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<char*>*/* searchPaths) {
+    hashmapInit(&ctx->modules, 1009);
+
+    ctx->arch = arch;
+    ctx->searchPaths = searchPaths;
+
+    ctx->errors = 0;
+    ctx->warnings = 0;
+
+    compilerInitSymbols(ctx);
+}
+
+void compilerEnd (compilerCtx* ctx) {
+    hashmapFreeObjs(&ctx->modules, (hashmapKeyDtor) free, (hashmapValueDtor) parserResultDestroy);
+    symEnd(ctx->global);
+    free(ctx->types);
+}
 
     int errors = 0, warnings = 0;
 
+void compiler (compilerCtx* ctx, const char* input, const char* output) {
     /*Parse the module*/
 
-    ast* Tree = 0; {
-        parserResult res = parser(input, Global, "", searchPaths);
-        errors += res.errors;
-        warnings += res.warnings;
-        Tree = res.tree;
+    ast* tree = 0; {
+        parserResult res = parser(input, "", ctx);
+        ctx->errors += res.errors;
+        ctx->warnings += res.warnings;
+        tree = res.tree;
 
         if (res.notfound)
             printf("fcc: Input file '%s' doesn't exist\n", input);
@@ -49,20 +74,13 @@ compilerResult compiler (const char* input, const char* output, vector/*<char*>*
     /*Semantic analysis*/
 
     {
-        analyzerResult res = analyzer(Tree, Types, &arch);
-        errors += res.errors;
-        warnings += res.warnings;
+        analyzerResult res = analyzer(tree, ctx->types, ctx->arch);
+        ctx->errors += res.errors;
+        ctx->warnings += res.warnings;
     }
 
     /*Emit the assembly*/
 
-    if (errors == 0 && internalErrors == 0)
-        emitter(Tree, output, &arch);
-
-    /*Clean up*/
-
-    astDestroy(Tree);
-    symEnd(Global);
-
-    return (compilerResult) {errors, warnings};
+    if (ctx->errors == 0 && internalErrors == 0)
+        emitter(tree, output, ctx->arch);
 }
