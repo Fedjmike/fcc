@@ -508,7 +508,7 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     operand Value;
 
     /*Save the general registers in use*/
-    for (int r = regRAX; r <= regR15; r++)
+    for (regIndex r = regRAX; r <= regR15; r++)
         if (regIsUsed(r))
             asmPush(ctx->Asm, operandCreateReg(&regs[r]));
 
