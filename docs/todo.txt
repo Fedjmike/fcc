@@ -5,20 +5,20 @@ High importance:
 
 [x] Compound literals
 [x] Anonymous unions and structs
-[-] Compile time evaluation
-    [x] enum constants
-    [x] Array sizes
-    [x] sizeof
-    [ ] Side effects
+[x] Compile time evaluation
 [-] const
 	[x] Parsing
 	[x] Type annotation
 	[ ] Type compatibility/equality
-	[x] Assignable
+	[-] Assignable
+		[ ] structs with const fields
+	[ ] Fields of const structs/unions const themselves
 [x] char
 [ ] Review type compatibility
+	[ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
 [-] Type completeness
+	[ ] Incomplete arrays
 [-] Varargs
 [x] enum
 [-] extern
@@ -30,11 +30,7 @@ High importance:
 [ ] Disallow global variables
 [-] Modules
     [ ] Separated namespaces
-    [ ] Include once only
-    [ ] Different dialect?
-        - No impls
-		- No static
-		- No globals (except extern)
+    [x] Include once only
 
 Medium:
 
@@ -63,8 +59,13 @@ Low:
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
+	[ ] Newline in string
 [ ] Modules
     [ ] header & using, special meaning?
+	[ ] Different dialect?
+        - No impls
+		- No static
+		- No globals (except extern)
 [ ] Initializing arrays from strings
 [ ] Expand eval.c
     [ ] String literals and indexing
@@ -90,11 +91,13 @@ Lexer:
 
 Parser:
 
-[ ] Param name clash !!!!
+[x] Param name clash !!!!
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[ ] Line that starts with undeclared ident... assume decl?
+[x] Line that starts with undeclared ident... assume decl?
+    No! More lines are value anyway, unlikely to result in a proper decl anyway, and
+	a malformed decl generates way more errors.
 [ ] Complain about keywords as idents
 [ ] Disallow initializations inside normal expressions
 [x] Search paths are still broken
@@ -116,12 +119,12 @@ Semantic analyzer:
 [-] Make sure prototypes and implementation match exactly (static)
 [ ] Initialization of extern and typedef
 [x] Use the DT of passed node in analyzer errors
-[ ] '' in errors
 [ ] Evaluate casts properly
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
-[ ] Look for ways use to use named symbols in errors where can, in place of just type
+[x] Look for ways use to use named symbols in errors where can, in place of just type
+[ ] eval.c: casts, target sizes
 
 Emitter:
 
