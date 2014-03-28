@@ -319,6 +319,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
             char* RStr = operandToStr(R);
             char* tmpStr = operandToStr(tmp);
             asmOutLn(ctx, "imul %s, %s, %s", tmpStr, LStr, RStr);
+            free(tmpStr);
             free(LStr);
             free(RStr);
 
