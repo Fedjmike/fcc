@@ -5,8 +5,8 @@
 
 static int hashstr (const char* key, int mapsize);
 
-typedef void (*generalmapDtor)(char* key, void* value);
-typedef void (*generalsetDtor)(char* element);
+typedef void (*generalmapKeyDtor)(char* key, const void* value);
+typedef void (*generalmapValueDtor)(void* value);
 typedef int (*generalmapHash)(const char* key, int mapsize);
 //Like strcmp, returns 0 for match
 typedef int (*generalmapCmp)(const char* actual, const char* key);
@@ -14,7 +14,8 @@ typedef int (*generalmapCmp)(const char* actual, const char* key);
 static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values);
 
 static void generalmapFree (generalmap* map, bool hashes, bool values);
-static void generalmapFreeObjs (generalmap* map, generalmapDtor dtor, bool hashes, bool values);
+static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
+                                bool hashes, bool values);
 
 static bool generalmapAdd (generalmap* map, const char* key, void* value,
                            generalmapHash hashf, generalmapCmp cmp, bool values);
@@ -83,7 +84,8 @@ static void generalmapFree (generalmap* map, bool hashes, bool values) {
 	map->values = 0;
 }
 
-static void generalmapFreeObjs (generalmap* map, generalmapDtor dtor, bool hashes, bool values) {
+static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
+                                bool hashes, bool values) {
     /*Until the end of the buffer*/
     for (int index = 0; index < map->size; index++) {
         /*Skip empties*/
@@ -92,11 +94,11 @@ static void generalmapFreeObjs (generalmap* map, generalmapDtor dtor, bool hashe
 
         /*Call the dtor*/
 
-        if (values)
-            dtor(map->keysStrMutable[index], map->values[index]);
+        if (keyDtor)
+            keyDtor(map->keysStrMutable[index], map->values[index]);
 
-        else
-            ((generalsetDtor) dtor)(map->keysStrMutable[index]);
+        if (valueDtor)
+            valueDtor(map->values[index]);
     }
 
     generalmapFree(map, hashes, values);
@@ -209,8 +211,8 @@ void hashmapFree (hashmap* map) {
     generalmapFree(map, true, true);
 }
 
-void hashmapFreeObjs (hashmap* map, hashmapDtor dtor) {
-    generalmapFreeObjs(map, dtor, true, true);
+void hashmapFreeObjs (hashmap* map, hashmapKeyDtor keyDtor, hashmapValueDtor valueDtor) {
+    generalmapFreeObjs(map, keyDtor, valueDtor, true, true);
 }
 
 bool hashmapAdd (hashmap* map, const char* key, void* value) {
@@ -239,8 +241,8 @@ void intmapFree (intmap* map) {
     generalmapFree(map, false, true);
 }
 
-void intmapFreeObjs (intmap* map, intmapDtor dtor) {
-    generalmapFreeObjs(map, (generalmapDtor) dtor, false, true);
+void intmapFreeObjs (intmap* map, intmapValueDtor dtor) {
+    generalmapFreeObjs(map, 0, (generalmapValueDtor) dtor, false, true);
 }
 
 bool intmapAdd (intmap* map, intptr_t element, void* value) {
@@ -266,7 +268,7 @@ void hashsetFree (hashset* set) {
 }
 
 void hashsetFreeObjs (hashset* set, hashsetDtor dtor) {
-    generalmapFreeObjs(set, (generalmapDtor) dtor, true, false);
+    generalmapFreeObjs(set, (generalmapKeyDtor) dtor, 0, true, false);
 }
 
 bool hashsetAdd (hashset* set, const char* element) {

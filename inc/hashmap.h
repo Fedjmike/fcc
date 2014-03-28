@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../std/std.h"
 
 #include "stdint.h"
@@ -22,7 +24,7 @@
  * Important notes on pointer ownership / cleanup:
  *  - hashXXXFree does not free the string keys given to it.
  *  - XXXmapFree does not free the void* values given to it.
- *  - XXXFreeObjs can be used to explicitly free these by providing a destructor.
+ *  - XXXFreeObjs can be used to explicitly free these by providing destructor(s).
  * and
  *  - hashXXXMerge uses the same string keys in the destination as in the source.
  *  - Use hashXXXMergeDup to instead make a copy of each added to the dest.
@@ -54,12 +56,13 @@ typedef generalmap intset;
 
 /*:::: HASHMAP ::::*/
 
-typedef void (*hashmapDtor)(char* key, void* value);
+typedef void (*hashmapKeyDtor)(char* key, const void* value);
+typedef void (*hashmapValueDtor)(void* value);
 
 hashmap* hashmapInit (hashmap* map, int size);
 
 void hashmapFree (hashmap* map);
-void hashmapFreeObjs (hashmap* map, hashmapDtor dtor);
+void hashmapFreeObjs (hashmap* map, hashmapKeyDtor keyDtor, hashmapValueDtor valueDtor);
 
 bool hashmapAdd (hashmap* map, const char* key, void* value);
 void hashmapMerge (hashmap* dest, hashmap* src);
@@ -69,12 +72,12 @@ void* hashmapMap (const hashmap* map, const char* key);
 
 /*:::: INTMAP ::::*/
 
-typedef void (*intmapDtor)(int element, void* value);
+typedef void (*intmapValueDtor)(void* value, int key);
 
 intmap* intmapInit (intmap* map, int size);
 
 void intmapFree (intmap* map);
-void intmapFreeObjs (intmap* map, intmapDtor dtor);
+void intmapFreeObjs (intmap* map, intmapValueDtor dtor);
 
 bool intmapAdd (intmap* map, intptr_t element, void* value);
 void intmapMerge (intmap* dest, const intmap* src);
