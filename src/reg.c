@@ -50,6 +50,9 @@ reg* regAlloc (int size) {
         if (regRequest(r, size) != 0)
             return &regs[r];
 
+    if (regIsUsed(regRAX))
+        debugError("regAlloc", "no registers left");
+
     return regRequest(regRAX, size);
 }
 
