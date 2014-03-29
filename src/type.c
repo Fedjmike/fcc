@@ -518,7 +518,8 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
         if (DT->params != 0) {
             vector/*<char*>*/ paramStrs;
-            vectorInitFromArray(&paramStrs, (void**) DT->paramTypes, DT->params, DT->params+1);
+            vectorInit(&paramStrs, DT->params+1);
+            vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params);
             vectorMap(&paramStrs, (vectorMapper) typeToStr, &paramStrs);
 
             if (DT->variadic)

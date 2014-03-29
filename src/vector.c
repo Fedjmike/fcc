@@ -12,13 +12,6 @@ vector* vectorInit (vector* v, int initialCapacity) {
     return v;
 }
 
-vector* vectorInitFromArray (vector* v, void** array, int length, int initialCapacity) {
-    vectorInit(v, initialCapacity);
-    memcpy(v->buffer, array, length*sizeof(void*));
-    v->length = length;
-    return v;
-}
-
 void vectorFree (vector* v) {
     free(v->buffer);
     v->buffer = 0;
@@ -35,6 +28,15 @@ void vectorPush (vector* v, void* item) {
         v->buffer = realloc(v->buffer, (v->capacity *= 2)*sizeof(void*));
 
     v->buffer[v->length++] = item;
+}
+
+vector* vectorPushFromArray (vector* v, void** array, int length) {
+    if (v->capacity < v->length + length)
+        v->buffer = realloc(v->buffer, (v->capacity += length*2)*sizeof(void*));
+
+    memcpy(v->buffer, array, length*sizeof(void*));
+    v->length = length;
+    return v;
 }
 
 void* vectorPop (vector* v) {
