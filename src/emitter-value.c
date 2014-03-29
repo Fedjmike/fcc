@@ -23,6 +23,7 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand ShortLabel, operand* Value);
 
 static operand emitterUOP (emitterCtx* ctx, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, const ast* Node, const operand* suggestion);
@@ -283,19 +284,52 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
 }
 
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
-    debugEnter("LogicalBOP");
-
     /*Label to jump to if circuit gets shorted*/
     operand ShortLabel = labelCreate(labelUndefined);
 
-    /*Left*/
-    asmEnter(ctx->Asm);
-    operand L = emitterValue(ctx, Node->l, requestFlags);
-    asmLeave(ctx->Asm);
+    operand Value;
+    /*Move the default into Value, return the condition as flags*/
+    operand R = emitterLogicalBOPImpl(ctx, Node, ShortLabel, &Value);
 
-    /*Set up the short circuit value*/
-    operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-    asmMove(ctx->Asm, Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
+    if (Node->o == opLogicalAnd)
+        R.condition = conditionNegate(R.condition);
+
+    /*Move final value*/
+    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
+
+    /*If shorted come here leaving the default in Value*/
+    asmLabel(ctx->Asm, ShortLabel);
+
+    return Value;
+}
+
+static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand ShortLabel, operand* Value) {
+    debugEnter("LogicalBOP");
+
+    /*The job of this function is:
+        - Move the default into Value (possibly passing the buck recursively)
+        - Jump to ShortLabel depending on LHS
+        - Return RHS as flags*/
+
+    /*Value is where the default goes, L and R are the conditions*/
+
+    operand L;
+
+    /*If LHS is the same op, then the short value is the same
+       => use our short label, their register*/
+    if (Node->l->tag == astBOP && Node->l->o == Node->o)
+        L = emitterLogicalBOPImpl(ctx, Node->l, ShortLabel, Value);
+
+    else {
+        /*Left*/
+        asmEnter(ctx->Asm);
+        L = emitterValue(ctx, Node->l, requestFlags);
+        asmLeave(ctx->Asm);
+
+        /*Set up the short circuit value*/
+        *Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+        asmMove(ctx->Asm, *Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
+    }
 
     /*Check initial condition*/
 
@@ -309,15 +343,9 @@ static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     operand R = emitterValue(ctx, Node->r, requestFlags);
     asmLeave(ctx->Asm);
 
-    if (Node->o == opLogicalAnd)
-        R.condition = conditionNegate(R.condition);
-
-    asmConditionalMove(ctx->Asm, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
-    asmLabel(ctx->Asm, ShortLabel);
-
     debugLeave();
 
-    return Value;
+    return R;
 }
 
 static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
