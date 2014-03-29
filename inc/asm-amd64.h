@@ -1,6 +1,7 @@
 #include "operand.h"
 
 struct asmCtx;
+typedef enum regIndex regIndex;
 
 typedef enum {
 	bopUndefined,
@@ -27,6 +28,12 @@ void asmFileEpilogue (struct asmCtx* ctx);
 
 void asmFnPrologue (struct asmCtx* ctx, operand name, int localSize);
 void asmFnEpilogue (struct asmCtx* ctx, operand labelEnd);
+
+/**
+ * Save and restore a register using the stack
+ */
+void asmSaveReg (struct asmCtx* ctx, regIndex r);
+void asmRestoreReg (struct asmCtx* ctx, regIndex r);
 
 /**
  * Place a string constant in the rodata section with the given label

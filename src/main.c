@@ -18,6 +18,7 @@ static bool driver (config conf) {
     architecture arch;
     architectureInit(&arch, 4);
     vectorPushFromArray(&arch.scratchRegs, (void**) &(regIndex[3]) {regRBX, regRSI, regRDI}, 3);
+    vectorPushFromArray(&arch.callerSavedRegs, (void**) &(regIndex[3]) {regRAX, regRCX, regRDX}, 3);
 
     compilerCtx comp;
     compilerInit(&comp, &arch, &conf.includeSearchPaths);

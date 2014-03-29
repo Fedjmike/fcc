@@ -38,7 +38,7 @@ void asmFnPrologue (asmCtx* ctx, operand name, int localSize) {
 
     for (int i = 0; i < ctx->arch->scratchRegs.length; i++) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
-        asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+        asmSaveReg(ctx, r);
     }
 }
 
@@ -49,12 +49,20 @@ void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     /*Pop off saved regs in reverse order*/
     for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
-        asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
+        asmRestoreReg(ctx, r);
     }
 
     asmMove(ctx, ctx->stackPtr, ctx->basePtr);
     asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
+}
+
+void asmSaveReg (asmCtx* ctx, regIndex r) {
+    asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+}
+
+void asmRestoreReg (asmCtx* ctx, regIndex r) {
+    asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
 }
 
 void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {

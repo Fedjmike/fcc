@@ -5,7 +5,7 @@
 #include "vector.h"
 
 typedef struct architecture {
-    vector/*<regIndex>*/ scratchRegs;
+    vector/*<regIndex>*/ scratchRegs, callerSavedRegs;
     int wordsize;
 } architecture;
 

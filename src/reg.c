@@ -28,6 +28,10 @@ bool regIsUsed (regIndex r) {
     return regs[r].allocatedAs != 0;
 }
 
+const reg* regGet (regIndex r) {
+    return &regs[r];
+}
+
 reg* regRequest (regIndex r, int size) {
     if (regs[r].allocatedAs == 0 && regs[r].size <= size) {
         regs[r].allocatedAs = size;

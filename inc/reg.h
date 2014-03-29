@@ -8,7 +8,7 @@ typedef struct reg {
     int allocatedAs; /*If unused, 0, else the size allocated as in bytes*/
 } reg;
 
-typedef enum {
+typedef enum regIndex {
     regUndefined,
     regRAX, /*It is important that every register between RAX and R15 are general registers*/
     regRBX,
@@ -35,6 +35,8 @@ extern reg regs[];
  * Check if a register is in use
  */
 bool regIsUsed (regIndex r);
+
+const reg* regGet (regIndex r);
 
 /**
  * Attempt a lock on a register
