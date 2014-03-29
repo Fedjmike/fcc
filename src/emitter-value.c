@@ -45,6 +45,8 @@ operand emitterValueSuggest (emitterCtx* ctx, const ast* Node, const operand* re
 
 static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
                                  emitterRequest request, const operand* suggestion) {
+    asmEnter(ctx->Asm);
+
     operand Value;
 
     /*Calculate the value*/
@@ -89,7 +91,8 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
 
     } else {
         debugErrorUnhandled("emitterValue", "AST tag", astTagGetStr(Node->tag));
-        return operandCreate(operandUndefined);
+        Value = operandCreate(operandUndefined);
+        request = requestAny;
     }
 
     /*Put it where requested*/
@@ -177,6 +180,8 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
 
     }
 
+    asmLeave(ctx->Asm);
+
     return Dest;
 }
 
@@ -186,27 +191,20 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     operand L, R, Value;
 
     if (Node->o == opMember) {
-        asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, requestMem);
-        asmLeave(ctx->Asm);
-
         Value.offset += Node->symbol->offset;
         Value.size = typeGetSize(ctx->arch, Node->symbol->dt);
 
     } else if (Node->o == opMemberDeref) {
-        asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestReg);
-        asmLeave(ctx->Asm);
 
         Value = operandCreateMem(L.base,
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->dt));
 
     } else if (opIsEquality(Node->o) || opIsOrdinal(Node->o)) {
-        asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestOperable);
         R = emitterValue(ctx, Node->r, requestOperable);
-        asmLeave(ctx->Asm);
 
         Value = operandCreateFlags(conditionNegate(conditionFromOp(Node->o)));
         asmCompare(ctx->Asm, L, R);
@@ -214,16 +212,12 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         operandFree(R);
 
     } else if (Node->o == opComma) {
-        asmEnter(ctx->Asm);
         operandFree(emitterValue(ctx, Node->l, requestAny));
         Value = R = emitterValue(ctx, Node->r, requestAny);
-        asmLeave(ctx->Asm);
 
     } else {
-        asmEnter(ctx->Asm);
         Value = L = emitterValue(ctx, Node->l, requestReg);
         R = emitterValue(ctx, Node->r, requestOperable);
-        asmLeave(ctx->Asm);
 
         boperation bop = Node->o == opAdd ? bopAdd :
                          Node->o == opSubtract ? bopSub :
@@ -251,10 +245,8 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
-    asmEnter(ctx->Asm);
     operand Value, R = emitterValue(ctx, Node->r, requestOperable),
                    L = emitterValue(ctx, Node->l, requestMem);
-    asmLeave(ctx->Asm);
 
     boperation bop = Node->o == opAddAssign ? bopAdd :
                      Node->o == opSubtractAssign ? bopSub :
@@ -322,9 +314,7 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand 
 
     else {
         /*Left*/
-        asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestFlags);
-        asmLeave(ctx->Asm);
 
         /*Set up the short circuit value*/
         *Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
@@ -339,9 +329,7 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand 
     asmBranch(ctx->Asm, L, ShortLabel);
 
     /*Right*/
-    asmEnter(ctx->Asm);
     operand R = emitterValue(ctx, Node->r, requestFlags);
-    asmLeave(ctx->Asm);
 
     debugLeave();
 
@@ -355,9 +343,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     if (   Node->o == opPostIncrement || Node->o == opPostDecrement
         || Node->o == opPreIncrement || Node->o == opPreDecrement) {
-        asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestMem);
-        asmLeave(ctx->Asm);
 
         bool post = Node->o == opPostIncrement || Node->o == opPostDecrement;
 
@@ -379,9 +365,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     } else if (   Node->o == opNegate
                || Node->o == opBitwiseNot || Node->o == opLogicalNot) {
-        asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestReg);
-        asmLeave(ctx->Asm);
 
         if (Node->o == opLogicalNot) {
             asmCompare(ctx->Asm, R, operandCreateLiteral(0));
@@ -398,9 +382,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateMem(Ptr.base, 0, typeGetSize(ctx->arch, Node->dt));
 
     } else if (Node->o == opAddressOf) {
-        asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestMem);
-        asmLeave(ctx->Asm);
 
         Value = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
@@ -463,10 +445,8 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
 
     /*Is it an array? Are we directly offsetting the address*/
     if (typeIsArray(Node->l->dt)) {
-        asmEnter(ctx->Asm);
         L = emitterValue(ctx, Node->l, requestMem);
         R = emitterValue(ctx, Node->r, requestOperable);
-        asmLeave(ctx->Asm);
 
         /*Just a constant? Add to the offset*/
         if (R.tag == operandLiteral) {
@@ -521,10 +501,8 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
 
     /*Is it instead a pointer? Get value and offset*/
     } else /*if (typeIsPtr(Node->l->dt)*/ {
-        asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestReg);
         asmBOP(ctx->Asm, bopMul, R, operandCreateLiteral(size));
-        asmLeave(ctx->Asm);
 
         L = emitterValue(ctx, Node->l, requestOperable);
 
@@ -765,10 +743,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
 
             /*Regular value*/
             } else {
-                asmEnter(ctx->Asm);
                 operand R = emitterValue(ctx, value, requestOperable);
-                asmLeave(ctx->Asm);
-
                 asmMove(ctx->Asm, L, R);
                 operandFree(R);
             }
@@ -793,10 +768,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
 
             /*Regular value*/
             else {
-                asmEnter(ctx->Asm);
                 operand R = emitterValue(ctx, Current, requestOperable);
-                asmLeave(ctx->Asm);
-
                 asmMove(ctx->Asm, L, R);
                 operandFree(R);
             }
@@ -806,9 +778,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
 
     /*Scalar*/
     } else {
-        asmEnter(ctx->Asm);
         operand R = emitterValue(ctx, Node->firstChild, requestOperable);
-        asmLeave(ctx->Asm);
         asmMove(ctx->Asm, base, R);
         operandFree(R);
     }
