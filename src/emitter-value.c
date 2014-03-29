@@ -325,22 +325,29 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     operand R, Value;
 
-    /*Post ops, save a copy before inc/dec*/
-    if (Node->o == opPostIncrement || Node->o == opPostDecrement) {
+    if (   Node->o == opPostIncrement || Node->o == opPostDecrement
+        || Node->o == opPreIncrement || Node->o == opPreDecrement) {
         asmEnter(ctx->Asm);
         R = emitterValue(ctx, Node->r, requestMem);
         asmLeave(ctx->Asm);
 
-        Value = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
-        asmMove(ctx->Asm, Value, R);
+        bool post = Node->o == opPostIncrement || Node->o == opPostDecrement;
 
-        if (Node->o == opPostIncrement)
-            asmUOP(ctx->Asm, uopInc, R);
+        /*Post ops: save a copy before inc/dec*/
+        if (post) {
+            Value = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
+            asmMove(ctx->Asm, Value, R);
 
-        else /*if (Node->o == opPostDecrement)*/
-            asmUOP(ctx->Asm, uopDec, R);
+        } else
+            Value = R;
 
-        operandFree(R);
+        uoperation op =   Node->o == opPostIncrement || Node->o == opPreIncrement
+                        ? uopInc : uopDec;
+
+        asmUOP(ctx->Asm, op, R);
+
+        if (post)
+            operandFree(R);
 
     } else if (   Node->o == opNegate
                || Node->o == opBitwiseNot || Node->o == opLogicalNot) {
