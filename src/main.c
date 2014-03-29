@@ -4,6 +4,7 @@
 #include "../inc/architecture.h"
 #include "../inc/options.h"
 #include "../inc/compiler.h"
+#include "../inc/reg.h"
 
 #include "string.h"
 #include "stdlib.h"
@@ -14,8 +15,12 @@ static bool driver (config conf);
 static bool driver (config conf) {
     bool fail = false;
 
+    architecture arch;
+    architectureInit(&arch, 4);
+    vectorPushFromArray(&arch.scratchRegs, (void**) &(regIndex[3]) {regRBX, regRSI, regRDI}, 3);
+
     compilerCtx comp;
-    compilerInit(&comp, &(architecture) {4}, &conf.includeSearchPaths);
+    compilerInit(&comp, &arch, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++)
@@ -52,6 +57,8 @@ static bool driver (config conf) {
 
         free(intermediates);
     }
+
+    architectureFree(&arch);
 
     return fail || comp.errors != 0 || internalErrors != 0;
 }

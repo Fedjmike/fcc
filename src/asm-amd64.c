@@ -36,17 +36,22 @@ void asmFnPrologue (asmCtx* ctx, operand name, int localSize) {
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 
-    asmOutLn(ctx, "push ebx");
-    asmOutLn(ctx, "push esi");
-    asmOutLn(ctx, "push edi");
+    for (int i = 0; i < ctx->arch->scratchRegs.length; i++) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+        asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+    }
 }
 
 void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     /*Exit stack frame*/
     asmOutLn(ctx, "%s:", labelGet(labelEnd));
-    asmOutLn(ctx, "pop edi");
-    asmOutLn(ctx, "pop esi");
-    asmOutLn(ctx, "pop ebx");
+
+    /*Pop off saved regs in reverse order*/
+    for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+        asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
+    }
+
     asmMove(ctx, ctx->stackPtr, ctx->basePtr);
     asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
