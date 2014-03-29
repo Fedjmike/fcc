@@ -66,6 +66,11 @@ operand operandCreateLabelOffset (int label);
 
 void operandFree (operand Value);
 
+/**
+ * Are the operands structurally, not semantically, equal
+ */
+bool operandIsEqual (operand L, operand R);
+
 int operandGetSize (const struct architecture* arch, operand Value);
 
 char* operandToStr (operand Value);

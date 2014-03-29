@@ -17,12 +17,15 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
+                                 emitterRequest request, const operand* suggestion);
+
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 
 static operand emitterUOP (emitterCtx* ctx, const ast* Node);
-static operand emitterTOP (emitterCtx* ctx, const ast* Node);
+static operand emitterTOP (emitterCtx* ctx, const ast* Node, const operand* suggestion);
 static operand emitterIndex (emitterCtx* ctx, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, const ast* Node);
 static operand emitterCast (emitterCtx* ctx, const ast* Node);
@@ -32,6 +35,15 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
 
 operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
+    return emitterValueImpl(ctx, Node, request, 0);
+}
+
+operand emitterValueSuggest (emitterCtx* ctx, const ast* Node, const operand* request) {
+    return emitterValueImpl(ctx, Node, requestAny, request);
+}
+
+static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
+                                 emitterRequest request, const operand* suggestion) {
     operand Value;
 
     /*Calculate the value*/
@@ -50,7 +62,7 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
         Value = emitterUOP(ctx, Node);
 
     else if (Node->tag == astTOP)
-        Value = emitterTOP(ctx, Node);
+        Value = emitterTOP(ctx, Node, suggestion);
 
     else if (Node->tag == astIndex)
         Value = emitterIndex(ctx, Node);
@@ -84,7 +96,8 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
     /*If they haven't specifically asked for the reference as memory
       then they're unaware it's held as a reference at all
       so make it a plain ol' value*/
-    if (Value.tag == operandMemRef && request != requestMem) {
+    if (   Value.tag == operandMemRef
+        && (request != requestMem && !(suggestion && suggestion->tag == operandMem))) {
         operand nValue = operandCreateReg(regAlloc(ctx->arch->wordsize));
         asmEvalAddress(ctx->Asm, nValue, Value);
         operandFree(Value);
@@ -93,7 +106,16 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) 
 
     operand Dest;
 
-    if (request == requestAny)
+    if (suggestion) {
+        if (!operandIsEqual(Value, *suggestion)) {
+            asmMove(ctx->Asm, *suggestion, Value);
+            operandFree(Value);
+            Dest = *suggestion;
+
+        } else
+            Dest = Value;
+
+    } else if (request == requestAny)
         Dest = Value;
 
     else if (request == requestReg) {
@@ -360,7 +382,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-static operand emitterTOP (emitterCtx* ctx, const ast* Node) {
+static operand emitterTOP (emitterCtx* ctx, const ast* Node, const operand* suggestion) {
     debugEnter("TOP");
 
     operand ElseLabel = labelCreate(labelUndefined);
@@ -370,23 +392,15 @@ static operand emitterTOP (emitterCtx* ctx, const ast* Node) {
               emitterValue(ctx, Node->firstChild, requestFlags),
               ElseLabel);
 
-    operand Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-
-    {
-        operand tmp = emitterValue(ctx, Node->l, requestAny);
-        asmMove(ctx->Asm, Value, tmp);
-        operandFree(tmp);
-    }
+    /*Ask for LHS to go in a reg, or the suggestion. This becomes our return*/
+    operand Value = emitterValueImpl(ctx, Node->l, requestReg, suggestion);
 
     asmComment(ctx->Asm, "");
     asmJump(ctx->Asm, EndLabel);
     asmLabel(ctx->Asm, ElseLabel);
 
-    {
-        operand tmp = emitterValue(ctx, Node->r, requestAny);
-        asmMove(ctx->Asm, Value, tmp);
-        operandFree(tmp);
-    }
+    /*Move RHS into our reg*/
+    emitterValueSuggest(ctx, Node->r, &Value);
 
     asmLabel(ctx->Asm, EndLabel);
 

@@ -115,6 +115,32 @@ void operandFree (operand Value) {
         debugErrorUnhandled("operandFree", "operand tag", operandTagGetStr(Value.tag));
 }
 
+bool operandIsEqual (operand L, operand R) {
+    if (L.tag != R.tag)
+        return false;
+
+    else if (L.tag == operandFlags)
+        return L.condition == R.condition;
+
+    else if (L.tag == operandReg)
+        return L.base == R.base;
+
+    else if (L.tag == operandMem || L.tag == operandMemRef)
+        return    L.size == R.size && L.base == R.base
+               && L.index == R.index && L.factor == R.factor
+               && L.offset == R.offset;
+
+    else if (L.tag == operandLiteral)
+        return L.literal == R.literal;
+
+    else if (L.tag == operandLabel || L.tag == operandLabelMem || L.tag == operandLabelOffset)
+        return L.label == R.label;
+
+    else /*if (   L.tag == operandVoid || L.tag == operandStack
+               || L.tag == operandInvalid || L.tag == operandUndefined)*/
+        return true;
+}
+
 int operandGetSize (const architecture* arch, operand Value) {
     if (   Value.tag == operandUndefined
         || Value.tag == operandInvalid || Value.tag == operandVoid)
