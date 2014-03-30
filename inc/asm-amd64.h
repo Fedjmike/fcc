@@ -4,23 +4,23 @@ struct asmCtx;
 typedef enum regIndex regIndex;
 
 typedef enum {
-	bopUndefined,
-	bopAdd,
-	bopSub,
-	bopMul,
-	bopBitAnd,
-	bopBitOr,
-	bopBitXor,
-	bopShR,
-	bopShL
+    bopUndefined,
+    bopAdd,
+    bopSub,
+    bopMul,
+    bopBitAnd,
+    bopBitOr,
+    bopBitXor,
+    bopShR,
+    bopShL
 } boperation;
 
 typedef enum {
-	uopUndefined,
-	uopInc,
-	uopDec,
-	uopNeg,
-	uopBitwiseNot
+    uopUndefined,
+    uopInc,
+    uopDec,
+    uopNeg,
+    uopBitwiseNot
 } uoperation;
 
 void asmFilePrologue (struct asmCtx* ctx);

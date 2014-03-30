@@ -64,7 +64,7 @@ static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool 
     map->size = size;
     map->elements = 0;
     map->keysInt = calloc(size, sizeof(char*));
-	map->hashes = hashes ? calloc(size, sizeof(int)) : 0;
+    map->hashes = hashes ? calloc(size, sizeof(int)) : 0;
     map->values = values ? calloc(size, sizeof(char*)) : 0;
 
     return map;
@@ -73,15 +73,15 @@ static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool 
 static void generalmapFree (generalmap* map, bool hashes, bool values) {
     free(map->keysInt);
 
-	if (hashes)
-		free(map->hashes);
+    if (hashes)
+        free(map->hashes);
 
     if (values)
         free(map->values);
 
-	map->keysInt = 0;
-	map->hashes = 0;
-	map->values = 0;
+    map->keysInt = 0;
+    map->hashes = 0;
+    map->values = 0;
 }
 
 static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
@@ -106,11 +106,11 @@ static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, gene
 
 static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp) {
     if (cmp)
-		return    map->hashes[index] == hash
-			   && (!cmp || !cmp(map->keysStr[index], key));
+        return    map->hashes[index] == hash
+               && (!cmp || !cmp(map->keysStr[index], key));
 
-	else
-		return map->keysStr[index] == key;
+    else
+        return map->keysStr[index] == key;
 }
 
 static int generalmapFind (const generalmap* map, const char* key,
@@ -138,10 +138,10 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
 
     /*Present, remap*/
     if (generalmapIsMatch(map, index, key, hash, cmp)) {
-		map->keysStr[index] = key;
+        map->keysStr[index] = key;
 
-		if (cmp != 0)
-			map->hashes[index] = hash;
+        if (cmp != 0)
+            map->hashes[index] = hash;
 
         if (values)
             map->values[index] = value;
@@ -153,8 +153,8 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
         map->keysStr[index] = key;
         map->elements++;
 
-		if (cmp != 0)
-			map->hashes[index] = hash;
+        if (cmp != 0)
+            map->hashes[index] = hash;
 
         if (values)
             map->values[index] = value;

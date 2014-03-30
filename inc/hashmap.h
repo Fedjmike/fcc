@@ -13,7 +13,7 @@
  *
  * Details of concrete implementations:
  *  - hashmap is a map from null terminated (char*) strings to void* values.
-      It is the most general of these structures.
+ *    It is the most general of these structures.
  *  - intmap is a map from uintptr_t integers to void* values.
  *  - hashset is a set of strings.
  *  - intset is a set of uintptr_t integers.
@@ -45,7 +45,7 @@ typedef struct generalmap {
         char** keysStrMutable;
         intptr_t* keysInt;
     };
-	int* hashes;
+    int* hashes;
     void** values;
 } generalmap;
 
