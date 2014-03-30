@@ -451,7 +451,7 @@ static const type* analyzerCall (analyzerCtx* ctx, ast* Node) {
                 const type* Param = analyzerValue(ctx, param);
 
                 if (!typeIsCompatible(Param, fn->paramTypes[n]))
-                    errorParamMismatch(ctx, param, Node, n, fn->paramTypes[n], Param);
+                    errorParamMismatch(ctx, param, Node->l, n, fn->paramTypes[n], Param);
             }
 
             /*Analyze the rest of the given params even if there were
