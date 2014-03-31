@@ -153,24 +153,19 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("DeclAssignBOP");
 
-    /*The emitter doesn't need to trace the RHS*/
     emitterDeclNode(ctx, Node->l);
 
-    asmEnter(ctx->Asm);
     operand L = operandCreateMem(&regs[regRBP],
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch,
                                              Node->symbol->dt));
-    asmLeave(ctx->Asm);
 
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
         emitterInitOrCompoundLiteral(ctx, Node->r, L);
 
     else {
         if (Node->symbol->storage == storageAuto) {
-            asmEnter(ctx->Asm);
             operand R = emitterValue(ctx, Node->r, requestOperable);
-            asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
             operandFree(R);
 
