@@ -55,7 +55,8 @@ void asmEnter (asmCtx* ctx) {
 }
 
 void asmLeave (asmCtx* ctx) {
-    ctx->depth--;
+    if (ctx->depth > 0)
+        ctx->depth--;
 }
 
 /* ::::LABELS:::: */
