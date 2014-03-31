@@ -11,5 +11,5 @@ void architectureInit (architecture* arch, int wordsize, archSymbolMangler mangl
 
 void architectureFree (architecture* arch) {
     vectorFree(&arch->scratchRegs);
-    vectorInit(&arch->callerSavedRegs, 4);
+    vectorFree(&arch->callerSavedRegs);
 }
