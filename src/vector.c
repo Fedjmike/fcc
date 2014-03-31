@@ -5,6 +5,11 @@
 #include "stdlib.h"
 #include "string.h"
 
+using "../inc/vector.h";
+
+using "stdlib.h";
+using "string.h";
+
 vector* vectorInit (vector* v, int initialCapacity) {
     v->length = 0;
     v->capacity = initialCapacity;
@@ -23,19 +28,24 @@ void vectorFreeObjs (vector* v, vectorDtor dtor) {
     vectorFree(v);
 }
 
+static void vectorResize (vector* v, int size) {
+    v->capacity = size;
+    v->buffer = realloc(v->buffer, v->capacity*sizeof(void*));
+}
+
 void vectorPush (vector* v, void* item) {
     if (v->length == v->capacity)
-        v->buffer = realloc(v->buffer, (v->capacity *= 2)*sizeof(void*));
+        vectorResize(v, v->capacity*2);
 
     v->buffer[v->length++] = item;
 }
 
 vector* vectorPushFromArray (vector* v, void** array, int length) {
     if (v->capacity < v->length + length)
-        v->buffer = realloc(v->buffer, (v->capacity += length*2)*sizeof(void*));
+        vectorResize(v, v->capacity + length*2);
 
-    memcpy(v->buffer, array, length*sizeof(void*));
-    v->length = length;
+    memcpy(v->buffer+v->length, array, length*sizeof(void*));
+    v->length += length;
     return v;
 }
 
@@ -65,4 +75,6 @@ void vectorMap (vector* dest, vectorMapper f, vector* src) {
 
     for (int n = 0; n < upto; n++)
         dest->buffer[n] = f(src->buffer[n]);
+
+    dest->length = upto;
 }
