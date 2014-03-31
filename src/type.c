@@ -88,7 +88,8 @@ type* typeCreateInvalid () {
 }
 
 void typeDestroy (type* DT) {
-    debugAssert("typeDestroy", "null parameter", DT != 0);
+    if (debugAssert("typeDestroy", "null parameter", DT != 0))
+        return;
 
     if (DT->tag == typeBasic || DT->tag == typeInvalid)
         ;
@@ -109,7 +110,8 @@ void typeDestroy (type* DT) {
 }
 
 type* typeDeepDuplicate (const type* DT) {
-    debugAssert("typeDeepDuplicate", "null parameter", DT != 0);
+    if (debugAssert("typeDeepDuplicate", "null parameter", DT != 0))
+        return typeCreateInvalid();
 
     type* copy;
 
@@ -249,13 +251,12 @@ type* typeDeriveUnified (const type* L, const type* R) {
 type* typeDeriveBase (const type* DT) {
     DT = typeTryThroughTypedef(DT);
 
-    if (typeIsInvalid(DT))
+    if (   typeIsInvalid(DT)
+        || debugAssert("typeDeriveBase", "base", typeIsPtr(DT) || typeIsArray(DT)))
         return typeCreateInvalid();
 
-    else {
-        debugAssert("typeDeriveBase", "base", typeIsPtr(DT) || typeIsArray(DT));
+    else
         return typeDeepDuplicate(DT->base);
-    }
 }
 
 type* typeDerivePtr (const type* base) {
@@ -268,8 +269,12 @@ type* typeDeriveArray (const type* base, int size) {
 
 type* typeDeriveReturn (const type* fn) {
     fn = typeGetCallable(fn);
-    debugAssert("typeDeriveReturn", "callable param", fn != 0);
-    return typeDeepDuplicate(fn->returnType);
+
+    if (debugAssert("typeDeriveReturn", "callable param", fn != 0))
+        return typeCreateInvalid();
+
+    else
+        return typeDeepDuplicate(fn->returnType);
 }
 
 /*:::: TYPE CLASSIFICATION ::::*/
@@ -454,7 +459,8 @@ const char* typeTagGetStr (typeTag tag) {
 }
 
 int typeGetSize (const architecture* arch, const type* DT) {
-    debugAssert("typeGetSize", "null parameter", DT != 0);
+    if (debugAssert("typeGetSize", "null parameter", DT != 0))
+        return arch->wordsize;
 
     DT = typeTryThroughTypedef(DT);
 

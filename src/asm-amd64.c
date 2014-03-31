@@ -122,7 +122,8 @@ void asmPush (asmCtx* ctx, operand L) {
 
     /*Larger than word*/
     } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
-        debugAssert("asmPush", "memory operand", L.tag == operandMem);
+        if (debugAssert("asmPush", "memory operand", L.tag == operandMem))
+            return;
 
         int size = operandGetSize(ctx->arch, L);
 
@@ -172,10 +173,11 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
 
     /*Too big for single register*/
     else if (operandGetSize(ctx->arch, Dest) > ctx->arch->wordsize) {
-        debugAssert("asmMove", "Dest mem", Dest.tag == operandMem);
-        debugAssert("asmMove", "Src mem", Src.tag == operandMem);
-        debugAssert("asmMove", "operand size equality",
-                    operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src));
+        if (   debugAssert("asmMove", "Dest mem", Dest.tag == operandMem)
+            || debugAssert("asmMove", "Src mem", Src.tag == operandMem)
+            || debugAssert("asmMove", "operand size equality",
+                           operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src)))
+            return;
 
         int size = operandGetSize(ctx->arch, Dest);
         int chunk = ctx->arch->wordsize;

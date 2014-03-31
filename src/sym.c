@@ -128,8 +128,9 @@ const sym* symGetChild (const sym* Parent, int n) {
 }
 
 sym* symChild (const sym* Scope, const char* look) {
-    debugAssert("symChild", "null scope", Scope != 0);
-    debugAssert("symChild", "null string", look != 0);
+    if (   debugAssert("symChild", "null scope", Scope != 0)
+        || debugAssert("symChild", "null string", look != 0))
+        return 0;
 
     //printf("searching: %s\n", Scope->ident);
 
@@ -157,8 +158,9 @@ sym* symChild (const sym* Scope, const char* look) {
 }
 
 sym* symFind (const sym* Scope, const char* look) {
-    debugAssert("symFind", "null scope", Scope != 0);
-    debugAssert("symFind", "null string", look != 0);
+    if (   debugAssert("symFind", "null scope", Scope != 0)
+        || debugAssert("symFind", "null string", look != 0))
+        return 0;
 
     //printf("look: %s\n", look);
 

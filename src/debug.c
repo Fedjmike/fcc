@@ -105,11 +105,13 @@ void debugError (const char* functionName,
     internalErrors++;
 }
 
-void debugAssert (const char* functionName,
+bool debugAssert (const char* functionName,
                   const char* testName,
                   bool result) {
     if (!result)
         debugError(functionName, "%s assertion failed", testName);
+
+    return !result;
 }
 
 void debugErrorUnhandled (const char* functionName,

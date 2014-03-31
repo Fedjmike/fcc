@@ -32,7 +32,7 @@ void debugVarOut (const char* format, va_list args);
 void debugError (const char* functionName,
                  const char* format, ...);
 
-void debugAssert (const char* functionName,
+bool debugAssert (const char* functionName,
                   const char* testName,
                   bool result);
 
