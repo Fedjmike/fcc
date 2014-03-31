@@ -706,9 +706,17 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node) {
     debugEnter("CompoundLiteral");
 
-    operand Value = operandCreateMem(&regs[regRBP],
-                                     Node->symbol->offset,
-                                     typeGetSize(ctx->arch, Node->symbol->dt));
+    operand Value;
+
+    if (typeIsArray(Node->dt))
+        Value = operandCreateMemRef(&regs[regRBP],
+                                    Node->symbol->offset,
+                                    typeGetSize(ctx->arch, typeGetBase(Node->symbol->dt)));
+
+    else
+        Value = operandCreateMem(&regs[regRBP],
+                                 Node->symbol->offset,
+                                 typeGetSize(ctx->arch, Node->symbol->dt));
 
     emitterInitOrCompoundLiteral(ctx, Node, Value);
 
