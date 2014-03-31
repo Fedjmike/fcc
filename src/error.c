@@ -190,7 +190,7 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
 void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
-    errorParser(ctx, "$h redeclared as $h", Symbol->ident, tag != symId ? symTagGetStr(tag) : "different symbol type");
+    errorParser(ctx, "$h redeclared as $s", Symbol->ident, tag != symId ? symTagGetStr(tag) : "different symbol type");
 
     tokenLocationMsg(first->location);
     errorf("first declaration here as $c\n", Symbol);
