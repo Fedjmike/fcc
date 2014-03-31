@@ -95,7 +95,7 @@ void operandFree (operand Value) {
         regFree(Value.base);
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef) {
-        if (Value.base != 0 && Value.base != &regs[regRBP])
+        if (Value.base != 0 && Value.base != regGet(regRBP))
             regFree(Value.base);
 
         if (Value.index != 0)
@@ -289,50 +289,4 @@ conditionTag conditionNegate (conditionTag cond) {
     else if (cond == conditionLess) return conditionGreaterEqual;
     else if (cond == conditionLessEqual) return conditionGreater;
     else return conditionUndefined;
-}
-
-/* ::::LABELS:::: */
-
-operand labelCreate (labelTag tag) {
-    char* label = malloc(12);
-
-    if (tag == labelReturn)
-        sprintf(label, "ret%08d", labelNo);
-
-    else if (tag == labelBreak)
-        sprintf(label, "brk%08d", labelNo);
-
-    else if (tag == labelROData)
-        sprintf(label, "rod%08d", labelNo);
-
-    else
-        sprintf(label, "_%08i", labelNo);
-
-    labels[labelNo] = label;
-
-    return operandCreateLabel(labelNo++);
-}
-
-operand labelNamed (const char* name) {
-    labels[labelNo] = malloc(strlen(name)+2);
-    sprintf(labels[labelNo], "_%s", name);
-    return operandCreateLabel(labelNo++);
-}
-
-const char* labelGet (operand label) {
-    if (   label.tag == operandLabel || label.tag == operandLabelMem
-        || label.tag == operandLabelOffset)
-        return labels[label.label];
-
-    else {
-        printf("labelGet(): expected label operand, got %d.\n", label.tag);
-        return 0;
-    }
-}
-
-void labelFreeAll () {
-    for (int i = 1; i < labelNo; i++)
-        free(labels[i]);
-
-    labelNo = 1;
 }

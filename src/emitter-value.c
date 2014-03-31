@@ -686,7 +686,7 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateLiteral(*(char*) Node->literal);
 
     else if (Node->litTag == literalStr) {
-        Value = labelCreate(labelROData);
+        Value = asmCreateLabel(ctx->Asm, labelROData);
         Value.tag = operandLabelOffset;
         asmStringConstant(ctx->Asm, Value, (char*) Node->literal);
 

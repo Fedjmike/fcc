@@ -223,7 +223,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
             asmMove(ctx->Asm, operandCreateReg(rax), Ret);
             regFree(rax);
 
-        } else if (Ret.base != &regs[regRAX])
+        } else if (Ret.base != regGet(regRAX))
             debugError("emitterLine", "unable to allocate RAX for return");
 
         operandFree(Ret);

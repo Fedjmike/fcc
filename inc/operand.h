@@ -77,13 +77,3 @@ const char* operandTagGetStr (operandTag tag);
 conditionTag conditionFromOp (opTag cond);
 
 conditionTag conditionNegate (conditionTag cond);
-
-/* ::::LABELS:::: */
-
-operand labelCreate (labelTag tag);
-
-operand labelNamed (const char* name);
-
-const char* labelGet (operand label);
-
-void labelFreeAll (void);
