@@ -19,19 +19,22 @@ HEADERS = $(wildcard inc/*.h)
 OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
 OUT = fcc
 
-all: bin/$(CONFIG)/$(OUT)
+OBJ = obj/$(CONFIG)
+BIN = bin/$(CONFIG)
 
-obj/$(CONFIG):
-	mkdir -p obj/$(CONFIG)
+all: $(BIN) $(OBJ) bin/$(CONFIG)/$(OUT)
 
-obj/$(CONFIG)/%.o: src/%.c $(HEADERS) obj/$(CONFIG)
+$(OBJ):
+	mkdir -p $(OBJ)
+
+$(OBJ)/%.o: src/%.c $(HEADERS)
 	@echo " [CC] $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-bin/$(CONFIG):
-	mkdir -p bin/$(CONFIG)
+$(BIN):
+	mkdir -p $(BIN)
 	
-bin/$(CONFIG)/$(OUT): $(OBJS) bin/$(CONFIG)
+$(BIN)/$(OUT): $(OBJS)
 	@echo " [LD] $@"
 	@$(CC) $(LDFLAGS) $(OBJS) -o $@
 	@du -hs $@*
