@@ -19,6 +19,7 @@ High importance:
 [ ] Numeric type coercion: widening & narrowing
 [-] Type completeness
 	[ ] Incomplete arrays
+	[ ] Cast to incomplete
 [-] Varargs
 [x] enum
 [-] extern
@@ -34,6 +35,12 @@ High importance:
 
 Medium:
 
+[-] Platform support
+	[-] 64 bit
+		[ ] Windows
+		[ ] Linux
+	[x] 32-bit Linux
+	[ ] Cross-compilation by command line
 [x] Typedef
 [ ] Pre increment/decrement
 	- char* o; -> enum
@@ -45,7 +52,14 @@ Medium:
 	[ ] Unused value
 	[ ] Statement without effect
 	[ ] Empty decl
-	[ ] Empty block body, if ();
+	[ ] Empty block body, if (...);
+	[ ] Assignment as condition
+[ ] AST optimizer
+	[ ] Strength reduction
+	[ ] Constant folding
+	[ ] Constant propogation?
+	[ ] Factorization (CSE)
+	[ ] Operand commutation => Strahler number
 
 Low:
 
@@ -70,7 +84,7 @@ Low:
 [ ] Expand eval.c
     [ ] String literals and indexing
     [ ] Records and arrays
-[ ] Full GCC ABI conformance
+[-] Full GCC ABI conformance
 	- structs, bah
 
 
@@ -78,16 +92,10 @@ Other issues:
 
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
-[ ] Use enums for BOPs and UOPs
+[x] Use enums for BOPs and UOPs
 [x] vsystem -> systemf
 [ ] Use vector in ast/sym
 [ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
-
-Lexer:
-
-[ ] Lexing of pp
-[ ] More on char and str lexing
-    More?
 
 Parser:
 
@@ -99,7 +107,6 @@ Parser:
     No! More lines are value anyway, unlikely to result in a proper decl anyway, and
 	a malformed decl generates way more errors.
 [ ] Complain about keywords as idents
-[ ] Disallow initializations inside normal expressions
 [x] Search paths are still broken
     - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
@@ -117,6 +124,7 @@ Semantic analyzer:
     Why not?
     Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
+[x] Disallow initializations inside normal expressions
 [ ] Initialization of extern and typedef
 [x] Use the DT of passed node in analyzer errors
 [ ] Evaluate casts properly
@@ -128,15 +136,15 @@ Semantic analyzer:
 
 Emitter:
 
-[ ] Get rid of global state in registers and labels
+[-] Get rid of global state in registers and labels
 [x] Clean up value moving code
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
-[ ] Get rid of &regs[] use outside reg.c
+[-] Get rid of &regs[] use outside reg.c
     - Make stack operations
     - Differentiate between top and base operands
-[ ] Short circuit ops optimization
+[-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
 [ ] Extra layer between emitter and assembly?
@@ -147,7 +155,7 @@ Emitter:
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
 [x] Move big pushes code into asm-amd64.c
 [x] Registers saving
-[ ] Let asm stuff return operand?
+[-] Let asm stuff return operand?
 [ ] requestReturn for eax
 [ ] Cache sym size
 	=> move to analyzer?
