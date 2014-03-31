@@ -363,7 +363,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         if (post)
             operandFree(R);
 
-    } else if (   Node->o == opNegate
+    } else if (   Node->o == opNegate || Node->o == opUnaryPlus
                || Node->o == opBitwiseNot || Node->o == opLogicalNot) {
         R = emitterValue(ctx, Node->r, requestReg);
 
@@ -371,6 +371,9 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
             asmCompare(ctx->Asm, R, operandCreateLiteral(0));
             Value = operandCreateFlags(conditionNotEqual);
             operandFree(R);
+
+        } else if (Node->o == opUnaryPlus) {
+            Value = R;
 
         } else {
             asmUOP(ctx->Asm, Node->o == opNegate ? uopNeg : uopBitwiseNot, R);
