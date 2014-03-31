@@ -1,4 +1,4 @@
-struct ast;
-struct emitterCtx;
+typedef struct ast ast;
+typedef struct emitterCtx emitterCtx;
 
-void emitterDecl (struct emitterCtx* ctx, const struct ast* Node);
+void emitterDecl (emitterCtx* ctx, const ast* Node);

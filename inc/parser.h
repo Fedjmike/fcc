@@ -37,7 +37,7 @@ typedef struct parserCtx {
 } parserCtx;
 
 typedef struct parserResult {
-    struct ast* tree;
+    ast* tree;
     char* filename;
     int errors, warnings;
     bool firsttime, notfound;

@@ -1,6 +1,6 @@
-struct ast;
+typedef struct ast ast;
 
-struct parserCtx;
+typedef struct parserCtx parserCtx;
 
-struct ast* parserValue (struct parserCtx* ctx);
-struct ast* parserAssignValue (struct parserCtx* ctx);
+ast* parserValue (parserCtx* ctx);
+ast* parserAssignValue (parserCtx* ctx);

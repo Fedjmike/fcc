@@ -1,8 +1,8 @@
 #include "../std/std.h"
 
-struct ast;
+typedef struct ast ast;
 
-struct parserCtx;
+typedef struct parserCtx parserCtx;
 
-struct ast* parserType (struct parserCtx* ctx);
-struct ast* parserDecl (struct parserCtx* ctx, bool module);
+ast* parserType (parserCtx* ctx);
+ast* parserDecl (parserCtx* ctx, bool module);

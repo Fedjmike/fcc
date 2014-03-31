@@ -1,15 +1,17 @@
 #include "hashmap.h"
 
-struct ast;
-struct sym;
+typedef struct ast ast;
+typedef struct sym sym;
+typedef struct type type;
+typedef struct architecture architecture;
 
 /**
  * Analyzer context specific to a function
  */
 typedef struct analyzerFnCtx {
-    struct sym* fn;
+    sym* fn;
     ///Return type
-    struct type* returnType;
+    type* returnType;
 } analyzerFnCtx;
 
 /**
@@ -19,10 +21,10 @@ typedef struct analyzerFnCtx {
  */
 typedef struct analyzerCtx {
     ///An array of built-in types
-    struct sym** types;
+    sym** types;
     ///Architecture, used only for compile time evaluation of array sizes and,
     ///in turn, enum constants
-    const struct architecture* arch;
+    const architecture* arch;
 
     ///Current function context
     analyzerFnCtx fnctx;
@@ -54,10 +56,10 @@ typedef struct analyzerResult {
  * assumed to all be value tags themselves. The o string in a BOP is
  * assumed to be a valid operator.
  */
-analyzerResult analyzer (struct ast* Tree, struct sym** Types, const struct architecture* arch);
+analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch);
 
 /**
  * Handles any node tag by passing it off to one of the following
  * specialized handlers.
  */
-void analyzerNode (analyzerCtx* ctx, struct ast* Node);
+void analyzerNode (analyzerCtx* ctx, ast* Node);

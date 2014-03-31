@@ -4,14 +4,15 @@
 
 #include "operand.h"
 
-struct type;
-struct ast;
+typedef struct type type;
+typedef struct ast ast;
+typedef struct sym sym;
 
 /**
  * Symbol tags
  * @see sym @see sym::tag
  */
-typedef enum {
+typedef enum symTag {
     symUndefined,
     symScope,
     symType,
@@ -27,7 +28,7 @@ typedef enum {
 /**
  * Storage tags for a symbol, defining their linkage and lifetime
  */
-typedef enum {
+typedef enum storageTag {
     storageUndefined,
     storageAuto,
     storageStatic,
@@ -39,7 +40,7 @@ typedef enum {
  * Bitmask attributes for types and structs defining their operations
  * @see sym::typeMask
  */
-typedef enum {
+typedef enum symTypeMask {
     typeNone,
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
@@ -76,12 +77,12 @@ typedef struct sym {
     vector/*<const ast* >*/ decls;
     ///Implementation
     ///Points to the astFnImpl, astStruct etc, whichever relevant if any
-    const struct ast* impl;
+    const ast* impl;
 
     /*Functions, params, vars only*/
     storageTag storage;
     ///In the case of functions, the return type
-    struct type* dt;
+    type* dt;
 
     /*Types and structs only*/
     ///Size in bytes
@@ -92,10 +93,10 @@ typedef struct sym {
 
     /*Linked list of symbols in our namespace
       Including parameters for functions and constants in enums*/
-    struct sym* parent;
-    struct sym* firstChild;
-    struct sym* lastChild;
-    struct sym* nextSibling;
+    sym* parent;
+    sym* firstChild;
+    sym* lastChild;
+    sym* nextSibling;
     int children;
 
     ///Label associated with this symbol in the assembly

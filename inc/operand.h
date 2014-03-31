@@ -1,10 +1,10 @@
 #pragma once
 
-struct reg;
-struct architecture;
+typedef struct reg reg;
+typedef struct architecture architecture;
 typedef enum opTag opTag;
 
-typedef enum {
+typedef enum operandTag {
     operandUndefined,
     operandInvalid,
     operandVoid,
@@ -19,7 +19,7 @@ typedef enum {
     operandStack
 } operandTag;
 
-typedef enum {
+typedef enum conditionTag {
     conditionUndefined,
     conditionEqual,
     conditionNotEqual,
@@ -32,8 +32,8 @@ typedef enum {
 typedef struct operand {
     operandTag tag;
 
-    struct reg* base;
-    struct reg* index;
+    reg* base;
+    reg* index;
     int factor;
     int offset;
     ///In bytes, for mem operands
@@ -51,9 +51,9 @@ operand operandCreate (operandTag tag);
 operand operandCreateInvalid (void);
 operand operandCreateVoid (void);
 operand operandCreateFlags (conditionTag cond);
-operand operandCreateReg (struct reg* r);
-operand operandCreateMem (struct reg* base, int offset, int size);
-operand operandCreateMemRef (struct reg* base, int offset, int size);
+operand operandCreateReg (reg* r);
+operand operandCreateMem (reg* base, int offset, int size);
+operand operandCreateMemRef (reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
 operand operandCreateLabel (const char* label);
 operand operandCreateLabelMem (const char* label, int size);
@@ -66,7 +66,7 @@ void operandFree (operand Value);
  */
 bool operandIsEqual (operand L, operand R);
 
-int operandGetSize (const struct architecture* arch, operand Value);
+int operandGetSize (const architecture* arch, operand Value);
 
 char* operandToStr (operand Value);
 

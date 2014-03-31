@@ -6,7 +6,7 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-struct architecture;
+typedef struct architecture architecture;
 
 typedef enum labelTag {
     labelReturn,
@@ -32,7 +32,7 @@ typedef struct asmCtx {
 
     int lineNo;
 
-    const struct architecture* arch;
+    const architecture* arch;
 
     ///(Top of) stack pointer - RSP
     operand stackPtr;
@@ -43,7 +43,7 @@ typedef struct asmCtx {
     vector/*<char*>*/ labels;
 } asmCtx;
 
-asmCtx* asmInit (const char* output, const struct architecture* arch);
+asmCtx* asmInit (const char* output, const architecture* arch);
 void asmEnd (asmCtx* ctx);
 
 void asmOutLn (asmCtx* ctx, char* format, ...);

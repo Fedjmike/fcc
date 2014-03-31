@@ -7,7 +7,11 @@
 struct type;
 struct sym;
 
-typedef enum {
+typedef struct type type;
+typedef struct sym sym;
+typedef struct ast ast;
+
+typedef enum astTag {
     astUndefined,
     astInvalid,
     astEmpty,
@@ -38,7 +42,7 @@ typedef enum opTag {
     opMember, opMemberDeref
 } opTag;
 
-typedef enum {
+typedef enum literalTag {
     literalUndefined,
     literalIdent,
     literalInt,
@@ -55,19 +59,19 @@ typedef struct ast {
     tokenLocation location;
 
     /*Linked list for container nodes like a module or parameter list and children of containers*/
-    struct ast* firstChild;
-    struct ast* lastChild;
-    struct ast* nextSibling;
-    struct ast* prevSibling;
+    ast* firstChild;
+    ast* lastChild;
+    ast* nextSibling;
+    ast* prevSibling;
     int children;
 
     /*Binary tree*/
-    struct ast* l;
-    astTag o;
-    struct ast* r;      /*Always used for unary operators*/
-    struct type* dt;    /*Result data type*/
+    ast* l;
+    opTag o;
+    ast* r;      /*Always used for unary operators*/
+    type* dt;    /*Result data type*/
 
-    struct sym* symbol;
+    sym* symbol;
 
     /*Literals*/
     literalTag litTag;

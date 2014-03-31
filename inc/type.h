@@ -2,13 +2,14 @@
 
 #include "../std/std.h"
 
-struct sym;
-struct architecture;
+typedef struct sym sym;
+typedef struct type type;
+typedef struct architecture architecture;
 
 /**
  * @see type @see type::tag
  */
-typedef enum {
+typedef enum typeTag {
     typeBasic,
     typePtr,
     typeArray,
@@ -31,11 +32,11 @@ typedef struct type {
     union {
         /*typeInvalid*/
         /*typeBasic*/
-        const struct sym* basic;
+        const sym* basic;
         /*typePtr
           typeArray*/
         struct {
-            struct type* base;
+            type* base;
             ///Size of the array
             ///-1 to indicate unspecified size in a declaration e.g. int x[] = {1, 2};
             ///NOT as a synonym for * e.g. void (*)(int[]) == void (*)(int*)
@@ -44,15 +45,15 @@ typedef struct type {
         };
         /*typeFunction*/
         struct {
-            struct type* returnType;
-            struct type** paramTypes;
+            type* returnType;
+            type** paramTypes;
             int params;
             bool variadic;
         };
     };
 } type;
 
-type* typeCreateBasic (const struct sym* basic);
+type* typeCreateBasic (const sym* basic);
 type* typeCreatePtr (type* base);
 type* typeCreateArray (type* base, int size);
 type* typeCreateFunction (type* returnType, type** paramTypes, int params, bool variadic);
@@ -62,10 +63,10 @@ void typeDestroy (type* DT);
 
 type* typeDeepDuplicate (const type* DT);
 
-const struct sym* typeGetBasic (const type* DT);
+const sym* typeGetBasic (const type* DT);
 const type* typeGetBase (const type* DT);
 const type* typeGetReturn (const type* DT);
-const struct sym* typeGetRecord (const type* DT);
+const sym* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
 
 type* typeDeriveFrom (const type* DT);
@@ -104,7 +105,7 @@ bool typeIsEqual (const type* L, const type* R);
 
 const char* typeTagGetStr (typeTag tag);
 
-int typeGetSize (const struct architecture* arch, const type* DT);
+int typeGetSize (const architecture* arch, const type* DT);
 
 char* typeToStr (const type* DT);
 char* typeToStrEmbed (const type* DT, const char* embedded);

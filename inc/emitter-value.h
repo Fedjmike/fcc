@@ -1,7 +1,7 @@
 #include "operand.h"
 
-struct ast;
-struct emitterCtx;
+typedef struct ast ast;
+typedef struct emitterCtx emitterCtx;
 
 typedef enum emitterRequest {
     requestAny,
@@ -16,12 +16,12 @@ typedef enum emitterRequest {
  * Calculate the value of an astNode, requesting it to go in a certain operand
  * class, returning where it goes.
  */
-operand emitterValue (struct emitterCtx* ctx, const struct ast* Node, emitterRequest request);
+operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request);
 
 /**
  * Calculate the value, requesting that it go in a specific, already allocated
  * operand which is then returned.
  */
-operand emitterValueSuggest (struct emitterCtx* ctx, const struct ast* Node, const operand* request);
+operand emitterValueSuggest (emitterCtx* ctx, const ast* Node, const operand* request);
 
-void emitterInitOrCompoundLiteral (struct emitterCtx* ctx, const struct ast* Node, operand base);
+void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand base);
