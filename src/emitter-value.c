@@ -277,7 +277,7 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
 
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node) {
     /*Label to jump to if circuit gets shorted*/
-    operand ShortLabel = labelCreate(labelUndefined);
+    operand ShortLabel = asmCreateLabel(ctx->Asm, labelShortCircuit);
 
     operand Value;
     /*Move the default into Value, return the condition as flags*/
@@ -402,8 +402,8 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterTOP (emitterCtx* ctx, const ast* Node, const operand* suggestion) {
     debugEnter("TOP");
 
-    operand ElseLabel = labelCreate(labelUndefined);
-    operand EndLabel = labelCreate(labelUndefined);
+    operand ElseLabel = asmCreateLabel(ctx->Asm, labelElse);
+    operand EndLabel = asmCreateLabel(ctx->Asm, labelEndIf);
 
     asmBranch(ctx->Asm,
               emitterValue(ctx, Node->firstChild, requestFlags),
@@ -636,7 +636,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
     operand Value = operandCreate(operandUndefined);
 
     if (typeIsFunction(Node->symbol->dt))
-        Value = Node->symbol->label;
+        Value = operandCreateLabel(Node->symbol->label);
 
     else {
         /*enum constant*/
@@ -647,7 +647,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
         else if (typeIsArray(Node->symbol->dt))
             Value = operandCreateMemRef(&regs[regRBP],
                                         Node->symbol->offset,
-                                        typeGetSize(ctx->arch, Node->symbol->dt->base));
+                                        typeGetSize(ctx->arch, typeGetBase(Node->symbol->dt)));
 
         /*regular variable*/
         else {
@@ -657,11 +657,10 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
                 Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
 
             else if (   Node->symbol->storage == storageStatic
-                     || Node->symbol->storage == storageExtern) {
-                Value = Node->symbol->label;
-                Value = operandCreateLabelMem(Value.label, size);
+                     || Node->symbol->storage == storageExtern)
+                Value = operandCreateLabelMem(Node->symbol->label, size);
 
-            } else
+            else
                 debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
         }
 

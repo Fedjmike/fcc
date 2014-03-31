@@ -1,11 +1,24 @@
 #pragma once
 
+#include "vector.h"
 #include "operand.h"
 
 #include "stdarg.h"
 #include "stdio.h"
 
 struct architecture;
+
+typedef enum labelTag {
+    labelReturn,
+    labelElse,
+    labelEndIf,
+    labelWhile,
+    labelFor,
+    labelContinue,
+    labelBreak,
+    labelShortCircuit,
+    labelROData
+} labelTag;
 
 /**
  * Assembly output context
@@ -25,8 +38,10 @@ typedef struct asmCtx {
     operand stackPtr;
     ///Base (of stack) pointer - RBP
     operand basePtr;
-} asmCtx;
 
+    ///Owns the strings in it
+    vector/*<char*>*/ labels;
+} asmCtx;
 
 asmCtx* asmInit (const char* output, const struct architecture* arch);
 void asmEnd (asmCtx* ctx);
@@ -40,3 +55,5 @@ void asmComment (asmCtx* ctx, char* str);
  */
 void asmEnter (asmCtx* ctx);
 void asmLeave (asmCtx* ctx);
+
+operand asmCreateLabel (asmCtx* ctx, labelTag tag);

@@ -4,21 +4,28 @@
 #include "../inc/architecture.h"
 #include "../inc/options.h"
 #include "../inc/compiler.h"
+#include "../inc/sym.h"
 #include "../inc/reg.h"
 
 #include "string.h"
 #include "stdlib.h"
 #include "stdio.h"
 
+static void manglerLinux (sym* Symbol);
+
 static bool driver (config conf);
+
+static void manglerLinux (sym* Symbol) {
+    Symbol->label = strdup(Symbol->ident);
+}
 
 static bool driver (config conf) {
     bool fail = false;
 
     architecture arch;
-    architectureInit(&arch, 4);
-    vectorPushFromArray(&arch.scratchRegs, (void**) &(regIndex[3]) {regRBX, regRSI, regRDI}, 3);
-    vectorPushFromArray(&arch.callerSavedRegs, (void**) &(regIndex[3]) {regRAX, regRCX, regRDX}, 3);
+    architectureInit(&arch, 4, manglerLinux);
+    vectorPushFromArray(&arch.scratchRegs, (void* [3]) {(void*) regRBX, (void*) regRSI, (void*) regRDI}, 3);
+    vectorPushFromArray(&arch.callerSavedRegs, (void* [3]) {(void*) regRAX, (void*) regRCX, (void*) regRDX}, 3);
 
     compilerCtx comp;
     compilerInit(&comp, &arch, &conf.includeSearchPaths);

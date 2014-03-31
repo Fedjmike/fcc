@@ -41,7 +41,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->nextSibling = 0;
     Symbol->children = 0;
 
-    Symbol->label = operandCreateLabel(0);
+    Symbol->label = 0;
     Symbol->offset = 0;
 
     return Symbol;
@@ -61,6 +61,7 @@ static void symDestroy (sym* Symbol) {
     if (Symbol->dt)
         typeDestroy(Symbol->dt);
 
+    free(Symbol->label);
     free(Symbol);
 }
 

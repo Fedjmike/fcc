@@ -26,7 +26,7 @@ typedef enum {
 void asmFilePrologue (struct asmCtx* ctx);
 void asmFileEpilogue (struct asmCtx* ctx);
 
-void asmFnPrologue (struct asmCtx* ctx, operand name, int localSize);
+void asmFnPrologue (struct asmCtx* ctx, const char* name, int localSize);
 void asmFnEpilogue (struct asmCtx* ctx, operand labelEnd);
 
 /**

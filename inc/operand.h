@@ -29,13 +29,6 @@ typedef enum {
     conditionLessEqual
 } conditionTag;
 
-typedef enum {
-    labelUndefined,
-    labelReturn,
-    labelBreak,
-    labelROData
-} labelTag;
-
 typedef struct operand {
     operandTag tag;
 
@@ -43,13 +36,15 @@ typedef struct operand {
     struct reg* index;
     int factor;
     int offset;
-    int size; 		/*In bytes, for mem operands*/
+    ///In bytes, for mem operands
+    int size;
 
     int literal;
 
-    conditionTag condition;	/*Condition for the FALSE result*/
+    ///Condition for the FALSE result
+    conditionTag condition;
 
-    int label; 		/*Global label index*/
+    const char* label;
 } operand;
 
 operand operandCreate (operandTag tag);
@@ -60,9 +55,9 @@ operand operandCreateReg (struct reg* r);
 operand operandCreateMem (struct reg* base, int offset, int size);
 operand operandCreateMemRef (struct reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
-operand operandCreateLabel (int label);
-operand operandCreateLabelMem (int label, int size);
-operand operandCreateLabelOffset (int label);
+operand operandCreateLabel (const char* label);
+operand operandCreateLabelMem (const char* label, int size);
+operand operandCreateLabelOffset (const char* label);
 
 void operandFree (operand Value);
 

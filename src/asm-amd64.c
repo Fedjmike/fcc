@@ -22,11 +22,11 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, operand name, int localSize) {
+void asmFnPrologue (asmCtx* ctx, const char* name, int localSize) {
     /*Symbol, linkage and alignment*/
     asmOutLn(ctx, ".balign 16");
-    asmOutLn(ctx, ".globl %s", labelGet(name));
-    asmOutLn(ctx, "%s:", labelGet(name));
+    asmOutLn(ctx, ".globl %s", name);
+    asmOutLn(ctx, "%s:", name);
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
@@ -44,7 +44,7 @@ void asmFnPrologue (asmCtx* ctx, operand name, int localSize) {
 
 void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     /*Exit stack frame*/
-    asmOutLn(ctx, "%s:", labelGet(labelEnd));
+    asmOutLn(ctx, "%s:", labelEnd.label);
 
     /*Pop off saved regs in reverse order*/
     for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
@@ -67,18 +67,18 @@ void asmRestoreReg (asmCtx* ctx, regIndex r) {
 
 void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
-    asmOutLn(ctx, "%s:", labelGet(label));
+    asmOutLn(ctx, "%s:", label.label);
     asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
     asmOutLn(ctx, ".section .text");
 }
 
 void asmLabel (asmCtx* ctx, operand L) {
-    asmOutLn(ctx, "%s:", labelGet(L));
+    asmOutLn(ctx, "%s:", L.label);
 }
 
 void asmJump (asmCtx* ctx, operand L) {
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "jmp %s", labelGet(L));
+        asmOutLn(ctx, "jmp %s", L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -91,7 +91,7 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
     char* CStr = operandToStr(Condition);
 
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "j%s %s", CStr, labelGet(L));
+        asmOutLn(ctx, "j%s %s", CStr, L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -104,7 +104,7 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
 
 void asmCall (asmCtx* ctx, operand L) {
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "call %s", labelGet(L));
+        asmOutLn(ctx, "call %s", L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -223,7 +223,7 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
 }
 
 void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src) {
-    operand FalseLabel = labelCreate(labelUndefined);
+    operand FalseLabel = asmCreateLabel(ctx, labelEndIf);
     asmBranch(ctx, operandCreateFlags(conditionNegate(Cond.condition)), FalseLabel);
     asmMove(ctx, Dest, Src);
     asmLabel(ctx, FalseLabel);

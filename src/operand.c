@@ -11,9 +11,6 @@
 
 const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
 
-char* labels[1024] = {"undefined"};
-int labelNo = 1;
-
 operand operandCreate (operandTag tag) {
     operand ret;
     ret.tag = tag;
@@ -74,20 +71,20 @@ operand operandCreateLiteral (int literal) {
     return ret;
 }
 
-operand operandCreateLabel (int label) {
+operand operandCreateLabel (const char* label) {
     operand ret = operandCreate(operandLabel);
     ret.label = label;
     return ret;
 }
 
-operand operandCreateLabelMem (int label, int size) {
+operand operandCreateLabelMem (const char* label, int size) {
     operand ret = operandCreate(operandLabelMem);
     ret.label = label;
     ret.size = size;
     return ret;
 }
 
-operand operandCreateLabelOffset (int label) {
+operand operandCreateLabelOffset (const char* label) {
     operand ret = operandCreate(operandLabelOffset);
     ret.label = label;
     return ret;
@@ -199,10 +196,9 @@ char* operandToStr (operand Value) {
             sizeStr = "undefined";
 
         if (Value.tag == operandLabelMem) {
-            const char* label = labelGet(Value);
             char* ret = malloc(  strlen(sizeStr)
-                               + strlen(label) + 9);
-            sprintf(ret, "%s ptr [%s]", sizeStr, label);
+                               + strlen(Value.label) + 9);
+            sprintf(ret, "%s ptr [%s]", sizeStr, Value.label);
             return ret;
 
         } else if (Value.index == regUndefined || Value.factor == 0) {
@@ -241,9 +237,8 @@ char* operandToStr (operand Value) {
         return ret;
 
     } else if (Value.tag == operandLabel || Value.tag == operandLabelOffset) {
-        const char* label = labelGet(Value);
-        char* ret = malloc(strlen(label)+8);
-        sprintf(ret, "offset %s", label);
+        char* ret = malloc(strlen(Value.label)+8);
+        sprintf(ret, "offset %s", Value.label);
         return ret;
 
     } else {

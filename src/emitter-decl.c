@@ -182,12 +182,10 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("DeclName");
 
-    if (Node->symbol->label.label == 0)
-        Node->symbol->label = labelNamed(Node->symbol->ident);
+    if (Node->symbol->label == 0)
+        ctx->arch->symbolMangler(Node->symbol);
 
     debugLeave();
 }
