@@ -57,4 +57,4 @@ const char* regGetName (regIndex r, int size);
  * Return the name of a register at a certain size in bytes as it would
  * be called in assembler source code
  */
-const char* regToStr (reg* r);
+const char* regToStr (const reg* r);

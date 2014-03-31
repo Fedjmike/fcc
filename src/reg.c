@@ -79,6 +79,6 @@ const char* regGetName (regIndex r, int size) {
     }
 }
 
-const char* regToStr (reg* r) {
+const char* regToStr (const reg* r) {
     return regGetName(r-regs, r->allocatedAs);
 }
