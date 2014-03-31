@@ -17,20 +17,28 @@ endif
 
 HEADERS = $(wildcard inc/*.h)
 OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
-OUT = bin/$(CONFIG)/fcc
+OUT = fcc
 
-obj/$(CONFIG)/%.o: src/%.c $(HEADERS)
+all: bin/$(CONFIG)/$(OUT)
+
+obj/$(CONFIG):
+	mkdir -p obj/$(CONFIG)
+
+obj/$(CONFIG)/%.o: src/%.c $(HEADERS) obj/$(CONFIG)
 	@echo " [CC] $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(OUT): $(OBJS)
-	@echo " [LD] $(OUT)"
-	@$(CC) $(LDFLAGS) $(OBJS) -o $(OUT)
-	@du -hs bin/$(CONFIG)/fcc*
+bin/$(CONFIG):
+	mkdir -p bin/$(CONFIG)
+	
+bin/$(CONFIG)/$(OUT): $(OBJS) bin/$(CONFIG)
+	@echo " [LD] $@"
+	@$(CC) $(LDFLAGS) $(OBJS) -o $@
+	@du -hs $@*
 	
 clean:
 	rm -rf obj/*/*.o
-	rm -f bin/*/fcc*
+	rm -f bin/*/$(OUT)*
 	
 print:
 	@echo "===================="
@@ -43,3 +51,4 @@ print:
 	@echo "===================="
 	
 .PHONY: all clean print
+.SUFFIXES:
