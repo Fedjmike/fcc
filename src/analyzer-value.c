@@ -145,10 +145,12 @@ static const type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
             errorTypeExpected(ctx, !(typeIsNumeric(L) || typeIsCondition(L)) ? Node->l : Node->r,
                               opTagGetStr(Node->o), "numeric type");
 
-    } else if (opIsNumeric(Node->o))
-        if (!typeIsNumeric(L) || !typeIsNumeric(R))
-            errorTypeExpected(ctx, !typeIsNumeric(L) ? Node->l : Node->r,
-                              opTagGetStr(Node->o), "numeric type");
+    } else {
+        if (opIsNumeric(Node->o))
+            if (!typeIsNumeric(L) || !typeIsNumeric(R))
+                errorTypeExpected(ctx, !typeIsNumeric(L) ? Node->l : Node->r,
+                                  opTagGetStr(Node->o), "numeric type");
+    }
 
     if (opIsAssignment(Node->o)) {
         if (!typeIsAssignment(L) || !typeIsAssignment(R))
@@ -533,10 +535,10 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
             Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->litTag == literalCompound)
+    } else if (Node->litTag == literalCompound) {
         analyzerCompoundLiteral(ctx, Node);
 
-    else if (Node->litTag == literalInit) {
+    } else if (Node->litTag == literalInit) {
         errorCompoundLiteralWithoutType(ctx, Node);
         Node->dt = typeCreateInvalid();
 

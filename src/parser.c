@@ -180,11 +180,11 @@ ast* parserCode (parserCtx* ctx) {
     Node->symbol = symCreateScope(ctx->scope);
     sym* OldScope = scopeSet(ctx, Node->symbol);
 
-    if (tokenTryMatchPunct(ctx, punctLBrace))
+    if (tokenTryMatchPunct(ctx, punctLBrace)) {
         while (!tokenTryMatchPunct(ctx, punctRBrace) && ctx->lexer->token != tokenEOF)
             astAddChild(Node, parserLine(ctx));
 
-    else
+    } else
         astAddChild(Node, parserLine(ctx));
 
     ctx->scope = OldScope;

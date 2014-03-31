@@ -180,10 +180,10 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         Node->symbol->dt = typeCreateInvalid();
         return Node->dt = typeCreateInvalid();
 
-    } else if (Node->tag == astEmpty)
+    } else if (Node->tag == astEmpty) {
         return Node->dt = typeDeepDuplicate(base);
 
-    else if (Node->tag == astBOP) {
+    } else if (Node->tag == astBOP) {
         if (Node->o == opAssign)
             return analyzerDeclAssignBOP(ctx, Node, base);
 
@@ -193,10 +193,10 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
             return Node->dt = typeCreateInvalid();
         }
 
-    } else if (Node->tag == astConst)
+    } else if (Node->tag == astConst) {
         return analyzerConst(ctx, Node, base);
 
-    else if (Node->tag == astUOP) {
+    } else if (Node->tag == astUOP) {
         if (Node->o == opDeref)
             return analyzerDeclPtrUOP(ctx, Node, base);
 

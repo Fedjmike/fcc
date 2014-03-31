@@ -119,11 +119,11 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
         } else
             Dest = Value;
 
-    } else if (request == requestAny)
+    } else if (request == requestAny) {
         Dest = Value;
 
-    else if (request == requestReg) {
-        if (Value.tag != operandReg){
+    } else if (request == requestReg) {
+        if (Value.tag != operandReg) {
             Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
             asmMove(ctx->Asm, Dest, Value);
             operandFree(Value);

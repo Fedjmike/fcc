@@ -120,26 +120,26 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
-    } else  if (Node->tag == astConst)
+    } else if (Node->tag == astConst) {
         emitterDeclNode(ctx, Node->r);
 
-    else if (Node->tag == astUOP) {
+    } else if (Node->tag == astUOP) {
         if (Node->o == opDeref)
             emitterDeclNode(ctx, Node->r);
 
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
-    } else if (Node->tag == astCall)
+    } else if (Node->tag == astCall) {
         /*Nothing to do with the params*/
         emitterDeclNode(ctx, Node->l);
 
-    else if (Node->tag == astIndex)
-        /*The emitter does nothing the size of the array, so only go
+    } else if (Node->tag == astIndex) {
+        /*The emitter does nothing the to size of the array, so only go
           down the left branch*/
         emitterDeclNode(ctx, Node->l);
 
-    else if (Node->tag == astLiteral) {
+    } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             emitterDeclName(ctx, Node);
 

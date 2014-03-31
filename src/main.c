@@ -31,10 +31,11 @@ static bool driver (config conf) {
     compilerInit(&comp, &arch, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
-    for (int i = 0; i < conf.inputs.length; i++)
+    for (int i = 0; i < conf.inputs.length; i++) {
         compiler(&comp,
                  vectorGet(&conf.inputs, i),
                  vectorGet(&conf.intermediates, i));
+    }
 
     compilerEnd(&comp);
 

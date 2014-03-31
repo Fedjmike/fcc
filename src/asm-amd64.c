@@ -300,10 +300,10 @@ void asmCompare (asmCtx* ctx, operand L, operand R) {
         asmCompare(ctx, intermediate, R);
         operandFree(intermediate);
 
-    } else if (L.tag == operandLiteral)
+    } else if (L.tag == operandLiteral) {
         asmCompare(ctx, R, L);
 
-    else {
+    } else {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
         asmOutLn(ctx, "cmp %s, %s", LStr, RStr);

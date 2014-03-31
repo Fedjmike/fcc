@@ -199,11 +199,11 @@ char* tokenMatchStr (parserCtx* ctx) {
 
                 /*An actual linebreak mid string? Escaped, ignore it*/
                 } else if (   ctx->lexer->buffer[i] == '\n'
-                           || ctx->lexer->buffer[i] == '\r')
+                           || ctx->lexer->buffer[i] == '\r') {
                     i++;
 
                 /*Unrecognised escape: ignore*/
-                else
+                } else
                     i++;
 
             } else
