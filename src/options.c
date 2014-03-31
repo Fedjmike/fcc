@@ -4,14 +4,14 @@
 #include "stdio.h"
 #include "string.h"
 
-typedef enum {
+typedef enum expectTag {
     expectNothing,
     expectOutput,
     expectIncludeSearchPath,
     expectTheUnexpected
 } expectTag;
 
-typedef struct {
+typedef struct optionsState {
     expectTag expect;
 } optionsState;
 
