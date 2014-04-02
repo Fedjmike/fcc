@@ -3,4 +3,5 @@ compiler: clang
 env:
   - CONFIG=debug
   - CONFIG=release
+before_install: sudo apt-get install g++-multilib
 script: make print && make && make tests-all
