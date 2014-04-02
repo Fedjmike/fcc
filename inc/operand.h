@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../std/std.h"
+
 typedef struct reg reg;
 typedef struct architecture architecture;
 typedef enum opTag opTag;
