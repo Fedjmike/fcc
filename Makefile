@@ -71,7 +71,7 @@ tests-all: $(TESTS)
 	
 tests/%-error: tests/%-error.c $(FCC)
 	@echo " [FCC] $@"
-	@$(FCC) $(TFLAGS) $< $(SILENT); [ $$? -eq 0 ]
+	@$(FCC) $(TFLAGS) $< $(SILENT); [ $$? -eq 1 ]
 	
 tests/%: tests/%.c $(FCC)
 	@echo " [FCC] $@"
