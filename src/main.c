@@ -55,10 +55,10 @@ static bool driver (config conf) {
                                       " ", (stdalloc) malloc);
 
         if (conf.mode == modeNoLink)
-            fail |= (bool) systemf("gcc -c %s", intermediates);
+            fail |= systemf("gcc -m32 -c %s", intermediates) != 0;
 
         else {
-            fail |= (bool) systemf("gcc %s -o %s", intermediates, conf.output);
+            fail |= systemf("gcc -m32 %s -o %s", intermediates, conf.output) != 0;
 
             if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
