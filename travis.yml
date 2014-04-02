@@ -1,0 +1,8 @@
+language: c
+compiler:
+  - clang
+  - gcc
+env:
+  - CONFIG=debug
+  - CONFIG=release
+script: make
