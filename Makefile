@@ -1,7 +1,7 @@
 # CONFIG = [ debug | release | profiling ]
 CONFIG ?= debug
 
-CC = gcc
+CC ?= gcc
 CFLAGS = -std=c11 -Werror -Wall -Wextra
 
 ifeq ($(CONFIG),debug)
