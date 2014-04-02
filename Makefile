@@ -63,13 +63,16 @@ print:
 # Tests
 #
 
+SILENT = >/dev/null
 TESTS = tests/xor-list tests/hashset
 
 tests-all: $(TESTS)
 	
 tests/%: tests/%.c $(FCC)
-	$(FCC) -I tests/include $<
-	$@
+	@echo " [FCC] $@"
+	@$(FCC) -I tests/include $< $(SILENT)
+	@echo " [$@]"
+	@$@ $(SILENT)
 
 #	
 #
