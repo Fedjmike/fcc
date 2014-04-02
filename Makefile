@@ -15,39 +15,41 @@ ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
 endif
 
+BINNAME = fcc
+FCC ?= bin/$(CONFIG)/$(BINNAME)
+
+SILENT = >/dev/null
+POSTBUILD = @[ -e $@ ] && du -hs $@; [ -e $@.exe ] && du -hs $@.exe; echo
+
 #
 # Build
 #
 
 HEADERS = $(wildcard inc/*.h)
 OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
-OUT = fcc
 
 OBJ = obj/$(CONFIG)
 BIN = bin/$(CONFIG)
 
-FCC = $(BIN)/$(OUT)
+OUT = $(BIN)/$(BINNAME)
 
-all: $(BIN) $(OBJ) $(FCC)
-
-$(OBJ):
-	mkdir -p $(OBJ)
+all: $(OUT)
 
 $(OBJ)/%.o: src/%.c $(HEADERS)
+	@mkdir -p $(OBJ)
 	@echo " [CC] $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN):
-	mkdir -p $(BIN)
-	
-$(FCC): $(OBJS)
+$(OUT): $(OBJS)
+	@mkdir -p $(BIN)
 	@echo " [LD] $@"
 	@$(CC) $(LDFLAGS) $(OBJS) -o $@
-	@du -hs $@*
+	$(POSTBUILD)
 	
 clean:
-	rm -rf obj/*/*.o
-	rm -f bin/*/$(OUT)*
+	rm -f obj/*/*.o
+	rm -f bin/*/$(BINNAME)*
+	rm -f bin/tests/*
 	
 print:
 	@echo "===================="
@@ -56,28 +58,31 @@ print:
 	@echo " CLFAGS : $(CFLAGS)"
 	@echo " HEADERS: $(HEADERS)"
 	@echo " OBJS   : $(OBJS)"
-	@echo " FCC    : $(FCC)"
+	@echo " OUT    : $(OUT)"
 	@echo "===================="
 	
 #
 # Tests
 #
 
-SILENT = >/dev/null
 TFLAGS = -I tests/include
-TESTS = tests/xor-list tests/hashset tests/xor-list-error
+TESTS = $(patsubst %, bin/tests/%, xor-list hashset xor-list-error.txt)
 
 tests-all: $(TESTS)
 	
-tests/%-error: tests/%-error.c $(FCC)
-	@echo " [FCC] $@"
-	@$(FCC) $(TFLAGS) $< $(SILENT); [ $$? -eq 1 ]
+bin/tests/%-error.txt: tests/%-error.c $(FCC)
+	@echo " [$(FCC)] $@"
+	@$(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
+	$(POSTBUILD)
 	
-tests/%: tests/%.c $(FCC)
-	@echo " [FCC] $@"
-	@$(FCC) $(TFLAGS) $< $(SILENT)
+bin/tests/%: tests/%.c $(FCC)
+	@mkdir -p bin/tests
+	@echo " [$(FCC)] $@"
+	@$(FCC) $(TFLAGS) $< $(SILENT) -o $@
+	
 	@echo " [$@]"
 	@$@ $(SILENT)
+	$(POSTBUILD)
 	
 print-tests:
 	@echo "===================="
@@ -86,9 +91,20 @@ print-tests:
 	@echo " TESTS : $(TESTS)"
 	@echo "===================="
 	
+#
+# Partial selfbuild
+#
+
+selfbuild: bin/self/fcc
+
+bin/self/fcc: $(OUT)
+	@echo " [FCC+CC] fcc"
+	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh $(SILENT)
+	$(POSTBUILD)
+	
 #	
 #
 #
 	
-.PHONY: all clean print print-tests tests-all
+.PHONY: all clean print print-tests tests-all selfbuild
 .SUFFIXES:

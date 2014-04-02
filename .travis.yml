@@ -4,4 +4,8 @@ env:
   - CONFIG=debug
   - CONFIG=release
 before_install: sudo apt-get install g++-multilib
-script: make print && make && make print-tests && make --keep-going tests-all
+script: >
+		make print all &&
+		make --keep-going print-tests tests-all &&
+		make selfbuild &&
+		FCC=bin/self/fcc make --keep-going print-tests tests-all
