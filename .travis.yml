@@ -1,8 +1,6 @@
 language: c
-compiler:
-  - clang
-  - gcc
+compiler: clang
 env:
   - CONFIG=debug
   - CONFIG=release
-script: make
+script: make print && make && make tests-all

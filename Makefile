@@ -15,6 +15,10 @@ ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
 endif
 
+#
+# Build
+#
+
 HEADERS = $(wildcard inc/*.h)
 OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
 OUT = fcc
@@ -22,7 +26,9 @@ OUT = fcc
 OBJ = obj/$(CONFIG)
 BIN = bin/$(CONFIG)
 
-all: $(BIN) $(OBJ) bin/$(CONFIG)/$(OUT)
+FCC = $(BIN)/$(OUT)
+
+all: $(BIN) $(OBJ) $(FCC)
 
 $(OBJ):
 	mkdir -p $(OBJ)
@@ -34,7 +40,7 @@ $(OBJ)/%.o: src/%.c $(HEADERS)
 $(BIN):
 	mkdir -p $(BIN)
 	
-$(BIN)/$(OUT): $(OBJS)
+$(FCC): $(OBJS)
 	@echo " [LD] $@"
 	@$(CC) $(LDFLAGS) $(OBJS) -o $@
 	@du -hs $@*
@@ -53,5 +59,21 @@ print:
 	@echo " OUT    : $(OUT)"
 	@echo "===================="
 	
-.PHONY: all clean print
+#
+# Tests
+#
+
+TESTS = tests/xor-list tests/hashset
+
+tests-all: $(TESTS)
+	
+tests/%: tests/%.c $(FCC)
+	$(FCC) -I tests/include $<
+	$@
+
+#	
+#
+#
+	
+.PHONY: all clean print test
 .SUFFIXES:
