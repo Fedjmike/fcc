@@ -56,7 +56,7 @@ print:
 	@echo " CLFAGS : $(CFLAGS)"
 	@echo " HEADERS: $(HEADERS)"
 	@echo " OBJS   : $(OBJS)"
-	@echo " OUT    : $(OUT)"
+	@echo " FCC    : $(FCC)"
 	@echo "===================="
 	
 #
@@ -64,19 +64,27 @@ print:
 #
 
 SILENT = >/dev/null
+TFLAGS = -I tests/include
 TESTS = tests/xor-list tests/hashset
 
 tests-all: $(TESTS)
 	
 tests/%: tests/%.c $(FCC)
 	@echo " [FCC] $@"
-	@$(FCC) -I tests/include $< $(SILENT)
+	@$(FCC) $(TFLAGS) $< $(SILENT)
 	@echo " [$@]"
 	@$@ $(SILENT)
-
+	
+print-tests:
+	@echo "===================="
+	@echo " FCC   : $(FCC)"
+	@echo " TFLAGS: $(TFLAGS)"
+	@echo " TESTS : $(TESTS)"
+	@echo "===================="
+	
 #	
 #
 #
 	
-.PHONY: all clean print test
+.PHONY: all clean print print-tests tests-all
 .SUFFIXES:
