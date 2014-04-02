@@ -65,9 +65,13 @@ print:
 
 SILENT = >/dev/null
 TFLAGS = -I tests/include
-TESTS = tests/xor-list tests/hashset
+TESTS = tests/xor-list tests/hashset tests/xor-list-error
 
 tests-all: $(TESTS)
+	
+tests/%-error: tests/%-error.c $(FCC)
+	@echo " [FCC] $@"
+	@$(FCC) $(TFLAGS) $< $(SILENT); [ $$? -eq 0 ]
 	
 tests/%: tests/%.c $(FCC)
 	@echo " [FCC] $@"
