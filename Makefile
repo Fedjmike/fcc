@@ -78,7 +78,7 @@ bin/tests/%-error.txt: tests/%-error.c $(FCC)
 bin/tests/%: tests/%.c $(FCC)
 	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
-	@$(FCC) $(TFLAGS) $< $(SILENT) -o $@
+	@$(FCC) $(TFLAGS) $< -o $@
 	
 	@echo " [$@]"
 	@$@ $(SILENT)
@@ -99,7 +99,7 @@ selfbuild: bin/self/fcc
 
 bin/self/fcc: $(OUT)
 	@echo " [FCC+CC] fcc"
-	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh $(SILENT)
+	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
 	
 #	
