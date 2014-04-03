@@ -2,7 +2,7 @@
 CONFIG ?= debug
 
 CC ?= gcc
-CFLAGS = -std=c11 -Werror -Wall -Wextra
+CFLAGS ?= -std=c11 -Werror -Wall -Wextra
 
 ifeq ($(CONFIG),debug)
 	CFLAGS += -DFCC_DEBUGMODE -g
