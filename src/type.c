@@ -300,6 +300,9 @@ bool typeIsFunction (const type* DT) {
 }
 
 bool typeIsInvalid (const type* DT) {
+    if (!DT)
+        return false;
+
     DT = typeTryThroughTypedef(DT);
     return DT->tag == typeInvalid;
 }

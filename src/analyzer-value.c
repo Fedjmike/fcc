@@ -236,7 +236,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     const sym* record = typeGetRecord(L);
 
-    if (typeIsInvalid(L))
+    if (typeIsInvalid(L) || typeIsInvalid(typeGetBase(L)))
         Node->dt = typeCreateInvalid();
 
     /*Record, or ptr to record? Irrespective of which we actually need*/
