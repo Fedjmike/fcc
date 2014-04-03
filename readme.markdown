@@ -49,7 +49,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - `volatile`
   - `register` storage class
 
-The compiler is advanced enough to selfhost much of itself with the rest compiled with GCC. As the compiler matures experimental additions to the language considered are:
+The compiler is advanced enough to self-host much of itself with the rest compiled with GCC. As the compiler matures experimental additions to the language considered are:
 
 - Type polymorphism as in ML/Haskell
 - Lambdas/closures
@@ -73,14 +73,21 @@ cd <fcc>
 make CONFIG=release
 ```
 
+This puts an fcc binary in `<fcc>/bin/$CONFIG`
+
 Makefile options (all optional):
 - `CONFIG=[debug profiling release]`, default: `debug`
 - `CC=[path to C11 compiler]`, default: `gcc`
+- `FCC=[path to FCC binary],` default: `bin/$CONFIG/fcc`
 
 Makefile targets:
-- `all clean print`
+- `all clean print  tests-all print-tests  selfbuild`
 
-This puts an fcc binary in `<fcc>/bin/$CONFIG`
+Use the `FCC` option to choose which copy of FCC to run the tests against.
+
+The `selfbuild` target executes a partial self-host: a predefined set of modules are compiled by FCC, the rest by GCC (this is not overrideable). The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both. [The modifications](https://github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http://en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
+
+Simply specifying `FCC=bin/self/fcc` as an option for the `tests-all` target will trigger a partial self-host.
 
 Running
 -------
