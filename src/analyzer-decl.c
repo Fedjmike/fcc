@@ -177,8 +177,6 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
     if (Node->tag == astInvalid) {
         debugMsg("Invalid");
-        Node->symbol->dt = typeCreateInvalid();
-        return Node->dt = typeCreateInvalid();
 
     } else if (Node->tag == astEmpty) {
         return Node->dt = typeDeepDuplicate(base);
@@ -187,11 +185,8 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         if (Node->o == opAssign)
             return analyzerDeclAssignBOP(ctx, Node, base);
 
-        else {
+        else
             debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
 
     } else if (Node->tag == astConst) {
         return analyzerConst(ctx, Node, base);
@@ -200,33 +195,31 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         if (Node->o == opDeref)
             return analyzerDeclPtrUOP(ctx, Node, base);
 
-        else {
+        else
             debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
 
-    } else if (Node->tag == astCall)
+    } else if (Node->tag == astCall) {
         return analyzerDeclCall(ctx, Node, base);
 
-    else if (Node->tag == astIndex)
+    } else if (Node->tag == astIndex) {
         return analyzerDeclIndex(ctx, Node, base);
 
-    else if (Node->tag == astLiteral) {
+    } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             return analyzerDeclIdentLiteral(ctx, Node, base);
 
-        else {
+        else
             debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
 
-    } else {
+    } else
         debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
+
+    /*Fall through for error states*/
+
+    if (Node->symbol)
         Node->symbol->dt = typeCreateInvalid();
-        return Node->dt = typeCreateInvalid();
-    }
+
+    return Node->dt = typeCreateInvalid();
 }
 
 static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base) {
