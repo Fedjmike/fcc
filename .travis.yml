@@ -6,4 +6,4 @@ script: >
         make print all &&
         make --keep-going print-tests tests-all &&
         make selfbuild &&
-        FCC=bin/self/fcc CFLAGS="-std=c0x -Werror -Wall -Wextra" make --keep-going print-tests tests-all
+        make FCC=bin/self/fcc CFLAGS="-std=c0x -Werror -Wall -Wextra" --keep-going print-tests tests-all
