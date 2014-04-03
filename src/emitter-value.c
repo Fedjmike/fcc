@@ -17,6 +17,24 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+using "../inc/emitter-value.h";
+
+using "../std/std.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/architecture.h";
+using "../inc/reg.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+
+using "../inc/emitter.h";
+
+using "stdio.h";
+using "stdlib.h";
+
 static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
 
@@ -683,10 +701,10 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
         Value = operandCreateLiteral(*(int*) Node->literal);
 
     else if (Node->litTag == literalChar)
-        Value = operandCreateLiteral(*(char*) Node->literal);
+        Value = operandCreateLiteral((int) *(char*) Node->literal);
 
     else if (Node->litTag == literalBool)
-        Value = operandCreateLiteral(*(char*) Node->literal);
+        Value = operandCreateLiteral((int) *(char*) Node->literal);
 
     else if (Node->litTag == literalStr) {
         Value = asmCreateLabel(ctx->Asm, labelROData);

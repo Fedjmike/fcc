@@ -1,4 +1,8 @@
+#include "../std/std.h"
+
 #include "operand.h"
+
+using "operand.h";
 
 typedef struct ast ast;
 typedef struct emitterCtx emitterCtx;

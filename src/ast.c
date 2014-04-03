@@ -10,6 +10,7 @@ void typeDestroy (struct type* DT);
 using "../inc/ast.h";
 
 using "../inc/debug.h";
+using "../inc/type.h";
 
 using "std.h";
 using "stdio.h";

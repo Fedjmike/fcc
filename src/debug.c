@@ -21,6 +21,7 @@ int internalErrors = 0;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;
+    logFile = stdout;
     debugSetMode(debugFull);
     internalErrors = 0;
 }

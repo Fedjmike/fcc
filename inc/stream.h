@@ -1,6 +1,10 @@
 #pragma once
 
+#include "../std/std.h"
+
 #include "stdio.h"
+
+using "stdio.h";
 
 /**
  * Stream context

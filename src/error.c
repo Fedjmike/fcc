@@ -14,6 +14,22 @@
 #include "stdlib.h"
 #include "string.h"
 
+using "../inc/error.h";
+
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/debug.h";
+
+using "../inc/lexer.h";
+using "../inc/parser.h";
+using "../inc/analyzer.h";
+
+using "stdarg.h";
+using "stdio.h";
+using "stdlib.h";
+using "string.h";
+
 const char* consoleNormal  = "\033[1;0m";
 const char* consoleRed     = "\033[1;31m";
 const char* consoleGreen   = "\033[1;32m";

@@ -4,6 +4,8 @@
 
 #include "hashmap.h"
 
+using "hashmap.h";
+
 typedef struct vector vector;
 typedef struct architecture architecture;
 typedef struct sym sym;

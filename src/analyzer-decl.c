@@ -13,6 +13,19 @@
 
 #include "stdlib.h"
 
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/error.h";
+
+using "../inc/eval.h";
+
+using "../inc/analyzer.h";
+using "../inc/analyzer-value.h";
+
+using "stdlib.h";
+
 static void analyzerParam (analyzerCtx* ctx, ast* Node);
 
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);

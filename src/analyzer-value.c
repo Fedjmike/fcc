@@ -11,6 +11,19 @@
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-decl.h"
 
+using "../inc/analyzer-value.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/error.h";
+
+using "../inc/compiler.h";
+
+using "../inc/analyzer.h";
+using "../inc/analyzer-decl.h";
+
 static const type* analyzerBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerLogicalBOP (analyzerCtx* ctx, ast* Node);

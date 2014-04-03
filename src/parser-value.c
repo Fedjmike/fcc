@@ -1,7 +1,6 @@
 #include "../inc/parser-value.h"
 
 #include "../inc/debug.h"
-#include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/error.h"
@@ -13,6 +12,18 @@
 
 #include "stdlib.h"
 #include "string.h"
+
+using "../inc/debug.h";
+using "../inc/sym.h";
+using "../inc/ast.h";
+using "../inc/error.h";
+
+using "../inc/lexer.h";
+using "../inc/parser-helpers.h";
+using "../inc/parser-decl.h";
+
+using "stdlib.h";
+using "string.h";
 
 static ast* parserComma (parserCtx* ctx);
 static ast* parserAssign (parserCtx* ctx);
@@ -416,7 +427,7 @@ static ast* parserFactor (parserCtx* ctx) {
     } else if (tokenIsKeyword(ctx, keywordTrue) || tokenIsKeyword(ctx, keywordFalse)) {
         Node = astCreateLiteral(ctx->location, literalBool);
         Node->literal = malloc(sizeof(char));
-        *(char*) Node->literal = tokenIsKeyword(ctx, keywordTrue) ? 1 : 0;
+        *(char*) Node->literal = (char)(tokenIsKeyword(ctx, keywordTrue) ? 1 : 0);
 
         tokenMatch(ctx);
 

@@ -2,6 +2,8 @@
 
 #include "vector.h"
 
+using "vector.h";
+
 typedef enum configMode {
     modeDefault,
     modeNoAssemble,

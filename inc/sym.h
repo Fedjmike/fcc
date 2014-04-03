@@ -8,8 +8,6 @@
 
 using "vector.h";
 
-using "operand.h";
-
 typedef struct type type;
 typedef struct ast ast;
 typedef struct sym sym;
@@ -50,18 +48,18 @@ typedef enum symTypeMask {
     typeNone,
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
-    typeNumeric = 1 << 0,
+    typeNumeric = 1, //1 << 0,
     ///Ordinal describes whether it has a defined order, and therefore
     ///can be compared with <, <=, >, >=
-    typeOrdinal = 1 << 1,
+    typeOrdinal = 2, //1 << 1,
     ///Equality describes whether equality can be tested with != and ==
-    typeEquality = 1 << 2,
+    typeEquality = 4, //1 << 2,
     ///Assignment describes whether you can assign new values directly
     ///with =
-    typeAssignment = 1 << 3,
+    typeAssignment = 8, //1 << 3,
     ///Condition describes whether the type can be tested for boolean
     ///truth
-    typeCondition = 1 << 4,
+    typeCondition = 16, //1 << 4,
     ///Combination of attributes
     typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition,
     typeStruct = typeAssignment,

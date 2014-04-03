@@ -4,6 +4,14 @@
 #include "stdio.h"
 #include "string.h"
 
+using "../inc/options.h";
+
+using "../std/std.h";
+
+using "stdlib.h";
+using "stdio.h";
+using "string.h";
+
 typedef enum expectTag {
     expectNothing,
     expectOutput,
@@ -77,7 +85,7 @@ static void optionsParseMacro (config* conf, optionsState* state, const char* op
 static void optionsParseMicro (config* conf, optionsState* state, const char* option) {
     for (int j = 1; j < (int) strlen(option); j++) {
         char suboption = option[j];
-        char asStr[2] = {suboption, 0};
+        char asStr[2] = {suboption, (char) 0};
 
         if (suboption == 'c')
             configSetMode(conf, modeNoLink, asStr);

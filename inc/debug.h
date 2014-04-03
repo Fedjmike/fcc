@@ -3,6 +3,8 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+using "../std/std.h";
+
 using "stdio.h";
 using "stdarg.h";
 

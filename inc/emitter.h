@@ -1,5 +1,6 @@
+#include "../std/std.h"
+
 #include "operand.h"
-#include "asm.h"
 
 typedef struct ast ast;
 typedef struct architecture architecture;

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "../std/std.h"
+
 #include "stream.h"
+
+using "stream.h";
 
 typedef enum tokenTag {
     tokenUndefined,

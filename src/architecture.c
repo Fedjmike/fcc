@@ -1,4 +1,8 @@
+#include "../std/std.h"
+
 #include "../inc/architecture.h"
+
+using "../inc/architecture.h";
 
 void architectureInit (architecture* arch, int wordsize, archSymbolMangler mangler) {
     arch->wordsize = wordsize;

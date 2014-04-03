@@ -4,6 +4,8 @@
 
 #include "vector.h"
 
+using "vector.h";
+
 typedef struct sym sym;
 
 typedef void (*archSymbolMangler)(sym*);

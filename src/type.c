@@ -9,6 +9,17 @@
 #include "string.h"
 #include "stdio.h"
 
+using "../inc/type.h";
+
+using "../inc/debug.h";
+using "../inc/sym.h";
+
+using "../inc/architecture.h";
+
+using "stdlib.h";
+using "string.h";
+using "stdio.h";
+
 static typeQualifiers typeQualifiersCreate (void);
 static type* typeCreate (typeTag tag);
 
@@ -413,7 +424,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     /*Basic type*/
     else {
         if (typeIsPtr(DT))
-            return Model->basic->typeMask & typeNumeric;
+            return (bool)(Model->basic->typeMask & typeNumeric);
 
         else
             return !typeIsArray(DT) && DT->basic == Model->basic;
@@ -453,7 +464,7 @@ const char* typeTagGetStr (typeTag tag) {
     else if (tag == typeFunction) return "typeFunction";
     else if (tag == typeInvalid) return "typeInvalid";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("typeTagGetStr", "type tag", str);
         free(str);
@@ -549,7 +560,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
         char* format = malloc(strlen(embedded) +
                               strlen(params)+5);
 
-        if (embedded[0] == 0)
+        if (embedded[0] == (char) 0)
             sprintf(format, "()(%s)", params);
 
         else

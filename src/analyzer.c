@@ -15,6 +15,22 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
+using "../inc/analyzer.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/error.h";
+using "../inc/architecture.h";
+
+using "../inc/compiler.h";
+
+using "../inc/analyzer-value.h";
+using "../inc/analyzer-decl.h";
+
+using "stdlib.h";
+
 static void analyzerModule (analyzerCtx* ctx, ast* Node);
 
 static void analyzerUsing (analyzerCtx* ctx, ast* Node);

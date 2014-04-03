@@ -6,7 +6,13 @@
 #include "../inc/ast.h"
 #include "../inc/architecture.h"
 
-#include "string.h"
+using "../inc/eval.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/sym.h";
+using "../inc/ast.h";
+using "../inc/architecture.h";
 
 static evalResult evalBOP (const architecture* arch, ast* Node);
 static evalResult evalUOP (const architecture* arch, ast* Node);
@@ -63,11 +69,11 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     else if (Node->o == opLogicalAnd) {
         /*Both known*/
         if (L.known && R.known)
-            return (evalResult) {true, L.value && R.value};
+            return (evalResult) {true, (int)(L.value && R.value)};
 
         /*One known and false*/
         else if ((L.known && !L.value) || (R.known && !R.value))
-            return (evalResult) {true, false};
+            return (evalResult) {true, (int) false};
 
         else
             return (evalResult) {false, 0};
@@ -75,11 +81,11 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     } else if (Node->o == opLogicalOr) {
         /*Both known*/
         if (L.known && R.known)
-            return (evalResult) {true, L.value && R.value};
+            return (evalResult) {true, (int)(L.value && R.value)};
 
         /*One known and true*/
         else if ((L.known && L.value) || (R.known && R.value))
-            return (evalResult) {true, true};
+            return (evalResult) {true, (int) true};
 
         else
             return (evalResult) {false, 0};
@@ -169,10 +175,10 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
         return (evalResult) {true, *(int*) Node->literal};
 
     else if (Node->litTag == literalChar)
-        return (evalResult) {true, *(char*) Node->literal};
+        return (evalResult) {true, (int) *(char*) Node->literal};
 
     else if (Node->litTag == literalBool)
-        return (evalResult) {true, *(char*) Node->literal};
+        return (evalResult) {true, (int) *(char*) Node->literal};
 
     /*Only enum constants are known at compile time*/
     else if (Node->litTag == literalIdent)

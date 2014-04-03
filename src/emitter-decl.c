@@ -14,6 +14,21 @@
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
+using "../std/std.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/architecture.h";
+using "../inc/operand.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+using "../inc/reg.h";
+
+using "../inc/emitter.h";
+using "../inc/emitter-value.h";
+
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
@@ -66,7 +81,7 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             fieldSize = typeGetSize(ctx->arch, Current->dt);
 
         } else if (Current->tag == symStruct || Current->tag == symUnion) {
-            bool anonymous = Current->ident[0] == 0;
+            bool anonymous = Current->ident[0] == (char) 0;
             emitterStructOrUnion(ctx, Current, anonymous ? nextOffset : 0);
             fieldSize = Current->size;
 

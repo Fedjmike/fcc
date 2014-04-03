@@ -28,6 +28,7 @@ using "../inc/parser-helpers.h";
 using "../inc/parser-value.h";
 using "../inc/parser-decl.h";
 
+using "../std/std.h";
 using "stdlib.h";
 using "string.h";
 
@@ -59,7 +60,7 @@ static void parserEnd (parserCtx ctx) {
 static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
     int filenameLength = strlen(filename);
 
-    if (initialPath && initialPath[0] != 0) {
+    if (initialPath && initialPath[0]) {
         char* fullname = malloc(strlen(initialPath)+1+filenameLength+1);
         sprintf(fullname, "%s/%s", initialPath, filename);
 
@@ -74,7 +75,7 @@ static char* parserFindFile (const char* filename, const char* initialPath, cons
         const char* path = vectorGet(searchPaths, i);
         char* fullname;
 
-        if (path[0] != 0) {
+        if (path[0]) {
             fullname = malloc(strlen(path)+1+filenameLength+1);
             sprintf(fullname, "%s/%s", path, filename);
 
@@ -165,7 +166,7 @@ static ast* parserUsing (parserCtx* ctx) {
     char* name = tokenMatchStr(ctx);
     ast* Node = astCreateUsing(loc, name);
 
-    if (name[0] != 0) {
+    if (name[0]) {
         //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
         parserResult res = parser(name, ctx->path, ctx->comp);
 

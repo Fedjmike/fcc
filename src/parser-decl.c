@@ -1,14 +1,28 @@
 #include "../inc/parser-decl.h"
 
+#include "../inc/debug.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
-#include "../inc/debug.h"
 #include "../inc/error.h"
 
 #include "../inc/lexer.h"
 #include "../inc/parser.h"
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
+
+#include "stdlib.h"
+
+using "../inc/debug.h";
+using "../inc/sym.h";
+using "../inc/ast.h";
+using "../inc/error.h";
+
+using "../inc/lexer.h";
+using "../inc/parser-helpers.h";
+using "../inc/parser-value.h";
+
+using "stdlib.h";
+using "string.h";
 
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);

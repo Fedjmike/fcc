@@ -18,6 +18,24 @@
 #include "string.h"
 #include "stdlib.h"
 
+using "../std/std.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/architecture.h";
+using "../inc/operand.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+using "../inc/reg.h";
+
+using "../inc/emitter-value.h";
+using "../inc/emitter-decl.h";
+
+using "string.h";
+using "stdlib.h";
+
 static void emitterModule (emitterCtx* ctx, const ast* Node);
 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);

@@ -11,6 +11,18 @@
 #include "stdarg.h"
 #include "string.h"
 
+using "../inc/lexer.h";
+
+using "../inc/debug.h";
+using "../inc/sym.h";
+using "../inc/ast.h";
+using "../inc/error.h";
+
+using "../inc/parser-helpers.h";
+
+using "stdlib.h";
+using "string.h";
+
 static char* tokenTagGetStr (tokenTag Token);
 
 /*:::: SCOPE ::::*/
@@ -100,7 +112,7 @@ static char* tokenTagGetStr (tokenTag tag) {
     else if (tag == tokenStr) return "string";
     else if (tag == tokenChar) return "character";
     else {
-        char* str = malloc(logi(tag, 10)+2);
+        char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("tokenTagGetStr", "token tag", str);
         free(str);
@@ -219,7 +231,7 @@ char* tokenMatchStr (parserCtx* ctx) {
 }
 
 char tokenMatchChar (parserCtx* ctx) {
-    char ret = 0;
+    char ret = (char) 0;
 
     if (tokenIsChar(ctx)) {
         if (ctx->lexer->buffer[0] == '\\') {
