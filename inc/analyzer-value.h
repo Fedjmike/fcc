@@ -1,9 +1,9 @@
 #include "../std/std.h"
 
-struct type;
-struct ast;
+typedef struct type type;
+typedef struct ast ast;
 
-struct analyzerCtx;
+typedef struct analyzerCtx analyzerCtx;
 
-const struct type* analyzerValue (struct analyzerCtx* ctx, struct ast* Node);
-const struct type* analyzerInitOrCompoundLiteral (struct analyzerCtx* ctx, struct ast* Node, const struct type* DT);
+const type* analyzerValue (analyzerCtx* ctx, ast* Node);
+const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit);

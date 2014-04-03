@@ -18,13 +18,14 @@ Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
 Shift = Expr [{ ">>" | "<<" Expr }]
 Expr = Term [{ "+" | "-" Term }]
 Term = Unary [{ "*" | "/" | "%" Unary }]
-Unary = ( "!" | "~" | "-" | "*" | "&" Unary ) | Object [{ "++" | "--" }]
+Unary = ( "!" | "~" | "-" | "*" | "&" | "++" | "--" Unary ) | PostUnary
+PostUnary = Object [{ "++" | "--" }]
 Object = Factor [{   ( "[" Value "]" )
                    | ( "(" [ AssignValue [{ "," AssignValue }] ] ")" )
                    | ( "." | "->" <Ident> ) }]
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
-         | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," AssignValue }] ] "}" )
+         | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
          | <Int> | <Bool> | <Str> | <Char> | <Ident>
 
@@ -37,13 +38,13 @@ EnumField = Name# [ "=" AssignValue ]
 Param = DeclBasic DeclExpr#
 
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
-DeclBasic = <Ident> | StructOrUnion | Enum
+DeclBasic = [ "const" ] <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
 Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
-DeclUnary = ( "*" DeclUnary ) | DeclObject
+DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
 DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." ] ")"
+DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

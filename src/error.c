@@ -62,7 +62,7 @@ static void verrorf (const char* format, va_list args) {
 
             /*Operator*/
             else if (format[i+1] == 'o')
-                printf("%s%s%s", colourOp, va_arg(args, char*), consoleNormal);
+                printf("%s%s%s", colourOp, opTagGetStr(va_arg(args, opTag)), consoleNormal);
 
             /*Integer*/
             else if (format[i+1] == 'd')
@@ -70,7 +70,7 @@ static void verrorf (const char* format, va_list args) {
 
             /*Raw type*/
             else if (format[i+1] == 't') {
-                char* typeStr = typeToStr(va_arg(args, type*), "");
+                char* typeStr = typeToStr(va_arg(args, type*));
                 printf("%s%s%s", colourType, typeStr, consoleNormal);
                 free(typeStr);
 
@@ -83,7 +83,7 @@ static void verrorf (const char* format, va_list args) {
                     if (Symbol->dt) {
                         char* identStr = malloc(strlen(colourIdent)+strlen(ident)+strlen(colourType)+1);
                         sprintf(identStr, "%s%s%s", colourIdent, ident, colourType);
-                        char* typeStr = typeToStr(Symbol->dt, identStr);
+                        char* typeStr = typeToStrEmbed(Symbol->dt, identStr);
                         printf("%s%s%s", colourType, typeStr, consoleNormal);
                         free(identStr);
                         free(typeStr);
@@ -93,6 +93,16 @@ static void verrorf (const char* format, va_list args) {
 
                 } else
                     printf("%s%s%s %s%s", colourTag, symTagGetStr(Symbol->tag), colourIdent, ident, consoleNormal);
+
+            /*AST node*/
+            } else if (format[i+1] == 'a') {
+                const ast* Node = va_arg(args, ast*);
+
+                if (Node->symbol && Node->symbol->ident)
+                    errorf("$n", Node->symbol);
+
+                else
+                    errorf("$t", Node->dt);
 
             /*Symbol tag, semantic "class"*/
             } else if (format[i+1] == 'c') {
@@ -126,6 +136,9 @@ static void verrorf (const char* format, va_list args) {
 }
 
 static void errorParser (parserCtx* ctx, const char* format, ...) {
+    if (ctx->location.line == ctx->lastErrorLine)
+        return;
+
     tokenLocationMsg(ctx->location);
     printf("%serror%s: ", consoleRed, consoleNormal);
 
@@ -137,6 +150,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
     putchar('\n');
 
     ctx->errors++;
+    ctx->lastErrorLine = ctx->location.line;
     debugWait();
 }
 
@@ -176,7 +190,7 @@ void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where) {
 void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag) {
     const ast* first = (const ast*) vectorGet(&Symbol->decls, 0);
 
-    errorParser(ctx, "$h redeclared as $h", Symbol->ident, tag != symId ? symTagGetStr(tag) : "\b\b\b   ");
+    errorParser(ctx, "$h redeclared as $s", Symbol->ident, tag != symId ? symTagGetStr(tag) : "different symbol type");
 
     tokenLocationMsg(first->location);
     errorf("first declaration here as $c\n", Symbol);
@@ -196,49 +210,52 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
 /*:::: ANALYZER ERRORS ::::*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
-    errorAnalyzer(ctx, Node, "$o requires $s, found $t", where, expected, Node->dt);
+    errorAnalyzer(ctx, Node, "$h requires $s, found $a", where, expected, Node);
 }
 
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
     errorAnalyzer(ctx, Node, "$s requires $t, found $t", where, expected, Node->dt);
 }
 
-void errorLvalue (analyzerCtx* ctx, const ast* Node, const char* o) {
+void errorLvalue (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o requires lvalue", o);
 }
 
-void errorMismatch (analyzerCtx* ctx, const ast* Node, const char* o) {
+void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "type mismatch between $t and $t for $o",
                   Node->l->dt, Node->r->dt, o);
 }
 
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
-    errorAnalyzer(ctx, Node, "$h expected $d $s$s, $d given",
-                  where, expected, thing, expected == 1 ? "" : "s", found);
+    errorAnalyzer(ctx, Node, "too $s $s given to $h: expected $d, given $d",
+                  expected > found ? "few" : "many", thing, where, expected, found);
 }
 
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
-                         int n, const type* expected, const type* found) {
-    errorAnalyzer(ctx, Node, "type mismatch at parameter $d, expected $t: found $t",
+                         const ast* fn, int n, const type* expected, const type* found) {
+    if (fn->symbol) {
+        const sym* param = symGetChild(fn->symbol, n);
+
+        if (param)
+            errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
+                          n+1, fn->symbol->ident, param, found);
+
+        else
+            errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, expected $t: found $t",
+                          n+1, fn->symbol->ident, expected, found);
+
+    } else
+        errorAnalyzer(ctx, Node, "type mismatch at parameter $d, expected $t: found $t",
                   n+1, expected, found);
 }
 
-void errorNamedParamMismatch (analyzerCtx* ctx, const ast* Node,
-                              const sym* fn, int n, const type* expected, const type* found) {
-    const sym* param = symGetChild(fn, n);
-
-    if (param)
-        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
-                      n+1, fn->ident, param, found);
-
-    else
-        errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, expected $t: found $t",
-                      n+1, fn->ident, expected, found);
+void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
+    errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", Node->o, Node->l, field);
 }
 
-void errorMember (analyzerCtx* ctx, const char* o, const ast* Node, const type* record) {
-    errorAnalyzer(ctx, Node, "$o expected field of $t, found $h", o, record, Node->literal);
+void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) {
+    errorAnalyzer(ctx, init, "incompatible initialization of $a from $a", variable, init);
 }
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
@@ -275,6 +292,24 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
     }
 }
 
+void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$h was already qualified with $h", Node->symbol->ident, "'const'");
+
+    else
+        errorAnalyzer(ctx, Node, "type was already qualified with $h", "'const'");
+}
+
+void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "illegal qualification of a$s, $n, as $h",
+                      typeIsArray(Node->dt) ? "n array" : " function", Node->symbol, "const");
+
+    else
+        errorAnalyzer(ctx, Node, "illegal qualification of a , $s, as $h",
+                      typeIsArray(Node->dt) ? "array" : "function", "const");
+}
+
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
     errorAnalyzer(ctx, Node, "cannot use $n as a value", Symbol);
 }
@@ -283,6 +318,56 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
     errorAnalyzer(ctx, Node, "declaration of $h needed a compile-time known $s", Symbol->ident, what);
 }
 
-void errorCompoundLiteralWithoutType (struct analyzerCtx* ctx, const struct ast* Node) {
+void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
     errorAnalyzer(ctx, Node, "compound literal without explicit type");
+}
+
+void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o) {
+    const sym* basic = typeGetBasic(typeGetBase(Node->dt));
+
+    /*Only error once per incomplete type*/
+    if (!(basic && intsetAdd(&ctx->incompletePtrIgnore, (intptr_t) basic)))
+        errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $a", o, Node);
+}
+
+void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node) {
+    const sym* basic = typeGetBasic(Node->dt);
+
+    /*Again, only once (decl and ptr errors counted separately)*/
+    if (basic && intsetAdd(&ctx->incompleteDeclIgnore, (intptr_t) basic))
+        return;
+
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$n declared with incomplete type", Node->symbol);
+
+    else
+        errorAnalyzer(ctx, Node, "variable declared with incomplete type $t", Node->dt);
+}
+
+void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n) {
+    const sym* basic = typeGetBasic(Node->dt);
+
+    if (basic && intsetAdd(&ctx->incompleteDeclIgnore, (intptr_t) basic))
+        return;
+
+    const char *of = "", *ident = "";
+
+    if (fn->symbol && fn->symbol->ident) {
+        of = " of function ";
+        ident = fn->symbol->ident;
+    }
+
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "parameter $d$s$h, $h declared with incomplete type $t", n, of, ident, Node->symbol->ident, Node->dt);
+
+    else
+        errorAnalyzer(ctx, Node, "parameter $d$s$h declared with incomplete type $t", n, of, ident, Node->dt);
+}
+
+void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt) {
+    errorAnalyzer(ctx, Node, "function $n declared with incomplete return type $t", Node->symbol, dt);
+}
+
+void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, opTag o) {
+    errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }

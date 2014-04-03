@@ -14,8 +14,6 @@
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
-#include "string.h"
-
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
@@ -43,6 +41,9 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
 
     else if (Node->tag == astEnum)
         emitterEnum(ctx, Node->symbol);
+
+    else if (Node->tag == astConst)
+        emitterDeclBasic(ctx, Node->r);
 
     else if (Node->tag == astLiteral)
         ;
@@ -74,7 +75,7 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             continue;
 
         } else {
-            debugErrorUnhandled("emitterStructOrUnion", "symbol", symTagGetStr(Current->tag));
+            debugErrorUnhandled("emitterStructOrUnion", "symbol tag", symTagGetStr(Current->tag));
             continue;
         }
 
@@ -113,29 +114,32 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
         ;
 
     else if (Node->tag == astBOP) {
-        if (!strcmp(Node->o, "="))
+        if (Node->o == opAssign)
             emitterDeclAssignBOP(ctx, Node);
 
         else
-            debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
+            debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
+
+    } else if (Node->tag == astConst) {
+        emitterDeclNode(ctx, Node->r);
 
     } else if (Node->tag == astUOP) {
-        if (!strcmp(Node->o, "*"))
+        if (Node->o == opDeref)
             emitterDeclNode(ctx, Node->r);
 
         else
-            debugErrorUnhandled("emitterDeclNode", "operator", Node->o);
+            debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
-    } else if (Node->tag == astCall)
+    } else if (Node->tag == astCall) {
         /*Nothing to do with the params*/
         emitterDeclNode(ctx, Node->l);
 
-    else if (Node->tag == astIndex)
-        /*The emitter does nothing the size of the array, so only go
+    } else if (Node->tag == astIndex) {
+        /*The emitter does nothing the to size of the array, so only go
           down the left branch*/
         emitterDeclNode(ctx, Node->l);
 
-    else if (Node->tag == astLiteral) {
+    } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             emitterDeclName(ctx, Node);
 
@@ -149,24 +153,19 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
 static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("DeclAssignBOP");
 
-    /*The emitter doesn't need to trace the RHS*/
     emitterDeclNode(ctx, Node->l);
 
-    asmEnter(ctx->Asm);
     operand L = operandCreateMem(&regs[regRBP],
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch,
                                              Node->symbol->dt));
-    asmLeave(ctx->Asm);
 
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
         emitterInitOrCompoundLiteral(ctx, Node->r, L);
 
     else {
         if (Node->symbol->storage == storageAuto) {
-            asmEnter(ctx->Asm);
             operand R = emitterValue(ctx, Node->r, requestOperable);
-            asmLeave(ctx->Asm);
             asmMove(ctx->Asm, L, R);
             operandFree(R);
 
@@ -178,12 +177,10 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    (void) ctx;
-
     debugEnter("DeclName");
 
-    if (Node->symbol->label.label == 0)
-        Node->symbol->label = labelNamed(Node->symbol->ident);
+    if (Node->symbol->label == 0)
+        ctx->arch->symbolMangler(Node->symbol);
 
     debugLeave();
 }

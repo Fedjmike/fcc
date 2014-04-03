@@ -1,9 +1,9 @@
-/*.layout.cbTemp
-/profile.txt
-/C compiler.depend
-/C compiler.layout
-/fcc.cbp
-/fcc.depend
-/fcc.layout
+/obj/
+/bin/
 /*.o
 /*.s
+/*.cbp
+/*.depend
+/*.layout
+/*.layout.cbTemp
+/profile.txt

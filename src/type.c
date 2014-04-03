@@ -9,15 +9,38 @@
 #include "string.h"
 #include "stdio.h"
 
+static typeQualifiers typeQualifiersCreate (void);
 static type* typeCreate (typeTag tag);
 
+/**
+ * Jump through (immediate) typedefs, possibly recursively, to actual type
+ */
 static const type* typeTryThroughTypedef (const type* DT);
 
+/**
+ * As above, but collects qualifiers, e.g.
+ *
+ *    typedef int x;
+ *    typedef volatile x* y;
+ *    typedef const y z;
+ *    z a;
+ * ->
+ *    TryThroughTypedefQual(z) == {volatile x*, const}
+ */
+static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
+
+static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded);
+
 /*:::: TYPE CTORS/DTOR ::::*/
+
+static typeQualifiers typeQualifiersCreate () {
+    return (typeQualifiers) {false};
+}
 
 static type* typeCreate (typeTag tag) {
     type* DT = malloc(sizeof(type));
     DT->tag = tag;
+    DT->qual.isConst = false;
 
     DT->basic = 0;
 
@@ -32,7 +55,7 @@ static type* typeCreate (typeTag tag) {
     return DT;
 }
 
-type* typeCreateBasic (struct sym* basic) {
+type* typeCreateBasic (const sym* basic) {
     type* DT = typeCreate(typeBasic);
     DT->basic = basic;
     return DT;
@@ -65,7 +88,8 @@ type* typeCreateInvalid () {
 }
 
 void typeDestroy (type* DT) {
-    debugAssert("typeDestroy", "null parameter", DT != 0);
+    if (debugAssert("typeDestroy", "null parameter", DT != 0))
+        return;
 
     if (DT->tag == typeBasic || DT->tag == typeInvalid)
         ;
@@ -86,19 +110,22 @@ void typeDestroy (type* DT) {
 }
 
 type* typeDeepDuplicate (const type* DT) {
-    debugAssert("typeDeepDuplicate", "null parameter", DT != 0);
-
-    if (DT->tag == typeInvalid)
+    if (debugAssert("typeDeepDuplicate", "null parameter", DT != 0))
         return typeCreateInvalid();
 
+    type* copy;
+
+    if (DT->tag == typeInvalid)
+        copy = typeCreateInvalid();
+
     else if (DT->tag == typeBasic)
-        return typeCreateBasic(DT->basic);
+        copy = typeCreateBasic(DT->basic);
 
     else if (DT->tag == typePtr)
-        return typeCreatePtr(typeDeepDuplicate(DT->base));
+        copy = typeCreatePtr(typeDeepDuplicate(DT->base));
 
     else if (DT->tag == typeArray)
-        return typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
+        copy = typeCreateArray(typeDeepDuplicate(DT->base), DT->array);
 
     else if (DT->tag == typeFunction) {
         type** paramTypes = calloc(DT->params, sizeof(type*));
@@ -106,41 +133,81 @@ type* typeDeepDuplicate (const type* DT) {
         for (int i = 0; i < DT->params; i++)
             paramTypes[i] = typeDeepDuplicate(DT->paramTypes[i]);
 
-        return typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params, DT->variadic);
+        copy = typeCreateFunction(typeDeepDuplicate(DT->returnType), paramTypes, DT->params, DT->variadic);
 
     } else {
         debugErrorUnhandled("typeDeepDuplicate", "type tag", typeTagGetStr(DT->tag));
-        return typeCreateInvalid();
+        copy = typeCreateInvalid();
     }
+
+    copy->qual = DT->qual;
+    return copy;
 }
 
 /*:::: TYPE MISC HELPERS ::::*/
 
 static const type* typeTryThroughTypedef (const type* DT) {
-    if (DT->tag == typeBasic && DT->basic->tag == symTypedef)
-        return typeTryThroughTypedef(DT->basic ? DT->basic->dt : 0);
+    if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
+        return typeTryThroughTypedef(DT->basic->dt);
 
     else
         return DT;
 }
 
-sym* typeGetRecordSym (const type* record) {
-    record = typeTryThroughTypedef(record);
+static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
+    if (qualOut)
+        qualOut->isConst |= DT->qual.isConst;
 
-    if (typeIsInvalid(record))
+    if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
+        return typeTryThroughTypedefQual(DT->basic->dt, qualOut);
+
+    else
+        return DT;
+}
+
+const sym* typeGetBasic (const type* DT) {
+    if (!DT)
         return 0;
 
-    else {
-        debugAssert("typeGetRecordSym", "record param",
-                       typeIsRecord(record)
-                    || (record->tag == typePtr && typeIsRecord(record->base)));
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeBasic ? DT->basic : 0;
+}
 
-        if (typeIsPtr(record))
-            return record->base->basic;
+const type* typeGetBase (const type* DT) {
+    if (!DT)
+        return 0;
 
-        else
-            return record->basic;
-    }
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typePtr || DT->tag == typeArray ? DT->base : 0;
+}
+
+const type* typeGetReturn (const type* DT) {
+    if (!DT)
+        return 0;
+
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeFunction ? DT->returnType : 0;
+}
+
+const sym* typeGetRecord (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+
+    if (    DT->tag == typeBasic && DT->basic
+        && (   DT->basic->tag == symStruct
+            || DT->basic->tag == symUnion))
+        return DT->basic;
+
+    else if (DT->tag == typePtr && typeIsBasic(DT->base))
+        return typeGetRecord(DT->base);
+
+    else
+        return 0;
+}
+
+const type* typeGetCallable (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeFunction ? DT :
+           DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
 }
 
 /*:::: TYPE DERIVATION ::::*/
@@ -184,13 +251,12 @@ type* typeDeriveUnified (const type* L, const type* R) {
 type* typeDeriveBase (const type* DT) {
     DT = typeTryThroughTypedef(DT);
 
-    if (typeIsInvalid(DT))
+    if (   typeIsInvalid(DT)
+        || debugAssert("typeDeriveBase", "base", typeIsPtr(DT) || typeIsArray(DT)))
         return typeCreateInvalid();
 
-    else {
-        debugAssert("typeDeriveBase", "base", typeIsPtr(DT) || typeIsArray(DT));
+    else
         return typeDeepDuplicate(DT->base);
-    }
 }
 
 type* typeDerivePtr (const type* base) {
@@ -202,20 +268,13 @@ type* typeDeriveArray (const type* base, int size) {
 }
 
 type* typeDeriveReturn (const type* fn) {
-    fn = typeTryThroughTypedef(fn);
+    fn = typeGetCallable(fn);
 
-    if (typeIsInvalid(fn))
+    if (debugAssert("typeDeriveReturn", "callable param", fn != 0))
         return typeCreateInvalid();
 
-    else {
-        debugAssert("typeDeriveReturn", "callable param", typeIsCallable(fn));
-
-        if (typeIsPtr(fn))
-            return typeDeriveReturn(fn->base);
-
-        else
-            return typeDeepDuplicate(fn->returnType);
-    }
+    else
+        return typeDeepDuplicate(fn->returnType);
 }
 
 /*:::: TYPE CLASSIFICATION ::::*/
@@ -241,8 +300,16 @@ bool typeIsFunction (const type* DT) {
 }
 
 bool typeIsInvalid (const type* DT) {
+    if (!DT)
+        return false;
+
     DT = typeTryThroughTypedef(DT);
     return DT->tag == typeInvalid;
+}
+
+bool typeIsComplete (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return !(DT->tag == typeBasic && !DT->basic->complete);
 }
 
 bool typeIsVoid (const type* DT) {
@@ -253,19 +320,22 @@ bool typeIsVoid (const type* DT) {
            || typeIsInvalid(DT);
 }
 
-bool typeIsRecord (const type* DT) {
+bool typeIsStruct (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   DT->tag == typeBasic
-               && (   DT->basic->tag == symStruct
-                   || DT->basic->tag == symUnion))
+    return    (   DT->tag == typeBasic && DT->basic->tag == symStruct)
            || typeIsInvalid(DT);
 }
 
-bool typeIsCallable (const type* DT) {
+bool typeIsUnion (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   typeIsFunction(DT)
-               || (DT->tag == typePtr && typeIsFunction(DT->base)))
+    return    (   DT->tag == typeBasic && DT->basic->tag == symUnion)
            || typeIsInvalid(DT);
+}
+
+bool typeIsMutable (const type* DT) {
+    typeQualifiers qual = typeQualifiersCreate();
+    DT = typeTryThroughTypedefQual(DT, &qual);
+    return !qual.isConst || typeIsInvalid(DT);
 }
 
 bool typeIsNumeric (const type* DT) {
@@ -392,7 +462,8 @@ const char* typeTagGetStr (typeTag tag) {
 }
 
 int typeGetSize (const architecture* arch, const type* DT) {
-    debugAssert("typeGetSize", "null parameter", DT != 0);
+    if (debugAssert("typeGetSize", "null parameter", DT != 0))
+        return arch->wordsize;
 
     DT = typeTryThroughTypedef(DT);
 
@@ -413,7 +484,11 @@ int typeGetSize (const architecture* arch, const type* DT) {
         return DT->basic->size;
 }
 
-char* typeToStr (const type* DT, const char* embedded) {
+char* typeToStr (const type* DT) {
+    return typeToStrEmbed(DT, "");
+}
+
+char* typeToStrEmbed (const type* DT, const char* embedded) {
     /*TODO: Jump through typedefs and offer akas
             Three modes: print as normal, print jumping through typedefs,
                          print both forms with akas at the correct positions
@@ -424,16 +499,23 @@ char* typeToStr (const type* DT, const char* embedded) {
     if (DT->tag == typeInvalid || DT->tag == typeBasic) {
         char* basicStr = typeIsInvalid(DT)
                             ? "<invalid>"
-                            : DT->basic->ident;
+                            : (DT->basic->ident && DT->basic->ident[0])
+                                ? DT->basic->ident
+                                : DT->basic->tag == symStruct ? "<unnamed struct>" :
+                                  DT->basic->tag == symUnion ? "<unnamed union>" :
+                                  DT->basic->tag == symEnum ? "<unnamed enum>" : "<unnamed type>";
 
-        if (embedded[0] == 0)
-            return strdup(basicStr);
+        char* qualified = typeQualifiersToStr(DT->qual, basicStr);
+
+        if (embedded[0] == (char) 0)
+            return qualified;
 
         else {
-            char* ret = malloc(strlen(embedded) +
-                               strlen(basicStr)+2);
-
-            sprintf(ret, "%s %s", basicStr, embedded);
+            char* ret = malloc(  strlen(embedded)
+                   + strlen(basicStr)
+                   + 2 + (DT->qual.isConst ? 6 : 0));
+            sprintf(ret, "%s %s", qualified, embedded);
+            free(qualified);
             return ret;
         }
 
@@ -444,30 +526,20 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* params = 0;
 
         if (DT->params != 0) {
-            char** paramStrs = calloc(DT->params, sizeof(char*));
-            int length = 1;
+            vector/*<char*>*/ paramStrs;
+            vectorInit(&paramStrs, DT->params+1);
+            vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params);
+            vectorMap(&paramStrs, (vectorMapper) typeToStr, &paramStrs);
 
-            /*Get strings for all the params and count total string length*/
-            for (int i = 0; i < DT->params; i++) {
-                paramStrs[i] = typeToStr(DT->paramTypes[i], "");
-                length += strlen(paramStrs[i])+2;
-            }
+            if (DT->variadic)
+                vectorPush(&paramStrs, "...");
 
-            /*Cat them together*/
+            params = strjoin((char**) paramStrs.buffer, paramStrs.length, ", ", (stdalloc) malloc);
 
-            params = malloc(length+1);
+            if (DT->variadic)
+                paramStrs.length--;
 
-            int charno = 0;
-
-            for (int i = 0; i < DT->params-1; i++) {
-                charno += sprintf(params+charno, "%s, ", paramStrs[i]);
-                free(paramStrs[i]);
-            }
-
-            /*Cat the final one, sans the delimiting comma*/
-            sprintf(params+charno, "%s", paramStrs[DT->params-1]);
-            free(paramStrs[DT->params-1]);
-            free(paramStrs);
+            vectorFreeObjs(&paramStrs, free);
 
         } else
             params = strdup("void");
@@ -484,7 +556,7 @@ char* typeToStr (const type* DT, const char* embedded) {
             sprintf(format, "%s(%s)", embedded, params);
 
         free(params);
-        char* ret = typeToStr(DT->returnType, format);
+        char* ret = typeToStrEmbed(DT->returnType, format);
         free(format);
         return ret;
 
@@ -493,13 +565,17 @@ char* typeToStr (const type* DT, const char* embedded) {
         char* format = 0;
 
         if (typeIsPtr(DT)) {
-            format = malloc(strlen(embedded)+4);
+            format = malloc(strlen(embedded) + 4 + (DT->qual.isConst ? 7 : 0));
+
+            char* qualified = typeQualifiersToStr(DT->qual, embedded);
 
             if (DT->base->tag == typeFunction)
-                sprintf(format, "(*%s)", embedded);
+                sprintf(format, "(*%s)", qualified);
 
             else
-                sprintf(format, "*%s", embedded);
+                sprintf(format, "*%s", qualified);
+
+            free(qualified);
 
         } else /*if (typeIsArray(DT))*/ {
             format = malloc(  strlen(embedded)
@@ -512,8 +588,25 @@ char* typeToStr (const type* DT, const char* embedded) {
                 sprintf(format, "%s[%d]", embedded, DT->array);
         }
 
-        char* ret = typeToStr(DT->base, format);
+        char* ret = typeToStrEmbed(DT->base, format);
         free(format);
         return ret;
     }
+}
+
+static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded) {
+    if (qual.isConst) {
+        char* ret = malloc(  strlen("const ")
+                           + strlen(embedded) + 1);
+
+        if (embedded[0])
+            sprintf(ret, "const %s", embedded);
+
+        else
+            strcpy(ret, "const");
+
+        return ret;
+
+    } else
+        return strdup(embedded);
 }

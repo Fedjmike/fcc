@@ -3,7 +3,51 @@
 #include "stdlib.h"
 #include "string.h"
 
-static int hashmapHash (const char* key, int mapsize);
+static int hashstr (const char* key, int mapsize);
+
+typedef void (*generalmapKeyDtor)(char* key, const void* value);
+typedef void (*generalmapValueDtor)(void* value);
+typedef int (*generalmapHash)(const char* key, int mapsize);
+//Like strcmp, returns 0 for match
+typedef int (*generalmapCmp)(const char* actual, const char* key);
+
+static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values);
+
+static void generalmapFree (generalmap* map, bool hashes, bool values);
+static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
+                                bool hashes, bool values);
+
+static bool generalmapAdd (generalmap* map, const char* key, void* value,
+                           generalmapHash hashf, generalmapCmp cmp, bool values);
+static void generalmapMerge (generalmap* dest, const generalmap* src,
+                             generalmapHash hash, generalmapCmp cmp, bool values, bool dup);
+
+static void* generalmapMap (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
+static bool generalmapTest (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
+
+/*:::: HASH FUNCTIONS ::::*/
+
+static int hashstr (const char* key, int mapsize) {
+    int hash = 0;
+
+    for (int i = 0; key[i]; i++)
+        hash += key[i];
+
+    return hash % mapsize;
+}
+
+static int hashint (int element, int mapsize) {
+    int hash = element;
+
+    while (hash > mapsize)
+        hash -= mapsize;
+
+    return element;
+}
+
+/*:::: GENERALMAP ::::*/
+
+static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp);
 
 /*Slightly counterintuitively, this doesn't actually find the location
   of the key. It finds the location where it stopped looking, which
@@ -13,101 +57,255 @@ static int hashmapHash (const char* key, int mapsize);
     3. Another key, indicating that it was not found and that the
        buffer is full
   It is guaranteed to be a valid index in the buffer.*/
-static int hashmapFind (const hashmap* map, const char* key);
+static int generalmapFind (const generalmap* map, const char* key,
+                           int hash, generalmapCmp cmp);
 
-hashmap hashmapCreate (int size) {
-    return (hashmap) {size, 0, calloc(size, sizeof(char*)), calloc(size, sizeof(char*))};
+static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values) {
+    map->size = size;
+    map->elements = 0;
+    map->keysInt = calloc(size, sizeof(char*));
+    map->hashes = hashes ? calloc(size, sizeof(int)) : 0;
+    map->values = values ? calloc(size, sizeof(char*)) : 0;
+
+    return map;
 }
 
-void hashmapDestroy (hashmap* map) {
-    for (int index = 0; index < map->size; index++) {
-        while (map->keys[index] == 0)
-            index++;
+static void generalmapFree (generalmap* map, bool hashes, bool values) {
+    free(map->keysInt);
 
-        free(map->keys[index]);
+    if (hashes)
+        free(map->hashes);
+
+    if (values)
+        free(map->values);
+
+    map->keysInt = 0;
+    map->hashes = 0;
+    map->values = 0;
+}
+
+static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
+                                bool hashes, bool values) {
+    /*Until the end of the buffer*/
+    for (int index = 0; index < map->size; index++) {
+        /*Skip empties*/
+        if (map->keysInt[index] == 0)
+            continue;
+
+        /*Call the dtor*/
+
+        if (keyDtor)
+            keyDtor(map->keysStrMutable[index], map->values[index]);
+
+        if (valueDtor)
+            valueDtor(map->values[index]);
     }
 
-    free(map->keys);
-    free(map->values);
+    generalmapFree(map, hashes, values);
 }
 
-void hashmapDestroyObjs (hashmap* map, hashmapDtor dtor) {
-    for (int index = 0; index < map->size; index++) {
-        while (map->keys[index] == 0)
-            index++;
+static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp) {
+    if (cmp)
+        return    map->hashes[index] == hash
+               && (!cmp || !cmp(map->keysStr[index], key));
 
-        dtor(map->keys[index], map->values[index]);
-        free(map->keys[index]);
-    }
-
-    free(map->keys);
-    free(map->values);
+    else
+        return map->keysStr[index] == key;
 }
 
-static int hashmapHash (const char* key, int mapsize) {
-    int hash = 0;
-
-    for (int i = 0; key[i]; i++)
-        hash += (int) key[i];
-
-    return hash % mapsize;
-}
-
-static int hashmapFind (const hashmap* map, const char* key) {
-    int hash = hashmapHash(key, map->size);
-
+static int generalmapFind (const generalmap* map, const char* key,
+                           int hash, generalmapCmp cmp) {
     /*Check from the first choice slot all the way until the end of
       the values buffer, if need be*/
     for (int index = hash; index < map->size; index++)
-        if (map->keys[index] == 0 || !strcmp(map->keys[index], key))
+        /*Exit if empty or found the key*/
+        if (map->keysInt[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
             return index;
 
     /*Then from the start all the way back to the first choice slot*/
     for (int index = 0; index < hash; index++)
-        if (map->keys[index] == 0 || !strcmp(map->keys[index], key))
+        if (map->keysInt[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
             return index;
 
     /*Done an entire sweep of the buffer, not found & full*/
     return hash;
 }
 
-bool hashmapAdd (hashmap* map, const char* key, void* value) {
-    int index = hashmapFind(map, key);
+static bool generalmapAdd (generalmap* map, const char* key, void* value,
+                           generalmapHash hashf, generalmapCmp cmp, bool values) {
+    int hash = hashf(key, map->size);
+    int index = generalmapFind(map, key, hash, cmp);
 
     /*Present, remap*/
-    if (!strcmp(map->keys[index], key)) {
-        map->values[index] = value;
+    if (generalmapIsMatch(map, index, key, hash, cmp)) {
+        map->keysStr[index] = key;
+
+        if (cmp != 0)
+            map->hashes[index] = hash;
+
+        if (values)
+            map->values[index] = value;
+
         return true;
 
     /*Empty spot*/
-    } else if (map->keys[index] == 0) {
-        map->keys[index] = strdup(key);
-        map->values[index] = value;
+    } else if (map->keysInt[index] == 0) {
+        map->keysStr[index] = key;
         map->elements++;
+
+        if (cmp != 0)
+            map->hashes[index] = hash;
+
+        if (values)
+            map->values[index] = value;
+
         return false;
 
     /*Full: create a new one twice the size and add it to that*/
     } else {
-        hashmap newmap = hashmapCreate(map->size*2);
-        hashmapMerge(&newmap, map);
-        hashmapAdd(&newmap, key, value);
+        generalmap newmap;
+        generalmapInit(&newmap, map->size*2, cmp != 0, values);
+        generalmapMerge(&newmap, map, hashf, cmp, values, false);
+        generalmapAdd(&newmap, key, value, hashf, cmp, values);
 
-        hashmapDestroy(map);
+        generalmapFree(map, values, cmp != 0);
         *map = newmap;
         return false;
     }
 }
 
-void hashmapMerge (hashmap* dest, const hashmap* src) {
+static void generalmapMerge (generalmap* dest, const generalmap* src,
+                             generalmapHash hash, generalmapCmp cmp, bool values, bool dup) {
     for (int index = 0; index < src->size; index++) {
-        while (src->keys[index] == 0)
-            index++;
+        if (src->keysInt[index] == 0)
+            continue;
 
-        hashmapAdd(dest, src->keys[index], src->values[index]);
+        char* key = src->keysStrMutable[index];
+
+        if (dup)
+            key = strdup(key);
+
+        generalmapAdd(dest, key, values ? src->values[index] : 0, hash, cmp, values);
     }
 }
 
+static void* generalmapMap (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp) {
+    int hash = hashf(key, map->size);
+    int index = generalmapFind(map, key, hash, cmp);
+    return generalmapIsMatch(map, index, key, hash, cmp) ? map->values[index] : 0;
+}
+
+static bool generalmapTest (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp) {
+    int hash = hashf(key, map->size);
+    int index = generalmapFind(map, key, hash, cmp);
+    return generalmapIsMatch(map, index, key, hash, cmp);
+}
+
+/*:::: HASHMAP ::::*/
+
+hashmap* hashmapInit (hashmap* map, int size) {
+    return generalmapInit(map, size, true, true);
+}
+
+void hashmapFree (hashmap* map) {
+    generalmapFree(map, true, true);
+}
+
+void hashmapFreeObjs (hashmap* map, hashmapKeyDtor keyDtor, hashmapValueDtor valueDtor) {
+    generalmapFreeObjs(map, keyDtor, valueDtor, true, true);
+}
+
+bool hashmapAdd (hashmap* map, const char* key, void* value) {
+    return generalmapAdd(map, key, value, hashstr, strcmp, true);
+}
+
+void hashmapMerge (hashmap* dest, hashmap* src) {
+    generalmapMerge(dest, src, hashstr, strcmp, true, false);
+}
+
+void hashmapMergeDup (hashmap* dest, const hashmap* src) {
+    generalmapMerge(dest, src, hashstr, strcmp, true, true);
+}
+
 void* hashmapMap (const hashmap* map, const char* key) {
-    int index = hashmapFind(map, key);
-    return !strcmp(map->values[index], key) ? map->values[index] : 0;
+    return generalmapMap(map, key, hashstr, strcmp);
+}
+
+/*:::: INTMAP ::::*/
+
+intmap* intmapInit (intmap* map, int size) {
+    return generalmapInit(map, size, false, true);
+}
+
+void intmapFree (intmap* map) {
+    generalmapFree(map, false, true);
+}
+
+void intmapFreeObjs (intmap* map, intmapValueDtor dtor) {
+    generalmapFreeObjs(map, 0, (generalmapValueDtor) dtor, false, true);
+}
+
+bool intmapAdd (intmap* map, intptr_t element, void* value) {
+    return generalmapAdd(map, (void*) element, value, (generalmapHash) hashint, 0, true);
+}
+
+void intmapMerge (intmap* dest, const intmap* src) {
+    generalmapMerge(dest, src, (generalmapHash) hashint, 0, true, false);
+}
+
+void* intmapMap (const intmap* map, intptr_t element) {
+    return generalmapMap(map, (void*) element, (generalmapHash) hashint, 0);
+}
+
+/*:::: HASHSET ::::*/
+
+hashset* hashsetInit (hashset* set, int size) {
+    return generalmapInit(set, size, true, false);
+}
+
+void hashsetFree (hashset* set) {
+    generalmapFree(set, true, false);
+}
+
+void hashsetFreeObjs (hashset* set, hashsetDtor dtor) {
+    generalmapFreeObjs(set, (generalmapKeyDtor) dtor, 0, true, false);
+}
+
+bool hashsetAdd (hashset* set, const char* element) {
+    return generalmapAdd(set, element, 0, hashstr, strcmp, false);
+}
+
+void hashsetMerge (hashset* dest, hashset* src) {
+    generalmapMerge(dest, src, hashstr, strcmp, false, false);
+}
+
+void hashsetMergeDup (hashset* dest, const hashset* src) {
+    generalmapMerge(dest, src, hashstr, strcmp, false, true);
+}
+
+bool hashsetTest (const hashset* set, const char* element) {
+    return generalmapTest(set, element, hashstr, strcmp);
+}
+
+
+/*:::: INTSET ::::*/
+
+intset* intsetInit (intset* set, int size) {
+    return generalmapInit(set, size, false, false);
+}
+
+void intsetFree (intset* set) {
+    generalmapFree(set, false, false);
+}
+
+bool intsetAdd (intset* set, intptr_t element) {
+    return generalmapAdd(set, (void*) element, 0, (generalmapHash) hashint, 0, false);
+}
+
+void intsetMerge (intset* dest, const intset* src) {
+    generalmapMerge(dest, src, (generalmapHash) hashint, 0, false, false);
+}
+
+bool intsetTest (const intset* set, intptr_t element) {
+    return generalmapTest(set, (void*) element, (generalmapHash) hashint, 0);
 }

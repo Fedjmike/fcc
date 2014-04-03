@@ -15,10 +15,10 @@ static char* tokenTagGetStr (tokenTag Token);
 
 /*:::: SCOPE ::::*/
 
-sym* scopeSet (parserCtx* ctx, sym* Scope) {
-    sym* Old = ctx->scope;
-    ctx->scope = Scope;
-    return Old;
+sym* scopeSet (parserCtx* ctx, sym* scope) {
+    sym* old = ctx->scope;
+    ctx->scope = scope;
+    return old;
 }
 
 /*:::: TOKEN HANDLING ::::*/
@@ -199,11 +199,11 @@ char* tokenMatchStr (parserCtx* ctx) {
 
                 /*An actual linebreak mid string? Escaped, ignore it*/
                 } else if (   ctx->lexer->buffer[i] == '\n'
-                           || ctx->lexer->buffer[i] == '\r')
+                           || ctx->lexer->buffer[i] == '\r') {
                     i++;
 
                 /*Unrecognised escape: ignore*/
-                else
+                } else
                     i++;
 
             } else

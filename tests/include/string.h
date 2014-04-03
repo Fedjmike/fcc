@@ -4,3 +4,5 @@ char* strcpy (char*, const char*);
 char* strdup (const char*);
 
 int strcmp (const char*, const char*);
+
+void* memcpy (void*, const void*, int);

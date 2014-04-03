@@ -12,7 +12,6 @@
 #include "../inc/analyzer-value.h"
 
 #include "stdlib.h"
-#include "string.h"
 
 static void analyzerParam (analyzerCtx* ctx, ast* Node);
 
@@ -28,6 +27,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node);
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base);
 
 static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base);
+static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base);
 static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base);
 static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType);
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* base);
@@ -40,13 +40,20 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
 
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling)
-        analyzerDeclNode(ctx, Current, BasicDT);
+         Current = Current->nextSibling) {
+        const type* R = analyzerDeclNode(ctx, Current, BasicDT);
+
+        /*Complete? Avoid complaining about typedefs and the like
+          (they don't need to be complete)*/
+        if (   Current->symbol && Current->symbol->tag == symId
+            && !typeIsComplete(R))
+            errorIncompleteDecl(ctx, Current);
+    }
 
     debugLeave();
 }
 
-const type* analyzerType (struct analyzerCtx* ctx, struct ast* Node) {
+const type* analyzerType (analyzerCtx* ctx, struct ast* Node) {
     debugEnter("Type");
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
@@ -86,6 +93,10 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
             debugErrorUnhandled("analyzerDeclBasic", "literal tag", literalTagGetStr(Node->litTag));
             Node->dt = typeCreateInvalid();
         }
+
+    } else if (Node->tag == astConst) {
+        Node->dt = typeDeepDuplicate(analyzerDeclBasic(ctx, Node->r));
+        Node->dt->qual.isConst = true;
 
     } else {
         if (Node->tag != astInvalid)
@@ -140,7 +151,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        if (Current->tag == astBOP && !strcmp(Current->o, "=")) {
+        if (Current->tag == astBOP && Current->o == opAssign) {
             analyzerValue(ctx, Current->r);
             evalResult constant = eval(ctx->arch, Current->r);
 
@@ -166,53 +177,49 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
     if (Node->tag == astInvalid) {
         debugMsg("Invalid");
-        Node->symbol->dt = typeCreateInvalid();
-        return Node->dt = typeCreateInvalid();
 
-    } else if (Node->tag == astEmpty)
+    } else if (Node->tag == astEmpty) {
         return Node->dt = typeDeepDuplicate(base);
 
-    else if (Node->tag == astBOP) {
-        if (!strcmp(Node->o, "="))
+    } else if (Node->tag == astBOP) {
+        if (Node->o == opAssign)
             return analyzerDeclAssignBOP(ctx, Node, base);
 
-        else {
-            debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
+        else
+            debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
+
+    } else if (Node->tag == astConst) {
+        return analyzerConst(ctx, Node, base);
 
     } else if (Node->tag == astUOP) {
-        if (!strcmp(Node->o, "*"))
+        if (Node->o == opDeref)
             return analyzerDeclPtrUOP(ctx, Node, base);
 
-        else {
-            debugErrorUnhandled("analyzerDeclNode", "operator", Node->o);
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
+        else
+            debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
 
-    } else if (Node->tag == astCall)
+    } else if (Node->tag == astCall) {
         return analyzerDeclCall(ctx, Node, base);
 
-    else if (Node->tag == astIndex)
+    } else if (Node->tag == astIndex) {
         return analyzerDeclIndex(ctx, Node, base);
 
-    else if (Node->tag == astLiteral) {
+    } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             return analyzerDeclIdentLiteral(ctx, Node, base);
 
-        else {
+        else
             debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
-            Node->symbol->dt = typeCreateInvalid();
-            return Node->dt = typeCreateInvalid();
-        }
 
-    } else {
+    } else
         debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
+
+    /*Fall through for error states*/
+
+    if (Node->symbol)
         Node->symbol->dt = typeCreateInvalid();
-        return Node->dt = typeCreateInvalid();
-    }
+
+    return Node->dt = typeCreateInvalid();
 }
 
 static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const type* base) {
@@ -222,16 +229,16 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
 
     /*Struct/array initializer?*/
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        analyzerInitOrCompoundLiteral(ctx, Node->r, L);
+        analyzerInitOrCompoundLiteral(ctx, Node->r, L, true);
 
     else {
         const type* R = analyzerValue(ctx, Node->r);
 
         if (!typeIsAssignment(L))
-            errorTypeExpected(ctx, Node->l, Node->o, "assignable type");
+            errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "assignable type");
 
         else if (!typeIsCompatible(R, L))
-            errorTypeExpectedType(ctx, Node->r, "variable initialization", L);
+            errorInitMismatch(ctx, Node->l, Node->r);
     }
 
     Node->dt = typeDeepDuplicate(L);
@@ -239,6 +246,25 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
     debugLeave();
 
     return Node->dt;
+}
+
+static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base) {
+    debugEnter("Const");
+
+    Node->dt = typeDeepDuplicate(base);
+
+    if (Node->dt->qual.isConst)
+        errorAlreadyConst(ctx, Node);
+
+    else if (typeIsArray(Node->dt) || typeIsFunction(Node->dt))
+        errorIllegalConst(ctx, Node);
+
+    Node->dt->qual.isConst = true;
+    const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
+
+    debugLeave();
+
+    return DT;
 }
 
 static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* base) {
@@ -254,6 +280,9 @@ static const type* analyzerDeclPtrUOP (analyzerCtx* ctx, ast* Node, const type* 
 
 static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* returnType) {
     debugEnter("DeclCall");
+
+    if (!typeIsComplete(returnType))
+        errorIncompleteReturnDecl(ctx, Node, returnType);
 
     /*Param types*/
 
@@ -272,6 +301,9 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
         } else if (Current->tag == astParam) {
             analyzerParam(ctx, Current);
             paramTypes[i++] = typeDeepDuplicate(Current->dt);
+
+            if (!typeIsComplete(Current->dt))
+                errorIncompleteParamDecl(ctx, Current, Node, i);
 
         } else
             debugErrorUnhandled("analyzerDeclCall", "AST tag", astTagGetStr(Current->tag));
@@ -332,7 +364,11 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, const 
             errorConflictingDeclarations(ctx, Node, Node->symbol, base);
 
         /*Even if types match, not allowed to be redeclared if a variable*/
-        else if (Node->symbol->tag == symId && !typeIsFunction(base))
+        else if (   Node->symbol->tag == symId &&
+                 !(   typeIsFunction(base)
+                   || Node->symbol->parent->tag == symStruct
+                   || Node->symbol->parent->tag == symUnion
+                   || Node->symbol->storage == storageExtern))
             errorRedeclared(ctx, Node, Node->symbol);
 
         reportSymbol(Node->symbol);

@@ -76,8 +76,7 @@ void debugOut (const char* format, ...) {
 }
 
 void debugVarOut (const char* format, va_list args) {
-    (void) args;
-    (void) format;
+    (void) args, (void) format;
 
     #ifdef FCC_DEBUGMODE
 
@@ -106,11 +105,13 @@ void debugError (const char* functionName,
     internalErrors++;
 }
 
-void debugAssert (const char* functionName,
+bool debugAssert (const char* functionName,
                   const char* testName,
                   bool result) {
     if (!result)
         debugError(functionName, "%s assertion failed", testName);
+
+    return !result;
 }
 
 void debugErrorUnhandled (const char* functionName,
@@ -147,7 +148,7 @@ void reportType (const type* DT) {
         /*String form*/
 
         if (!typeIsInvalid(DT)) {
-            char* Str = typeToStr(DT, "");
+            char* Str = typeToStr(DT);
             debugOut("str: %s   ", Str);
             free(Str);
         }
@@ -178,7 +179,7 @@ void reportSymbol (const sym* Symbol) {
     if (   (   Symbol->tag == symId
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
-        char* Str = typeToStr(Symbol->dt, "");
+        char* Str = typeToStr(Symbol->dt);
         debugOut("type: %s   ", Str);
         free(Str);
     }
@@ -230,7 +231,7 @@ void reportRegs () {
 
     for (regIndex r = 0; r < regMax; r++)
         if (regIsUsed(r))
-            debugOut("%s ", regToStr(&regs[r]));
+            debugOut("%s ", regToStr(regGet(r)));
 
     debugOut(" ]\n");
 }

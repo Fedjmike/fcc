@@ -10,20 +10,9 @@ using "vector.h";
 
 using "operand.h";
 
-struct type;
-struct ast;
-
-/**
- * Indices of certain built in symbols for arrays passed between
- * main and the semantic analyzer.
- * @see main @see analyzer
- */
-typedef enum builtinTypeIndex {
-    builtinVoid,
-    builtinBool,
-    builtinChar,
-    builtinInt
-} builtinTypeIndex;
+typedef struct type type;
+typedef struct ast ast;
+typedef struct sym sym;
 
 /**
  * Symbol tags
@@ -58,6 +47,7 @@ typedef enum storageTag {
  * @see sym::typeMask
  */
 typedef enum symTypeMask {
+    typeNone,
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
     typeNumeric = 1 << 0,
@@ -72,8 +62,10 @@ typedef enum symTypeMask {
     ///Condition describes whether the type can be tested for boolean
     ///truth
     typeCondition = 1 << 4,
-    ///Combination of attributes for integral types
-    typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition
+    ///Combination of attributes
+    typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition,
+    typeStruct = typeAssignment,
+    typeEnum = typeIntegral
 } symTypeMask;
 
 /**
@@ -87,30 +79,39 @@ typedef struct sym {
     symTag tag;
     char* ident;
 
-    vector/*<const ast* >*/ decls;  ///Vector of AST nodes for each declaration (inc. impls)
-    const struct ast* impl;  ///Implementation
-                             ///Points to the FnImpl, DeclStruct etc, whichever relevant if any
+    ///Vector of AST nodes for each declaration (inc. impls)
+    vector/*<const ast* >*/ decls;
+    ///Implementation
+    ///Points to the astFnImpl, astStruct etc, whichever relevant if any
+    const ast* impl;
 
     /*Functions, params, vars only*/
     storageTag storage;
-    struct type* dt;  ///In the case of functions, the return type
+    ///In the case of functions, the return type
+    type* dt;
 
     /*Types and structs only*/
-    int size;  ///Size in bytes
-    symTypeMask typeMask;  ///A mask defining operator capabilities
+    ///Size in bytes
+    int size;
+    ///A mask defining operator capabilities
+    symTypeMask typeMask;
+    bool complete;
 
     /*Linked list of symbols in our namespace
       Including parameters for functions and constants in enums*/
-    struct sym* parent;
-    struct sym* firstChild;
-    struct sym* lastChild;
-    struct sym* nextSibling;
+    sym* parent;
+    sym* firstChild;
+    sym* lastChild;
+    sym* nextSibling;
     int children;
 
-    operand label;  ///Label associated with this symbol in the assembly
-    int offset;  ///Offset, in bytes, for stack stored vars/parameters and non
-                 ///static fields
-    int constValue; ///For enum constants
+    ///Label associated with this symbol in the assembly
+    char* label;
+    ///Offset, in bytes, for stack stored vars/parameters and non
+    ///static fields
+    int offset;
+    ///For enum constants
+    int constValue;
 } sym;
 
 /**
@@ -118,7 +119,7 @@ typedef struct sym {
  * @return the global namespace symbol
  * @see symEnd
  */
-sym* symInit ();
+sym* symInit (void);
 
 /**
  * Destroy a symbol table

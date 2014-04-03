@@ -28,7 +28,7 @@ ast* astCreate (astTag tag, tokenLocation location) {
     Node->children = 0;
 
     Node->l = 0;
-    Node->o = 0;
+    Node->o = opUndefined;
     Node->r = 0;
     Node->dt = 0;
 
@@ -41,7 +41,8 @@ ast* astCreate (astTag tag, tokenLocation location) {
 }
 
 void astDestroy (ast* Node) {
-    debugAssert("astDestroy", "null param", Node != 0);
+    if (debugAssert("astDestroy", "null param", Node != 0))
+        return;
 
     for (ast *Current = Node->firstChild, *Next = Current ? Current->nextSibling : 0;
          Current;
@@ -51,16 +52,12 @@ void astDestroy (ast* Node) {
     if (Node->l)
         astDestroy(Node->l);
 
-    if (Node->r)
+    if (Node->r && Node->tag != astUsing)
         astDestroy(Node->r);
 
     if (Node->dt)
         typeDestroy(Node->dt);
 
-    if (Node->tag == astModule)
-        free(Node->location.filename);
-
-    free(Node->o);
     free(Node->literal);
     free(Node);
 }
@@ -124,7 +121,13 @@ ast* astCreateEnum (tokenLocation location, ast* name) {
     return Node;
 }
 
-ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r) {
+ast* astCreateConst (tokenLocation location, ast* r) {
+    ast* Node = astCreate(astConst, location);
+    Node->r = r;
+    return Node;
+}
+
+ast* astCreateBOP (tokenLocation location, ast* l, opTag o, ast* r) {
     ast* Node = astCreate(astBOP, location);
     Node->l = l;
     Node->o = o;
@@ -132,7 +135,7 @@ ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r) {
     return Node;
 }
 
-ast* astCreateUOP (tokenLocation location, char* o, ast* r) {
+ast* astCreateUOP (tokenLocation location, opTag o, ast* r) {
     ast* Node = astCreate(astUOP, location);
     Node->o = o;
     Node->r = r;
@@ -228,6 +231,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astUnion) return "astUnion";
     else if (tag == astEnum) return "astEnum";
     else if (tag == astType) return "astType";
+    else if (tag == astConst) return "astConst";
     else if (tag == astCode) return "astCode";
     else if (tag == astBranch) return "astBranch";
     else if (tag == astLoop) return "astLoop";
@@ -266,6 +270,106 @@ const char* literalTagGetStr (literalTag tag) {
         char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
         debugErrorUnhandled("literalTagGetStr", "literal tag", str);
+        free(str);
+        return "<unhandled>";
+    }
+}
+
+bool opIsNumeric (opTag o) {
+    return    o == opAdd || o == opSubtract || o == opAddAssign || o == opSubtractAssign
+           || o == opMultiply || o == opDivide || o == opModulo
+           || o == opMultiplyAssign || o == opDivideAssign || o == opModuloAssign
+           || o == opBitwiseAnd || o == opBitwiseOr || o == opBitwiseXor
+           || o == opBitwiseAndAssign || o == opBitwiseOrAssign || o == opBitwiseXorAssign
+           || o == opShl || o == opShr || o == opShlAssign || o == opShrAssign;
+}
+
+bool opIsBitwise (opTag o) {
+    return    o == opBitwiseAnd || o == opBitwiseOr || o == opBitwiseXor
+           || o == opBitwiseAndAssign || o == opBitwiseOrAssign || o == opBitwiseXorAssign;
+}
+
+
+bool opIsOrdinal (opTag o) {
+    return o == opGreater || o == opLess || o == opGreaterEqual || o == opLessEqual;
+}
+
+bool opIsEquality (opTag o) {
+    return o == opEqual || o == opNotEqual;
+}
+
+bool opIsAssignment (opTag o) {
+    return    o == opAssign
+           || o == opAddAssign || o == opSubtractAssign
+           || o == opMultiplyAssign || o == opDivideAssign || o == opModuloAssign
+           || o == opBitwiseAndAssign || o == opBitwiseOrAssign || o == opBitwiseXorAssign
+           || o == opShlAssign || o == opShrAssign;
+}
+
+bool opIsLogical (opTag o) {
+    return o == opLogicalAnd || o == opLogicalOr;
+}
+
+
+bool opIsMember (opTag o) {
+    return o == opMember || o == opMemberDeref;
+}
+
+
+bool opIsDeref (opTag o) {
+    return o == opMemberDeref;
+}
+
+const char* opTagGetStr (opTag tag) {
+    if (tag == opUndefined) return "<undefined>";
+    else if (tag == opComma) return ",";
+    else if (tag == opAssign) return "=";
+    else if (tag == opBitwiseAndAssign) return "&=";
+    else if (tag == opBitwiseOrAssign) return "|=";
+    else if (tag == opBitwiseXorAssign) return "^=";
+    else if (tag == opShrAssign) return ">>=";
+    else if (tag == opShlAssign) return "<<=";
+    else if (tag == opAddAssign) return "+=";
+    else if (tag == opSubtractAssign) return "-=";
+    else if (tag == opMultiplyAssign) return "*=";
+    else if (tag == opDivideAssign) return "/=";
+    else if (tag == opModuloAssign) return "%=";
+    else if (tag == opTernary) return "ternary ?:";
+    else if (tag == opLogicalAnd) return "&&";
+    else if (tag == opLogicalOr) return "||";
+    else if (tag == opBitwiseAnd) return "&";
+    else if (tag == opBitwiseOr) return "|";
+    else if (tag == opBitwiseXor) return "^";
+    else if (tag == opEqual) return "==";
+    else if (tag == opNotEqual) return "!=";
+    else if (tag == opGreater) return ">";
+    else if (tag == opGreaterEqual) return ">=";
+    else if (tag == opLess) return "<";
+    else if (tag == opLessEqual) return "<=";
+    else if (tag == opShr) return ">>";
+    else if (tag == opShl) return "<<";
+    else if (tag == opAdd) return "+";
+    else if (tag == opSubtract) return "-";
+    else if (tag == opMultiply) return "*";
+    else if (tag == opDivide) return "/";
+    else if (tag == opModulo) return "%";
+    else if (tag == opLogicalNot) return "!";
+    else if (tag == opBitwiseNot) return "~";
+    else if (tag == opUnaryPlus) return "+";
+    else if (tag == opNegate) return "-";
+    else if (tag == opDeref) return "*";
+    else if (tag == opAddressOf) return "&";
+    else if (tag == opPreIncrement) return "++";
+    else if (tag == opPreDecrement) return "--";
+    else if (tag == opPostIncrement) return "++";
+    else if (tag == opPostDecrement) return "--";
+    else if (tag == opIndex) return "[]";
+    else if (tag == opMember) return ".";
+    else if (tag == opMemberDeref) return "->";
+    else {
+        char* str = malloc(logi((int) tag, 10)+2);
+        sprintf(str, "%d", tag);
+        debugErrorUnhandled("opTagGetStr", "operator tag", str);
         free(str);
         return "<unhandled>";
     }

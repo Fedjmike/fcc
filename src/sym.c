@@ -35,13 +35,15 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->tag = tag;
     Symbol->ident = 0;
 
-    Symbol->decls = vectorCreate(2);
+    vectorInit(&Symbol->decls, 2);
     Symbol->impl = 0;
 
     Symbol->storage = storageAuto;
     Symbol->dt = 0;
 
     Symbol->size = 0;
+    Symbol->typeMask = typeNone;
+    Symbol->complete = false;
 
     symAddChild(Parent, Symbol);
     Symbol->firstChild = 0;
@@ -49,7 +51,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->nextSibling = 0;
     Symbol->children = 0;
 
-    Symbol->label = operandCreateLabel(0);
+    Symbol->label = 0;
     Symbol->offset = 0;
 
     return Symbol;
@@ -58,7 +60,7 @@ static sym* symCreate (symTag tag, sym* Parent) {
 static void symDestroy (sym* Symbol) {
     free(Symbol->ident);
 
-    vectorDestroy(&Symbol->decls);
+    vectorFree(&Symbol->decls);
 
     if (Symbol->firstChild)
         symDestroy(Symbol->firstChild);
@@ -69,6 +71,7 @@ static void symDestroy (sym* Symbol) {
     if (Symbol->dt)
         typeDestroy(Symbol->dt);
 
+    free(Symbol->label);
     free(Symbol);
 }
 
@@ -81,6 +84,7 @@ sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMa
     Symbol->ident = strdup(ident);
     Symbol->size = size;
     Symbol->typeMask = typeMask;
+    Symbol->complete = true;
     return Symbol;
 }
 
@@ -89,10 +93,10 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
     Symbol->ident = strdup(ident);
 
     if (tag == symStruct)
-        Symbol->typeMask = typeAssignment;
+        Symbol->typeMask = typeStruct;
 
     else if (tag == symEnum)
-        Symbol->typeMask = typeIntegral;
+        Symbol->typeMask = typeEnum;
 
     return Symbol;
 }
@@ -134,8 +138,9 @@ const sym* symGetChild (const sym* Parent, int n) {
 }
 
 sym* symChild (const sym* Scope, const char* look) {
-    debugAssert("symChild", "null scope", Scope != 0);
-    debugAssert("symChild", "null string", look != 0);
+    if (   debugAssert("symChild", "null scope", Scope != 0)
+        || debugAssert("symChild", "null string", look != 0))
+        return 0;
 
     //printf("searching: %s\n", Scope->ident);
 
@@ -163,8 +168,9 @@ sym* symChild (const sym* Scope, const char* look) {
 }
 
 sym* symFind (const sym* Scope, const char* look) {
-    debugAssert("symFind", "null scope", Scope != 0);
-    debugAssert("symFind", "null string", look != 0);
+    if (   debugAssert("symFind", "null scope", Scope != 0)
+        || debugAssert("symFind", "null string", look != 0))
+        return 0;
 
     //printf("look: %s\n", look);
 

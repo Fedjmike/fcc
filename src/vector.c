@@ -3,32 +3,50 @@
 #include "../std/std.h"
 
 #include "stdlib.h"
-#include "stdio.h"
+#include "string.h"
 
-vector vectorCreate (int initialCapacity) {
-    vector v;
-    v.length = 0;
-    v.capacity = initialCapacity;
-    v.buffer = malloc(initialCapacity*sizeof(void*));
+using "../inc/vector.h";
+
+using "stdlib.h";
+using "string.h";
+
+vector* vectorInit (vector* v, int initialCapacity) {
+    v->length = 0;
+    v->capacity = initialCapacity;
+    v->buffer = malloc(initialCapacity*sizeof(void*));
     return v;
 }
 
-void vectorDestroy (vector* v) {
+void vectorFree (vector* v) {
     free(v->buffer);
     v->buffer = 0;
 }
 
-void vectorDestroyObjs (vector* v, vectorDtor dtor) {
+void vectorFreeObjs (vector* v, vectorDtor dtor) {
     /*This will mess up the vector, watevs*/
     vectorMap(v, (vectorMapper) dtor, v);
-    vectorDestroy(v);
+    vectorFree(v);
+}
+
+static void vectorResize (vector* v, int size) {
+    v->capacity = size;
+    v->buffer = realloc(v->buffer, v->capacity*sizeof(void*));
 }
 
 void vectorPush (vector* v, void* item) {
     if (v->length == v->capacity)
-        v->buffer = realloc(v->buffer, (v->capacity *= 2)*sizeof(void*));
+        vectorResize(v, v->capacity*2);
 
     v->buffer[v->length++] = item;
+}
+
+vector* vectorPushFromArray (vector* v, void** array, int length) {
+    if (v->capacity < v->length + length)
+        vectorResize(v, v->capacity + length*2);
+
+    memcpy(v->buffer+v->length, array, length*sizeof(void*));
+    v->length += length;
+    return v;
 }
 
 void* vectorPop (vector* v) {
@@ -43,7 +61,7 @@ void* vectorGet (const vector* v, int n) {
         return 0;
 }
 
-int vectorSet (vector* v, int n, void* value) {
+bool vectorSet (vector* v, int n, void* value) {
     if (n < v->length) {
         v->buffer[n] = value;
         return false;
@@ -53,6 +71,10 @@ int vectorSet (vector* v, int n, void* value) {
 }
 
 void vectorMap (vector* dest, vectorMapper f, vector* src) {
-    for (int n = 0; n < src->length; n++)
+    int upto = src->length > dest->capacity ? dest->capacity : src->length;
+
+    for (int n = 0; n < upto; n++)
         dest->buffer[n] = f(src->buffer[n]);
+
+    dest->length = upto;
 }

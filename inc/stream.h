@@ -5,7 +5,7 @@
 /**
  * Stream context
  */
-typedef struct {
+typedef struct streamCtx {
     FILE* file;
 
     char current;

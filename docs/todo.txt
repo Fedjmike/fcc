@@ -5,19 +5,24 @@ High importance:
 
 [x] Compound literals
 [x] Anonymous unions and structs
-[-] Compile time evaluation
-    [x] enum constants
-    [x] Array sizes
-    [x] sizeof
-    [ ] Side effects
-[ ] const
+[x] Compile time evaluation
+[-] const
+	[x] Parsing
+	[x] Type annotation
+	[ ] Type compatibility/equality
+	[-] Assignable
+		[ ] structs with const fields
+	[ ] Fields of const structs/unions const themselves
 [x] char
 [ ] Review type compatibility
+	[ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
-[ ] Type completeness
+[-] Type completeness
+	[ ] Incomplete arrays
+	[ ] Cast to incomplete
 [-] Varargs
-[-] enum
-[ ] extern
+[x] enum
+[-] extern
 [x] argc & argv passing
 [x] continue
 [-] static
@@ -26,15 +31,17 @@ High importance:
 [ ] Disallow global variables
 [-] Modules
     [ ] Separated namespaces
-    [ ] Include once only
-    [ ] Different dialect?
-        - No impls
-		- No static
-		- No globals (except extern)
+    [x] Include once only
 
 Medium:
 
-[-] Typedef
+[-] Platform support
+	[-] 64 bit
+		[ ] Windows
+		[ ] Linux
+	[x] 32-bit Linux
+	[ ] Cross-compilation by command line
+[x] Typedef
 [ ] Pre increment/decrement
 	- char* o; -> enum
 [ ] x ?: y
@@ -45,6 +52,14 @@ Medium:
 	[ ] Unused value
 	[ ] Statement without effect
 	[ ] Empty decl
+	[ ] Empty block body, if (...);
+	[ ] Assignment as condition
+[ ] AST optimizer
+	[ ] Strength reduction
+	[ ] Constant folding
+	[ ] Constant propogation?
+	[ ] Factorization (CSE)
+	[ ] Operand commutation => Strahler number
 
 Low:
 
@@ -58,42 +73,46 @@ Low:
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
+	[ ] Newline in string
 [ ] Modules
     [ ] header & using, special meaning?
+	[ ] Different dialect?
+        - No impls
+		- No static
+		- No globals (except extern)
 [ ] Initializing arrays from strings
 [ ] Expand eval.c
     [ ] String literals and indexing
     [ ] Records and arrays
+[-] Full GCC ABI conformance
+	- structs, bah
 
 
 Other issues:
 
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
-[ ] Use enums for BOPs and UOPs
+[x] Use enums for BOPs and UOPs
 [x] vsystem -> systemf
 [ ] Use vector in ast/sym
-
-Lexer:
-
-[ ] Lexing of pp
-[ ] More on char and str lexing
-    More?
+[ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
 
 Parser:
 
-[ ] Param name clash !!!!
+[x] Param name clash !!!!
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[ ] Line that starts with undeclared ident... assume decl?
+[x] Line that starts with undeclared ident... assume decl?
+    No! More lines are value anyway, unlikely to result in a proper decl anyway, and
+	a malformed decl generates way more errors.
 [ ] Complain about keywords as idents
-[ ] Disallow initializations inside normal expressions
 [x] Search paths are still broken
     - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
 [ ] Error for unnamed structs/unions that don't define variables
 	- OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
+[ ] Missing semicolon after decl (more?) shouldn't cascade so terribly
 
 Semantic analyzer:
 
@@ -105,22 +124,27 @@ Semantic analyzer:
     Why not?
     Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
+[x] Disallow initializations inside normal expressions
 [ ] Initialization of extern and typedef
 [x] Use the DT of passed node in analyzer errors
-[ ] '' in errors
 [ ] Evaluate casts properly
+[ ] Ternary: allow compatible unequal?
+[ ] typedef unification
+[ ] On error expected type, chain types together and only complain again if found type not in chain?
+[x] Look for ways use to use named symbols in errors where can, in place of just type
+[ ] eval.c: casts, target sizes
 
 Emitter:
 
-[ ] Get rid of global state in registers and labels
-[ ] Clean up value moving code
+[-] Get rid of global state in registers and labels
+[x] Clean up value moving code
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
-[ ] Get rid of &regs[] use outside reg.c
+[-] Get rid of &regs[] use outside reg.c
     - Make stack operations
     - Differentiate between top and base operands
-[ ] Short circuit ops optimization
+[-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
 [ ] Extra layer between emitter and assembly?
@@ -130,8 +154,8 @@ Emitter:
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
 [x] Move big pushes code into asm-amd64.c
-[ ] Registers saving (possibly other ABI issues)
-[ ] Let asm stuff return operand?
+[x] Registers saving
+[-] Let asm stuff return operand?
 [ ] requestReturn for eax
 [ ] Cache sym size
 	=> move to analyzer?

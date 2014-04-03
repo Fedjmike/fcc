@@ -8,6 +8,7 @@ using "parser.h";
 
 typedef struct type type;
 typedef struct sym sym;
+typedef struct ast ast;
 
 typedef enum astTag {
     astUndefined,
@@ -16,11 +17,29 @@ typedef enum astTag {
     astModule,
     astUsing,
     astFnImpl,
-    astType, astDecl, astParam, astStruct, astUnion, astEnum,
+    astType, astDecl, astParam, astStruct, astUnion, astEnum, astConst,
     astCode, astBranch, astLoop, astIter, astReturn, astBreak, astContinue,
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
     astEllipsis
 } astTag;
+
+typedef enum opTag {
+    opUndefined,
+    opComma,
+    opAssign,
+    opBitwiseAndAssign, opBitwiseOrAssign, opBitwiseXorAssign,
+    opTernary,
+    opShrAssign, opShlAssign,
+    opAddAssign, opSubtractAssign, opMultiplyAssign, opDivideAssign, opModuloAssign,
+    opLogicalAnd, opLogicalOr, opBitwiseAnd, opBitwiseOr, opBitwiseXor,
+    opEqual, opNotEqual, opGreater, opGreaterEqual, opLess, opLessEqual,
+    opShr, opShl,
+    opAdd, opSubtract, opMultiply, opDivide, opModulo,
+    opLogicalNot, opBitwiseNot, opUnaryPlus, opNegate, opDeref, opAddressOf,
+    opIndex,
+    opPreIncrement, opPreDecrement, opPostIncrement, opPostDecrement,
+    opMember, opMemberDeref
+} opTag;
 
 typedef enum literalTag {
     literalUndefined,
@@ -32,8 +51,6 @@ typedef enum literalTag {
     literalCompound,
     literalInit
 } literalTag;
-
-typedef struct ast ast;
 
 typedef struct ast {
     astTag tag;
@@ -49,7 +66,7 @@ typedef struct ast {
 
     /*Binary tree*/
     ast* l;
-    char* o;
+    opTag o;
     ast* r;      /*Always used for unary operators*/
     type* dt;    /*Result data type*/
 
@@ -76,9 +93,10 @@ ast* astCreateParam (tokenLocation location, ast* basic, ast* expr);
 ast* astCreateStruct (tokenLocation location, ast* name);
 ast* astCreateUnion (tokenLocation location, ast* name);
 ast* astCreateEnum (tokenLocation location, ast* name);
+ast* astCreateConst (tokenLocation location, ast* r);
 
-ast* astCreateBOP (tokenLocation location, ast* l, char* o, ast* r);
-ast* astCreateUOP (tokenLocation location, char* o, ast* r);
+ast* astCreateBOP (tokenLocation location, ast* l, opTag o, ast* r);
+ast* astCreateUOP (tokenLocation location, opTag o, ast* r);
 ast* astCreateTOP (tokenLocation location, ast* cond, ast* l, ast* r);
 ast* astCreateIndex (tokenLocation location, ast* base, ast* index);
 ast* astCreateCall (tokenLocation location, ast* function);
@@ -101,3 +119,32 @@ bool astIsValueTag (astTag tag);
 const char* astTagGetStr (astTag tag);
 
 const char* literalTagGetStr (literalTag tag);
+
+/**
+ * Returns whether the (binary) operator is one that can only act on
+ * numeric types (e.g. int, char, not bool, not x*)
+ */
+bool opIsNumeric (opTag o);
+
+bool opIsBitwise (opTag o);
+
+/**
+ * Is it an ordinal operator (defines an ordering...)?
+ */
+bool opIsOrdinal (opTag o);
+
+bool opIsEquality (opTag o);
+bool opIsAssignment (opTag o);
+bool opIsLogical (opTag o);
+
+/**
+ * Does this operator access struct/union members of its LHS?
+ */
+bool opIsMember (opTag o);
+
+/**
+ * Does it dereference its LHS?
+ */
+bool opIsDeref (opTag o);
+
+const char* opTagGetStr (opTag tag);

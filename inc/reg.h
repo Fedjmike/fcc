@@ -8,7 +8,7 @@ typedef struct reg {
     int allocatedAs; /*If unused, 0, else the size allocated as in bytes*/
 } reg;
 
-typedef enum {
+typedef enum regIndex {
     regUndefined,
     regRAX, /*It is important that every register between RAX and R15 are general registers*/
     regRBX,
@@ -36,6 +36,8 @@ extern reg regs[];
  */
 bool regIsUsed (regIndex r);
 
+const reg* regGet (regIndex r);
+
 /**
  * Attempt a lock on a register
  * Returns the register on success, 0 elsewise
@@ -49,8 +51,10 @@ void regFree (reg* r);
  */
 reg* regAlloc (int size);
 
+const char* regGetName (regIndex r, int size);
+
 /**
  * Return the name of a register at a certain size in bytes as it would
  * be called in assembler source code
  */
-const char* regToStr (reg* r);
+const char* regToStr (const reg* r);

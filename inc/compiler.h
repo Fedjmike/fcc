@@ -1,21 +1,38 @@
 #pragma once
 
-#include "vector.h"
+#include "../std/std.h"
+
 #include "hashmap.h"
 
-typedef struct {
-    architecture arch;
+typedef struct vector vector;
+typedef struct architecture architecture;
+typedef struct sym sym;
 
-    const vector/*<char*>*/ searchPaths;
+/**
+ * Indices of certain built in symbols for compilerCtx::types.
+ * Used by the analyzer.
+ */
+enum {
+    builtinVoid,
+    builtinBool,
+    builtinChar,
+    builtinInt,
+    builtinTotal
+};
 
-    hashmap/*<char*, sym*>*/ modules;
+typedef struct compilerCtx {
+    sym* global;
+    sym** types;
+
+    hashmap/*<parserResult*>*/ modules;
+
+    const architecture* arch;
+    const vector/*<char*>*/* searchPaths;
+
+    int errors, warnings;
 } compilerCtx;
 
-typedef struct compilerResult {
-    int errors, warnings;
-} compilerResult;
-
-compilerCtx* compilerInit ();
+void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<char*>*/* searchPaths);
 void compilerEnd (compilerCtx* ctx);
 
-compilerResult compiler (compilerCtx* ctx, const char* input, const char* output, const char* parent);
+void compiler (compilerCtx* ctx, const char* input, const char* output);

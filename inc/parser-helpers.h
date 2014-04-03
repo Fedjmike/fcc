@@ -3,42 +3,42 @@
 #include "sym.h"
 #include "lexer.h"
 
-struct parserCtx;
+typedef struct parserCtx parserCtx;
 
-sym* scopeSet (struct parserCtx* ctx, sym* Scope);
-
-/*::::*/
-
-bool tokenIsKeyword (const struct parserCtx* ctx, keywordTag keyword);
-bool tokenIsPunct (const struct parserCtx* ctx, punctTag punct);
-bool tokenIsIdent (const struct parserCtx* ctx);
-bool tokenIsInt (const struct parserCtx* ctx);
-bool tokenIsString (const struct parserCtx* ctx);
-bool tokenIsChar (const struct parserCtx* ctx);
-bool tokenIsDecl (const struct parserCtx* ctx);
+sym* scopeSet (parserCtx* ctx, sym* scope);
 
 /*::::*/
 
-void tokenNext (struct parserCtx* ctx);
-void tokenSkipMaybe (struct parserCtx* ctx);
+bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword);
+bool tokenIsPunct (const parserCtx* ctx, punctTag punct);
+bool tokenIsIdent (const parserCtx* ctx);
+bool tokenIsInt (const parserCtx* ctx);
+bool tokenIsString (const parserCtx* ctx);
+bool tokenIsChar (const parserCtx* ctx);
+bool tokenIsDecl (const parserCtx* ctx);
 
 /*::::*/
 
-void tokenMatch (struct parserCtx* ctx);
-char* tokenDupMatch (struct parserCtx* ctx);
+void tokenNext (parserCtx* ctx);
+void tokenSkipMaybe (parserCtx* ctx);
 
-void tokenMatchKeyword (struct parserCtx* ctx, keywordTag keyword);
-bool tokenTryMatchKeyword (struct parserCtx* ctx, keywordTag keyword);
+/*::::*/
 
-void tokenMatchPunct (struct parserCtx* ctx, punctTag punct);
-bool tokenTryMatchPunct (struct parserCtx* ctx, punctTag punct);
+void tokenMatch (parserCtx* ctx);
+char* tokenDupMatch (parserCtx* ctx);
 
-void tokenMatchToken (struct parserCtx* ctx, tokenTag Match);
+void tokenMatchKeyword (parserCtx* ctx, keywordTag keyword);
+bool tokenTryMatchKeyword (parserCtx* ctx, keywordTag keyword);
 
-int tokenMatchInt (struct parserCtx* ctx);
+void tokenMatchPunct (parserCtx* ctx, punctTag punct);
+bool tokenTryMatchPunct (parserCtx* ctx, punctTag punct);
 
-char* tokenMatchIdent (struct parserCtx* ctx);
+void tokenMatchToken (parserCtx* ctx, tokenTag Match);
 
-char* tokenMatchStr (struct parserCtx* ctx);
+int tokenMatchInt (parserCtx* ctx);
 
-char tokenMatchChar (struct parserCtx* ctx);
+char* tokenMatchIdent (parserCtx* ctx);
+
+char* tokenMatchStr (parserCtx* ctx);
+
+char tokenMatchChar (parserCtx* ctx);

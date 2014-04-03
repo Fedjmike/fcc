@@ -1,31 +1,48 @@
 #include "../std/std.h"
 
 #include "../inc/debug.h"
+#include "../inc/architecture.h"
 #include "../inc/options.h"
 #include "../inc/compiler.h"
+#include "../inc/sym.h"
+#include "../inc/reg.h"
 
 #include "string.h"
 #include "stdlib.h"
 #include "stdio.h"
 
-static int driver (config conf);
+static void manglerLinux (sym* Symbol);
 
-static int driver (config conf) {
-    int errors = 0, warnings = 0;
+static bool driver (config conf);
+
+static void manglerLinux (sym* Symbol) {
+    Symbol->label = strdup(Symbol->ident);
+}
+
+static bool driver (config conf) {
+    bool fail = false;
+
+    architecture arch;
+    architectureInit(&arch, 4, manglerLinux);
+    vectorPushFromArray(&arch.scratchRegs, (void* [3]) {(void*) regRBX, (void*) regRSI, (void*) regRDI}, 3);
+    vectorPushFromArray(&arch.callerSavedRegs, (void* [3]) {(void*) regRAX, (void*) regRCX, (void*) regRDX}, 3);
+
+    compilerCtx comp;
+    compilerInit(&comp, &arch, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++) {
-        compilerResult result = compiler(vectorGet(&conf.inputs, i),
-                                         vectorGet(&conf.intermediates, i),
-                                         &conf.includeSearchPaths);
-        errors += result.errors;
-        warnings += result.warnings;
+        compiler(&comp,
+                 vectorGet(&conf.inputs, i),
+                 vectorGet(&conf.intermediates, i));
     }
 
-    if (errors != 0 || warnings != 0)
+    compilerEnd(&comp);
+
+    if (comp.errors != 0 || comp.warnings != 0)
         printf("Compilation complete with %d error%s and %d warning%s\n",
-               errors, errors == 1 ? "" : "s",
-               warnings, warnings == 1 ? "" : "s");
+               comp.errors, comp.errors == 1 ? "" : "s",
+               comp.warnings, comp.warnings == 1 ? "" : "s");
 
     else if (internalErrors)
         printf("Compilation complete with %d internal error%s\n",
@@ -34,36 +51,25 @@ static int driver (config conf) {
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
-        char* intermediates = 0; {
-            int length = 0;
-
-            for (int i = 0; i < conf.intermediates.length; i++)
-                length += 1+strlen((char*) vectorGet(&conf.intermediates, i));
-
-            intermediates = strcpy(malloc(length), vectorGet(&conf.intermediates, 0));
-            int charno = strlen(intermediates);
-
-            for (int i = 1; i < conf.intermediates.length; i++) {
-                char* current = vectorGet(&conf.intermediates, i);
-                sprintf(intermediates+charno, " %s", current);
-                charno += strlen(current)+1;
-            }
-        }
+        char* intermediates = strjoin((char**) conf.intermediates.buffer, conf.intermediates.length,
+                                      " ", (stdalloc) malloc);
 
         if (conf.mode == modeNoLink)
-            systemf("gcc -c %s", intermediates);
+            fail |= systemf("gcc -m32 -c %s", intermediates) != 0;
 
         else {
-            int linkfail = systemf("gcc %s -o %s", intermediates, conf.output);
+            fail |= systemf("gcc -m32 %s -o %s", intermediates, conf.output) != 0;
 
-            if (conf.deleteAsm && !linkfail)
+            if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
         }
 
         free(intermediates);
     }
 
-    return errors != 0;
+    architectureFree(&arch);
+
+    return fail || comp.errors != 0 || internalErrors != 0;
 }
 
 int main (int argc, char** argv) {

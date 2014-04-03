@@ -28,6 +28,10 @@ bool regIsUsed (regIndex r) {
     return regs[r].allocatedAs != 0;
 }
 
+const reg* regGet (regIndex r) {
+    return &regs[r];
+}
+
 reg* regRequest (regIndex r, int size) {
     if (regs[r].allocatedAs == 0 && regs[r].size <= size) {
         regs[r].allocatedAs = size;
@@ -50,24 +54,31 @@ reg* regAlloc (int size) {
         if (regRequest(r, size) != 0)
             return &regs[r];
 
+    if (regIsUsed(regRAX))
+        debugError("regAlloc", "no registers left");
+
     return regRequest(regRAX, size);
 }
 
-const char* regToStr (reg* r) {
-    if (r->allocatedAs == 1)
-        return r->names[0];
+const char* regGetName (regIndex r, int size) {
+    if (size == 1)
+        return regs[r].names[0];
 
-    else if (r->allocatedAs == 2)
-        return r->names[1];
+    else if (size == 2)
+        return regs[r].names[1];
 
-    else if (r->allocatedAs == 4)
-        return r->names[2];
+    else if (size == 4)
+        return regs[r].names[2];
 
-    else if (r->allocatedAs == 8)
-        return r->names[3];
+    else if (size == 8)
+        return regs[r].names[3];
 
     else {
-        debugErrorUnhandledInt("regToStr", "register size", r->allocatedAs);
-        return r->names[3];
+        debugErrorUnhandledInt("regGetName", "register size", size);
+        return regs[r].names[3];
     }
+}
+
+const char* regToStr (const reg* r) {
+    return regGetName(r-regs, r->allocatedAs);
 }

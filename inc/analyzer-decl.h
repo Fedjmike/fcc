@@ -1,7 +1,7 @@
-struct type;
-struct ast;
+typedef struct type type;
+typedef struct ast ast;
 
-struct analyzerCtx;
+typedef struct analyzerCtx analyzerCtx;
 
-void analyzerDecl (struct analyzerCtx* ctx, struct ast* Node);
-const struct type* analyzerType (struct analyzerCtx* ctx, struct ast* Node);
+void analyzerDecl (analyzerCtx* ctx, ast* Node);
+const type* analyzerType (analyzerCtx* ctx, ast* Node);

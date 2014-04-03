@@ -5,10 +5,11 @@
 typedef struct vector vector;
 typedef struct ast ast;
 typedef struct sym sym;
+typedef struct compilerCtx compilerCtx;
 typedef struct lexerCtx lexerCtx;
 
 typedef struct tokenLocation {
-    char* filename; ///< Only the tokenLocation of the astModule of the file in question owns this
+    const char* filename;
     int line;
     int lineChar;
 } tokenLocation;
@@ -17,10 +18,11 @@ typedef struct parserCtx {
     lexerCtx* lexer;
     tokenLocation location;
 
-    char* filename; ///< Ownership is taken by the tokenLocation of the astModule of the file
-    char* fullname;
+    char* filename; ///< Ownership is taken by the parserResult of the astModule of the file
+    const char* fullname;
     char* path;
-    vector/*<char*>*/* searchPaths;
+
+    compilerCtx* comp;
 
     sym* scope;
 
@@ -29,16 +31,20 @@ typedef struct parserCtx {
 
     int errors;
     int warnings;
+
+    /*The last line that an error occurred on*/
+    int lastErrorLine;
 } parserCtx;
 
 typedef struct parserResult {
-    struct ast* tree;
-    int errors;
-    int warnings;
-    bool notfound;
+    ast* tree;
+    char* filename;
+    int errors, warnings;
+    bool firsttime, notfound;
 } parserResult;
 
-parserResult parser (const char* filename, struct sym* global,
-                     const char* initialPath, vector/*<char*>*/* searchPaths);
+parserResult parser (const char* filename, const char* initialPath, compilerCtx* comp);
+
+void parserResultDestroy (parserResult* result);
 
 ast* parserCode (parserCtx* ctx);

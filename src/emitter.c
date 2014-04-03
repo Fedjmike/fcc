@@ -18,7 +18,7 @@
 #include "string.h"
 #include "stdlib.h"
 
-static void emitterModule (emitterCtx* ctx, const ast* Tree);
+static void emitterModule (emitterCtx* ctx, const ast* Node);
 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
 static void emitterCode (emitterCtx* ctx, const ast* Node);
@@ -36,7 +36,6 @@ static emitterCtx* emitterInit (const char* output, const architecture* arch) {
     ctx->arch = arch;
     ctx->labelReturnTo = operandCreate(operandUndefined);
     ctx->labelBreakTo = operandCreate(operandUndefined);
-
     return ctx;
 }
 
@@ -51,22 +50,21 @@ void emitter (const ast* Tree, const char* output, const architecture* arch) {
 
     emitterModule(ctx, Tree);
 
-    labelFreeAll();
-
     asmFileEpilogue(ctx->Asm);
     emitterEnd(ctx);
 }
 
-static void emitterModule (emitterCtx* ctx, const ast* Tree) {
+static void emitterModule (emitterCtx* ctx, const ast* Node) {
     debugEnter("Module");
 
-    for (ast* Current = Tree->firstChild;
+    for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        if (Current->tag == astUsing)
-            emitterModule(ctx, Current->r);
+        if (Current->tag == astUsing) {
+            if (Current->r)
+                emitterModule(ctx, Current->r);
 
-        else if (Current->tag == astFnImpl)
+        } else if (Current->tag == astFnImpl)
             emitterFnImpl(ctx, Current);
 
         else if (Current->tag == astDecl)
@@ -103,7 +101,8 @@ static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
-    Node->symbol->label = labelNamed(Node->symbol->ident);
+    if (Node->symbol->label == 0)
+        ctx->arch->symbolMangler(Node->symbol);
 
     /*Two words already on the stack:
       return ptr and saved base pointer*/
@@ -129,7 +128,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /*Label to jump to from returns*/
-    operand EndLabel = ctx->labelReturnTo = labelCreate(labelReturn);
+    operand EndLabel = ctx->labelReturnTo = asmCreateLabel(ctx->Asm, labelReturn);
 
     asmComment(ctx->Asm, "");
     asmFnPrologue(ctx->Asm, Node->symbol->label, stacksize);
@@ -224,7 +223,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
             asmMove(ctx->Asm, operandCreateReg(rax), Ret);
             regFree(rax);
 
-        } else if (Ret.base != &regs[regRAX])
+        } else if (Ret.base != regGet(regRAX))
             debugError("emitterLine", "unable to allocate RAX for return");
 
         operandFree(Ret);
@@ -238,8 +237,8 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
 static void emitterBranch (emitterCtx* ctx, const ast* Node) {
     debugEnter("Branch");
 
-    operand ElseLabel = labelCreate(labelUndefined);
-    operand EndLabel = labelCreate(labelUndefined);
+    operand ElseLabel = asmCreateLabel(ctx->Asm, labelElse);
+    operand EndLabel = asmCreateLabel(ctx->Asm, labelEndIf);
 
     /*Compute the condition, requesting it be placed in the flags*/
     asmBranch(ctx->Asm,
@@ -267,12 +266,12 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
     debugEnter("Loop");
 
     /*The place to return to loop again (after confirming condition)*/
-    operand LoopLabel = labelCreate(labelUndefined);
+    operand LoopLabel = asmCreateLabel(ctx->Asm, labelWhile);
 
     operand OldBreakTo = ctx->labelBreakTo;
     operand OldContinueTo = ctx->labelContinueTo;
-    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
-    ctx->labelContinueTo = labelCreate(labelUndefined);
+    operand EndLabel = ctx->labelBreakTo = asmCreateLabel(ctx->Asm, labelBreak);
+    ctx->labelContinueTo = asmCreateLabel(ctx->Asm, labelContinue);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -318,12 +317,12 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     ast* cond = init->nextSibling;
     ast* iter = cond->nextSibling;
 
-    operand LoopLabel = labelCreate(labelUndefined);
+    operand LoopLabel = asmCreateLabel(ctx->Asm, labelFor);
 
     operand OldBreakTo = ctx->labelBreakTo;
     operand OldContinueTo = ctx->labelContinueTo;
-    operand EndLabel = ctx->labelBreakTo = labelCreate(labelUndefined);
-    ctx->labelContinueTo = labelCreate(labelUndefined);
+    operand EndLabel = ctx->labelBreakTo = asmCreateLabel(ctx->Asm, labelBreak);
+    ctx->labelContinueTo = asmCreateLabel(ctx->Asm, labelContinue);
 
     /*Initialize stuff*/
 

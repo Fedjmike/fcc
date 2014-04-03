@@ -5,13 +5,11 @@
 #include "stdio.h"
 
 #include "../inc/debug.h"
+#include "../inc/ast.h"
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
 const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
-
-char* labels[1024] = {"undefined"};
-int labelNo = 1;
 
 operand operandCreate (operandTag tag) {
     operand ret;
@@ -73,20 +71,20 @@ operand operandCreateLiteral (int literal) {
     return ret;
 }
 
-operand operandCreateLabel (int label) {
+operand operandCreateLabel (const char* label) {
     operand ret = operandCreate(operandLabel);
     ret.label = label;
     return ret;
 }
 
-operand operandCreateLabelMem (int label, int size) {
+operand operandCreateLabelMem (const char* label, int size) {
     operand ret = operandCreate(operandLabelMem);
     ret.label = label;
     ret.size = size;
     return ret;
 }
 
-operand operandCreateLabelOffset (int label) {
+operand operandCreateLabelOffset (const char* label) {
     operand ret = operandCreate(operandLabelOffset);
     ret.label = label;
     return ret;
@@ -97,7 +95,7 @@ void operandFree (operand Value) {
         regFree(Value.base);
 
     else if (Value.tag == operandMem || Value.tag == operandMemRef) {
-        if (Value.base != 0 && Value.base != &regs[regRBP])
+        if (Value.base != 0 && Value.base != regGet(regRBP))
             regFree(Value.base);
 
         if (Value.index != 0)
@@ -112,6 +110,32 @@ void operandFree (operand Value) {
 
     else
         debugErrorUnhandled("operandFree", "operand tag", operandTagGetStr(Value.tag));
+}
+
+bool operandIsEqual (operand L, operand R) {
+    if (L.tag != R.tag)
+        return false;
+
+    else if (L.tag == operandFlags)
+        return L.condition == R.condition;
+
+    else if (L.tag == operandReg)
+        return L.base == R.base;
+
+    else if (L.tag == operandMem || L.tag == operandMemRef)
+        return    L.size == R.size && L.base == R.base
+               && L.index == R.index && L.factor == R.factor
+               && L.offset == R.offset;
+
+    else if (L.tag == operandLiteral)
+        return L.literal == R.literal;
+
+    else if (L.tag == operandLabel || L.tag == operandLabelMem || L.tag == operandLabelOffset)
+        return L.label == R.label;
+
+    else /*if (   L.tag == operandVoid || L.tag == operandStack
+               || L.tag == operandInvalid || L.tag == operandUndefined)*/
+        return true;
 }
 
 int operandGetSize (const architecture* arch, operand Value) {
@@ -139,66 +163,88 @@ int operandGetSize (const architecture* arch, operand Value) {
 }
 
 char* operandToStr (operand Value) {
-    char* ret = malloc(32);
-    ret[0] = 0;
-
     if (Value.tag == operandUndefined)
-        return strcpy(ret, "<undefined>");
+        return strdup("<undefined>");
 
     else if (Value.tag == operandInvalid)
-        return strcpy(ret, "<invalid>");
+        return strdup("<invalid>");
 
     else if (Value.tag == operandVoid)
-        return strcpy(ret, "<void>");
+        return strdup("<void>");
 
     else if (Value.tag == operandFlags)
-        strncpy(ret, conditions[Value.condition], 32);
+        return strdup(conditions[Value.condition]);
 
     else if (Value.tag == operandReg)
-        strncpy(ret, regToStr(Value.base), 32);
+        return strdup(regToStr(Value.base));
 
     else if (   Value.tag == operandMem || Value.tag == operandMemRef
              || Value.tag == operandLabelMem) {
-        const char* sizestr;
+        const char* sizeStr;
 
         if (Value.size == 1)
-            sizestr = "byte";
+            sizeStr = "byte";
         else if (Value.size == 2)
-            sizestr = "word";
+            sizeStr = "word";
         else if (Value.size == 4)
-            sizestr = "dword";
+            sizeStr = "dword";
         else if (Value.size == 8)
-            sizestr = "qword";
+            sizeStr = "qword";
         else if (Value.size == 16)
-            sizestr = "oword";
+            sizeStr = "oword";
         else
-            sizestr = "undefined";
+            sizeStr = "undefined";
 
-        if (Value.tag == operandLabelMem)
-            snprintf(ret, 32, "%s ptr [%s]", sizestr, labelGet(Value));
+        if (Value.tag == operandLabelMem) {
+            char* ret = malloc(  strlen(sizeStr)
+                               + strlen(Value.label) + 9);
+            sprintf(ret, "%s ptr [%s]", sizeStr, Value.label);
+            return ret;
 
-        else if (Value.index == regUndefined || Value.factor == 0)
-            if (Value.offset == 0)
-                snprintf(ret, 32, "%s ptr [%s]", sizestr, regToStr(Value.base));
+        } else if (Value.index == regUndefined || Value.factor == 0) {
+            if (Value.offset == 0) {
+                const char* regStr = regToStr(Value.base);
+                char* ret = malloc(  strlen(sizeStr)
+                                   + strlen(regStr) + 9);
+                sprintf(ret, "%s ptr [%s]", sizeStr, regStr);
+                return ret;
 
-            else
-                snprintf(ret, 32, "%s ptr [%s%+d]", sizestr, regToStr(Value.base), Value.offset);
+            } else {
+                const char* regStr = regToStr(Value.base);
+                char* ret = malloc(  strlen(sizeStr)
+                                   + strlen(regStr)
+                                   + logi(Value.offset, 10) + 2 + 9);
+                sprintf(ret, "%s ptr [%s%+d]", sizeStr, regStr, Value.offset);
+                return ret;
+            }
 
-        else
-            snprintf(ret, 32, "%s ptr [%s%+d*%s%+d]", sizestr, regToStr(Value.base),
-                                                            Value.factor, regToStr(Value.index),
-                                                            Value.offset);
+        } else {
+            const char* regStr = regToStr(Value.base);
+            const char* indexStr = regToStr(Value.index);
+            char* ret = malloc(  strlen(sizeStr)
+                               + strlen(regStr)
+                               + logi(Value.factor, 10) + 3
+                               + strlen(indexStr)
+                               + logi(Value.offset, 10) + 2 + 9);
+            sprintf(ret, "%s ptr [%s%+d*%s%+d]",
+                     sizeStr, regStr, Value.factor, indexStr, Value.offset);
+            return ret;
+        }
 
-    } else if (Value.tag == operandLiteral)
-        snprintf(ret, 32, "%d", Value.literal);
+    } else if (Value.tag == operandLiteral) {
+        char* ret = malloc(logi(Value.literal, 10)+3);
+        sprintf(ret, "%d", Value.literal);
+        return ret;
 
-    else if (Value.tag == operandLabel || Value.tag == operandLabelOffset)
-        snprintf(ret, 32, "offset %s", labelGet(Value));
+    } else if (Value.tag == operandLabel || Value.tag == operandLabelOffset) {
+        char* ret = malloc(strlen(Value.label)+8);
+        sprintf(ret, "offset %s", Value.label);
+        return ret;
 
-    else
+    } else {
         debugErrorUnhandled("operandToStr", "operand tag", operandTagGetStr(Value.tag));
-
-    return ret;
+        return strdup("<unhandled>");
+    }
 }
 
 const char* operandTagGetStr (operandTag tag) {
@@ -225,17 +271,17 @@ const char* operandTagGetStr (operandTag tag) {
 
 /* ::::CONDITIONS:::: */
 
-int conditionFromStr (char* cond) {
-    if (!strcmp(cond, "==")) return conditionEqual;
-    else if (!strcmp(cond, "!=")) return conditionNotEqual;
-    else if (!strcmp(cond, ">")) return conditionGreater;
-    else if (!strcmp(cond, ">=")) return conditionGreaterEqual;
-    else if (!strcmp(cond, "<")) return conditionLess;
-    else if (!strcmp(cond, "<=")) return conditionLessEqual;
+conditionTag conditionFromOp (opTag cond) {
+    if (cond == opEqual) return conditionEqual;
+    else if (cond == opNotEqual) return conditionNotEqual;
+    else if (cond == opGreater) return conditionGreater;
+    else if (cond == opGreaterEqual) return conditionGreaterEqual;
+    else if (cond == opLess) return conditionLess;
+    else if (cond == opLessEqual) return conditionLessEqual;
     else return conditionUndefined;
 }
 
-int conditionNegate (int cond) {
+conditionTag conditionNegate (conditionTag cond) {
     if (cond == conditionEqual) return conditionNotEqual;
     else if (cond == conditionNotEqual) return conditionEqual;
     else if (cond == conditionGreater) return conditionLessEqual;
@@ -243,50 +289,4 @@ int conditionNegate (int cond) {
     else if (cond == conditionLess) return conditionGreaterEqual;
     else if (cond == conditionLessEqual) return conditionGreater;
     else return conditionUndefined;
-}
-
-/* ::::LABELS:::: */
-
-operand labelCreate (int tag) {
-    char* label = malloc(12);
-
-    if (tag == labelReturn)
-        sprintf(label, "ret%08d", labelNo);
-
-    else if (tag == labelBreak)
-        sprintf(label, "brk%08d", labelNo);
-
-    else if (tag == labelROData)
-        sprintf(label, "rod%08d", labelNo);
-
-    else
-        sprintf(label, "_%08i", labelNo);
-
-    labels[labelNo] = label;
-
-    return operandCreateLabel(labelNo++);
-}
-
-operand labelNamed (const char* name) {
-    labels[labelNo] = malloc(strlen(name)+2);
-    sprintf(labels[labelNo], "_%s", name);
-    return operandCreateLabel(labelNo++);
-}
-
-const char* labelGet (operand label) {
-    if (   label.tag == operandLabel || label.tag == operandLabelMem
-        || label.tag == operandLabelOffset)
-        return labels[label.label];
-
-    else {
-        printf("labelGet(): expected label operand, got %d.\n", label.tag);
-        return 0;
-    }
-}
-
-void labelFreeAll () {
-    for (int i = 1; i < labelNo; i++)
-        free(labels[i]);
-
-    labelNo = 1;
 }

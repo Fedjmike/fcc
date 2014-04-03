@@ -9,16 +9,12 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-void asmComment (asmCtx* ctx, char* format, ...) {
-    asmOutLn(ctx, ";");
-
-    va_list args;
-    va_start(args, format);
-    asmVarOut(ctx, format, args);
-    va_end(args);
+void asmComment (asmCtx* ctx, char* str) {
+    asmOutLn(ctx, ";%s", str);
 }
 
 void asmFilePrologue (asmCtx* ctx) {
+    asmOutLn(ctx, ".file 1 \"%s\"", ctx->filename);
     asmOutLn(ctx, ".intel_syntax noprefix");
 }
 
@@ -26,11 +22,11 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
+void asmFnPrologue (asmCtx* ctx, const char* name, int localSize) {
     /*Symbol, linkage and alignment*/
     asmOutLn(ctx, ".balign 16");
-    asmOutLn(ctx, ".globl %s", labelGet(Name));
-    asmOutLn(ctx, "%s:", labelGet(Name));
+    asmOutLn(ctx, ".globl %s", name);
+    asmOutLn(ctx, "%s:", name);
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
@@ -44,36 +40,49 @@ void asmFnPrologue (asmCtx* ctx, operand Name, int localSize) {
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 
-    asmOutLn(ctx, "push ebx");
-    asmOutLn(ctx, "push esi");
-    asmOutLn(ctx, "push edi");
+    for (int i = 0; i < ctx->arch->scratchRegs.length; i++) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+        asmSaveReg(ctx, r);
+    }
 }
 
-void asmFnEpilogue (asmCtx* ctx, operand EndLabel) {
+void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     /*Exit stack frame*/
-    asmOutLn(ctx, "%s:", labelGet(EndLabel));
-    asmOutLn(ctx, "pop edi");
-    asmOutLn(ctx, "pop esi");
-    asmOutLn(ctx, "pop ebx");
+    asmOutLn(ctx, "%s:", labelEnd.label);
+
+    /*Pop off saved regs in reverse order*/
+    for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+        asmRestoreReg(ctx, r);
+    }
+
     asmMove(ctx, ctx->stackPtr, ctx->basePtr);
     asmPop(ctx, ctx->basePtr);
     asmOutLn(ctx, "ret");
 }
 
+void asmSaveReg (asmCtx* ctx, regIndex r) {
+    asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+}
+
+void asmRestoreReg (asmCtx* ctx, regIndex r) {
+    asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
+}
+
 void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
-    asmOutLn(ctx, "%s:", labelGet(label));
+    asmOutLn(ctx, "%s:", label.label);
     asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
     asmOutLn(ctx, ".section .text");
 }
 
 void asmLabel (asmCtx* ctx, operand L) {
-    asmOutLn(ctx, "%s:", labelGet(L));
+    asmOutLn(ctx, "%s:", L.label);
 }
 
 void asmJump (asmCtx* ctx, operand L) {
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "jmp %s", labelGet(L));
+        asmOutLn(ctx, "jmp %s", L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -86,7 +95,7 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
     char* CStr = operandToStr(Condition);
 
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "j%s %s", CStr, labelGet(L));
+        asmOutLn(ctx, "j%s %s", CStr, L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -99,7 +108,7 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L) {
 
 void asmCall (asmCtx* ctx, operand L) {
     if (L.tag == operandLabel)
-        asmOutLn(ctx, "call %s", labelGet(L));
+        asmOutLn(ctx, "call %s", L.label);
 
     else {
         char* LStr = operandToStr(L);
@@ -117,7 +126,8 @@ void asmPush (asmCtx* ctx, operand L) {
 
     /*Larger than word*/
     } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
-        debugAssert("asmPush", "memory operand", L.tag == operandMem);
+        if (debugAssert("asmPush", "memory operand", L.tag == operandMem))
+            return;
 
         int size = operandGetSize(ctx->arch, L);
 
@@ -167,10 +177,11 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
 
     /*Too big for single register*/
     else if (operandGetSize(ctx->arch, Dest) > ctx->arch->wordsize) {
-        debugAssert("asmMove", "Dest mem", Dest.tag == operandMem);
-        debugAssert("asmMove", "Src mem", Src.tag == operandMem);
-        debugAssert("asmMove", "operand size equality",
-                    operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src));
+        if (   debugAssert("asmMove", "Dest mem", Dest.tag == operandMem)
+            || debugAssert("asmMove", "Src mem", Src.tag == operandMem)
+            || debugAssert("asmMove", "operand size equality",
+                           operandGetSize(ctx->arch, Dest) == operandGetSize(ctx->arch, Src)))
+            return;
 
         int size = operandGetSize(ctx->arch, Dest);
         int chunk = ctx->arch->wordsize;
@@ -218,7 +229,7 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
 }
 
 void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src) {
-    operand FalseLabel = labelCreate(labelUndefined);
+    operand FalseLabel = asmCreateLabel(ctx, labelEndIf);
     asmBranch(ctx, operandCreateFlags(conditionNegate(Cond.condition)), FalseLabel);
     asmMove(ctx, Dest, Src);
     asmLabel(ctx, FalseLabel);
@@ -293,10 +304,10 @@ void asmCompare (asmCtx* ctx, operand L, operand R) {
         asmCompare(ctx, intermediate, R);
         operandFree(intermediate);
 
-    } else if (L.tag == operandLiteral)
+    } else if (L.tag == operandLiteral) {
         asmCompare(ctx, R, L);
 
-    else {
+    } else {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
         asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
@@ -327,6 +338,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
             char* RStr = operandToStr(R);
             char* tmpStr = operandToStr(tmp);
             asmOutLn(ctx, "imul %s, %s, %s", tmpStr, LStr, RStr);
+            free(tmpStr);
             free(LStr);
             free(RStr);
 

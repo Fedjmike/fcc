@@ -1,7 +1,10 @@
 #pragma once
 
-struct reg;
-struct architecture;
+#include "../std/std.h"
+
+typedef struct reg reg;
+typedef struct architecture architecture;
+typedef enum opTag opTag;
 
 typedef enum operandTag {
     operandUndefined,
@@ -28,46 +31,44 @@ typedef enum conditionTag {
     conditionLessEqual
 } conditionTag;
 
-typedef enum labelTag {
-    labelUndefined,
-    labelReturn,
-    labelBreak,
-    labelROData
-} labelTag;
-
 typedef struct operand {
     operandTag tag;
 
-    struct reg* base;
-    struct reg* index;
+    reg* base;
+    reg* index;
     int factor;
     int offset;
-    int size; 		/*In bytes, for mem operands*/
+    ///In bytes, for mem operands
+    int size;
 
     int literal;
 
-    conditionTag condition;	/*Condition for the FALSE result*/
+    ///Condition for the FALSE result
+    conditionTag condition;
 
-    int label; 		/*Global label index*/
+    const char* label;
 } operand;
 
-extern const char *const conditions[];
-
 operand operandCreate (operandTag tag);
-operand operandCreateInvalid ();
-operand operandCreateVoid ();
+operand operandCreateInvalid (void);
+operand operandCreateVoid (void);
 operand operandCreateFlags (conditionTag cond);
-operand operandCreateReg (struct reg* r);
-operand operandCreateMem (struct reg* base, int offset, int size);
-operand operandCreateMemRef (struct reg* base, int offset, int size);
+operand operandCreateReg (reg* r);
+operand operandCreateMem (reg* base, int offset, int size);
+operand operandCreateMemRef (reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
-operand operandCreateLabel (int label);
-operand operandCreateLabelMem (int label, int size);
-operand operandCreateLabelOffset (int label);
+operand operandCreateLabel (const char* label);
+operand operandCreateLabelMem (const char* label, int size);
+operand operandCreateLabelOffset (const char* label);
 
 void operandFree (operand Value);
 
-int operandGetSize (const struct architecture* arch, operand Value);
+/**
+ * Are the operands structurally, not semantically, equal
+ */
+bool operandIsEqual (operand L, operand R);
+
+int operandGetSize (const architecture* arch, operand Value);
 
 char* operandToStr (operand Value);
 
@@ -75,16 +76,6 @@ const char* operandTagGetStr (operandTag tag);
 
 /* ::::CONDITIONS:::: */
 
-int conditionFromStr (char* cond);
+conditionTag conditionFromOp (opTag cond);
 
-int conditionNegate (int cond);
-
-/* ::::LABELS:::: */
-
-operand labelCreate (int tag);
-
-operand labelNamed (const char* name);
-
-const char* labelGet (operand label);
-
-void labelFreeAll ();
+conditionTag conditionNegate (conditionTag cond);

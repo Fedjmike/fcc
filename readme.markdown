@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License along with thi
 Features
 --------
 
-The compiler implements a language quite similar to C, however there are some major differences. The following list is probably not exhaustive, but attempts to be.
+The compiler implements a language quite similar to C, but there are some major differences. The following list is probably not exhaustive, but attempts to be.
 
 - Addition of:
   - Simple module system
@@ -28,6 +28,7 @@ The compiler implements a language quite similar to C, however there are some ma
   - Empty prototype parentheses means zero arguments
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
+  - Comma (`,`) can return a constant expression
 - The features of C99 and C11 supported:
   - Anonymous structs/unions
   - Compound literals
@@ -48,7 +49,7 @@ The compiler implements a language quite similar to C, however there are some ma
   - `volatile`
   - `register` storage class
 
-The compiler is advanced enough to selfhost much of itself, with the rest compiled with GCC. As the compiler matures, experimental additions to the language considered:
+The compiler is advanced enough to selfhost much of itself with the rest compiled with GCC. As the compiler matures experimental additions to the language considered are:
 
 - Type polymorphism as in ML/Haskell
 - Lambdas/closures
@@ -60,7 +61,7 @@ Output
 
 The compiler generates assembly for x86 (32-bit) CPUs. 64-bit AMD64 is experimental. The compiler does very little optimization before emitting straight to assembly.
 
-The ABI is largely compatible GCC's, however passing and returning structs as values will often not work. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another.
+The ABI is largely compatible GCC and Clang's. However, passing and returning structs as values will often not work. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another.
 
 Building
 --------
