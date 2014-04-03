@@ -172,6 +172,8 @@ int main () {
         }
     }
 
+	*printf;
+	
     puts((list_node) "\nInserting 6, deleting 3");
     list_node* newnode = insert_between(fourth, fifth, 6);
     node_delete(newnode, fourth);

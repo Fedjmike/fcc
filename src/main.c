@@ -117,5 +117,5 @@ int main (int argc, char** argv) {
 
     configDestroy(conf);
 
-    return fail;
+    return fail ? 1 : 0;
 }

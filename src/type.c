@@ -392,7 +392,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     else if (typeIsFunction(Model)) {
         /*fn ptr <=> fn*/
         if (typeIsPtr(DT) && typeIsFunction(DT->base))
-            typeIsCompatible(DT->base, Model);
+            return typeIsCompatible(DT->base, Model);
 
         else if (!typeIsFunction(DT) || Model->params != DT->params)
             return false;

@@ -635,8 +635,10 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
                      && tag == symTypedef))
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
-        } else if (inDecl)
-            Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
+        } else {
+            if (inDecl)
+                Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
+        }
 
         if (Node->symbol) {
             Node->symbol->storage = storage;

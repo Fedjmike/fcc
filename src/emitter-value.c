@@ -117,7 +117,8 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
 
     /*If they haven't specifically asked for the reference as memory
       then they're unaware it's held as a reference at all
-      so make it a plain ol' value*/
+      so make it a plain ol' value
+      This is where array decay occurs*/
     if (   Value.tag == operandMemRef
         && (request != requestMem && !(suggestion && suggestion->tag == operandMem))) {
         operand nValue = operandCreateReg(regAlloc(ctx->arch->wordsize));
