@@ -243,7 +243,7 @@ static const type* analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
     else if (!record) {
         errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o),
                           opIsDeref(Node->o) ? "structure or union pointer"
-                                              : "structure or union type");
+                                             : "structure or union type");
         Node->dt = typeCreateInvalid();
 
     } else {
