@@ -153,9 +153,8 @@ static const type* analyzerBOP (analyzerCtx* ctx, ast* Node) {
     }
 
     if (opIsAssignment(Node->o)) {
-        if (!typeIsAssignment(L) || !typeIsAssignment(R))
-            errorTypeExpected(ctx, !typeIsAssignment(L) ? Node->l : Node->r,
-                              opTagGetStr(Node->o), "assignable type");
+        if (!typeIsAssignment(L))
+            errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "assignable type");
 
         if (!isNodeLvalue(Node->l))
             errorLvalue(ctx, Node->l, Node->o);
