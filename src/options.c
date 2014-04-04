@@ -1,5 +1,7 @@
 #include "../inc/options.h"
 
+#include "../inc/architecture.h"
+
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
@@ -28,18 +30,27 @@ config configCreate () {
     conf.fail = false;
     conf.mode = modeDefault;
     conf.deleteAsm = true;
+
+    archInit(&conf.arch);
+
     vectorInit(&conf.inputs, 32);
     vectorInit(&conf.intermediates, 32);
+
     conf.output = 0;
+
     vectorInit(&conf.includeSearchPaths, 8);
     vectorPush(&conf.includeSearchPaths, strdup(""));
+
     return conf;
 }
 
 void configDestroy (config conf) {
+    archFree(&conf.arch);
+
     vectorFreeObjs(&conf.inputs, free);
     vectorFreeObjs(&conf.intermediates, free);
     vectorFreeObjs(&conf.includeSearchPaths, free);
+
     free(conf.output);
 }
 

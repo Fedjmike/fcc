@@ -22,13 +22,8 @@ static void manglerLinux (sym* Symbol) {
 static bool driver (config conf) {
     bool fail = false;
 
-    architecture arch;
-    architectureInit(&arch, 4, manglerLinux);
-    vectorPushFromArray(&arch.scratchRegs, (void* [3]) {(void*) regRBX, (void*) regRSI, (void*) regRDI}, 3);
-    vectorPushFromArray(&arch.callerSavedRegs, (void* [3]) {(void*) regRAX, (void*) regRCX, (void*) regRDX}, 3);
-
     compilerCtx comp;
-    compilerInit(&comp, &arch, &conf.includeSearchPaths);
+    compilerInit(&comp, &conf.arch, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++) {
@@ -67,8 +62,6 @@ static bool driver (config conf) {
         free(intermediates);
     }
 
-    architectureFree(&arch);
-
     return fail || comp.errors != 0 || internalErrors != 0;
 }
 
@@ -77,8 +70,13 @@ int main (int argc, char** argv) {
 
     bool fail = false;
 
+    /*Parse the command line options into a config*/
     config conf = configCreate();
     optionsParse(&conf, argc, argv);
+
+    /*Initialize the arch with defaults from <fcc>/default.h
+      This is included (with -include) by the makefile.*/
+    archSetup(&conf.arch, defaultOS, defaultWordsize);
 
     if (conf.fail)
         fail = true;

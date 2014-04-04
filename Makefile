@@ -3,6 +3,7 @@ CONFIG ?= debug
 
 CC ?= gcc
 CFLAGS = -std=c11 -Werror -Wall -Wextra
+CFLAGS += -include defaults.h
 
 ifeq ($(CONFIG),debug)
 	CFLAGS += -DFCC_DEBUGMODE -g
@@ -25,7 +26,7 @@ POSTBUILD = @[ -e $@ ] && du -hs $@; [ -e $@.exe ] && du -hs $@.exe; echo
 # Build
 #
 
-HEADERS = $(wildcard inc/*.h)
+HEADERS = $(wildcard inc/*.h) defaults.h
 OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
 
 OBJ = obj/$(CONFIG)
@@ -78,7 +79,7 @@ bin/tests/%-error.txt: tests/%-error.c $(FCC)
 bin/tests/%: tests/%.c $(FCC)
 	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
-	@$(FCC) $(TFLAGS) $< $(SILENT) -o $@
+	@$(FCC) $(TFLAGS) $< -o $@
 	
 	@echo " [$@]"
 	@$@ $(SILENT)
@@ -99,7 +100,7 @@ selfbuild: bin/self/fcc
 
 bin/self/fcc: $(OUT)
 	@echo " [FCC+CC] fcc"
-	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh $(SILENT)
+	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
 	
 #	

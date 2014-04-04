@@ -527,8 +527,8 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     operand Value;
 
     /*Caller save registers: only if in use*/
-    for (int i = 0; i < ctx->arch->callerSavedRegs.length; i++) {
-        regIndex r = (regIndex) vectorGet(&ctx->arch->callerSavedRegs, i);
+    for (int i = 0; i < ctx->arch->scratchRegs.length; i++) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
 
         if (regIsUsed(r))
             asmSaveReg(ctx->Asm, r);
@@ -595,8 +595,8 @@ static operand emitterCall (emitterCtx* ctx, const ast* Node) {
     asmPopN(ctx->Asm, argSize/ctx->arch->wordsize + tempWords + (retInTemp ? 1 : 0));
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
-    for (int i = ctx->arch->callerSavedRegs.length-1; i >= 0 ; i--) {
-        regIndex r = (regIndex) vectorGet(&ctx->arch->callerSavedRegs, i);
+    for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
 
         if (regIsUsed(r) && regGet(r) != Value.base)
             asmRestoreReg(ctx->Asm, r);

@@ -30,11 +30,9 @@ void vectorPush (vector* v, void* item);
 
 /**
  * Add to the end of a vector from an array.
- *
- * initialCapacity must be greater than length.
  * Won't modify array.
  */
-vector* vectorPushFromArray (vector* v, void** array, int length);
+vector* vectorPushFromArray (vector* v, void** array, int length, int elementSize);
 
 void* vectorPop (vector* v);
 
