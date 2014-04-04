@@ -1,7 +1,7 @@
 language: c
 compiler: clang
-env: CONFIG=release
+env: CONFIG=release OS=linux ARCH=32
 before_install: sudo apt-get install g++-multilib
 script: >
-        OS=linux ARCH=32 make print all &&
+        make print all &&
         make --keep-going print-tests tests-all
