@@ -76,7 +76,9 @@ make CONFIG=release
 This puts an fcc binary in `<fcc>/bin/$CONFIG`
 
 Makefile options (all optional):
-- `CONFIG=[debug profiling release]`, default: `debug`
+- `OS=[linux windows]`, default: `linux`
+- `ARCH=[32 64]`, default: `32`
+- `CONFIG=[debug profiling release]`, default: `release`
 - `CC=[path to C11 compiler]`, default: `gcc`
 - `FCC=[path to FCC binary],` default: `bin/$CONFIG/fcc`
 

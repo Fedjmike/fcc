@@ -1,5 +1,23 @@
+# OS = [ linux | windows ]
+OS ?= linux
+
+ifeq ($(OS),windows)
+	OS = osWindows
+else
+	OS = osLinux
+endif
+
+# ARCH = [ 32 | 64 ]
+ARCH ?= 32
+
+ifeq ($(ARCH),64)
+	WORDSIZE = 8
+else
+	WORDSIZE = 4
+endif
+
 # CONFIG = [ debug | release | profiling ]
-CONFIG ?= debug
+CONFIG ?= release
 
 CC ?= gcc
 CFLAGS = -std=c11 -Werror -Wall -Wextra
@@ -36,6 +54,10 @@ OUT = $(BIN)/$(BINNAME)
 
 all: $(OUT)
 
+defaults.h: defaults.in.h
+	@echo " [makedefaults.h] $@"
+	@OS=$(OS) WORDSIZE=$(WORDSIZE) bash makedefaults.sh $< >$@
+
 $(OBJ)/%.o: src/%.c $(HEADERS)
 	@mkdir -p $(OBJ)
 	@echo " [CC] $@"
@@ -48,12 +70,15 @@ $(OUT): $(OBJS)
 	$(POSTBUILD)
 	
 clean:
+	rm -f defaults.h
 	rm -f obj/*/*.o
 	rm -f bin/*/$(BINNAME)*
 	rm -f bin/tests/*
 	
 print:
 	@echo "===================="
+	@echo " OS     : $(OS)"
+	@echo " ARCH   : $(ARCH)"
 	@echo " CONFIG : $(CONFIG)"
 	@echo " CC     : $(CC)"
 	@echo " CLFAGS : $(CFLAGS)"
