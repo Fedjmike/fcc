@@ -3,5 +3,5 @@ compiler: clang
 env: CONFIG=release
 before_install: sudo apt-get install g++-multilib
 script: >
-        make print all &&
+        OS=linux ARCH=32 make print all &&
         make --keep-going print-tests tests-all
