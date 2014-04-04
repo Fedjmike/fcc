@@ -1,5 +1,6 @@
 #include "../inc/parser-decl.h"
 
+#include "../inc/debug.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/error.h"
