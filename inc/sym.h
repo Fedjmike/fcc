@@ -58,7 +58,9 @@ typedef enum symTypeMask {
     typeCondition = 1 << 4,
     ///Combination of attributes
     typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition,
+    typeBool = typeEquality | typeAssignment | typeCondition,
     typeStruct = typeAssignment,
+    typeUnion = typeAssignment,
     typeEnum = typeIntegral
 } symTypeMask;
 

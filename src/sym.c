@@ -85,6 +85,9 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
     if (tag == symStruct)
         Symbol->typeMask = typeStruct;
 
+    else if (tag == symUnion)
+        Symbol->typeMask = typeUnion;
+
     else if (tag == symEnum)
         Symbol->typeMask = typeEnum;
 

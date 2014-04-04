@@ -24,8 +24,8 @@ static void compilerInitSymbols (compilerCtx* ctx) {
 
     ctx->global = symInit();
     ctx->types = calloc((int) builtinTotal, sizeof(type*));
-    ctx->types[builtinVoid] = symCreateType(ctx->global, "void", 0, (symTypeMask) 0);
-    ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeEquality | typeAssignment | typeCondition);
+    ctx->types[builtinVoid] = symCreateType(ctx->global, "void", 0, typeNone);
+    ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeBool);
     ctx->types[builtinChar] = symCreateType(ctx->global, "char", 1, typeIntegral);
     ctx->types[builtinInt] = symCreateType(ctx->global, "int", 4, typeIntegral);
 
