@@ -4,9 +4,6 @@
 
 #include "parser.h"
 
-struct type;
-struct sym;
-
 typedef struct type type;
 typedef struct sym sym;
 typedef struct ast ast;
