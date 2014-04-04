@@ -11,13 +11,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-static void manglerLinux (sym* Symbol);
-
 static bool driver (config conf);
-
-static void manglerLinux (sym* Symbol) {
-    Symbol->label = strdup(Symbol->ident);
-}
 
 static bool driver (config conf) {
     bool fail = false;
