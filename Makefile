@@ -2,9 +2,9 @@
 OS ?= linux
 
 ifeq ($(OS),windows)
-	OS = osWindows
+	OS_ = osWindows
 else
-	OS = osLinux
+	OS_ = osLinux
 endif
 
 # ARCH = [ 32 | 64 ]
@@ -56,7 +56,7 @@ all: $(OUT)
 
 defaults.h: defaults.in.h
 	@echo " [makedefaults.h] $@"
-	@OS=$(OS) WORDSIZE=$(WORDSIZE) bash makedefaults.sh $< >$@
+	@OS=$(OS_) WORDSIZE=$(WORDSIZE) bash makedefaults.sh $< >$@
 
 $(OBJ)/%.o: src/%.c $(HEADERS)
 	@mkdir -p $(OBJ)
@@ -77,7 +77,7 @@ clean:
 	
 print:
 	@echo "===================="
-	@echo " OS     : $(OS)"
+	@echo " OS     : $(OS_)"
 	@echo " ARCH   : $(ARCH)"
 	@echo " CONFIG : $(CONFIG)"
 	@echo " CC     : $(CC)"
