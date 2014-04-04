@@ -77,7 +77,7 @@ clean:
 	
 print:
 	@echo "===================="
-	@echo " OS     : $(OS_)"
+	@echo " OS     : $(OS)"
 	@echo " ARCH   : $(ARCH)"
 	@echo " CONFIG : $(CONFIG)"
 	@echo " CC     : $(CC)"
