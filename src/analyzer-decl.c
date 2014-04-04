@@ -287,7 +287,7 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
     /*Param types*/
 
     bool variadic = false;
-    type** paramTypes = malloc(Node->children*sizeof(type*));
+    type** paramTypes = calloc(Node->children, sizeof(type*));
     ast* Current;
     int i;
 
