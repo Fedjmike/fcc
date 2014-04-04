@@ -1,7 +1,6 @@
 #include "../inc/parser.h"
 
 #include "../inc/debug.h"
-#include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/error.h"
