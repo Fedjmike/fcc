@@ -66,7 +66,7 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             fieldSize = typeGetSize(ctx->arch, Current->dt);
 
         } else if (Current->tag == symStruct || Current->tag == symUnion) {
-            bool anonymous = Current->ident[0] == 0;
+            bool anonymous = !Current->ident[0];
             emitterStructOrUnion(ctx, Current, anonymous ? nextOffset : 0);
             fieldSize = Current->size;
 

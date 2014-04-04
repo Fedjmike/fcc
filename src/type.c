@@ -549,7 +549,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
         char* format = malloc(strlen(embedded) +
                               strlen(params)+5);
 
-        if (embedded[0] == 0)
+        if (!embedded[0])
             sprintf(format, "()(%s)", params);
 
         else

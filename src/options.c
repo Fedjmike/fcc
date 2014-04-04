@@ -88,7 +88,7 @@ static void optionsParseMacro (config* conf, optionsState* state, const char* op
 static void optionsParseMicro (config* conf, optionsState* state, const char* option) {
     for (int j = 1; j < (int) strlen(option); j++) {
         char suboption = option[j];
-        char asStr[2] = {suboption, 0};
+        char asStr[2] = {suboption, '\0'};
 
         if (suboption == 'c')
             configSetMode(conf, modeNoLink, asStr);
