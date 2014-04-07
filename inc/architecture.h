@@ -17,6 +17,8 @@ typedef struct architecture {
     int wordsize;
     vector/*<regIndex>*/ scratchRegs, calleeSaveRegs;
     archSymbolMangler symbolMangler;
+
+    char *asflags, *ldflags;
 } architecture;
 
 void archInit (architecture* arch);

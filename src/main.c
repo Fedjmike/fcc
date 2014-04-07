@@ -44,10 +44,10 @@ static bool driver (config conf) {
                                       " ", (stdalloc) malloc);
 
         if (conf.mode == modeNoLink)
-            fail |= systemf("gcc -m32 -c %s", intermediates) != 0;
+            fail |= systemf("gcc %s -c %s", conf.arch.asflags, intermediates) != 0;
 
         else {
-            fail |= systemf("gcc -m32 %s -o %s", intermediates, conf.output) != 0;
+            fail |= systemf("gcc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
 
             if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
@@ -68,8 +68,8 @@ int main (int argc, char** argv) {
     config conf = configCreate();
     optionsParse(&conf, argc, argv);
 
-    /*Initialize the arch with defaults from <fcc>/default.h
-      This is included (with -include) by the makefile.*/
+    /*Initialize the arch with defaults from <fcc>/defaults.h, which is generated
+      by <fcc>/makedefaults.sh and included (with -include) by the makefile.*/
     archSetup(&conf.arch, defaultOS, defaultWordsize);
 
     if (conf.fail)

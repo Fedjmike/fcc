@@ -10,6 +10,7 @@
 #include "string.h"
 
 static void archSetupRegs (architecture* arch, osTag os);
+static void archSetupDriverFlags (architecture* arch, osTag os);
 
 static void manglerLinux (sym* Symbol);
 static void manglerWindows (sym* Symbol);
@@ -23,11 +24,17 @@ void archInit (architecture* arch) {
     vectorInit(&arch->calleeSaveRegs, 4);
 
     arch->symbolMangler = 0;
+
+    arch->asflags = 0;
+    arch->ldflags = 0;
 }
 
 void archFree (architecture* arch) {
     vectorFree(&arch->scratchRegs);
     vectorFree(&arch->calleeSaveRegs);
+
+    free(arch->asflags);
+    free(arch->ldflags);
 }
 
 /*:::: SETUP ::::*/
@@ -54,6 +61,10 @@ void archSetup (architecture* arch, osTag os, int wordsize) {
         debugErrorUnhandledInt("archSetup", "OS", (int) os);
         arch->symbolMangler = manglerLinux;
     }
+
+    /*Flags for AS/LD*/
+
+    archSetupDriverFlags(arch, os);
 }
 
 static void archSetupRegs (architecture* arch, osTag os) {
@@ -72,9 +83,9 @@ static void archSetupRegs (architecture* arch, osTag os) {
         regIndex calleeSaveRegs[5] = {regRBX, regR12, regR13, regR14, regR15};
 
         vectorPushFromArray(&arch->scratchRegs, (void**) scratchRegs,
-                            sizeof(scratchRegs), sizeof(regIndex));
+                            sizeof(scratchRegs)/sizeof(regIndex), sizeof(regIndex));
         vectorPushFromArray(&arch->calleeSaveRegs, (void**) calleeSaveRegs,
-                            sizeof(scratchRegs), sizeof(regIndex));
+                            sizeof(scratchRegs)/sizeof(regIndex), sizeof(regIndex));
 
         /*RSI and RDI are scratch regs on Windows, callee save on most others*/
         vector* RSIandRDI = os == osWindows ? &arch->scratchRegs : &arch->calleeSaveRegs;
@@ -83,6 +94,21 @@ static void archSetupRegs (architecture* arch, osTag os) {
 
     } else
         debugErrorUnhandledInt("archSetupRegs", "arch word size", arch->wordsize);
+}
+
+static void archSetupDriverFlags (architecture* arch, osTag os) {
+    (void) os;
+
+    /*Tell the assembler and linker which arch we are targetting*/
+
+    if (arch->wordsize == 4) {
+        arch->asflags = strdup("-m32");
+        arch->ldflags = strdup("-m32");
+
+    } else if (arch->wordsize == 8) {
+        arch->asflags = strdup("-m64");
+        arch->ldflags = strdup("-m64");
+    }
 }
 
 /*:::: ARCH SPECIFICS ::::*/
