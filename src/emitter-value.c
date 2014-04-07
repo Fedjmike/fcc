@@ -17,11 +17,21 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+static operand emitterGetInReg (emitterCtx* ctx, operand src, int size);
+
+/**
+ * Forcibly allocate a register, saving its old value on the stack if need be.
+ * @see emitterGiveBackReg()
+ */
+static operand emitterTakeReg (emitterCtx* ctx, regIndex r, int* oldSize, int newSize);
+static void emitterGiveBackReg (emitterCtx* ctx, regIndex r, int oldSize);
+
 static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
 
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand ShortLabel, operand* Value);
 
@@ -52,7 +62,11 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
     /*Calculate the value*/
 
     if (Node->tag == astBOP) {
-        if (opIsAssignment(Node->o))
+        if (   Node->o == opDivide || Node->o == opDivideAssign
+            || Node->o == opModulo || Node->o == opModuloAssign)
+            Value = emitterDivisionBOP(ctx, Node);
+
+        else if (opIsAssignment(Node->o))
             Value = emitterAssignmentBOP(ctx, Node);
 
         else if (opIsLogical(Node->o))
@@ -236,6 +250,90 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
             debugErrorUnhandled("emitterBOP", "operator", opTagGetStr(Node->o));
 
         operandFree(R);
+    }
+
+    debugLeave();
+
+    return Value;
+}
+
+static operand emitterTakeReg (emitterCtx* ctx, regIndex r, int* oldSize, int newSize) {
+    if (regIsUsed(r)) {
+        *oldSize = regs[r].allocatedAs;
+        asmSaveReg(ctx->Asm, r);
+
+    } else
+        *oldSize = 0;
+
+    regs[r].allocatedAs = newSize;
+    return operandCreateReg(&regs[r]);
+}
+
+static void emitterGiveBackReg (emitterCtx* ctx, regIndex r, int oldSize) {
+    regs[r].allocatedAs = oldSize;
+
+    if (oldSize)
+        asmRestoreReg(ctx->Asm, r);
+}
+
+static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("DivisionBOP");
+
+    /*x86 is really non-orthogonal for division. EDX:EAX is treated as the LHS
+      and then EDX stores the remainder and EAX the quotient*/
+
+    bool isAssign = Node->o == opDivideAssign || Node->o == opModuloAssign,
+         isModulo = Node->o == opModulo || Node->o == opModuloAssign;
+
+    int raxOldSize, rdxOldSize;
+
+    /*RAX: take, but save if necessary*/
+    operand RAX = emitterTakeReg(ctx, regRAX, &raxOldSize, typeGetSize(ctx->arch, Node->l->dt));
+
+    /*RDX: take, (save), clear*/
+    operand RDX = emitterTakeReg(ctx, regRDX, &rdxOldSize, ctx->arch->wordsize);
+    asmMove(ctx->Asm, RDX, operandCreateLiteral(0));
+
+    /*RHS*/
+    operand Value, L, R = emitterValue(ctx, Node->r, requestOperable);
+
+    /*LHS*/
+
+    if (isAssign) {
+        L = emitterValue(ctx, Node->l, requestMem);
+        asmMove(ctx->Asm, RAX, L);
+
+    } else
+        L = emitterValueSuggest(ctx, Node->l, &RAX);
+
+    /*The calculation*/
+    asmDivision(ctx->Asm, R);
+    operandFree(R);
+
+    /*If the result reg was used before, move it to a new reg*/
+    if ((isModulo ? rdxOldSize : raxOldSize) != 0) {
+        Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+        asmMove(ctx->Asm, Value, isModulo ? RDX : RAX);
+
+        /*Restore regs*/
+        emitterGiveBackReg(ctx, regRDX, rdxOldSize);
+        emitterGiveBackReg(ctx, regRAX, raxOldSize);
+
+    } else {
+        if (isModulo) {
+            Value = RDX;
+            emitterGiveBackReg(ctx, regRAX, raxOldSize);
+
+        } else {
+            Value = RAX;
+            emitterGiveBackReg(ctx, regRDX, rdxOldSize);
+        }
+    }
+
+    /*If an assignment, also move the result into memory*/
+    if (isAssign) {
+        asmMove(ctx->Asm, L, Value);
+        operandFree(L);
     }
 
     debugLeave();

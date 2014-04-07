@@ -366,6 +366,12 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     }
 }
 
+void asmDivision (asmCtx* ctx, operand R) {
+    char* RStr = operandToStr(R);
+    asmOutLn(ctx, "idiv %s", RStr);
+    free(RStr);
+}
+
 void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
     char* RStr = operandToStr(R);
 

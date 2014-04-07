@@ -70,4 +70,7 @@ void asmEvalAddress (asmCtx* ctx, operand L, operand R);
 void asmCompare (asmCtx* ctx, operand L, operand R);
 
 void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R);
+
+void asmDivision (asmCtx* ctx, operand R);
+
 void asmUOP (asmCtx* ctx, uoperation Op, operand R);
