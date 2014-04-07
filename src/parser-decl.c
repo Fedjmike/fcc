@@ -359,7 +359,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 }
 
 /**
- * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
+ * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
  */
 static struct ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
@@ -391,7 +391,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));
-        } while (tokenTryMatchPunct(ctx, punctComma));
+        } while (tokenTryMatchPunct(ctx, punctComma) && !tokenIsPunct(ctx, punctRBrace));
 
         tokenMatchPunct(ctx, punctRBrace);
     }
