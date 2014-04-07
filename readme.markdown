@@ -1,19 +1,6 @@
 Fedjmike's C Compiler
 =====================
 
-License
--------
-
-Unless otherwise stated, a source file in this package is under the GNU GPL V3 license.
-
-Fedjmike's C Compiler Copyright (C) 2012-2014 Sam Nipps
-
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
-
-You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
-
 Features
 --------
 
@@ -24,7 +11,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - `bool` type
 - Different semantics:
   - Unified variable/typedef/struct/union/enum namespace
-  - Logical operators (`||` and `&&`) return `bool`
+  - Logical operators (`||`, `&&`, and `!`) return `bool`
   - Empty prototype parentheses means zero arguments
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
@@ -44,7 +31,6 @@ The compiler implements a language quite similar to C, but there are some major 
   - Bitfields
   - Implicit casts / coercion between integral types
   - `goto` and labels
-  - Some numerical operators including divide (`/`) and modulo (`%`)
   - Designated initializers for initializers and compound literals
   - `volatile`
   - `register` storage class
@@ -53,7 +39,7 @@ The compiler is advanced enough to self-host much of itself with the rest compil
 
 - Type polymorphism as in ML/Haskell
 - Lambdas/closures
-- Options types (`option` in ML, `Maybe` in Haskell)
+- Option types (`option` in ML, `Maybe` in Haskell)
 - Algebraic types (a more general solution to option types)
 
 Output
@@ -87,7 +73,7 @@ Makefile targets:
 
 Use the `FCC` option to choose which copy of FCC to run the tests against.
 
-The `selfbuild` target executes a partial self-host: a predefined set of modules are compiled by FCC, the rest by GCC (this is not overrideable). The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both. [The modifications](https://github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http://en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
+The `selfbuild` target executes a partial self-host: a predefined set of modules is compiled by FCC, the rest by GCC (this is not overrideable). The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both. [The modifications](https://github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http://en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
 
 Simply specifying `FCC=bin/self/fcc` as an option for the `tests-all` target will trigger a partial self-host.
 
