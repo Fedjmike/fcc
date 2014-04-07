@@ -344,6 +344,7 @@ static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node) {
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
     debugEnter("AssignnentBOP");
 
+    /*Keep the left in memory so that the lvalue gets modified*/
     operand Value, R = emitterValue(ctx, Node->r, requestOperable),
                    L = emitterValue(ctx, Node->l, requestMem);
 
@@ -440,6 +441,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
 
     operand R, Value;
 
+    /*Increment/decrement ops*/
     if (   Node->o == opPostIncrement || Node->o == opPostDecrement
         || Node->o == opPreIncrement || Node->o == opPreDecrement) {
         R = emitterValue(ctx, Node->r, requestMem);
@@ -462,6 +464,7 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
         if (post)
             operandFree(R);
 
+    /*Numerical and logical ops*/
     } else if (   Node->o == opNegate || Node->o == opUnaryPlus
                || Node->o == opBitwiseNot || Node->o == opLogicalNot) {
         R = emitterValue(ctx, Node->r, requestReg);
@@ -479,10 +482,12 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
             Value = R;
         }
 
+    /*Deref*/
     } else if (Node->o == opDeref) {
         operand Ptr = emitterValue(ctx, Node->r, requestReg);
         Value = operandCreateMem(Ptr.base, 0, typeGetSize(ctx->arch, Node->dt));
 
+    /*Address of*/
     } else if (Node->o == opAddressOf) {
         R = emitterValue(ctx, Node->r, requestMem);
 
@@ -550,12 +555,12 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
         L = emitterValue(ctx, Node->l, requestMem);
         R = emitterValue(ctx, Node->r, requestOperable);
 
-        /*Just a constant? Add to the offset*/
+        /*Is the RHS just a constant? Add it to the offset*/
         if (R.tag == operandLiteral) {
             Value = L;
             Value.offset += size*R.literal;
 
-        /*Has an index but factor matches? Add to the index*/
+        /*LHS has an index but factor matches? Add RHS to the index*/
         } else if (L.index && L.factor == size) {
             asmBOP(ctx->Asm, bopAdd, operandCreateReg(L.index), R);
             operandFree(R);
@@ -569,7 +574,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
                 Value = L;
                 Value.tag = operandMem;
 
-            /*Evaluate the address, create use result as base of new operand*/
+            /*Evaluate the address of L, use the result as base of new operand*/
             } else {
                 Value = operandCreateMem(regAlloc(ctx->arch->wordsize), 0, size);
                 asmEvalAddress(ctx->Asm, operandCreateReg(Value.base), L);
@@ -710,6 +715,8 @@ static operand emitterCast (emitterCtx* ctx, const ast* Node) {
 
     operand R = emitterValue(ctx, Node->r, requestOperable);
 
+    /*Widen or narrow, if needed*/
+
     int from = typeGetSize(ctx->arch, Node->r->dt),
         to = typeGetSize(ctx->arch, Node->dt);
 
@@ -737,35 +744,33 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node) {
 
     operand Value = operandCreate(operandUndefined);
 
+    /*function*/
     if (typeIsFunction(Node->symbol->dt))
         Value = operandCreateLabel(Node->symbol->label);
 
-    else {
-        /*enum constant*/
-        if (Node->symbol->tag == symEnumConstant)
+    /*enum constant*/
+    else if (Node->symbol->tag == symEnumConstant)
             Value = operandCreateLiteral(Node->symbol->constValue);
 
-        /*array*/
-        else if (typeIsArray(Node->symbol->dt))
-            Value = operandCreateMemRef(&regs[regRBP],
-                                        Node->symbol->offset,
-                                        typeGetSize(ctx->arch, typeGetBase(Node->symbol->dt)));
+    /*array*/
+    else if (typeIsArray(Node->symbol->dt))
+        Value = operandCreateMemRef(&regs[regRBP],
+                                    Node->symbol->offset,
+                                    typeGetSize(ctx->arch, typeGetBase(Node->symbol->dt)));
 
-        /*regular variable*/
-        else {
-            int size = typeGetSize(ctx->arch, Node->symbol->dt);
+    /*regular variable*/
+    else {
+        int size = typeGetSize(ctx->arch, Node->symbol->dt);
 
-            if (Node->symbol->storage == storageAuto)
-                Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
+        if (Node->symbol->storage == storageAuto)
+            Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
 
-            else if (   Node->symbol->storage == storageStatic
-                     || Node->symbol->storage == storageExtern)
-                Value = operandCreateLabelMem(Node->symbol->label, size);
+        else if (   Node->symbol->storage == storageStatic
+                 || Node->symbol->storage == storageExtern)
+            Value = operandCreateLabelMem(Node->symbol->label, size);
 
-            else
-                debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
-        }
-
+        else
+            debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
     }
 
     debugLeave();
