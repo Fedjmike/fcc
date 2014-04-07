@@ -36,17 +36,21 @@ High importance:
 Medium:
 
 [-] Platform support
-	[-] 64 bit
-		[ ] Windows
-		[ ] Linux
-	[x] 32-bit Linux
-	[ ] Cross-compilation by command line
+	[-] 64-bit
+		[-] Windows
+		[-] Linux
+	[x] 32-bit
+	[-] Cross-compilation by command line
 [x] Typedef
-[ ] Pre increment/decrement
-	- char* o; -> enum
+[ ] Unsigned integers
+[ ] Floating point numbers
+[ ] long (long long)
+[ ] wchar_t
+[x] Pre increment/decrement
 [ ] x ?: y
 [ ] String literal concatenation
-[ ] % / >> <<
+[x] % /
+[ ] >> <<
 [ ] Warnings
 	[ ] main conformance
 	[ ] Unused value
@@ -84,8 +88,11 @@ Low:
 [ ] Expand eval.c
     [ ] String literals and indexing
     [ ] Records and arrays
-[-] Full GCC ABI conformance
+[-] Full ABI conformance
 	- structs, bah
+	- GCC
+	- Clang
+	  Doing something weird with struct returning, LTO across module boundaries?
 
 
 Other issues:
@@ -99,7 +106,7 @@ Other issues:
 
 Parser:
 
-[x] Param name clash !!!!
+[x] Param name clash
 [ ] Fix bop location thingy (astCreateBOP(o, l))
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
@@ -133,6 +140,8 @@ Semantic analyzer:
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
 [x] Look for ways use to use named symbols in errors where can, in place of just type
 [ ] eval.c: casts, target sizes
+[ ] Improve errors for compound initializations: symbol name, type
+[ ] Very strict enum coercion: from enum to integer of same size?
 
 Emitter:
 
@@ -162,3 +171,4 @@ Emitter:
 	=> as well as offset
 	=> offsetOf?
 	=> eval.c
+[ ] Optimize pointer indexing similar to array indexing
