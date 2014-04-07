@@ -10,5 +10,5 @@ HOSTING=`find ../../src/*.c | egrep "$PATTERN"`
 popd >/dev/null
 
 EXT=`find src/*.c | egrep -v "$PATTERN"`
-gcc -m32 $CFLAGS $EXT obj/self/*.o -o bin/self/fcc
+$(GCC) -m32 $CFLAGS $EXT obj/self/*.o -o bin/self/fcc
 rm -f src/*.o

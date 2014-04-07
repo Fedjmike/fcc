@@ -1,9 +1,9 @@
 language: c
 compiler: clang
-env: CONFIG=release
-before_install: sudo apt-get install g++-multilib
-script: >
-        make print all &&
-        make --keep-going print-tests tests-all &&
-        make selfbuild &&
-        make FCC=bin/self/fcc CFLAGS="-std=c0x -Werror -Wall -Wextra" --keep-going print-tests tests-all
+env: CONFIG=release GCC=gcc-4.8
+before_install: sudo apt-get install gcc-multilib gcc-4.8
+script:
+    - make print all
+    - make --keep-going print-tests tests-all
+    - make selfbuild
+    - make FCC=bin/self/fcc --keep-going print-tests tests-all
