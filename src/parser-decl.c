@@ -10,6 +10,8 @@
 #include "../inc/parser-helpers.h"
 #include "../inc/parser-value.h"
 
+#include "stdlib.h"
+
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);
 static ast* parserParam (parserCtx* ctx, bool inDecl);
@@ -173,6 +175,8 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
 /**
  * Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
+ *
+ * DeclExpr is told to require idents and create symbols.
  */
 static ast* parserField (parserCtx* ctx) {
     debugEnter("Field");
