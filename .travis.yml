@@ -2,7 +2,6 @@ language: c
 compiler: clang
 env: CONFIG=release GCC=gcc-4.8
 before_install:
-    - sudo add-apt-repository -y ppa: ubuntu-toolchain-r/test
     - sudo apt-get update
     - sudo apt-get install gcc-multilib gcc-4.8
 script:
