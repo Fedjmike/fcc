@@ -205,11 +205,13 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
 
     operand L, R, Value;
 
+    /* '.' */
     if (Node->o == opMember) {
         Value = L = emitterValue(ctx, Node->l, requestMem);
         Value.offset += Node->symbol->offset;
         Value.size = typeGetSize(ctx->arch, Node->symbol->dt);
 
+    /* '->' */
     } else if (Node->o == opMemberDeref) {
         L = emitterValue(ctx, Node->l, requestReg);
 
@@ -217,6 +219,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->dt));
 
+    /*Comparison operator*/
     } else if (opIsEquality(Node->o) || opIsOrdinal(Node->o)) {
         L = emitterValue(ctx, Node->l, requestOperable);
         R = emitterValue(ctx, Node->r, requestOperable);
@@ -226,10 +229,12 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
         operandFree(L);
         operandFree(R);
 
+    /* ',' */
     } else if (Node->o == opComma) {
         operandFree(emitterValue(ctx, Node->l, requestAny));
         Value = R = emitterValue(ctx, Node->r, requestAny);
 
+    /*Numeric operator*/
     } else {
         Value = L = emitterValue(ctx, Node->l, requestReg);
         R = emitterValue(ctx, Node->r, requestOperable);
