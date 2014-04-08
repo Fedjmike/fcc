@@ -3,14 +3,18 @@
 #include "../std/std.h"
 
 typedef struct reg {
-    int size; /*Minimum size in bytes*/
-    const char* names[4]; /*Name when a byte, word, dword and qword*/
-    int allocatedAs; /*If unused, 0, else the size allocated as in bytes*/
+    ///Minimum size in bytes
+    int size;
+    ///Name when a byte, word, dword and qword
+    const char* names[4];
+    ///If unused, 0, else the size allocated as in bytes
+    int allocatedAs;
 } reg;
 
 typedef enum regIndex {
     regUndefined,
-    regRAX, /*It is important that every register between RAX and R15 are general registers*/
+    /*It is important that every register between RAX and R15 is a general register*/
+    regRAX,
     regRBX,
     regRCX,
     regRDX,
