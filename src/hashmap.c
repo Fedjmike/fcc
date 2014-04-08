@@ -37,12 +37,7 @@ static int hashstr (const char* key, int mapsize) {
 }
 
 static int hashint (int element, int mapsize) {
-    int hash = element;
-
-    while (hash > mapsize)
-        hash -= mapsize;
-
-    return element;
+    return element % mapsize;
 }
 
 /*:::: GENERALMAP ::::*/
