@@ -58,11 +58,11 @@ void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
 }
 
 void asmSaveReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+    asmOutLn(ctx, "push %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
 void asmRestoreReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
+    asmOutLn(ctx, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
 void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {

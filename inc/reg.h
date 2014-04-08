@@ -55,10 +55,10 @@ void regFree (reg* r);
  */
 reg* regAlloc (int size);
 
-const char* regGetName (regIndex r, int size);
+const char* regIndexGetName (regIndex r, int size);
 
 /**
  * Return the name of a register at a certain size in bytes as it would
  * be called in assembler source code
  */
-const char* regToStr (const reg* r);
+const char* regGetStr (const reg* r);

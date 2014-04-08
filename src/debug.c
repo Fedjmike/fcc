@@ -231,7 +231,7 @@ void reportRegs () {
 
     for (regIndex r = 0; r < regMax; r++)
         if (regIsUsed(r))
-            debugOut("%s ", regToStr(regGet(r)));
+            debugOut("%s ", regGetStr(regGet(r)));
 
     debugOut(" ]\n");
 }

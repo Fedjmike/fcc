@@ -176,7 +176,7 @@ char* operandToStr (operand Value) {
         return strdup(conditions[Value.condition]);
 
     else if (Value.tag == operandReg)
-        return strdup(regToStr(Value.base));
+        return strdup(regGetStr(Value.base));
 
     else if (   Value.tag == operandMem || Value.tag == operandMemRef
              || Value.tag == operandLabelMem) {
@@ -203,14 +203,14 @@ char* operandToStr (operand Value) {
 
         } else if (Value.index == regUndefined || Value.factor == 0) {
             if (Value.offset == 0) {
-                const char* regStr = regToStr(Value.base);
+                const char* regStr = regGetStr(Value.base);
                 char* ret = malloc(  strlen(sizeStr)
                                    + strlen(regStr) + 9);
                 sprintf(ret, "%s ptr [%s]", sizeStr, regStr);
                 return ret;
 
             } else {
-                const char* regStr = regToStr(Value.base);
+                const char* regStr = regGetStr(Value.base);
                 char* ret = malloc(  strlen(sizeStr)
                                    + strlen(regStr)
                                    + logi(Value.offset, 10) + 2 + 9);
@@ -219,8 +219,8 @@ char* operandToStr (operand Value) {
             }
 
         } else {
-            const char* regStr = regToStr(Value.base);
-            const char* indexStr = regToStr(Value.index);
+            const char* regStr = regGetStr(Value.base);
+            const char* indexStr = regGetStr(Value.index);
             char* ret = malloc(  strlen(sizeStr)
                                + strlen(regStr)
                                + logi(Value.factor, 10) + 3

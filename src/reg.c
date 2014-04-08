@@ -60,7 +60,7 @@ reg* regAlloc (int size) {
     return regRequest(regRAX, size);
 }
 
-const char* regGetName (regIndex r, int size) {
+const char* regIndexGetName (regIndex r, int size) {
     if (size == 1)
         return regs[r].names[0];
 
@@ -74,11 +74,11 @@ const char* regGetName (regIndex r, int size) {
         return regs[r].names[3];
 
     else {
-        debugErrorUnhandledInt("regGetName", "register size", size);
+        debugErrorUnhandledInt("regIndexGetName", "register size", size);
         return regs[r].names[3];
     }
 }
 
-const char* regToStr (const reg* r) {
-    return regGetName(r-regs, r->allocatedAs);
+const char* regGetStr (const reg* r) {
+    return regIndexGetName(r-regs, r->allocatedAs);
 }
