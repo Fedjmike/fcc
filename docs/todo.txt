@@ -3,9 +3,6 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 
 High importance:
 
-[x] Compound literals
-[x] Anonymous unions and structs
-[x] Compile time evaluation
 [-] const
 	[x] Parsing
 	[x] Type annotation
@@ -13,7 +10,6 @@ High importance:
 	[-] Assignable
 		[ ] structs with const fields
 	[ ] Fields of const structs/unions const themselves
-[x] char
 [ ] Review type compatibility
 	[ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
@@ -21,10 +17,7 @@ High importance:
 	[ ] Incomplete arrays
 	[ ] Cast to incomplete
 [-] Varargs
-[x] enum
 [-] extern
-[x] argc & argv passing
-[x] continue
 [-] static
     [ ] Function linkage
     [ ] Disallow all others?
@@ -41,16 +34,15 @@ Medium:
 		[-] Linux
 	[x] 32-bit
 	[-] Cross-compilation by command line
-[x] Typedef
 [ ] Unsigned integers
 [ ] Floating point numbers
 [ ] long (long long)
 [ ] wchar_t
-[x] Pre increment/decrement
 [ ] x ?: y
 [ ] String literal concatenation
 [x] % /
 [ ] >> <<
+[ ] assert
 [ ] Warnings
 	[ ] main conformance
 	[ ] Unused value
@@ -99,23 +91,17 @@ Other issues:
 
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
-[x] Use enums for BOPs and UOPs
-[x] vsystem -> systemf
-[ ] Use vector in ast/sym
+[-] Use vector in:
+	[ ] ast
+	[x] sym
 [ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
 
 Parser:
 
-[x] Param name clash
-[ ] Fix bop location thingy (astCreateBOP(o, l))
+[x] Fix AST node location
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
-[x] Line that starts with undeclared ident... assume decl?
-    No! More lines are value anyway, unlikely to result in a proper decl anyway, and
-	a malformed decl generates way more errors.
 [ ] Complain about keywords as idents
-[x] Search paths are still broken
-    - Don't add current path to search, only use it within
 [ ] Implicit declarations on error
 [ ] Error for unnamed structs/unions that don't define variables
 	- OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
@@ -125,20 +111,13 @@ Semantic analyzer:
 
 [ ] Array size detection (basic x[] = {...})
     - analyzer-decl.c
-[x] Do analyzerArrayLiteral lits properly
 [ ] Check that fn impl and var init are semantically valid
-[x] Move sym checking code from analyzerDecl to analyzerDeclIdentLiteral?
-    Why not?
-    Might be different for different kinds of symbol
 [-] Make sure prototypes and implementation match exactly (static)
-[x] Disallow initializations inside normal expressions
 [ ] Initialization of extern and typedef
-[x] Use the DT of passed node in analyzer errors
 [ ] Evaluate casts properly
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
-[x] Look for ways use to use named symbols in errors where can, in place of just type
 [ ] eval.c: casts, target sizes
 [ ] Improve errors for compound initializations: symbol name, type
 [ ] Very strict enum coercion: from enum to integer of same size?
@@ -146,7 +125,6 @@ Semantic analyzer:
 Emitter:
 
 [-] Get rid of global state in registers and labels
-[x] Clean up value moving code
 [ ] Free operands before use, so can do things like:
       mov rbx, dword ptr [rbp+16]
       mov _rbx_, dword ptr [rbx+8]
@@ -162,8 +140,6 @@ Emitter:
       sends them off to emitterValue, handles operands and reg
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
-[x] Move big pushes code into asm-amd64.c
-[x] Registers saving
 [-] Let asm stuff return operand?
 [ ] requestReturn for eax
 [ ] Cache sym size
