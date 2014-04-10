@@ -159,7 +159,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
                 nextConst = constant.value;
 
             else
-                errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "enum constant");
+                errorCompileTimeKnown(ctx, Current->r, Current->l->symbol, "enum constant");
 
         } else if (   (Current->tag != astLiteral || Current->litTag != literalIdent)
                    && Current->tag != astInvalid)
