@@ -94,8 +94,10 @@ print:
 TFLAGS = -I tests/include
 TESTS = $(patsubst %, bin/tests/%, xor-list hashset xor-list-error.txt)
 
-VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes
-VALGRIND ?= valgrind $(VFLAGS)
+ifneq ($(shell command -v valgrind; echo $?),)
+	VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes
+	VALGRIND ?= valgrind $(VFLAGS)
+endif
 
 tests-all: $(TESTS)
 	
@@ -115,9 +117,10 @@ bin/tests/%: tests/%.c $(FCC)
 	
 print-tests:
 	@echo "===================="
-	@echo " FCC   : $(FCC)"
-	@echo " TFLAGS: $(TFLAGS)"
-	@echo " TESTS : $(TESTS)"
+	@echo " FCC     : $(FCC)"
+	@echo " TFLAGS  : $(TFLAGS)"
+	@echo " TESTS   : $(TESTS)"
+	@echo " VALGRIND: $(VALGRIND)"
 	@echo "===================="
 	
 #
