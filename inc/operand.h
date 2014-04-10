@@ -34,19 +34,27 @@ typedef enum conditionTag {
 typedef struct operand {
     operandTag tag;
 
-    reg* base;
-    reg* index;
-    int factor;
-    int offset;
-    ///In bytes, for mem operands
-    int size;
+    /*operandMem: size ptr [base + index*factor + offset]*/
 
-    int literal;
-
-    ///Condition for the FALSE result
-    conditionTag condition;
-
-    const char* label;
+    union {
+        struct {
+            /*operandReg operandMem*/
+            reg* base;
+            /*operandMem*/
+            reg* index;
+            int factor;
+            int offset;
+            ///In bytes, for mem operands
+            int size;
+        };
+        /*operandLiteral*/
+        int literal;
+        /*operandFlags*/
+        ///Condition for the FALSE result
+        conditionTag condition;
+        /*operandLabel operandLabelMem operandLabelOffset*/
+        const char* label;
+    };
 } operand;
 
 operand operandCreate (operandTag tag);
