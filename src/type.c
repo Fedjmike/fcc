@@ -29,6 +29,8 @@ static const type* typeTryThroughTypedef (const type* DT);
  */
 static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
 
+static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R);
+
 static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded);
 
 /*:::: TYPE CTORS/DTOR ::::*/
@@ -420,11 +422,20 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     }
 }
 
-bool typeIsEqual (const type* L, const type* R) {
-    L = typeTryThroughTypedef(L);
-    R = typeTryThroughTypedef(R);
+static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R) {
+    return L.isConst == R.isConst;
+}
 
-    if (typeIsInvalid(L) || typeIsInvalid(R))
+bool typeIsEqual (const type* L, const type* R) {
+    typeQualifiers Lqual = typeQualifiersCreate(),
+                   Rqual = typeQualifiersCreate();
+    L = typeTryThroughTypedefQual(L, &Lqual);
+    R = typeTryThroughTypedefQual(R, &Rqual);
+
+    if (!typeQualIsEqual(Lqual, Rqual))
+        return false;
+
+    else if (typeIsInvalid(L) || typeIsInvalid(R))
         return true;
 
     else if (L->tag != R->tag)
