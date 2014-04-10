@@ -318,6 +318,11 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
     errorAnalyzer(ctx, Node, "declaration of $h needed a compile-time known $s", Symbol->ident, what);
 }
 
+void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
+                            const sym* Symbol, int size) {
+    errorAnalyzer(ctx, Node, "declaration of array $s expected positive size, found $d", Symbol, size);
+}
+
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
     errorAnalyzer(ctx, Node, "compound literal without explicit type");
 }

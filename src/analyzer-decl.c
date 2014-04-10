@@ -332,7 +332,9 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* b
         if (!size.known) {
             errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "array size");
             size.value = -2;
-        }
+
+        } else if (size.value <= 0)
+            errorIllegalArraySize(ctx, Node->r, Node->l->symbol, size.value);
 
         Node->dt = typeCreateArray(typeDeepDuplicate(base), size.value);
     }
