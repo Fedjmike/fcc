@@ -108,6 +108,10 @@ static void archSetupDriverFlags (architecture* arch, osTag os) {
     } else if (arch->wordsize == 8) {
         arch->asflags = strdup("-m64");
         arch->ldflags = strdup("-m64");
+
+    } else {
+        arch->asflags = "";
+        arch->ldflags = "";
     }
 }
 
