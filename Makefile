@@ -20,7 +20,7 @@ endif
 CONFIG ?= release
 
 CC ?= gcc
-CFLAGS = -std=c11 -Werror -Wall -Wextra
+CFLAGS ?= -std=c11 -Werror -Wall -Wextra
 CFLAGS += -include defaults.h
 
 ifeq ($(CONFIG),debug)
@@ -29,6 +29,7 @@ ifeq ($(CONFIG),debug)
 endif
 ifeq ($(CONFIG),release)
 	CFLAGS += -O3
+	LDFLAGS += -O3
 endif
 ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
@@ -129,7 +130,7 @@ print-tests:
 
 selfbuild: bin/self/fcc
 
-bin/self/fcc: $(OUT)
+bin/self/fcc: $(OUT) selfbuild.sh
 	@echo " [FCC+CC] fcc"
 	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
