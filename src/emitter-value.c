@@ -44,6 +44,7 @@ static operand emitterSizeof (emitterCtx* ctx, const ast* Node);
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
+static void emitterElementInit (emitterCtx* ctx, ast* Node, operand L);
 
 operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, Node, request, 0);
@@ -827,15 +828,15 @@ static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node) {
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->symbol->dt));
 
-    emitterInitOrCompoundLiteral(ctx, Node, Value);
+    emitterCompoundInit(ctx, Node, Value);
 
     debugLeave();
 
     return Value;
 }
 
-void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand base) {
-    debugEnter("InitOrCompoundLiteral");
+void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base) {
+    debugEnter("CompoundInit");
 
     /*Struct initialization*/
     if (typeIsStruct(Node->dt)) {
@@ -855,19 +856,7 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
             L.size = typeGetSize(ctx->arch, field->dt);
             L.offset += field->offset;
 
-            if (value->tag == astEmpty)
-                ;
-
-            /*Recursive initialization*/
-            else if (value->tag == astLiteral && value->litTag == literalInit) {
-                emitterInitOrCompoundLiteral(ctx, value, L);
-
-            /*Regular value*/
-            } else {
-                operand R = emitterValue(ctx, value, requestOperable);
-                asmMove(ctx->Asm, L, R);
-                operandFree(R);
-            }
+            emitterElementInit(ctx, value, L);
         }
 
     /*Array initialization*/
@@ -877,23 +866,10 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
         L.size = elementSize;
 
         /*For every element*/
-        for (ast* Current = Node->firstChild;
-             Current;
-             Current = Current->nextSibling) {
-            if (Current->tag == astEmpty)
-                ;
-
-            /*Recursive initialization*/
-            else if (Current->tag == astLiteral && Current->litTag == literalInit)
-                emitterInitOrCompoundLiteral(ctx, Current, L);
-
-            /*Regular value*/
-            else {
-                operand R = emitterValue(ctx, Current, requestOperable);
-                asmMove(ctx->Asm, L, R);
-                operandFree(R);
-            }
-
+        for (ast* value = Node->firstChild;
+             value;
+             value = value->nextSibling) {
+            emitterElementInit(ctx, value, L);
             L.offset += elementSize;
         }
 
@@ -905,4 +881,21 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
     }
 
     debugLeave();
+}
+
+static void emitterElementInit (emitterCtx* ctx, ast* Node, operand L) {
+    /*Skipped init*/
+    if (Node->tag == astEmpty)
+        ;
+
+    /*Recursive initialization*/
+    else if (Node->tag == astLiteral && Node->litTag == literalInit)
+        emitterCompoundInit(ctx, Node, L);
+
+    /*Regular value*/
+    else {
+        operand R = emitterValue(ctx, Node, requestOperable);
+        asmMove(ctx->Asm, L, R);
+        operandFree(R);
+    }
 }

@@ -24,4 +24,4 @@ operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request);
  */
 operand emitterValueSuggest (emitterCtx* ctx, const ast* Node, const operand* request);
 
-void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand base);
+void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base);
