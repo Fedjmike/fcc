@@ -109,7 +109,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     int lastOffset = 2*ctx->arch->wordsize;
 
     /*Returning through temporary?*/
-    if (typeGetSize(ctx->arch, Node->symbol->dt->returnType) > ctx->arch->wordsize)
+    if (typeGetSize(ctx->arch, typeGetReturn(Node->symbol->dt)) > ctx->arch->wordsize)
         lastOffset += ctx->arch->wordsize;
 
     /*Asign offsets to all the parameters*/

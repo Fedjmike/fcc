@@ -572,7 +572,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*struct: check each field in order, check lengths match*/
     else if (typeIsStruct(DT)) {
-        const sym* record = DT->basic;
+        const sym* record = typeGetBasic(DT);
         int fieldNo = record->children.length;
 
         /*Only force direct initializations (excl. compound literals) to specify
@@ -608,9 +608,12 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*Array: check that all are of the right type, complain only once*/
     } else if (typeIsArray(DT)) {
+        int elementNo = typeGetArraySize(DT);
+        const type* base = typeGetBase(DT);
+
         /*Allow as many inits as elements, but not more*/
-        if (DT->array >= 0 && DT->array < Node->children)
-            errorDegree(ctx, Node, "elements", DT->array, Node->children, "array");
+        if (elementNo && elementNo >= 0 && elementNo < Node->children)
+            errorDegree(ctx, Node, "elements", elementNo, Node->children, "array");
 
         for (ast* current = Node->firstChild;
              current;
@@ -621,13 +624,13 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                 continue;
 
             else if (current->tag == astLiteral && current->litTag == literalInit)
-                value = analyzerInitOrCompoundLiteral(ctx, current, DT->base, false);
+                value = analyzerInitOrCompoundLiteral(ctx, current, base, false);
 
             else
                 value = analyzerValue(ctx, current);
 
-            if (!typeIsCompatible(value, DT->base))
-                errorTypeExpectedType(ctx, current, "array initialization", DT->base);
+            if (!typeIsCompatible(value, base))
+                errorTypeExpectedType(ctx, current, "array initialization", base);
         }
 
     /*Scalar*/

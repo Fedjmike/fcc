@@ -840,7 +840,7 @@ void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base) {
 
     /*Struct initialization*/
     if (typeIsStruct(Node->dt)) {
-        const sym* record = Node->dt->basic;
+        const sym* record = typeGetBasic(Node->dt);
 
         ast* value;
         int n = 0;
@@ -861,7 +861,7 @@ void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base) {
 
     /*Array initialization*/
     } else if (typeIsArray(Node->dt)) {
-        int elementSize = typeGetSize(ctx->arch, Node->dt->base);
+        int elementSize = typeGetSize(ctx->arch, typeGetBase(Node->dt));
         operand L = base;
         L.size = elementSize;
 

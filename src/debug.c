@@ -143,7 +143,7 @@ void reportType (const type* DT) {
         /*Base type*/
 
         if (typeIsPtr(DT) || typeIsArray(DT))
-            debugOut("base: %p   ", (void*) DT->base);
+            debugOut("base: %p   ", (void*) typeGetBase(DT));
 
         /*String form*/
 
@@ -189,10 +189,10 @@ void reportSymbol (const sym* Symbol) {
     /*if (   (   Symbol->tag == symId
             || Symbol->tag == symParam)
         && Symbol->dt != 0) {
-        if (Symbol->dt->tag == typeArray)
+        if (typeIsArray(Symbol->dt))
             debugOut("size: %dx%d   ",
-                     typeGetSize(Symbol->dt->base),
-                     Symbol->dt->array);
+                     typeGetSize(typeGetBase(Symbol->dt)),
+                     typeGetArraySize(Symbol->dt));
 
         else
             debugOut("size:   %d   ", typeGetSize(Symbol->dt));

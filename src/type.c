@@ -212,6 +212,11 @@ const type* typeGetCallable (const type* DT) {
            DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
 }
 
+int typeGetArraySize (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeArray ? DT->array >= 0 ? DT->array : 0 : 0;
+}
+
 /*:::: TYPE DERIVATION ::::*/
 
 type* typeDeriveFrom (const type* DT) {
