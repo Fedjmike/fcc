@@ -94,17 +94,20 @@ print:
 TFLAGS = -I tests/include
 TESTS = $(patsubst %, bin/tests/%, xor-list hashset xor-list-error.txt)
 
+VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes
+VALGRIND ?= valgrind $(VFLAGS)
+
 tests-all: $(TESTS)
 	
 bin/tests/%-error.txt: tests/%-error.c $(FCC)
 	@echo " [$(FCC)] $@"
-	@$(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
+	@$(VALGRIND) $(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
 	$(POSTBUILD)
 	
 bin/tests/%: tests/%.c $(FCC)
 	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
-	@$(FCC) $(TFLAGS) $< -o $@
+	@$(VALGRIND) $(FCC) $(TFLAGS) $< -o $@
 	
 	@echo " [$@]"
 	@$@ $(SILENT)
