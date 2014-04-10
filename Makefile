@@ -38,7 +38,7 @@ BINNAME = fcc
 FCC ?= bin/$(CONFIG)/$(BINNAME)
 
 SILENT = >/dev/null
-POSTBUILD = @[ -e $@ ] && du -hs $@; [ -e $@.exe ] && du -hs $@.exe; echo
+POSTBUILD = @[ -e $@ ] && du -hs $@; echo
 
 #
 # Build
