@@ -81,9 +81,9 @@ static void emitterModule (emitterCtx* ctx, const ast* Node) {
 }
 
 static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset) {
-    for (sym* Symbol = Scope->firstChild;
-         Symbol;
-         Symbol = Symbol->nextSibling) {
+    for (int n = 0; n < Scope->children.length; n++) {
+        sym* Symbol = vectorGet(&Scope->children, n);
+
         if (Symbol->tag == symScope)
             offset = emitterScopeAssignOffsets(arch, Symbol, offset);
 
@@ -107,16 +107,18 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     /*Two words already on the stack:
       return ptr and saved base pointer*/
     int lastOffset = 2*ctx->arch->wordsize;
-    sym* Symbol;
 
     /*Returning through temporary?*/
     if (typeGetSize(ctx->arch, Node->symbol->dt->returnType) > ctx->arch->wordsize)
         lastOffset += ctx->arch->wordsize;
 
     /*Asign offsets to all the parameters*/
-    for (Symbol = Node->symbol->firstChild;
-         Symbol && Symbol->tag == symParam;
-         Symbol = Symbol->nextSibling) {
+    for (int n = 0; n < Node->symbol->children.length; n++) {
+        sym* Symbol = vectorGet(&Node->symbol->children, n);
+
+        if (Symbol->tag != symParam)
+            break;
+
         Symbol->offset = lastOffset;
         lastOffset += typeGetSize(ctx->arch, Symbol->dt);
 

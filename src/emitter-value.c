@@ -839,15 +839,17 @@ void emitterInitOrCompoundLiteral (emitterCtx* ctx, const ast* Node, operand bas
 
     /*Struct initialization*/
     if (typeIsStruct(Node->dt)) {
-        const sym* structSym = Node->dt->basic;
+        const sym* record = Node->dt->basic;
 
         ast* value;
-        sym* field;
+        int n = 0;
 
         /*For every field*/
-        for (value = Node->firstChild, field = structSym->firstChild;
-             value && field;
-             value = value->nextSibling, field = field->nextSibling) {
+        for (value = Node->firstChild, n = 0;
+             value && n < record->children.length;
+             value = value->nextSibling, n++) {
+            sym* field = vectorGet(&record->children, n);
+
             /*Prepare the left operand*/
             operand L = base;
             L.size = typeGetSize(ctx->arch, field->dt);

@@ -35,11 +35,8 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->typeMask = typeNone;
     Symbol->complete = false;
 
+    vectorInit(&Symbol->children, 4);
     symAddChild(Parent, Symbol);
-    Symbol->firstChild = 0;
-    Symbol->lastChild = 0;
-    Symbol->nextSibling = 0;
-    Symbol->children = 0;
 
     Symbol->label = 0;
     Symbol->offset = 0;
@@ -52,11 +49,7 @@ static void symDestroy (sym* Symbol) {
 
     vectorFree(&Symbol->decls);
 
-    if (Symbol->firstChild)
-        symDestroy(Symbol->firstChild);
-
-    if (Symbol->nextSibling)
-        symDestroy(Symbol->nextSibling);
+    vectorFreeObjs(&Symbol->children, (vectorDtor) symDestroy);
 
     if (Symbol->dt)
         typeDestroy(Symbol->dt);
@@ -95,39 +88,21 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
 }
 
 static void symAddChild (sym* Parent, sym* Child) {
+    if (debugAssert("symAddChild", "null child", Child != 0))
+        ;
+
     /*Global namespace?*/
-    if (!Parent && Child->tag == symScope) {
+    else if (!Parent && Child->tag == symScope)
         Child->parent = 0;
-        return;
 
-    } else if (!Child || !Parent) {
-        printf("symAddChild(): null %s given.\n",
-               Child ? "parent" : "child");
-        return;
+    else if (debugAssert("symAddChild", "null parent", Parent != 0))
+        ;
+
+    else {
+        vectorPush(&Parent->children, Child);
+        Child->parent = Parent;
+        Child->nthChild = Parent->children.length-1;
     }
-
-    if (Parent->firstChild == 0) {
-        Parent->firstChild = Child;
-        Parent->lastChild = Child;
-
-    } else {
-        Parent->lastChild->nextSibling = Child;
-        Parent->lastChild = Child;
-    }
-
-    Child->parent = Parent;
-    Parent->children++;
-}
-
-const sym* symGetChild (const sym* Parent, int n) {
-    sym* Current = Parent->firstChild;
-
-    for (int i = 0;
-         i < n && Current;
-         i++, Current = Current->nextSibling)
-        {}
-
-    return Current;
 }
 
 sym* symChild (const sym* Scope, const char* look) {
@@ -137,9 +112,8 @@ sym* symChild (const sym* Scope, const char* look) {
 
     //printf("searching: %s\n", Scope->ident);
 
-    for (sym* Current = Scope->firstChild;
-            Current;
-            Current = Current->nextSibling) {
+    for (int n = 0; n < Scope->children.length; n++) {
+        sym* Current = vectorGet(&Scope->children, n);
         //reportSymbol(Current);
         //getchar();
 

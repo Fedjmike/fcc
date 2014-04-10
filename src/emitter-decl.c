@@ -57,42 +57,44 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
 
     record->size = 0;
 
-    for (sym* Current = record->firstChild;
-         Current;
-         Current = Current->nextSibling) {
+    /*For every field*/
+    for (int n = 0; n < record->children.length; n++) {
+        sym* field = vectorGet(&record->children, n);
         int fieldSize;
 
-        if (Current->tag == symId) {
-            fieldSize = typeGetSize(ctx->arch, Current->dt);
+        /*Find the size of the field*/
 
-        } else if (Current->tag == symStruct || Current->tag == symUnion) {
-            bool anonymous = !Current->ident[0];
-            emitterStructOrUnion(ctx, Current, anonymous ? nextOffset : 0);
-            fieldSize = Current->size;
+        if (field->tag == symId) {
+            fieldSize = typeGetSize(ctx->arch, field->dt);
 
-        } else if (Current->tag == symEnum) {
-            emitterEnum(ctx, Current);
+        } else if (field->tag == symStruct || field->tag == symUnion) {
+            bool anonymous = !field->ident[0];
+            emitterStructOrUnion(ctx, field, anonymous ? nextOffset : 0);
+            fieldSize = field->size;
+
+        } else if (field->tag == symEnum) {
+            emitterEnum(ctx, field);
             continue;
 
         } else {
-            debugErrorUnhandled("emitterStructOrUnion", "symbol tag", symTagGetStr(Current->tag));
+            debugErrorUnhandled("emitterStructOrUnion", "symbol tag", symTagGetStr(field->tag));
             continue;
         }
 
+        /*Set the field offset and update the record size*/
+
+        field->offset = nextOffset;
+        reportSymbol(field);
+
         if (record->tag == symStruct) {
-            Current->offset = nextOffset;
             /*Add the size of this field, rounded up to the nearest word boundary*/
             int alignment = ctx->arch->wordsize;
             fieldSize = ((fieldSize-1)/alignment+1)*alignment;
             record->size += fieldSize;
             nextOffset += fieldSize;
 
-        } else /*(record->tag == symUnion)*/ {
-            Current->offset = nextOffset;
+        } else /*if (record->tag == symUnion)*/
             record->size = max(record->size, fieldSize);
-        }
-
-        reportSymbol(Current);
     }
 
     reportSymbol(record);

@@ -572,23 +572,26 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
 
     /*struct: check each field in order, check lengths match*/
     else if (typeIsStruct(DT)) {
-        const sym* structSym = DT->basic;
+        const sym* record = DT->basic;
+        int fieldNo = record->children.length;
 
         /*Only force direct initializations (excl. compound literals) to specify
           no fields*/
         if (Node->children == 0 && !directInit)
             ;
 
-        else if (structSym->children != Node->children)
-            errorDegree(ctx, Node, "fields", structSym->children, Node->children, structSym->ident);
+        else if (fieldNo != Node->children)
+            errorDegree(ctx, Node, "fields", fieldNo, Node->children, record->ident);
 
         else {
             ast* current;
-            sym* field;
+            int n = 0;
 
-            for (current = Node->firstChild, field = structSym->firstChild;
-                 current && field;
-                 current = current->nextSibling, field = field->nextSibling) {
+            for (current = Node->firstChild, n = 0;
+                 current && n < fieldNo;
+                 current = current->nextSibling, n++) {
+                sym* field = vectorGet(&record->children, n);
+
                 if (current->tag == astEmpty)
                     continue;
 
@@ -599,7 +602,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                     analyzerValue(ctx, current);
 
                 if (!typeIsCompatible(current->dt, field->dt))
-                    errorInitFieldMismatch(ctx, current, structSym, field);
+                    errorInitFieldMismatch(ctx, current, record, field);
             }
         }
 

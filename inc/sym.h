@@ -93,13 +93,11 @@ typedef struct sym {
     symTypeMask typeMask;
     bool complete;
 
-    /*Linked list of symbols in our namespace
-      Including parameters for functions and constants in enums*/
+    ///Children, including parameters for functions and constants in enums
+    vector/*<sym*>*/ children;
     sym* parent;
-    sym* firstChild;
-    sym* lastChild;
-    sym* nextSibling;
-    int children;
+    ///Position in parent's vector
+    int nthChild;
 
     ///Label associated with this symbol in the assembly
     char* label;
@@ -125,11 +123,6 @@ void symEnd (sym* Global);
 sym* symCreateScope (sym* Parent);
 sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask);
 sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
-
-/**
- * Get the nth child of a symbol, returning 0 if there are fewer
- */
-const sym* symGetChild (const sym* Parent, int n);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search

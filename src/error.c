@@ -235,7 +235,7 @@ void errorDegree (analyzerCtx* ctx, const ast* Node,
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                          const ast* fn, int n, const type* expected, const type* found) {
     if (fn->symbol) {
-        const sym* param = symGetChild(fn->symbol, n);
+        const sym* param = vectorGet(&fn->symbol->children, n);
 
         if (param)
             errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
