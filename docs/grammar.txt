@@ -11,7 +11,7 @@ For := "for" "(" Decl# | ( [ Value ] ";" ) [ Value ] ";" [ Value ] ")" Code
 Value = Comma
 AssignValue = Assign
 Comma = Assign [{ "," Assign }]
-Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "|=" | "^=" Assign ]
+Assign = Ternary [ "&=" | "|=" | "^=" | ">>=" | "<<=" | "=" | "+=" | "-=" | "*=" | "/=" | "%=" Assign ]
 Ternary = Bool [ "?" Value ":" Ternary ]
 Bool = Equality [{ "&&" | "||" | "&" | "|" | "^" Equality }]
 Equality = Shift [{ "==" | "!=" | ">" | ">=" | "<" | "<=" Shift }]
