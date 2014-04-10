@@ -15,6 +15,16 @@ typedef struct sym sym;
 typedef enum symTag {
     symUndefined,
     symScope,
+    ///When a module is included, a module link is added to the current scope.
+    ///Its first child is the module scope of the file included. symFind and
+    ///symChild will look in here for symbols.
+    symModuleLink,
+    ///Whenever a symbol is (legally) redeclared, it is replaced by a link in
+    ///its original scope, and the symbol moved to the new scope. This is so
+    ///a function implementation sees the symbols of the scope it is actually
+    ///in, not of the first declaration. symFind and symChild work as above.
+    ///@see symChangeParent
+    symLink,
     symType,
     symTypedef,
     symStruct,
@@ -118,25 +128,31 @@ sym* symInit (void);
 /**
  * Destroy a symbol table
  */
-void symEnd (sym* Global);
+void symEnd (sym* global);
 
-sym* symCreateScope (sym* Parent);
-sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask);
+sym* symCreateScope (sym* parent);
+sym* symCreateModuleLink (sym* parent, const sym* module);
+sym* symCreateType (sym* parent, const char* ident, int size, symTypeMask typeMask);
 sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
+
+/**
+ * Changes the parent of a symbol, replacing it with a symLink
+ */
+void symChangeParent (sym* Symbol, sym* parent);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search
  * inside contained enums, anon. unions but will not look at parent scopes.
  * @return Symbol, or null on failure.
  */
-sym* symChild (const sym* Scope, const char* look);
+sym* symChild (const sym* scope, const char* look);
 
 /**
  * Attempt to find a symbol visible from a scope. Will recurse up parent
  * scopes.
  * @return Symbol, or null on failure
  */
-sym* symFind (const sym* Scope, const char* look);
+sym* symFind (const sym* scope, const char* look);
 
 const char* symTagGetStr (symTag tag);
 const char* storageTagGetStr (storageTag tag);

@@ -38,6 +38,7 @@ typedef struct parserCtx {
 
 typedef struct parserResult {
     ast* tree;
+    const sym* scope;
     char* filename;
     int errors, warnings;
     bool firsttime, notfound;

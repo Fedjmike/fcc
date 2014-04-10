@@ -608,6 +608,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
 
         if (Symbol) {
             Node->symbol = Symbol;
+            symChangeParent(Symbol, ctx->scope);
 
             /*SPECIAL EXCEPTION
               In C, there are multiple symbol tables for variables, typedefs, structs etc

@@ -24,7 +24,7 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static void parserInit (parserCtx* ctx, char* filename, char* fullname, compilerCtx* comp) {
+static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullname, compilerCtx* comp) {
     ctx->lexer = lexerInit(fopen(fullname, "r"));
     ctx->location = (tokenLocation) {0, 0, 0};
 
@@ -34,7 +34,7 @@ static void parserInit (parserCtx* ctx, char* filename, char* fullname, compiler
 
     ctx->comp = comp;
 
-    ctx->scope = comp->global;
+    ctx->scope = scope;
 
     ctx->breakLevel = 0;
 
@@ -94,16 +94,18 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
         parserResult* module = hashmapMap(&comp->modules, fullname);
 
         if (!module) {
+            sym* scope = symCreateScope(comp->global);
+
             parserCtx ctx;
-            parserInit(&ctx, fstripname(filename), fullname, comp);
+            parserInit(&ctx, scope, fstripname(filename), fullname, comp);
             ast* Module = parserModule(&ctx);
             parserEnd(&ctx);
 
             module = malloc(sizeof(parserResult));
             hashmapAdd(&comp->modules, fullname, module);
 
-            *module = (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, false, false};
-            return    (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, true, false};
+            *module = (parserResult) {Module, scope, ctx.filename, ctx.errors, ctx.warnings, false, false};
+            return    (parserResult) {Module, scope, ctx.filename, ctx.errors, ctx.warnings, true, false};
 
         } else {
             free(fullname);
@@ -111,7 +113,7 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
         }
 
     } else
-        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0, 0}),
+        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0, 0}), 0,
                                0, 0, 0, false, true};
 }
 
@@ -160,16 +162,20 @@ static ast* parserUsing (parserCtx* ctx) {
     ast* Node = astCreateUsing(loc, name);
 
     if (name[0]) {
-        //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
         parserResult res = parser(name, ctx->path, ctx->comp);
 
         if (res.notfound)
             errorFileNotFound(ctx, name);
 
-        else if (res.firsttime) {
-            ctx->errors += res.errors;
-            ctx->warnings += res.warnings;
-            Node->r = res.tree;
+        else {
+            symCreateModuleLink(ctx->scope, res.scope);
+
+            if (res.firsttime) {
+                ctx->errors += res.errors;
+                ctx->warnings += res.warnings;
+                /*Take ownership of the module's tree*/
+                Node->r = res.tree;
+            }
         }
     }
 
