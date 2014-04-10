@@ -140,8 +140,6 @@ static ast* parserModule (parserCtx* ctx) {
 
         else
             astAddChild(Module, parserDecl(ctx, true));
-
-        //debugWait();
     }
 
     debugLeave();
@@ -267,8 +265,6 @@ static ast* parserLine (parserCtx* ctx) {
     }
 
     debugLeave();
-
-    //debugWait();
 
     return Node;
 }
