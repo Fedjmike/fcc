@@ -24,19 +24,32 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx parserInit (char* filename, char* fullname, compilerCtx* comp) {
-    lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
+static void parserInit (parserCtx* ctx, char* filename, char* fullname, compilerCtx* comp) {
+    ctx->lexer = lexerInit(fopen(fullname, "r"));
+    ctx->location = (tokenLocation) {0, 0, 0};
 
-    return (parserCtx) {lexer, {0, 0, 0},
-                        filename, fullname, fgetpath(fullname), comp,
-                        comp->global,
-                        0,
-                        0, 0, 0};
+    ctx->filename = filename;
+    ctx->fullname = fullname;
+    ctx->path = fgetpath(fullname);
+
+    ctx->comp = comp;
+
+    ctx->scope = comp->global;
+
+    ctx->breakLevel = 0;
+
+    ctx->errors = 0;
+    ctx->warnings = 0;
+
+    ctx->lastErrorLine = 0;
+
+    /*Load the first token*/
+    tokenNext(ctx);
 }
 
-static void parserEnd (parserCtx ctx) {
-    free(ctx.path);
-    lexerEnd(ctx.lexer);
+static void parserEnd (parserCtx* ctx) {
+    free(ctx->path);
+    lexerEnd(ctx->lexer);
 }
 
 static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
@@ -81,10 +94,10 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
         parserResult* module = hashmapMap(&comp->modules, fullname);
 
         if (!module) {
-            parserCtx ctx = parserInit(fstripname(filename), fullname, comp);
-            tokenNext(&ctx);
+            parserCtx ctx;
+            parserInit(&ctx, fstripname(filename), fullname, comp);
             ast* Module = parserModule(&ctx);
-            parserEnd(ctx);
+            parserEnd(&ctx);
 
             module = malloc(sizeof(parserResult));
             hashmapAdd(&comp->modules, fullname, module);
