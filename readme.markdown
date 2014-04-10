@@ -16,6 +16,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
   - Comma (`,`) can return a constant expression
+  - Enums are always complete types
 - The features of C99 and C11 supported:
   - Anonymous structs/unions
   - Compound literals

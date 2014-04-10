@@ -382,6 +382,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
     ast* Node = astCreateEnum(loc, name);
     Node->symbol = Node->l->symbol;
+    Node->symbol->complete = true;
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
