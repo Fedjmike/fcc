@@ -30,8 +30,9 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
 
 static operand emitterBOP (emitterCtx* ctx, const ast* Node);
-static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterShiftBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node);
+static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, const ast* Node);
 static operand emitterLogicalBOPImpl (emitterCtx* ctx, const ast* Node, operand ShortLabel, operand* Value);
 
@@ -66,6 +67,10 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
         if (   Node->o == opDivide || Node->o == opDivideAssign
             || Node->o == opModulo || Node->o == opModuloAssign)
             Value = emitterDivisionBOP(ctx, Node);
+
+        else if (   Node->o == opShl || Node->o == opShlAssign
+                 || Node->o == opShr || Node->o == opShrAssign)
+            Value = emitterShiftBOP(ctx, Node);
 
         else if (opIsAssignment(Node->o))
             Value = emitterAssignmentBOP(ctx, Node);
@@ -345,6 +350,48 @@ static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 
     return Value;
+}
+
+static operand emitterShiftBOP (emitterCtx* ctx, const ast* Node) {
+    debugEnter("ShiftBOP");
+
+    operand R;
+    int rcxOldSize;
+
+    /*Is the RHS an immediate?*/
+    bool immediate = Node->r->tag == astLiteral && Node->r->litTag == literalInt;
+
+    /*Then use it directly*/
+    if (immediate)
+        R = emitterValue(ctx, Node->r, requestAny);
+
+    else {
+        /*Shifting too is non-orthogonal. RHS goes in RCX, CL used as the operand.
+          If RHS >= 2^8 or < 0, too bad.*/
+
+        R = emitterTakeReg(ctx, regRCX, &rcxOldSize, typeGetSize(ctx->arch, Node->l->dt));
+        emitterValueSuggest(ctx, Node->r, &R);
+
+        /*Only CL*/
+        R.base->allocatedAs = 1;
+    }
+
+    /*Assignment op? Then get the LHS as an lvalue, otherwise in a register*/
+    emitterRequest Lrequest =   Node->o == opShlAssign || Node->o == opShrAssign
+                              ? requestMem : requestReg;
+    operand L = emitterValue(ctx, Node->l, Lrequest);
+
+    /*Shift*/
+    boperation op = Node->o == opShl || Node->o == opShlAssign ? bopShL : bopShR;
+    asmBOP(ctx->Asm, op, L, R);
+
+    /*Give back RCX*/
+    if (!immediate)
+        emitterGiveBackReg(ctx, regRCX, rcxOldSize);
+
+    debugLeave();
+
+    return L;
 }
 
 static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {

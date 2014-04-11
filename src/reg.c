@@ -6,10 +6,10 @@
   Note rsp and rbp always used*/
 reg regs[regMax] = {
     {1, {"undefined", "undefined", "undefined", "undefined"}, 0},
-    {1, {"ah", "ax", "eax", "rax"}, 0},
-    {1, {"ah", "bx", "ebx", "rbx"}, 0},
-    {1, {"ch", "cx", "ecx", "rcx"}, 0},
-    {1, {"dh", "dx", "edx", "rdx"}, 0},
+    {1, {"al", "ax", "eax", "rax"}, 0},
+    {1, {"al", "bx", "ebx", "rbx"}, 0},
+    {1, {"cl", "cx", "ecx", "rcx"}, 0},
+    {1, {"dl", "dx", "edx", "rdx"}, 0},
     {2, {0, "si", "esi", "rsi"}, 0},
     {2, {0, "di", "edi", "rdi"}, 0},
     {8, {0, 0, 0, "r8"}, 0},
