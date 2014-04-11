@@ -250,9 +250,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
                          Node->o == opMultiply ? bopMul :
                          Node->o == opBitwiseAnd ? bopBitAnd :
                          Node->o == opBitwiseOr ? bopBitOr :
-                         Node->o == opBitwiseXor ? bopBitXor :
-                         Node->o == opShr ? bopShR :
-                         Node->o == opShl ? bopShL : bopUndefined;
+                         Node->o == opBitwiseXor ? bopBitXor : bopUndefined;
 
         if (bop)
             asmBOP(ctx->Asm, bop, L, R);
@@ -406,9 +404,7 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, const ast* Node) {
                      Node->o == opMultiplyAssign ? bopMul :
                      Node->o == opBitwiseAndAssign ? bopBitAnd :
                      Node->o == opBitwiseOrAssign ? bopBitOr :
-                     Node->o == opBitwiseXorAssign ? bopBitXor :
-                     Node->o == opShrAssign ? bopShR :
-                     Node->o == opShlAssign ? bopShL : bopUndefined;
+                     Node->o == opBitwiseXorAssign ? bopBitXor : bopUndefined;
 
     if (Node->o == opAssign) {
         Value = R;
