@@ -46,8 +46,7 @@ void asmOutLn (asmCtx* ctx, char* format, ...) {
     fputc('\n', ctx->file);
     ctx->lineNo++;
 
-    if (ctx->lineNo % 2 == 0)
-        fprintf(ctx->file, ".loc 1 %d 0\n", ctx->lineNo+1);
+    fprintf(ctx->file, ".loc 1 %d 0\n", ctx->lineNo+1);
 }
 
 void asmEnter (asmCtx* ctx) {
