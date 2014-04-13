@@ -555,27 +555,22 @@ static operand emitterUOP (emitterCtx* ctx, const ast* Node) {
     return Value;
 }
 
-static operand emitterTOP (emitterCtx* ctx, const ast* Node, const operand* suggestion) {
+static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
     debugEnter("TOP");
 
-    operand ElseLabel = asmCreateLabel(ctx->Asm, labelElse);
-    operand EndLabel = asmCreateLabel(ctx->Asm, labelEndIf);
+    irBlock* ifTrue = irBlockCreate(ctx->ir),
+             ifFalse = irBlockCreate(ctx->ir);
 
-    asmBranch(ctx->Asm,
-              emitterValue(ctx, Node->firstChild, requestFlags),
-              ElseLabel);
+    /*Condition, branch*/
+    emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
 
     /*Ask for LHS to go in a reg, or the suggestion. This becomes our return*/
-    operand Value = emitterValueImpl(ctx, Node->l, requestReg, suggestion);
-
-    asmComment(ctx->Asm, "");
-    asmJump(ctx->Asm, EndLabel);
-    asmLabel(ctx->Asm, ElseLabel);
+    operand Value = emitterValueImpl(ctx, &ifTrue, Node->l, requestReg, suggestion);
+    irJump(ifTrue, continuation);
 
     /*Move RHS into our reg*/
-    emitterValueSuggest(ctx, Node->r, &Value);
-
-    asmLabel(ctx->Asm, EndLabel);
+    emitterValueSuggest(ctx, &ifFalse, Node->r, &Value);
+    irJump(ifFalse, continuation);
 
     debugLeave();
 

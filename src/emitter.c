@@ -18,6 +18,9 @@
 #include "string.h"
 #include "stdlib.h"
 
+static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
+                                 irBlock* ifTrue, irBlock* ifFalse)
+
 static void emitterModule (emitterCtx* ctx, const ast* Node);
 
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
@@ -236,44 +239,31 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 }
 
-static void emitterBranch (emitterCtx* ctx, const ast* Node) {
+static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
+                                 irBlock* ifTrue, irBlock* ifFalse) {
+    operand cond = emitterValue(ctx, &block, value, requestFlags);
+    irBranch(block, cond, ifTrue, ifFalse);
+}
+
+static void emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
     debugEnter("Branch");
 
-    operand ElseLabel = asmCreateLabel(ctx->Asm, labelElse);
-    operand EndLabel = asmCreateLabel(ctx->Asm, labelEndIf);
+    irBlock* ifTrue = irBlockCreate(ctx->ir),
+             ifFalse = irBlockCreate(ctx->ir);
 
-    /*Compute the condition, requesting it be placed in the flags*/
-    asmBranch(ctx->Asm,
-              emitterValue(ctx, Node->firstChild, requestFlags),
-              ElseLabel);
+    /*Condition, branch*/
+    emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
 
-    emitterCode(ctx, Node->l);
-
-    if (Node->r) {
-        asmComment(ctx->Asm, "");
-        asmJump(ctx->Asm, EndLabel);
-        asmLabel(ctx->Asm, ElseLabel);
-
-        emitterCode(ctx, Node->r);
-
-        asmLabel(ctx->Asm, EndLabel);
-
-    } else
-        asmLabel(ctx->Asm, ElseLabel);
+    /*Emit the true and false branches*/
+    emitterCode(ctx, ifTrue, Node->l, continuation);
+    emitterCode(ctx, ifFalse, Node->r, continuation);
 
     debugLeave();
 }
 
-static void emitterLoop (emitterCtx* ctx, const ast* Node) {
-    debugEnter("Loop");
-
-    /*The place to return to loop again (after confirming condition)*/
-    operand LoopLabel = asmCreateLabel(ctx->Asm, labelWhile);
-
-    operand OldBreakTo = ctx->labelBreakTo;
-    operand OldContinueTo = ctx->labelContinueTo;
-    operand EndLabel = ctx->labelBreakTo = asmCreateLabel(ctx->Asm, labelBreak);
-    ctx->labelContinueTo = asmCreateLabel(ctx->Asm, labelContinue);
+static void emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
+    irBlock* body = irBlockCreate(ctx->ir),
+             loopCheck = irBlockCreate(ctx->ir);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -281,95 +271,58 @@ static void emitterLoop (emitterCtx* ctx, const ast* Node) {
     ast* cond = isDo ? Node->r : Node->l;
     ast* code = isDo ? Node->l : Node->r;
 
-    /*Condition*/
+    /*A do while, no initial condition*/
+    if (isDo)
+        irJump(body, code);
 
-    if (!isDo)
-        asmBranch(ctx->Asm,
-                  emitterValue(ctx, cond, requestFlags),
-                  EndLabel);
+    /*Initial condition: go into the body, or exit to the continuation*/
+    else
+        emitterBranchOnValue(ctx, &block, cond, body, continuation);
 
-    /*Code*/
+    /*Loop body*/
 
-    asmLabel(ctx->Asm, LoopLabel);
-    emitterCode(ctx, code);
+    irBlock* oldBreakTo = emitterSetBreakTo(ctx, continuation);
+    irBlock* oldContinueTo = emitterSetContinueTo(ctx, loopCheck);
 
-    asmComment(ctx->Asm, "");
+    emitterCode(ctx, body, code, loopCheck);
 
-    /*Condition*/
+    ctx->breakTo = oldBreakTo;
+    ctx->continueTo = oldContinueTo;
 
-    asmLabel(ctx->Asm, ctx->labelContinueTo);
-
-    asmBranch(ctx->Asm,
-              emitterValue(ctx, cond, requestFlags),
-              EndLabel);
-
-    asmJump(ctx->Asm, LoopLabel);
-    asmLabel(ctx->Asm, EndLabel);
-
-    ctx->labelBreakTo = OldBreakTo;
-    ctx->labelContinueTo = OldContinueTo;
-
-    debugLeave();
+    /*Loop re-entrant condition (in the loopCheck block this time)*/
+    emitterBranchOnValue(ctx, &loopCheck, cond, body, continuation);
 }
 
-static void emitterIter (emitterCtx* ctx, const ast* Node) {
-    debugEnter("Iter");
+static void emitterIter (emitterCtx* ctx, const ast* Node, irBlock* continuation) {
+    irBlock* body = irBlockCreate(ctx->ir),
+             iterate = irBlockCreate(ctx->ir);
 
     ast* init = Node->firstChild;
     ast* cond = init->nextSibling;
     ast* iter = cond->nextSibling;
 
-    operand LoopLabel = asmCreateLabel(ctx->Asm, labelFor);
+    /*Initialization*/
 
-    operand OldBreakTo = ctx->labelBreakTo;
-    operand OldContinueTo = ctx->labelContinueTo;
-    operand EndLabel = ctx->labelBreakTo = asmCreateLabel(ctx->Asm, labelBreak);
-    ctx->labelContinueTo = asmCreateLabel(ctx->Asm, labelContinue);
-
-    /*Initialize stuff*/
-
-    if (init->tag == astDecl) {
+    if (init->tag == astDecl)
         emitterDecl(ctx, init);
-        asmComment(ctx->Asm, "");
 
-    } else if (astIsValueTag(init->tag)) {
-        operandFree(emitterValue(ctx, init, requestAny));
-        asmComment(ctx->Asm, "");
+    else
+        emitterValue(ctx, &block, init, requestVoid);
 
-    } else if (init->tag != astEmpty)
-        debugErrorUnhandled("emitterIter", "AST tag", astTagGetStr(init->tag));
+    /*Condition*/
+    emitterBranchOnValue(ctx, &block, cond, body, continuation);
 
+    /*Body*/
 
-    /*Check condition*/
+    irBlock* oldBreakTo = emitterSetBreakTo(ctx, continuation);
+    irBlock* oldContinueTo = emitterSetContinueTo(ctx, iterate);
 
-    asmLabel(ctx->Asm, LoopLabel);
+    emitterCode(ctx, body, code, iterate);
 
-    if (cond->tag != astEmpty) {
-        operand Condition = emitterValue(ctx, cond, requestFlags);
-        asmBranch(ctx->Asm, Condition, EndLabel);
-    }
+    ctx->breakTo = oldBreakTo;
+    ctx->continueTo = oldContinueTo;
 
-    /*Do block*/
-
-    emitterCode(ctx, Node->l);
-    asmComment(ctx->Asm, "");
-
-    /*Iterate*/
-
-    asmLabel(ctx->Asm, ctx->labelContinueTo);
-
-    if (iter->tag != astEmpty) {
-        operandFree(emitterValue(ctx, iter, requestAny));
-        asmComment(ctx->Asm, "");
-    }
-
-    /*loopen Sie*/
-
-    asmJump(ctx->Asm, LoopLabel);
-    asmLabel(ctx->Asm, EndLabel);
-
-    ctx->labelBreakTo = OldBreakTo;
-    ctx->labelContinueTo = OldContinueTo;
-
-    debugLeave();
+    /*Iterate and loop check*/
+    emitterValue(Ctx, &iterate, iter, requestVoid);
+    emitterBranchOnValue(ctx, iterate, cond, body, continuation);
 }
