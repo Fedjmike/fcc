@@ -187,6 +187,8 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
 /**
  * Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
+ *
+ * DeclExpr is told to require idents and create symbols.
  */
 static ast* parserField (parserCtx* ctx) {
     debugEnter("Field");
@@ -369,7 +371,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 }
 
 /**
- * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] "}" )
+ * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
  */
 static struct ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
@@ -392,6 +394,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
     ast* Node = astCreateEnum(loc, name);
     Node->symbol = Node->l->symbol;
+    Node->symbol->complete = true;
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
@@ -401,7 +404,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));
-        } while (tokenTryMatchPunct(ctx, punctComma));
+        } while (tokenTryMatchPunct(ctx, punctComma) && !tokenIsPunct(ctx, punctRBrace));
 
         tokenMatchPunct(ctx, punctRBrace);
     }
@@ -617,6 +620,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
 
         if (Symbol) {
             Node->symbol = Symbol;
+            symChangeParent(Symbol, ctx->scope);
 
             /*SPECIAL EXCEPTION
               In C, there are multiple symbol tables for variables, typedefs, structs etc

@@ -40,6 +40,8 @@ static const type* typeTryThroughTypedef (const type* DT);
  */
 static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
 
+static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R);
+
 static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded);
 
 /*:::: TYPE CTORS/DTOR ::::*/
@@ -219,6 +221,11 @@ const type* typeGetCallable (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return DT->tag == typeFunction ? DT :
            DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
+}
+
+int typeGetArraySize (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return DT->tag == typeArray ? DT->array >= 0 ? DT->array : 0 : 0;
 }
 
 /*:::: TYPE DERIVATION ::::*/
@@ -431,11 +438,20 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     }
 }
 
-bool typeIsEqual (const type* L, const type* R) {
-    L = typeTryThroughTypedef(L);
-    R = typeTryThroughTypedef(R);
+static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R) {
+    return L.isConst == R.isConst;
+}
 
-    if (typeIsInvalid(L) || typeIsInvalid(R))
+bool typeIsEqual (const type* L, const type* R) {
+    typeQualifiers Lqual = typeQualifiersCreate(),
+                   Rqual = typeQualifiersCreate();
+    L = typeTryThroughTypedefQual(L, &Lqual);
+    R = typeTryThroughTypedefQual(R, &Rqual);
+
+    if (!typeQualIsEqual(Lqual, Rqual))
+        return false;
+
+    else if (typeIsInvalid(L) || typeIsInvalid(R))
         return true;
 
     else if (L->tag != R->tag)
@@ -539,7 +555,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
         if (DT->params != 0) {
             vector/*<char*>*/ paramStrs;
             vectorInit(&paramStrs, DT->params+1);
-            vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params);
+            vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params, sizeof(type*));
             vectorMap(&paramStrs, (vectorMapper) typeToStr, &paramStrs);
 
             if (DT->variadic)
@@ -560,7 +576,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
         char* format = malloc(strlen(embedded) +
                               strlen(params)+5);
 
-        if (embedded[0] == (char) 0)
+        if (!embedded[0])
             sprintf(format, "()(%s)", params);
 
         else

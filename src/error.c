@@ -251,7 +251,7 @@ void errorDegree (analyzerCtx* ctx, const ast* Node,
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                          const ast* fn, int n, const type* expected, const type* found) {
     if (fn->symbol) {
-        const sym* param = symGetChild(fn->symbol, n);
+        const sym* param = vectorGet(&fn->symbol->children, n);
 
         if (param)
             errorAnalyzer(ctx, Node, "type mismatch at parameter $d of $h, $n: found $t",
@@ -310,10 +310,10 @@ void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
 
 void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
     if (Node->symbol && Node->symbol->ident)
-        errorAnalyzer(ctx, Node, "$h was already qualified with $h", Node->symbol->ident, "'const'");
+        errorAnalyzer(ctx, Node, "$h was already qualified with $h", Node->symbol->ident, "const");
 
     else
-        errorAnalyzer(ctx, Node, "type was already qualified with $h", "'const'");
+        errorAnalyzer(ctx, Node, "type was already qualified with $h", "const");
 }
 
 void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
@@ -332,6 +332,11 @@ void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbo
 
 void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol, const char* what) {
     errorAnalyzer(ctx, Node, "declaration of $h needed a compile-time known $s", Symbol->ident, what);
+}
+
+void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
+                            const sym* Symbol, int size) {
+    errorAnalyzer(ctx, Node, "declaration of array $s expected positive size, found $d", Symbol, size);
 }
 
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {

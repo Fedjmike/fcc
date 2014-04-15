@@ -33,9 +33,9 @@ static void compilerInitSymbols (compilerCtx* ctx) {
       make new built in data types and add them to the global namespace*/
 
     ctx->global = symInit();
-    ctx->types = calloc((int) builtinTotal, sizeof(type*));
-    ctx->types[builtinVoid] = symCreateType(ctx->global, "void", 0, (symTypeMask) 0);
-    ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeEquality | typeAssignment | typeCondition);
+    ctx->types = calloc((int) builtinTotal, sizeof(sym*));
+    ctx->types[builtinVoid] = symCreateType(ctx->global, "void", 0, typeNone);
+    ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeBool);
     ctx->types[builtinChar] = symCreateType(ctx->global, "char", 1, typeIntegral);
     ctx->types[builtinInt] = symCreateType(ctx->global, "int", 4, typeIntegral);
 

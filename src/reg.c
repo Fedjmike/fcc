@@ -6,10 +6,10 @@
   Note rsp and rbp always used*/
 reg regs[regMax] = {
     {1, {"undefined", "undefined", "undefined", "undefined"}, 0},
-    {1, {"ah", "ax", "eax", "rax"}, 0},
-    {1, {"ah", "bx", "ebx", "rbx"}, 0},
-    {1, {"ch", "cx", "ecx", "rcx"}, 0},
-    {1, {"dh", "dx", "edx", "rdx"}, 0},
+    {1, {"al", "ax", "eax", "rax"}, 0},
+    {1, {"al", "bx", "ebx", "rbx"}, 0},
+    {1, {"cl", "cx", "ecx", "rcx"}, 0},
+    {1, {"dl", "dx", "edx", "rdx"}, 0},
     {2, {0, "si", "esi", "rsi"}, 0},
     {2, {0, "di", "edi", "rdi"}, 0},
     {8, {0, 0, 0, "r8"}, 0},
@@ -60,7 +60,7 @@ reg* regAlloc (int size) {
     return regRequest(regRAX, size);
 }
 
-const char* regGetName (regIndex r, int size) {
+const char* regIndexGetName (regIndex r, int size) {
     if (size == 1)
         return regs[r].names[0];
 
@@ -74,11 +74,11 @@ const char* regGetName (regIndex r, int size) {
         return regs[r].names[3];
 
     else {
-        debugErrorUnhandledInt("regGetName", "register size", size);
+        debugErrorUnhandledInt("regIndexGetName", "register size", size);
         return regs[r].names[3];
     }
 }
 
-const char* regToStr (const reg* r) {
-    return regGetName(r-regs, r->allocatedAs);
+const char* regGetStr (const reg* r) {
+    return regIndexGetName(r-regs, r->allocatedAs);
 }

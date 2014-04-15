@@ -1,7 +1,6 @@
 #include "../inc/parser.h"
 
 #include "../inc/debug.h"
-#include "../inc/type.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/error.h"
@@ -42,19 +41,32 @@ static ast* parserWhile (parserCtx* ctx);
 static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
-static parserCtx parserInit (char* filename, char* fullname, compilerCtx* comp) {
-    lexerCtx* lexer = lexerInit(fopen(fullname, "r"));
+static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullname, compilerCtx* comp) {
+    ctx->lexer = lexerInit(fopen(fullname, "r"));
+    ctx->location = (tokenLocation) {0, 0, 0};
 
-    return (parserCtx) {lexer, {0, 0, 0},
-                        filename, fullname, fgetpath(fullname), comp,
-                        comp->global,
-                        0,
-                        0, 0, 0};
+    ctx->filename = filename;
+    ctx->fullname = fullname;
+    ctx->path = fgetpath(fullname);
+
+    ctx->comp = comp;
+
+    ctx->scope = scope;
+
+    ctx->breakLevel = 0;
+
+    ctx->errors = 0;
+    ctx->warnings = 0;
+
+    ctx->lastErrorLine = 0;
+
+    /*Load the first token*/
+    tokenNext(ctx);
 }
 
-static void parserEnd (parserCtx ctx) {
-    free(ctx.path);
-    lexerEnd(ctx.lexer);
+static void parserEnd (parserCtx* ctx) {
+    free(ctx->path);
+    lexerEnd(ctx->lexer);
 }
 
 static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
@@ -99,16 +111,18 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
         parserResult* module = hashmapMap(&comp->modules, fullname);
 
         if (!module) {
-            parserCtx ctx = parserInit(fstripname(filename), fullname, comp);
-            tokenNext(&ctx);
+            sym* scope = symCreateScope(comp->global);
+
+            parserCtx ctx;
+            parserInit(&ctx, scope, fstripname(filename), fullname, comp);
             ast* Module = parserModule(&ctx);
-            parserEnd(ctx);
+            parserEnd(&ctx);
 
             module = malloc(sizeof(parserResult));
             hashmapAdd(&comp->modules, fullname, module);
 
-            *module = (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, false, false};
-            return    (parserResult) {Module, ctx.filename, ctx.errors, ctx.warnings, true, false};
+            *module = (parserResult) {Module, scope, ctx.filename, ctx.errors, ctx.warnings, false, false};
+            return    (parserResult) {Module, scope, ctx.filename, ctx.errors, ctx.warnings, true, false};
 
         } else {
             free(fullname);
@@ -116,7 +130,7 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
         }
 
     } else
-        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0, 0}),
+        return (parserResult) {astCreateInvalid((tokenLocation) {0, 0, 0}), 0,
                                0, 0, 0, false, true};
 }
 
@@ -145,8 +159,6 @@ static ast* parserModule (parserCtx* ctx) {
 
         else
             astAddChild(Module, parserDecl(ctx, true));
-
-        //debugWait();
     }
 
     debugLeave();
@@ -167,16 +179,20 @@ static ast* parserUsing (parserCtx* ctx) {
     ast* Node = astCreateUsing(loc, name);
 
     if (name[0]) {
-        //!!DONT USE THIS SCOPE, HEADERS SHOULDNT INTERFERE!!
         parserResult res = parser(name, ctx->path, ctx->comp);
 
         if (res.notfound)
             errorFileNotFound(ctx, name);
 
-        else if (res.firsttime) {
-            ctx->errors += res.errors;
-            ctx->warnings += res.warnings;
-            Node->r = res.tree;
+        else {
+            symCreateModuleLink(ctx->scope, res.scope);
+
+            if (res.firsttime) {
+                ctx->errors += res.errors;
+                ctx->warnings += res.warnings;
+                /*Take ownership of the module's tree*/
+                Node->r = res.tree;
+            }
         }
     }
 
@@ -272,8 +288,6 @@ static ast* parserLine (parserCtx* ctx) {
     }
 
     debugLeave();
-
-    //debugWait();
 
     return Node;
 }

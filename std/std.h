@@ -34,3 +34,8 @@ int systemf (const char* format, ...);
 
 #define max(x, y) ((x) > (y) ? (x) : (y))
 #define min(x, y) ((x) < (y) ? (x) : (y))
+
+#if 0
+int max (int x, int y);
+int min (int x, int y);
+#endif

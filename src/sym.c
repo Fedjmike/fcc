@@ -1,8 +1,7 @@
 #include "../inc/sym.h"
 
 #include "../inc/debug.h"
-//#include "../inc/type.h"
-void typeDestroy (struct type* DT);
+#include "../inc/type.h"
 
 #include "stdio.h"
 #include "string.h"
@@ -17,20 +16,23 @@ using "stdio.h";
 using "string.h";
 using "stdlib.h";
 
-static sym* symCreate (symTag tag, sym* Parent);
+static sym* symCreate (symTag tag);
+static sym* symCreateParented (symTag tag, sym* Parent);
 static void symDestroy (sym* Symbol);
+
+static sym* symCreateLink (sym* Symbol);
 
 static void symAddChild (sym* Parent, sym* Child);
 
 sym* symInit () {
-    return symCreate(symScope, 0);
+    return symCreate(symScope);
 }
 
 void symEnd (sym* Global) {
     symDestroy(Global);
 }
 
-static sym* symCreate (symTag tag, sym* Parent) {
+static sym* symCreate (symTag tag) {
     sym* Symbol = malloc(sizeof(sym));
     Symbol->tag = tag;
     Symbol->ident = 0;
@@ -45,15 +47,18 @@ static sym* symCreate (symTag tag, sym* Parent) {
     Symbol->typeMask = typeNone;
     Symbol->complete = false;
 
-    symAddChild(Parent, Symbol);
-    Symbol->firstChild = 0;
-    Symbol->lastChild = 0;
-    Symbol->nextSibling = 0;
-    Symbol->children = 0;
+    vectorInit(&Symbol->children, 4);
+    Symbol->parent = 0;
 
     Symbol->label = 0;
     Symbol->offset = 0;
 
+    return Symbol;
+}
+
+static sym* symCreateParented (symTag tag, sym* Parent) {
+    sym* Symbol = symCreate(tag);
+    symAddChild(Parent, Symbol);
     return Symbol;
 }
 
@@ -62,11 +67,11 @@ static void symDestroy (sym* Symbol) {
 
     vectorFree(&Symbol->decls);
 
-    if (Symbol->firstChild)
-        symDestroy(Symbol->firstChild);
+    if (Symbol->tag != symModuleLink && Symbol->tag != symLink)
+        vectorFreeObjs(&Symbol->children, (vectorDtor) symDestroy);
 
-    if (Symbol->nextSibling)
-        symDestroy(Symbol->nextSibling);
+    else
+        vectorFree(&Symbol->children);
 
     if (Symbol->dt)
         typeDestroy(Symbol->dt);
@@ -76,11 +81,23 @@ static void symDestroy (sym* Symbol) {
 }
 
 sym* symCreateScope (sym* Parent) {
-    return symCreate(symScope, Parent);
+    return symCreateParented(symScope, Parent);
+}
+
+sym* symCreateModuleLink (sym* parent, const sym* module) {
+    sym* Symbol = symCreateParented(symModuleLink, parent);
+    vectorPush(&Symbol->children, (sym*) module);
+    return Symbol;
+}
+
+static sym* symCreateLink (sym* Symbol) {
+    sym* Link = symCreate(symLink);
+    vectorPush(&Link->children, (sym*) Symbol);
+    return Link;
 }
 
 sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask) {
-    sym* Symbol = symCreate(symType, Parent);
+    sym* Symbol = symCreateParented(symType, Parent);
     Symbol->ident = strdup(ident);
     Symbol->size = size;
     Symbol->typeMask = typeMask;
@@ -89,11 +106,14 @@ sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMa
 }
 
 sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
-    sym* Symbol = symCreate(tag, Parent);
+    sym* Symbol = symCreateParented(tag, Parent);
     Symbol->ident = strdup(ident);
 
     if (tag == symStruct)
         Symbol->typeMask = typeStruct;
+
+    else if (tag == symUnion)
+        Symbol->typeMask = typeUnion;
 
     else if (tag == symEnum)
         Symbol->typeMask = typeEnum;
@@ -102,39 +122,24 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
 }
 
 static void symAddChild (sym* Parent, sym* Child) {
-    /*Global namespace?*/
-    if (!Parent && Child->tag == symScope) {
-        Child->parent = 0;
-        return;
+    if (   debugAssert("symAddChild", "null child", Child != 0)
+        || debugAssert("symAddChild", "null parent", Parent != 0))
+        ;
 
-    } else if (!Child || !Parent) {
-        printf("symAddChild(): null %s given.\n",
-               Child ? "parent" : "child");
-        return;
+    else {
+        vectorPush(&Parent->children, Child);
+        Child->parent = Parent;
+        Child->nthChild = Parent->children.length-1;
     }
-
-    if (Parent->firstChild == 0) {
-        Parent->firstChild = Child;
-        Parent->lastChild = Child;
-
-    } else {
-        Parent->lastChild->nextSibling = Child;
-        Parent->lastChild = Child;
-    }
-
-    Child->parent = Parent;
-    Parent->children++;
 }
 
-const sym* symGetChild (const sym* Parent, int n) {
-    sym* Current = Parent->firstChild;
+void symChangeParent (sym* Symbol, sym* parent) {
+    /*Replace it in the old parent's vector with a link*/
+    vectorSet(&Symbol->parent->children, Symbol->nthChild,
+              symCreateLink(Symbol));
 
-    for (int i = 0;
-         i < n && Current;
-         i++, Current = Current->nextSibling)
-        {}
-
-    return Current;
+    /*Add it to the new parent*/
+    symAddChild(parent, Symbol);
 }
 
 sym* symChild (const sym* Scope, const char* look) {
@@ -144,19 +149,34 @@ sym* symChild (const sym* Scope, const char* look) {
 
     //printf("searching: %s\n", Scope->ident);
 
-    for (sym* Current = Scope->firstChild;
-            Current;
-            Current = Current->nextSibling) {
+    for (int n = 0; n < Scope->children.length; n++) {
+        sym* Current = vectorGet(&Scope->children, n);
         //reportSymbol(Current);
         //getchar();
 
+        /*Found it?*/
         if (Current->ident && !strcmp(Current->ident, look))
             return Current;
 
         /*Anonymous inside a struct/union?*/
-        if (   Current->ident && Current->ident[0] == (char) 0
+        if (   Current->ident && !Current->ident[0]
             && (   Current->parent->tag == symStruct
                 || Current->parent->tag == symUnion)) {
+            sym* Found = symChild(Current, look);
+
+            if (Found)
+                return Found;
+        }
+
+        /*Included module?*/
+        if (Current->tag == symModuleLink) {
+            sym* Found = symChild(Current->children.buffer[0], look);
+
+            if (Found)
+                return Found;
+
+        /*Reparented symbol?*/
+        } else if (Current->tag == symLink) {
             sym* Found = symChild(Current, look);
 
             if (Found)
@@ -196,6 +216,8 @@ sym* symFind (const sym* Scope, const char* look) {
 const char* symTagGetStr (symTag tag) {
     if (tag == symUndefined) return "undefined";
     else if (tag == symScope) return "scope";
+    else if (tag == symModuleLink) return "module link";
+    else if (tag == symLink) return "sym link";
     else if (tag == symType) return "type";
     else if (tag == symTypedef) return "typedef";
     else if (tag == symStruct) return "struct";

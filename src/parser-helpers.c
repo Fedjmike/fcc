@@ -231,7 +231,7 @@ char* tokenMatchStr (parserCtx* ctx) {
 }
 
 char tokenMatchChar (parserCtx* ctx) {
-    char ret = (char) 0;
+    char ret = '\0';
 
     if (tokenIsChar(ctx)) {
         if (ctx->lexer->buffer[0] == '\\') {

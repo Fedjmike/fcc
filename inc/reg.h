@@ -3,14 +3,18 @@
 #include "../std/std.h"
 
 typedef struct reg {
-    int size; /*Minimum size in bytes*/
-    const char* names[4]; /*Name when a byte, word, dword and qword*/
-    int allocatedAs; /*If unused, 0, else the size allocated as in bytes*/
+    ///Minimum size in bytes
+    int size;
+    ///Name when a byte, word, dword and qword
+    const char* names[4];
+    ///If unused, 0, else the size allocated as in bytes
+    int allocatedAs;
 } reg;
 
 typedef enum regIndex {
     regUndefined,
-    regRAX, /*It is important that every register between RAX and R15 are general registers*/
+    /*It is important that every register between RAX and R15 is a general register*/
+    regRAX,
     regRBX,
     regRCX,
     regRDX,
@@ -29,7 +33,7 @@ typedef enum regIndex {
     regMax
 } regIndex;
 
-extern reg regs[];
+extern reg regs[regMax];
 
 /**
  * Check if a register is in use
@@ -51,10 +55,10 @@ void regFree (reg* r);
  */
 reg* regAlloc (int size);
 
-const char* regGetName (regIndex r, int size);
+const char* regIndexGetName (regIndex r, int size);
 
 /**
  * Return the name of a register at a certain size in bytes as it would
  * be called in assembler source code
  */
-const char* regToStr (const reg* r);
+const char* regGetStr (const reg* r);

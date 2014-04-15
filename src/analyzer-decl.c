@@ -172,7 +172,7 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
                 nextConst = constant.value;
 
             else
-                errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "enum constant");
+                errorCompileTimeKnown(ctx, Current->r, Current->l->symbol, "enum constant");
 
         } else if (   (Current->tag != astLiteral || Current->litTag != literalIdent)
                    && Current->tag != astInvalid)
@@ -188,21 +188,15 @@ static void analyzerEnum (analyzerCtx* ctx, ast* Node) {
 }
 
 static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* base) {
-    if (Node->tag == astInvalid) {
+    if (Node->tag == astInvalid)
         debugMsg("Invalid");
 
-    } else if (Node->tag == astEmpty) {
-        return Node->dt = typeDeepDuplicate(base);
-
-    } else if (Node->tag == astBOP) {
+    else if (Node->tag == astBOP) {
         if (Node->o == opAssign)
             return analyzerDeclAssignBOP(ctx, Node, base);
 
         else
             debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
-
-    } else if (Node->tag == astConst) {
-        return analyzerConst(ctx, Node, base);
 
     } else if (Node->tag == astUOP) {
         if (Node->o == opDeref)
@@ -211,12 +205,6 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         else
             debugErrorUnhandled("analyzerDeclNode", "operator", opTagGetStr(Node->o));
 
-    } else if (Node->tag == astCall) {
-        return analyzerDeclCall(ctx, Node, base);
-
-    } else if (Node->tag == astIndex) {
-        return analyzerDeclIndex(ctx, Node, base);
-
     } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
             return analyzerDeclIdentLiteral(ctx, Node, base);
@@ -224,7 +212,19 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, const type* ba
         else
             debugErrorUnhandled("analyzerDeclNode", "literal tag", literalTagGetStr(Node->litTag));
 
-    } else
+    } else if (Node->tag == astEmpty)
+        return Node->dt = typeDeepDuplicate(base);
+
+    else if (Node->tag == astConst)
+        return analyzerConst(ctx, Node, base);
+
+    else if (Node->tag == astCall)
+        return analyzerDeclCall(ctx, Node, base);
+
+    else if (Node->tag == astIndex)
+        return analyzerDeclIndex(ctx, Node, base);
+
+    else
         debugErrorUnhandled("analyzerDeclNode", "AST tag", astTagGetStr(Node->tag));
 
     /*Fall through for error states*/
@@ -300,7 +300,7 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, const type* re
     /*Param types*/
 
     bool variadic = false;
-    type** paramTypes = malloc(Node->children*sizeof(type*));
+    type** paramTypes = calloc(Node->children, sizeof(type*));
     ast* Current;
     int i;
 
@@ -345,7 +345,9 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, const type* b
         if (!size.known) {
             errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "array size");
             size.value = -2;
-        }
+
+        } else if (size.value <= 0)
+            errorIllegalArraySize(ctx, Node->r, Node->l->symbol, size.value);
 
         Node->dt = typeCreateArray(typeDeepDuplicate(base), size.value);
     }

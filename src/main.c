@@ -23,24 +23,13 @@ using "string.h";
 using "stdlib.h";
 using "stdio.h";
 
-static void manglerLinux (sym* Symbol);
-
 static bool driver (config conf);
-
-static void manglerLinux (sym* Symbol) {
-    Symbol->label = strdup(Symbol->ident);
-}
 
 static bool driver (config conf) {
     bool fail = false;
 
-    architecture arch;
-    architectureInit(&arch, 4, manglerLinux);
-    vectorPushFromArray(&arch.scratchRegs, (void* [3]) {(void*) regRBX, (void*) regRSI, (void*) regRDI}, 3);
-    vectorPushFromArray(&arch.callerSavedRegs, (void* [3]) {(void*) regRAX, (void*) regRCX, (void*) regRDX}, 3);
-
     compilerCtx comp;
-    compilerInit(&comp, &arch, &conf.includeSearchPaths);
+    compilerInit(&comp, &conf.arch, &conf.includeSearchPaths);
 
     /*Compile each of the inputs to assembly*/
     for (int i = 0; i < conf.inputs.length; i++) {
@@ -67,10 +56,10 @@ static bool driver (config conf) {
                                       " ", (stdalloc) malloc);
 
         if (conf.mode == modeNoLink)
-            fail |= systemf("gcc -m32 -c %s", intermediates) != 0;
+            fail |= systemf("gcc %s -c %s", conf.arch.asflags, intermediates) != 0;
 
         else {
-            fail |= systemf("gcc -m32 %s -o %s", intermediates, conf.output) != 0;
+            fail |= systemf("gcc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
 
             if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
@@ -78,8 +67,6 @@ static bool driver (config conf) {
 
         free(intermediates);
     }
-
-    architectureFree(&arch);
 
     return fail || comp.errors != 0 || internalErrors != 0;
 }
@@ -89,8 +76,13 @@ int main (int argc, char** argv) {
 
     bool fail = false;
 
+    /*Parse the command line options into a config*/
     config conf = configCreate();
     optionsParse(&conf, argc, argv);
+
+    /*Initialize the arch with defaults from <fcc>/defaults.h, which is generated
+      by <fcc>/makedefaults.sh and included (with -include) by the makefile.*/
+    archSetup(&conf.arch, defaultOS, defaultWordsize);
 
     if (conf.fail)
         fail = true;

@@ -40,8 +40,8 @@ void asmFnPrologue (asmCtx* ctx, const char* name, int localSize) {
     if (localSize != 0)
         asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 
-    for (int i = 0; i < ctx->arch->scratchRegs.length; i++) {
-        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+    for (int i = 0; i < ctx->arch->calleeSaveRegs.length; i++) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->calleeSaveRegs, i);
         asmSaveReg(ctx, r);
     }
 }
@@ -51,8 +51,8 @@ void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
     asmOutLn(ctx, "%s:", labelEnd.label);
 
     /*Pop off saved regs in reverse order*/
-    for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
-        regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
+    for (int i = ctx->arch->calleeSaveRegs.length-1; i >= 0 ; i--) {
+        regIndex r = (regIndex) vectorGet(&ctx->arch->calleeSaveRegs, i);
         asmRestoreReg(ctx, r);
     }
 
@@ -62,11 +62,11 @@ void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
 }
 
 void asmSaveReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "push %s", regGetName(r, ctx->arch->wordsize));
+    asmOutLn(ctx, "push %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
 void asmRestoreReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "pop %s", regGetName(r, ctx->arch->wordsize));
+    asmOutLn(ctx, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
 void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
@@ -368,6 +368,12 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
         free(LStr);
         free(RStr);
     }
+}
+
+void asmDivision (asmCtx* ctx, operand R) {
+    char* RStr = operandToStr(R);
+    asmOutLn(ctx, "idiv %s", RStr);
+    free(RStr);
 }
 
 void asmUOP (asmCtx* ctx, uoperation Op, operand R) {

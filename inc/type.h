@@ -68,6 +68,7 @@ const type* typeGetBase (const type* DT);
 const type* typeGetReturn (const type* DT);
 const sym* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
+int typeGetArraySize (const type* DT);
 
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);

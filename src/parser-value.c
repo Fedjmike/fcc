@@ -87,7 +87,7 @@ static ast* parserComma (parserCtx* ctx) {
 }
 
 /**
- * Assign = Ternary [ "=" | "+=" | "-=" | "*=" | "/=" | "|=" | "^=" Assign ]
+ * Assign = Ternary [ "&=" | "|=" | "^=" | ">>=" | "<<=" | "=" | "+=" | "-=" | "*=" | "/=" | "%=" Assign ]
  */
 static ast* parserAssign (parserCtx* ctx) {
     debugEnter("Assign");
@@ -96,14 +96,17 @@ static ast* parserAssign (parserCtx* ctx) {
     tokenLocation loc = ctx->location;
     opTag o;
 
-    if ((o = tokenTryMatchPunct(ctx, punctAssign) ? opAssign :
+    if ((o = tokenTryMatchPunct(ctx, punctBitwiseAndAssign) ? opBitwiseAndAssign :
+             tokenTryMatchPunct(ctx, punctBitwiseOrAssign) ? opBitwiseOrAssign :
+             tokenTryMatchPunct(ctx, punctBitwiseXorAssign) ? opBitwiseXorAssign :
+             tokenTryMatchPunct(ctx, punctShrAssign) ? opShrAssign :
+             tokenTryMatchPunct(ctx, punctShlAssign) ? opShlAssign :
+             tokenTryMatchPunct(ctx, punctAssign) ? opAssign :
              tokenTryMatchPunct(ctx, punctPlusAssign) ? opAddAssign :
              tokenTryMatchPunct(ctx, punctMinusAssign) ? opSubtractAssign :
              tokenTryMatchPunct(ctx, punctTimesAssign) ? opMultiplyAssign :
              tokenTryMatchPunct(ctx, punctDivideAssign) ? opDivideAssign :
-             tokenTryMatchPunct(ctx, punctBitwiseAndAssign) ? opBitwiseAndAssign :
-             tokenTryMatchPunct(ctx, punctBitwiseOrAssign) ? opBitwiseOrAssign :
-             tokenTryMatchPunct(ctx, punctBitwiseXorAssign) ? opBitwiseXorAssign : opUndefined))
+             tokenTryMatchPunct(ctx, punctModuloAssign) ? opModuloAssign : opUndefined))
         Node = astCreateBOP(loc, Node, o, parserAssign(ctx));
 
     debugLeave();

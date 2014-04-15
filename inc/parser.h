@@ -18,7 +18,8 @@ typedef struct parserCtx {
     lexerCtx* lexer;
     tokenLocation location;
 
-    char* filename; ///< Ownership is taken by the parserResult of the astModule of the file
+    ///Ownership of filename is taken by the parserResult of the astModule of the file
+    char* filename;
     const char* fullname;
     char* path;
 
@@ -26,18 +27,18 @@ typedef struct parserCtx {
 
     sym* scope;
 
-    /*The levels of break-able control flows currently in*/
+    ///The levels of break-able control flows currently in
     int breakLevel;
 
-    int errors;
-    int warnings;
+    int errors, warnings;
 
-    /*The last line that an error occurred on*/
+    ///The last line that an error occurred on
     int lastErrorLine;
 } parserCtx;
 
 typedef struct parserResult {
     ast* tree;
+    const sym* scope;
     char* filename;
     int errors, warnings;
     bool firsttime, notfound;

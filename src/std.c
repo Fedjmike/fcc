@@ -169,3 +169,14 @@ int systemf (const char* format, ...) {
     free(command);
     return ret;
 }
+
+#undef min
+#undef max
+
+int max (int x, int y) {
+	return x > y ? x : y;
+}
+
+int mix (int x, int y) {
+	return x < y ? x : y;
+}

@@ -99,9 +99,9 @@ static void emitterModule (emitterCtx* ctx, const ast* Node) {
 }
 
 static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset) {
-    for (sym* Symbol = Scope->firstChild;
-         Symbol;
-         Symbol = Symbol->nextSibling) {
+    for (int n = 0; n < Scope->children.length; n++) {
+        sym* Symbol = vectorGet(&Scope->children, n);
+
         if (Symbol->tag == symScope)
             offset = emitterScopeAssignOffsets(arch, Symbol, offset);
 
@@ -125,16 +125,18 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     /*Two words already on the stack:
       return ptr and saved base pointer*/
     int lastOffset = 2*ctx->arch->wordsize;
-    sym* Symbol;
 
     /*Returning through temporary?*/
-    if (typeGetSize(ctx->arch, Node->symbol->dt->returnType) > ctx->arch->wordsize)
+    if (typeGetSize(ctx->arch, typeGetReturn(Node->symbol->dt)) > ctx->arch->wordsize)
         lastOffset += ctx->arch->wordsize;
 
     /*Asign offsets to all the parameters*/
-    for (Symbol = Node->symbol->firstChild;
-         Symbol && Symbol->tag == symParam;
-         Symbol = Symbol->nextSibling) {
+    for (int n = 0; n < Node->symbol->children.length; n++) {
+        sym* Symbol = vectorGet(&Node->symbol->children, n);
+
+        if (Symbol->tag != symParam)
+            break;
+
         Symbol->offset = lastOffset;
         lastOffset += typeGetSize(ctx->arch, Symbol->dt);
 
@@ -199,7 +201,7 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
         emitterDecl(ctx, Node);
 
     else if (astIsValueTag(Node->tag))
-        operandFree(emitterValue(ctx, Node, requestAny));
+        emitterValue(ctx, Node, requestVoid);
 
     else if (Node->tag == astEmpty)
         debugMsg("Empty");
@@ -215,7 +217,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
 
     /*Non void return?*/
     if (Node->r) {
-        operand Ret = emitterValue(ctx, Node->r, requestOperable);
+        operand Ret = emitterValue(ctx, Node->r, requestValue);
         int retSize = typeGetSize(ctx->arch, Node->r->dt);
 
         bool retInTemp = retSize > ctx->arch->wordsize;
@@ -349,7 +351,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
         asmComment(ctx->Asm, "");
 
     } else if (astIsValueTag(init->tag)) {
-        operandFree(emitterValue(ctx, init, requestAny));
+        emitterValue(ctx, init, requestVoid);
         asmComment(ctx->Asm, "");
 
     } else if (init->tag != astEmpty)
@@ -375,7 +377,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, ctx->labelContinueTo);
 
     if (iter->tag != astEmpty) {
-        operandFree(emitterValue(ctx, iter, requestAny));
+        emitterValue(ctx, iter, requestVoid);
         asmComment(ctx->Asm, "");
     }
 

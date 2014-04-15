@@ -1,6 +1,9 @@
+#pragma once
+
 #include "../std/std.h"
 
 #include "vector.h"
+#include "architecture.h"
 
 using "vector.h";
 
@@ -16,6 +19,8 @@ typedef struct config {
     bool fail;
     configMode mode;
     bool deleteAsm;
+
+    architecture arch;
 
     vector/*<char*>*/ inputs, intermediates;
     char* output;

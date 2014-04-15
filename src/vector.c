@@ -40,11 +40,20 @@ void vectorPush (vector* v, void* item) {
     v->buffer[v->length++] = item;
 }
 
-vector* vectorPushFromArray (vector* v, void** array, int length) {
+vector* vectorPushFromArray (vector* v, void** array, int length, int elementSize) {
+    /*Make sure it is at least big enough*/
     if (v->capacity < v->length + length)
         vectorResize(v, v->capacity + length*2);
 
-    memcpy(v->buffer+v->length, array, length*sizeof(void*));
+    /*If the src and dest element size match, memcpy*/
+    if (elementSize == sizeof(void*))
+        memcpy(v->buffer+v->length, array, length*elementSize);
+
+    /*Otherwise copy each element individually*/
+    else
+        for (int i = 0; i < length; i++)
+            memcpy(v->buffer+i, (char*) array + i*elementSize, elementSize);
+
     v->length += length;
     return v;
 }

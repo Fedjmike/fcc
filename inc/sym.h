@@ -4,8 +4,6 @@
 
 #include "vector.h"
 
-#include "operand.h"
-
 using "vector.h";
 
 typedef struct type type;
@@ -19,6 +17,16 @@ typedef struct sym sym;
 typedef enum symTag {
     symUndefined,
     symScope,
+    ///When a module is included, a module link is added to the current scope.
+    ///Its first child is the module scope of the file included. symFind and
+    ///symChild will look in here for symbols.
+    symModuleLink,
+    ///Whenever a symbol is (legally) redeclared, it is replaced by a link in
+    ///its original scope, and the symbol moved to the new scope. This is so
+    ///a function implementation sees the symbols of the scope it is actually
+    ///in, not of the first declaration. symFind and symChild work as above.
+    ///@see symChangeParent
+    symLink,
     symType,
     symTypedef,
     symStruct,
@@ -48,21 +56,23 @@ typedef enum symTypeMask {
     typeNone,
     ///Numeric describes whether arithmetic operators can be performed
     ///on it. e.g. +, unary -, bitwise &
-    typeNumeric = 1, //1 << 0,
+    typeNumeric = 1 << 0,
     ///Ordinal describes whether it has a defined order, and therefore
     ///can be compared with <, <=, >, >=
-    typeOrdinal = 2, //1 << 1,
+    typeOrdinal = 1 << 1,
     ///Equality describes whether equality can be tested with != and ==
-    typeEquality = 4, //1 << 2,
+    typeEquality = 1 << 2,
     ///Assignment describes whether you can assign new values directly
     ///with =
-    typeAssignment = 8, //1 << 3,
+    typeAssignment = 1 << 3,
     ///Condition describes whether the type can be tested for boolean
     ///truth
-    typeCondition = 16, //1 << 4,
+    typeCondition = 1 << 4,
     ///Combination of attributes
     typeIntegral = typeNumeric | typeOrdinal | typeEquality | typeAssignment | typeCondition,
+    typeBool = typeEquality | typeAssignment | typeCondition,
     typeStruct = typeAssignment,
+    typeUnion = typeAssignment,
     typeEnum = typeIntegral
 } symTypeMask;
 
@@ -95,13 +105,11 @@ typedef struct sym {
     symTypeMask typeMask;
     bool complete;
 
-    /*Linked list of symbols in our namespace
-      Including parameters for functions and constants in enums*/
+    ///Children, including parameters for functions and constants in enums
+    vector/*<sym*>*/ children;
     sym* parent;
-    sym* firstChild;
-    sym* lastChild;
-    sym* nextSibling;
-    int children;
+    ///Position in parent's vector
+    int nthChild;
 
     ///Label associated with this symbol in the assembly
     char* label;
@@ -122,30 +130,31 @@ sym* symInit (void);
 /**
  * Destroy a symbol table
  */
-void symEnd (sym* Global);
+void symEnd (sym* global);
 
-sym* symCreateScope (sym* Parent);
-sym* symCreateType (sym* Parent, const char* ident, int size, symTypeMask typeMask);
+sym* symCreateScope (sym* parent);
+sym* symCreateModuleLink (sym* parent, const sym* module);
+sym* symCreateType (sym* parent, const char* ident, int size, symTypeMask typeMask);
 sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
 
 /**
- * Get the nth child of a symbol, returning 0 if there are fewer
+ * Changes the parent of a symbol, replacing it with a symLink
  */
-const sym* symGetChild (const sym* Parent, int n);
+void symChangeParent (sym* Symbol, sym* parent);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search
  * inside contained enums, anon. unions but will not look at parent scopes.
  * @return Symbol, or null on failure.
  */
-sym* symChild (const sym* Scope, const char* look);
+sym* symChild (const sym* scope, const char* look);
 
 /**
  * Attempt to find a symbol visible from a scope. Will recurse up parent
  * scopes.
  * @return Symbol, or null on failure
  */
-sym* symFind (const sym* Scope, const char* look);
+sym* symFind (const sym* scope, const char* look);
 
 const char* symTagGetStr (symTag tag);
 const char* storageTagGetStr (storageTag tag);
