@@ -658,7 +658,7 @@ static operand emitterIndex (emitterCtx* ctx, const ast* Node) {
 
             /*Just have to multiply it anyway*/
             else
-                Value.factor = size % 4 == 0 ? size/4 : 1;
+                Value.factor = size % 4 == 0 ? 4 : 1;
 
             int multiplier = size/Value.factor;
 
