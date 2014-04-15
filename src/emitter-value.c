@@ -368,7 +368,9 @@ static operand emitterShiftBOP (emitterCtx* ctx, const ast* Node) {
     int rcxOldSize;
 
     /*Is the RHS an immediate?*/
-    bool immediate = Node->r->tag == astLiteral && Node->r->litTag == literalInt;
+    bool immediate =    Node->r->tag == astLiteral
+                     && (   Node->r->litTag == literalInt || Node->r->litTag == literalChar
+                         || Node->r->litTag == literalBool);
 
     /*Then use it directly*/
     if (immediate)
