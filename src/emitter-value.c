@@ -784,7 +784,7 @@ static operand emitterCast (emitterCtx* ctx, const ast* Node) {
     int from = typeGetSize(ctx->arch, Node->r->dt),
         to = typeGetSize(ctx->arch, Node->dt);
 
-    if (from != to)
+    if (from != to && to != 0)
         R = (from < to ? asmWiden : asmNarrow)(ctx->Asm, R, to);
 
     debugLeave();
