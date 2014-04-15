@@ -163,10 +163,11 @@ char* operandToStr (operand Value) {
     else if (Value.tag == operandVoid)
         return strdup("<void>");
 
-    else if (Value.tag == operandFlags)
+    else if (Value.tag == operandFlags) {
+        const char* conditions[7] = {"condition", "e", "ne", "g", "ge", "l", "le"};
         return strdup(conditions[Value.condition]);
 
-    else if (Value.tag == operandReg)
+    } else if (Value.tag == operandReg)
         return strdup(regGetStr(Value.base));
 
     else if (   Value.tag == operandMem || Value.tag == operandLabelMem) {
