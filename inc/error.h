@@ -1,7 +1,8 @@
-#include "sym.h"
-
 typedef struct type type;
+typedef struct sym sym;
 typedef struct ast ast;
+typedef enum opTag opTag;
+typedef enum symTag symTag;
 
 typedef struct parserCtx parserCtx;
 typedef struct analyzerCtx analyzerCtx;
