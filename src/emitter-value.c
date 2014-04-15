@@ -110,7 +110,7 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
             Value = emitterLiteral(ctx, Node);
 
     } else {
-        debugErrorUnhandled("emitterValue", "AST tag", astTagGetStr(Node->tag));
+        debugErrorUnhandled("emitterValueImpl", "AST tag", astTagGetStr(Node->tag));
         Value = operandCreate(operandUndefined);
         request = requestAny;
     }
@@ -141,8 +141,6 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
 
     /*Void: throw away result*/
     } else if (request == requestVoid) {
-            Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-            asmMove(ctx->Asm, Dest, Value);
         operandFree(Value);
 
     /*Lvalue*/
