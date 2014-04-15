@@ -1,5 +1,9 @@
 #include "operand.h"
 
+using "forward.h";
+
+using "operand.h";
+
 typedef struct asmCtx asmCtx;
 typedef enum regIndex regIndex;
 

@@ -4,6 +4,8 @@
 
 #include "stream.h"
 
+using "forward.h";
+
 using "stream.h";
 
 typedef enum tokenTag {

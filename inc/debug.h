@@ -5,6 +5,8 @@
 
 using "../std/std.h";
 
+using "forward.h";
+
 using "stdio.h";
 using "stdarg.h";
 

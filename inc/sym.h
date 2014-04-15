@@ -4,6 +4,8 @@
 
 #include "vector.h"
 
+using "forward.h";
+
 using "vector.h";
 
 typedef struct type type;

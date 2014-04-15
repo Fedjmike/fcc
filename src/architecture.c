@@ -11,6 +11,15 @@
 
 using "../inc/architecture.h";
 
+using "../inc/debug.h";
+using "../inc/sym.h";
+using "../inc/reg.h";
+
+using "../std/std.h";
+
+using "stdlib.h";
+using "string.h";
+
 static void archSetupRegs (architecture* arch, osTag os);
 static void archSetupDriverFlags (architecture* arch, osTag os);
 

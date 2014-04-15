@@ -1,5 +1,7 @@
 #include "../std/std.h"
 
+using "forward.h";
+
 typedef struct type type;
 typedef struct ast ast;
 

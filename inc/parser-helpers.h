@@ -3,6 +3,11 @@
 #include "sym.h"
 #include "lexer.h"
 
+using "forward.h";
+
+using "sym.h";
+using "lexer.h";
+
 typedef struct parserCtx parserCtx;
 
 sym* scopeSet (parserCtx* ctx, sym* scope);

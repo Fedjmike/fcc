@@ -9,6 +9,8 @@
 #include "stdarg.h"
 #include "stdio.h"
 
+using "../inc/all.h";
+
 void asmComment (asmCtx* ctx, char* str) {
     asmOutLn(ctx, ";%s", str);
 }

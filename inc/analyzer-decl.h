@@ -1,3 +1,5 @@
+using "forward.h";
+
 typedef struct type type;
 typedef struct ast ast;
 

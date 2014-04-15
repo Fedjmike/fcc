@@ -26,9 +26,10 @@ using "../inc/type.h";
 using "../inc/ast.h";
 using "../inc/sym.h";
 using "../inc/architecture.h";
-using "../inc/reg.h";
+using "../inc/operand.h";
 using "../inc/asm.h";
 using "../inc/asm-amd64.h";
+using "../inc/reg.h";
 
 using "../inc/emitter.h";
 
@@ -348,24 +349,28 @@ static operand emitterDivisionBOP (emitterCtx* ctx, const ast* Node) {
     asmDivision(ctx->Asm, R);
     operandFree(R);
 
+    if (isModulo)
+        Value = RDX;
+
+    else
+        Value = RAX;
+
     /*If the result reg was used before, move it to a new reg*/
     if ((isModulo ? rdxOldSize : raxOldSize) != 0) {
-        Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-        asmMove(ctx->Asm, Value, isModulo ? RDX : RAX);
+        operand tmp = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
+        asmMove(ctx->Asm, tmp, Value);
+        Value = tmp;
 
         /*Restore regs*/
         emitterGiveBackReg(ctx, regRDX, rdxOldSize);
         emitterGiveBackReg(ctx, regRAX, raxOldSize);
 
     } else {
-        if (isModulo) {
-            Value = RDX;
+        if (isModulo)
             emitterGiveBackReg(ctx, regRAX, raxOldSize);
 
-        } else {
-            Value = RAX;
+        else
             emitterGiveBackReg(ctx, regRDX, rdxOldSize);
-        }
     }
 
     /*If an assignment, also move the result into memory*/

@@ -1,8 +1,7 @@
 #include "../inc/ast.h"
 
 #include "../inc/debug.h"
-//#include "../inc/type.h"
-void typeDestroy (struct type* DT);
+#include "../inc/type.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -12,7 +11,6 @@ using "../inc/ast.h";
 using "../inc/debug.h";
 using "../inc/type.h";
 
-using "std.h";
 using "stdio.h";
 using "stdlib.h";
 

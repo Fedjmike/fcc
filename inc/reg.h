@@ -2,6 +2,8 @@
 
 #include "../std/std.h"
 
+using "forward.h";
+
 typedef struct reg {
     ///Minimum size in bytes
     int size;

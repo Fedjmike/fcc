@@ -11,14 +11,14 @@
 #include "stdarg.h"
 #include "string.h"
 
-using "../inc/lexer.h";
+using "../inc/parser-helpers.h";
 
 using "../inc/debug.h";
 using "../inc/sym.h";
 using "../inc/ast.h";
 using "../inc/error.h";
 
-using "../inc/parser-helpers.h";
+using "../inc/parser.h";
 
 using "stdlib.h";
 using "string.h";

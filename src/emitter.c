@@ -18,6 +18,8 @@
 #include "string.h"
 #include "stdlib.h"
 
+using "../inc/emitter.h";
+
 using "../std/std.h";
 
 using "../inc/debug.h";

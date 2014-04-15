@@ -102,13 +102,13 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
         else if (Node->o == opGreaterEqual) result = (int)(L.value >= R.value);
         else if (Node->o == opLess) result = (int)(L.value < R.value);
         else if (Node->o == opLessEqual) result = (int)(L.value <= R.value);
-        //else if (Node->o == opShr) result = L.value >> R.value;
-        //else if (Node->o == opShl) result = L.value << R.value;
+        else if (Node->o == opShr) result = L.value >> R.value;
+        else if (Node->o == opShl) result = L.value << R.value;
         else if (Node->o == opAdd) result = L.value + R.value;
         else if (Node->o == opSubtract) result = L.value - R.value;
         else if (Node->o == opMultiply) result = L.value * R.value;
-        //else if (Node->o == opDivide) result = L.value / R.value;
-        //else if (Node->o == opModulo) result = L.value % R.value;
+        else if (Node->o == opDivide) result = L.value / R.value;
+        else if (Node->o == opModulo) result = L.value % R.value;
         else {
             debugErrorUnhandled("evalBOP", "operator", opTagGetStr(Node->o));
             return (evalResult) {false, 0};

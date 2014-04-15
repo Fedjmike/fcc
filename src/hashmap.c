@@ -3,6 +3,11 @@
 #include "stdlib.h"
 #include "string.h"
 
+using "../inc/hashmap.h";
+
+using "stdlib.h";
+using "string.h";
+
 static int hashstr (const char* key, int mapsize);
 
 typedef void (*generalmapKeyDtor)(char* key, const void* value);

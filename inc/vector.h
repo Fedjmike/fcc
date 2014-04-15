@@ -2,6 +2,8 @@
 
 #include "../std/std.h"
 
+using "forward.h";
+
 typedef struct vector {
     int length, capacity;
     void** buffer;

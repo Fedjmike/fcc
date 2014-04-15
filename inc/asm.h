@@ -5,6 +5,13 @@
 
 #include "stdio.h"
 
+using "forward.h";
+
+using "vector.h";
+using "operand.h";
+
+using "stdio.h";
+
 typedef struct architecture architecture;
 
 typedef enum labelTag {

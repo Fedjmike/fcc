@@ -6,6 +6,7 @@
 #include "architecture.h"
 
 using "vector.h";
+using "architecture.h";
 
 typedef enum configMode {
     modeDefault,

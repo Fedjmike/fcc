@@ -2,7 +2,7 @@
 
 #include "operand.h"
 
-using "operand.h";
+using "forward.h";
 
 typedef struct ast ast;
 typedef struct emitterCtx emitterCtx;

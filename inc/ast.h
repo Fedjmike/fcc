@@ -4,6 +4,8 @@
 
 #include "parser.h"
 
+using "forward.h";
+
 using "parser.h";
 
 typedef struct type type;

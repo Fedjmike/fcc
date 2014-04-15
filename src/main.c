@@ -11,9 +11,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-using "../std/std.h";
-
 using "../inc/debug.h";
+using "../inc/architecture.h";
 using "../inc/options.h";
 using "../inc/compiler.h";
 using "../inc/sym.h";
@@ -22,6 +21,8 @@ using "../inc/reg.h";
 using "string.h";
 using "stdlib.h";
 using "stdio.h";
+
+using "../defaults.h";
 
 static bool driver (config conf);
 

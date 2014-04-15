@@ -2,6 +2,8 @@
 
 #include "../std/std.h"
 
+using "forward.h";
+
 typedef struct reg reg;
 typedef struct architecture architecture;
 typedef enum opTag opTag;

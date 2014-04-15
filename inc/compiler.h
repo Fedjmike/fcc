@@ -4,6 +4,8 @@
 
 #include "hashmap.h"
 
+using "forward.h";
+
 using "hashmap.h";
 
 typedef struct vector vector;

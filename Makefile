@@ -132,7 +132,7 @@ selfbuild: bin/self/fcc
 
 bin/self/fcc: $(OUT) selfbuild.sh
 	@echo " [FCC+CC] fcc"
-	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
+	@CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
 	
 #	

@@ -17,14 +17,18 @@
 
 using "../inc/compiler.h";
 
+using "../inc/hashmap.h";
 using "../inc/debug.h";
 using "../inc/ast.h";
 using "../inc/sym.h";
 using "../inc/operand.h";
 using "../inc/architecture.h";
 
+using "../inc/parser.h";
 using "../inc/analyzer.h";
 using "../inc/emitter.h";
+
+using "stdlib.h";
 
 static void compilerInitSymbols (compilerCtx* ctx);
 

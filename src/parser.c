@@ -14,14 +14,12 @@
 #include "stdlib.h"
 #include "string.h"
 
-using "../inc/parser.h";
-
 using "../inc/debug.h";
-using "../inc/type.h";
 using "../inc/sym.h";
 using "../inc/ast.h";
 using "../inc/error.h";
 
+using "../inc/compiler.h";
 using "../inc/lexer.h";
 using "../inc/parser-helpers.h";
 using "../inc/parser-value.h";

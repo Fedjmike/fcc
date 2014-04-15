@@ -9,7 +9,16 @@
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
-const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
+using "../inc/operand.h";
+
+using "stdlib.h";
+using "string.h";
+using "stdio.h";
+
+using "../inc/debug.h";
+using "../inc/ast.h";
+using "../inc/architecture.h";
+using "../inc/reg.h";
 
 operand operandCreate (operandTag tag) {
     operand ret;

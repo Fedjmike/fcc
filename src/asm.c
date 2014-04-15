@@ -9,6 +9,17 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+using "../inc/asm.h";
+
+using "../inc/debug.h";
+using "../inc/architecture.h";
+using "../inc/reg.h";
+
+using "stdlib.h";
+using "string.h";
+using "stdio.h";
+using "stdarg.h";
+
 asmCtx* asmInit (const char* output, const architecture* arch) {
     asmCtx* ctx = malloc(sizeof(asmCtx));
     ctx->filename = strdup(output);

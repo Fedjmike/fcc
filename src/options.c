@@ -8,6 +8,8 @@
 
 using "../inc/options.h";
 
+using "../inc/architecture.h";
+
 using "../std/std.h";
 
 using "stdlib.h";

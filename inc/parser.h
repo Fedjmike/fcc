@@ -2,6 +2,8 @@
 
 #include "../std/std.h"
 
+using "forward.h";
+
 typedef struct vector vector;
 typedef struct ast ast;
 typedef struct sym sym;

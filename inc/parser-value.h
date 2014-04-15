@@ -1,3 +1,5 @@
+using "forward.h";
+
 typedef struct ast ast;
 
 typedef struct parserCtx parserCtx;
