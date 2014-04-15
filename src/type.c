@@ -433,8 +433,11 @@ bool typeIsCompatible (const type* DT, const type* Model) {
         if (typeIsPtr(DT))
             return (bool)(Model->basic->typeMask & typeNumeric);
 
+        else if (Model->basic->typeMask == typeIntegral)
+            return DT->tag == typeBasic && DT->basic->typeMask == typeIntegral;
+
         else
-            return !typeIsArray(DT) && DT->basic == Model->basic;
+            return DT->tag == typeBasic && (DT->basic == Model->basic);
     }
 }
 
