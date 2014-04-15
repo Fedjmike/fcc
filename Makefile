@@ -20,7 +20,8 @@ endif
 CONFIG ?= release
 
 CC ?= gcc
-CFLAGS ?= -std=c11 -Werror -Wall -Wextra
+CFLAGS ?= -std=c11
+CFLAGS += -Werror -Wall -Wextra
 CFLAGS += -include defaults.h
 
 ifeq ($(CONFIG),debug)
