@@ -183,7 +183,7 @@ static void emitterLine (emitterCtx* ctx, const ast* Node) {
         emitterDecl(ctx, Node);
 
     else if (astIsValueTag(Node->tag))
-        operandFree(emitterValue(ctx, Node, requestAny));
+        emitterValue(ctx, Node, requestVoid);
 
     else if (Node->tag == astEmpty)
         debugMsg("Empty");
@@ -199,7 +199,7 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
 
     /*Non void return?*/
     if (Node->r) {
-        operand Ret = emitterValue(ctx, Node->r, requestOperable);
+        operand Ret = emitterValue(ctx, Node->r, requestValue);
         int retSize = typeGetSize(ctx->arch, Node->r->dt);
 
         bool retInTemp = retSize > ctx->arch->wordsize;
@@ -333,7 +333,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
         asmComment(ctx->Asm, "");
 
     } else if (astIsValueTag(init->tag)) {
-        operandFree(emitterValue(ctx, init, requestAny));
+        emitterValue(ctx, init, requestVoid);
         asmComment(ctx->Asm, "");
 
     } else if (init->tag != astEmpty)
@@ -359,7 +359,7 @@ static void emitterIter (emitterCtx* ctx, const ast* Node) {
     asmLabel(ctx->Asm, ctx->labelContinueTo);
 
     if (iter->tag != astEmpty) {
-        operandFree(emitterValue(ctx, iter, requestAny));
+        emitterValue(ctx, iter, requestVoid);
         asmComment(ctx->Asm, "");
     }
 

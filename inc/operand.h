@@ -13,7 +13,6 @@ typedef enum operandTag {
     operandFlags,
     operandReg,
     operandMem,
-    operandMemRef,
     operandLiteral,
     operandLabel,
     operandLabelMem,
@@ -44,8 +43,6 @@ typedef struct operand {
             reg* index;
             int factor;
             int offset;
-            ///In bytes, for mem operands
-            int size;
         };
         /*operandLiteral*/
         int literal;
@@ -55,6 +52,11 @@ typedef struct operand {
         /*operandLabel operandLabelMem operandLabelOffset*/
         const char* label;
     };
+
+    ///In bytes, for mem operands
+    int size;
+
+    bool array;
 } operand;
 
 operand operandCreate (operandTag tag);
@@ -63,7 +65,6 @@ operand operandCreateVoid (void);
 operand operandCreateFlags (conditionTag cond);
 operand operandCreateReg (reg* r);
 operand operandCreateMem (reg* base, int offset, int size);
-operand operandCreateMemRef (reg* base, int offset, int size);
 operand operandCreateLiteral (int literal);
 operand operandCreateLabel (const char* label);
 operand operandCreateLabelMem (const char* label, int size);

@@ -166,12 +166,10 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
         emitterCompoundInit(ctx, Node->r, L);
 
     else {
-        if (Node->symbol->storage == storageAuto) {
-            operand R = emitterValue(ctx, Node->r, requestOperable);
-            asmMove(ctx->Asm, L, R);
-            operandFree(R);
+        if (Node->symbol->storage == storageAuto)
+            emitterValueSuggest(ctx, Node->r, &L);
 
-        } else
+        else
             debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
     }
 
