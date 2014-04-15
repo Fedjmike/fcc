@@ -9,7 +9,16 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-using "../inc/all.h";
+using "../inc/asm-amd64.h";
+
+using "../inc/debug.h";
+using "../inc/architecture.h";
+using "../inc/asm.h";
+using "../inc/reg.h";
+
+using "stdlib.h";
+using "stdarg.h";
+using "stdio.h";
 
 void asmComment (asmCtx* ctx, char* str) {
     asmOutLn(ctx, ";%s", str);
