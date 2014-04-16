@@ -18,10 +18,11 @@ operand operandCreate (operandTag tag) {
     ret.index = regUndefined;
     ret.factor = 0;
     ret.offset = 0;
-    ret.size = 0;
     ret.literal = 0;
     ret.condition = conditionUndefined;
     ret.label = 0;
+    ret.array = false;
+    ret.size = 0;
     return ret;
 }
 
@@ -47,16 +48,6 @@ operand operandCreateReg (reg* r) {
 
 operand operandCreateMem (reg* base, int offset, int size) {
     operand ret = operandCreate(operandMem);
-    ret.base = base;
-    ret.index = regUndefined;
-    ret.factor = 0;
-    ret.offset = offset;
-    ret.size = size;
-    return ret;
-}
-
-operand operandCreateMemRef (reg* base, int offset, int size) {
-    operand ret = operandCreate(operandMemRef);
     ret.base = base;
     ret.index = regUndefined;
     ret.factor = 0;
@@ -94,7 +85,7 @@ void operandFree (operand Value) {
     if (Value.tag == operandReg)
         regFree(Value.base);
 
-    else if (Value.tag == operandMem || Value.tag == operandMemRef) {
+    else if (Value.tag == operandMem) {
         if (Value.base != 0 && Value.base != regGet(regRBP))
             regFree(Value.base);
 
@@ -122,7 +113,7 @@ bool operandIsEqual (operand L, operand R) {
     else if (L.tag == operandReg)
         return L.base == R.base;
 
-    else if (L.tag == operandMem || L.tag == operandMemRef)
+    else if (L.tag == operandMem)
         return    L.size == R.size && L.base == R.base
                && L.index == R.index && L.factor == R.factor
                && L.offset == R.offset;
@@ -146,14 +137,14 @@ int operandGetSize (const architecture* arch, operand Value) {
     else if (Value.tag == operandReg)
         return Value.base->allocatedAs;
 
-    else if (   Value.tag == operandMem || Value.tag == operandMemRef
-             || Value.tag == operandLabelMem)
+    else if (   Value.tag == operandMem || Value.tag == operandLabelMem)
         return Value.size;
 
     else if (Value.tag == operandLiteral)
         return 1;
 
-    else if (Value.tag == operandLabel || Value.tag == operandLabelOffset)
+    else if (   Value.tag == operandLabel || Value.tag == operandLabelOffset
+             || Value.tag == operandFlags)
         return arch->wordsize;
 
     else
@@ -172,14 +163,14 @@ char* operandToStr (operand Value) {
     else if (Value.tag == operandVoid)
         return strdup("<void>");
 
-    else if (Value.tag == operandFlags)
+    else if (Value.tag == operandFlags) {
+        const char* conditions[7] = {"condition", "e", "ne", "g", "ge", "l", "le"};
         return strdup(conditions[Value.condition]);
 
-    else if (Value.tag == operandReg)
+    } else if (Value.tag == operandReg)
         return strdup(regGetStr(Value.base));
 
-    else if (   Value.tag == operandMem || Value.tag == operandMemRef
-             || Value.tag == operandLabelMem) {
+    else if (   Value.tag == operandMem || Value.tag == operandLabelMem) {
         const char* sizeStr;
 
         if (Value.size == 1)
@@ -254,7 +245,6 @@ const char* operandTagGetStr (operandTag tag) {
     else if (tag == operandFlags) return "operandFlags";
     else if (tag == operandReg) return "operandReg";
     else if (tag == operandMem) return "operandMem";
-    else if (tag == operandMemRef) return "operandMemRef";
     else if (tag == operandLiteral) return "operandLiteral";
     else if (tag == operandLabel) return "operandLabel";
     else if (tag == operandLabelMem) return "operandLabelMem";

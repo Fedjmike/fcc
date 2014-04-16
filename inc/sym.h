@@ -2,8 +2,6 @@
 
 #include "vector.h"
 
-#include "operand.h"
-
 typedef struct type type;
 typedef struct ast ast;
 typedef struct sym sym;

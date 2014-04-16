@@ -6,4 +6,4 @@ typedef struct ast ast;
 typedef struct analyzerCtx analyzerCtx;
 
 const type* analyzerValue (analyzerCtx* ctx, ast* Node);
-const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit);
+const type* analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit);

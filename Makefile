@@ -20,7 +20,8 @@ endif
 CONFIG ?= release
 
 CC ?= gcc
-CFLAGS ?= -std=c11 -Werror -Wall -Wextra
+CFLAGS ?= -std=c11
+CFLAGS += -Werror -Wall -Wextra
 CFLAGS += -include defaults.h
 
 ifeq ($(CONFIG),debug)
@@ -33,6 +34,10 @@ ifeq ($(CONFIG),release)
 endif
 ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
+endif
+ifeq ($(CONFIG),coverage)
+	CFLAGS += --coverage
+	LDFLAGS += --coverage
 endif
 
 BINNAME = fcc

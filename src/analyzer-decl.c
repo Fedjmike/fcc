@@ -229,7 +229,7 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, const typ
 
     /*Struct/array initializer?*/
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        analyzerInitOrCompoundLiteral(ctx, Node->r, L, true);
+        analyzerCompoundInit(ctx, Node->r, L, true);
 
     else {
         const type* R = analyzerValue(ctx, Node->r);
@@ -259,7 +259,9 @@ static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base)
     else if (typeIsArray(Node->dt) || typeIsFunction(Node->dt))
         errorIllegalConst(ctx, Node);
 
-    Node->dt->qual.isConst = true;
+    else
+        Node->dt->qual.isConst = true;
+
     const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
 
     debugLeave();

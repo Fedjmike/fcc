@@ -33,7 +33,7 @@ typedef enum regIndex {
     regMax
 } regIndex;
 
-extern reg regs[];
+extern reg regs[regMax];
 
 /**
  * Check if a register is in use

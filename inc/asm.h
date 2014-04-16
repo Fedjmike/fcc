@@ -3,7 +3,6 @@
 #include "vector.h"
 #include "operand.h"
 
-#include "stdarg.h"
 #include "stdio.h"
 
 typedef struct architecture architecture;

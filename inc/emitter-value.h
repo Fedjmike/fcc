@@ -5,9 +5,14 @@ typedef struct emitterCtx emitterCtx;
 
 typedef enum emitterRequest {
     requestAny,
+    ///When you don't care where the value goes
+    requestVoid,
     requestReg,
+    requestRegOrMem,
     requestMem,
-    requestOperable,
+    ///When you need to use the operand as a first-class value in assembly
+    requestValue,
+    requestArray,
     requestFlags,
     requestStack
 } emitterRequest;
