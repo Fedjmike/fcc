@@ -25,6 +25,7 @@ static const type* analyzerCast (analyzerCtx* ctx, ast* Node);
 static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
+static const type* analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected);
 
 static bool isNodeLvalue (const ast* Node) {
     if (Node->tag == astBOP) {
@@ -554,7 +555,7 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     debugEnter("CompoundLiteral");
 
-    analyzerInitOrCompoundLiteral(ctx, Node, analyzerType(ctx, Node->l), false);
+    analyzerCompoundInit(ctx, Node, analyzerType(ctx, Node->l), false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
 
     debugLeave();
@@ -562,8 +563,8 @@ static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
-const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit) {
-    debugEnter("InitOrCompoundtLiteral");
+const type* analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit) {
+    debugEnter("CompoundInit");
 
     Node->dt = typeDeepDuplicate(DT);
 
@@ -592,14 +593,7 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                  current = current->nextSibling, n++) {
                 sym* field = vectorGet(&record->children, n);
 
-                if (current->tag == astEmpty)
-                    continue;
-
-                else if (current->tag == astLiteral && current->litTag == literalInit)
-                    analyzerInitOrCompoundLiteral(ctx, current, field->dt, false);
-
-                else
-                    analyzerValue(ctx, current);
+                analyzerElementInit(ctx, current, field->dt);
 
                 if (!typeIsCompatible(current->dt, field->dt))
                     errorInitFieldMismatch(ctx, current, record, field);
@@ -618,18 +612,9 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
         for (ast* current = Node->firstChild;
              current;
              current = current->nextSibling) {
-            const type* value;
+            analyzerElementInit(ctx, current, base);
 
-            if (current->tag == astEmpty)
-                continue;
-
-            else if (current->tag == astLiteral && current->litTag == literalInit)
-                value = analyzerInitOrCompoundLiteral(ctx, current, base, false);
-
-            else
-                value = analyzerValue(ctx, current);
-
-            if (!typeIsCompatible(value, base))
+            if (!typeIsCompatible(current->dt, base))
                 errorTypeExpectedType(ctx, current, "array initialization", base);
         }
 
@@ -648,6 +633,26 @@ const type* analyzerInitOrCompoundLiteral (analyzerCtx* ctx, ast* Node, const ty
                 errorTypeExpectedType(ctx, Node->r, "variable initialization", DT);
         }
     }
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static const type* analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected) {
+    debugEnter("ElementInit");
+
+    /*Skipped initializer*/
+    if (Node->tag == astEmpty)
+        Node->dt = typeDeepDuplicate(expected);
+
+    /*Recursive initialization*/
+    else if (Node->tag == astLiteral && Node->litTag == literalInit)
+        analyzerCompoundInit(ctx, Node, expected, false);
+
+    /*Regular value*/
+    else
+        analyzerValue(ctx, Node);
 
     debugLeave();
 
