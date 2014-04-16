@@ -28,10 +28,12 @@ char* filext (const char* name, const char* extension) {
 }
 
 int logi (int x, int base) {
-    int n;
+    int n = 0;
 
-    for (n = 0; x >= base; n++)
+    while (x >= base) {
         x /= base;
+        n++;
+    }
 
     return n;
 }

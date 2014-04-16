@@ -35,6 +35,10 @@ endif
 ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
 endif
+ifeq ($(CONFIG),coverage)
+	CFLAGS += --coverage
+	LDFLAGS += --coverage
+endif
 
 BINNAME = fcc
 FCC ?= bin/$(CONFIG)/$(BINNAME)
