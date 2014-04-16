@@ -259,7 +259,9 @@ static const type* analyzerConst (analyzerCtx* ctx, ast* Node, const type* base)
     else if (typeIsArray(Node->dt) || typeIsFunction(Node->dt))
         errorIllegalConst(ctx, Node);
 
-    Node->dt->qual.isConst = true;
+    else
+        Node->dt->qual.isConst = true;
+
     const type* DT = analyzerDeclNode(ctx, Node->r, Node->dt);
 
     debugLeave();
