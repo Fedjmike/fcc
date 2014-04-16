@@ -7,6 +7,7 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/architecture.h"
+#include "../inc/ir.h"
 #include "../inc/operand.h"
 #include "../inc/asm.h"
 #include "../inc/asm-amd64.h"
@@ -18,42 +19,48 @@
 #include "string.h"
 #include "stdlib.h"
 
+static irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block);
+static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block);
+
 static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
-                                 irBlock* ifTrue, irBlock* ifFalse)
+                                 irBlock* ifTrue, irBlock* ifFalse);
 
 static void emitterModule (emitterCtx* ctx, const ast* Node);
-
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
-static void emitterCode (emitterCtx* ctx, const ast* Node);
-static void emitterLine (emitterCtx* ctx, const ast* Node);
 
-static void emitterReturn (emitterCtx* ctx, const ast* Node);
+static void emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation);
+static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node);
 
-static void emitterBranch (emitterCtx* ctx, const ast* Node);
-static void emitterLoop (emitterCtx* ctx, const ast* Node);
-static void emitterIter (emitterCtx* ctx, const ast* Node);
+static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node);
+
+static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node);
+static irBlock* emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node);
+static irBlock* emitterIter (emitterCtx* ctx, irBlock* block, const ast* Node);
 
 static emitterCtx* emitterInit (const char* output, const architecture* arch) {
     emitterCtx* ctx = malloc(sizeof(emitterCtx));
-    ctx->Asm = asmInit(output, arch);
+    ctx->ir = malloc(sizeof(irCtx));
+    irInit(ctx->ir, output, arch);
     ctx->arch = arch;
-    ctx->labelReturnTo = operandCreate(operandUndefined);
-    ctx->labelBreakTo = operandCreate(operandUndefined);
+    ctx->returnTo = 0;
+    ctx->breakTo = 0;
+    ctx->continueTo = 0;
     return ctx;
 }
 
 static void emitterEnd (emitterCtx* ctx) {
-    asmEnd(ctx->Asm);
+    irFree(ctx->ir);
+
+    free(ctx->ir);
     free(ctx);
 }
 
 void emitter (const ast* Tree, const char* output, const architecture* arch) {
     emitterCtx* ctx = emitterInit(output, arch);
-    asmFilePrologue(ctx->Asm);
 
     emitterModule(ctx, Tree);
+    irEmit(ctx->ir);
 
-    asmFileEpilogue(ctx->Asm);
     emitterEnd(ctx);
 }
 
@@ -132,74 +139,79 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
       Stack grows down, so the amount is the negation of the last offset*/
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
-    /*Label to jump to from returns*/
-    operand EndLabel = ctx->labelReturnTo = asmCreateLabel(ctx->Asm, labelReturn);
+    /**/
+    irBlock *block = irBlockCreate(ctx->ir),
+            *epilogue = irBlockCreate(ctx->ir);
 
-    asmComment(ctx->Asm, "");
-    asmFnPrologue(ctx->Asm, Node->symbol->label, stacksize);
+    ctx->returnTo = epilogue;
 
-    emitterCode(ctx, Node->r);
-    asmFnEpilogue(ctx->Asm, EndLabel);
+    irFnPrologue(block, Node->symbol->label, stacksize);
+    emitterCode(ctx, block, Node->r, epilogue);
+    irFnEpilogue(epilogue);
 
     debugLeave();
 }
 
-static void emitterCode (emitterCtx* ctx, const ast* Node) {
-    asmEnter(ctx->Asm);
-
+static void emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        emitterLine(ctx, Current);
+        block = emitterLine(ctx, block, Current);
     }
 
-    asmLeave(ctx->Asm);
+    irJump(block, continuation);
 }
 
-static void emitterLine (emitterCtx* ctx, const ast* Node) {
-    debugEnter("Line");
+static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
 
-    asmComment(ctx->Asm, "");
+    irBlock* continuation;
 
     if (Node->tag == astBranch)
-        emitterBranch(ctx, Node);
+        continuation = emitterBranch(ctx, block, Node);
 
     else if (Node->tag == astLoop)
-        emitterLoop(ctx, Node);
+        continuation = emitterLoop(ctx, block, Node);
 
     else if (Node->tag == astIter)
-        emitterIter(ctx, Node);
+        continuation = emitterIter(ctx, block, Node);
 
-    else if (Node->tag == astCode)
-        emitterCode(ctx, Node);
+    else if (Node->tag == astCode) {
+        continuation = irBlockCreate(ctx->ir);
+        emitterCode(ctx, block, Node, continuation);
 
-    else if (Node->tag == astReturn)
-        emitterReturn(ctx, Node);
+    } else if (Node->tag == astReturn) {
+        emitterReturn(ctx, block, Node);
+        continuation = irBlockCreate(ctx->ir);
 
-    else if (Node->tag == astBreak)
-        asmJump(ctx->Asm, ctx->labelBreakTo);
+    } else if (Node->tag == astBreak) {
+        irJump(block, ctx->breakTo);
+        continuation = irBlockCreate(ctx->ir);
 
-    else if (Node->tag == astContinue)
-        asmJump(ctx->Asm, ctx->labelContinueTo);
+    } else if (Node->tag == astContinue) {
+        irJump(block, ctx->continueTo);
+        continuation = irBlockCreate(ctx->ir);
 
-    else if (Node->tag == astDecl)
-        emitterDecl(ctx, Node);
+    } else if (Node->tag == astDecl) {
+        emitterDecl(ctx, &block, Node);
+        continuation = block;
 
-    else if (astIsValueTag(Node->tag))
-        emitterValue(ctx, Node, requestVoid);
+    } else if (astIsValueTag(Node->tag)) {
+        emitterValue(ctx, &block, Node, requestVoid);
+        continuation = block;
 
-    else if (Node->tag == astEmpty)
-        debugMsg("Empty");
+    } else if (Node->tag == astEmpty)
+        continuation = block;
 
     else
         debugErrorUnhandled("emitterLine", "AST tag", astTagGetStr(Node->tag));
 
     debugLeave();
+
+    return continuation;
 }
 
-static void emitterReturn (emitterCtx* ctx, const ast* Node) {
-    debugEnter("Return");
-
+static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node) {
     /*Non void return?*/
     if (Node->r) {
         operand Ret = emitterValue(ctx, Node->r, requestValue);
@@ -234,9 +246,19 @@ static void emitterReturn (emitterCtx* ctx, const ast* Node) {
         operandFree(Ret);
     }
 
-    asmJump(ctx->Asm, ctx->labelReturnTo);
+    irJump(block, ctx->returnTo);
+}
 
-    debugLeave();
+static irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block) {
+    irBlock* old = ctx->breakTo;
+    ctx->breakTo = block;
+    return old;
+}
+
+static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
+    irBlock* old = ctx->continueTo;
+    ctx->continueTo = block;
+    return old;
 }
 
 static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
@@ -245,11 +267,10 @@ static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* va
     irBranch(block, cond, ifTrue, ifFalse);
 }
 
-static void emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
-    debugEnter("Branch");
-
-    irBlock* ifTrue = irBlockCreate(ctx->ir),
-             ifFalse = irBlockCreate(ctx->ir);
+static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node) {
+    irBlock *continuation = irBlockCreate(ctx->ir),
+            *ifTrue = irBlockCreate(ctx->ir),
+            *ifFalse = irBlockCreate(ctx->ir);
 
     /*Condition, branch*/
     emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
@@ -258,31 +279,32 @@ static void emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node, irB
     emitterCode(ctx, ifTrue, Node->l, continuation);
     emitterCode(ctx, ifFalse, Node->r, continuation);
 
-    debugLeave();
+    return continuation;
 }
 
-static void emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
-    irBlock* body = irBlockCreate(ctx->ir),
-             loopCheck = irBlockCreate(ctx->ir);
+static irBlock* emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node) {
+    irBlock *continuation = irBlockCreate(ctx->ir),
+            *body = irBlockCreate(ctx->ir),
+            *loopCheck = irBlockCreate(ctx->ir);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
     bool isDo = Node->l->tag == astCode;
-    ast* cond = isDo ? Node->r : Node->l;
-    ast* code = isDo ? Node->l : Node->r;
+    ast *cond = isDo ? Node->r : Node->l,
+        *code = isDo ? Node->l : Node->r;
 
     /*A do while, no initial condition*/
     if (isDo)
-        irJump(body, code);
+        irJump(block, body);
 
     /*Initial condition: go into the body, or exit to the continuation*/
     else
-        emitterBranchOnValue(ctx, &block, cond, body, continuation);
+        emitterBranchOnValue(ctx, block, cond, body, continuation);
 
     /*Loop body*/
 
-    irBlock* oldBreakTo = emitterSetBreakTo(ctx, continuation);
-    irBlock* oldContinueTo = emitterSetContinueTo(ctx, loopCheck);
+    irBlock *oldBreakTo = emitterSetBreakTo(ctx, continuation),
+            *oldContinueTo = emitterSetContinueTo(ctx, loopCheck);
 
     emitterCode(ctx, body, code, loopCheck);
 
@@ -290,27 +312,31 @@ static void emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node, irBlo
     ctx->continueTo = oldContinueTo;
 
     /*Loop re-entrant condition (in the loopCheck block this time)*/
-    emitterBranchOnValue(ctx, &loopCheck, cond, body, continuation);
+    emitterBranchOnValue(ctx, loopCheck, cond, body, continuation);
+
+    return continuation;
 }
 
-static void emitterIter (emitterCtx* ctx, const ast* Node, irBlock* continuation) {
-    irBlock* body = irBlockCreate(ctx->ir),
-             iterate = irBlockCreate(ctx->ir);
+static irBlock* emitterIter (emitterCtx* ctx, irBlock* block, const ast* Node) {
+    irBlock *continuation = irBlockCreate(ctx->ir),
+            *body = irBlockCreate(ctx->ir),
+            *iterate = irBlockCreate(ctx->ir);
 
-    ast* init = Node->firstChild;
-    ast* cond = init->nextSibling;
-    ast* iter = cond->nextSibling;
+    ast *init = Node->firstChild,
+        *cond = init->nextSibling,
+        *iter = cond->nextSibling,
+        *code = Node->l;
 
     /*Initialization*/
 
     if (init->tag == astDecl)
-        emitterDecl(ctx, init);
+        emitterDecl(ctx, &block, init);
 
     else
         emitterValue(ctx, &block, init, requestVoid);
 
     /*Condition*/
-    emitterBranchOnValue(ctx, &block, cond, body, continuation);
+    emitterBranchOnValue(ctx, block, cond, body, continuation);
 
     /*Body*/
 
@@ -323,6 +349,8 @@ static void emitterIter (emitterCtx* ctx, const ast* Node, irBlock* continuation
     ctx->continueTo = oldContinueTo;
 
     /*Iterate and loop check*/
-    emitterValue(Ctx, &iterate, iter, requestVoid);
+    emitterValue(ctx, &iterate, iter, requestVoid);
     emitterBranchOnValue(ctx, iterate, cond, body, continuation);
+
+    return continuation;
 }

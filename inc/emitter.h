@@ -2,15 +2,14 @@
 
 typedef struct ast ast;
 typedef struct architecture architecture;
-typedef struct asmCtx asmCtx;
+typedef struct irBlock irBlock;
+typedef struct irCtx irCtx;
 
 typedef struct emitterCtx {
-    asmCtx* Asm;
+    irCtx* ir;
     const architecture* arch;
 
-    operand labelReturnTo;
-    operand labelBreakTo;
-    operand labelContinueTo;
+    irBlock *returnTo, *breakTo, *continueTo;
 } emitterCtx;
 
 void emitter (const ast* Tree, const char* output, const architecture* arch);
