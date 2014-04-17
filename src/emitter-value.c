@@ -35,7 +35,7 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
-static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, operand ShortLabel, operand* Value);
+static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, irBlock* continuation, operand* Value);
 
 static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion);
@@ -436,11 +436,13 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast
 
 static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     /*Label to jump to if circuit gets shorted*/
-    operand ShortLabel = asmCreateLabel(ctx->Asm, labelShortCircuit);
+    irBlock* continuation = irBlockCreate(ctx->ir);
 
     operand Value;
-    /*Move the default into Value, return the condition as flags*/
-    operand R = emitterLogicalBOPImpl(ctx, block, Node, ShortLabel, &Value);
+
+    /*Move the default into Value, possibly jump to the continuation,
+      return the condition as flags in R*/
+    operand R = emitterLogicalBOPImpl(ctx, block, Node, continuation, &Value);
 
     if (Node->o == opLogicalAnd)
         R.condition = conditionNegate(R.condition);
@@ -448,8 +450,9 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
     /*Move final value*/
     asmConditionalMove(*block, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
 
-    /*If shorted come here leaving the default in Value*/
-    asmLabel(ctx->Asm, ShortLabel);
+    /*Continue*/
+    irJump(*block, continuation);
+    *block = continuation;
 
     return Value;
 }
@@ -459,17 +462,17 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 
     /*The job of this function is:
         - Move the default into Value (possibly passing the buck recursively)
-        - Jump to ShortLabel depending on LHS
-        - Return RHS as flags*/
+        - Branch to the short block depending on LHS
+        - Otherwise calculate the RHS and return flags*/
 
     /*Value is where the default goes, L and R are the conditions*/
 
     operand L;
 
     /*If LHS is the same op, then the short value is the same
-       => use our short label, their register*/
+       => use the given short block, their register*/
     if (Node->l->tag == astBOP && Node->l->o == Node->o)
-        L = emitterLogicalBOPImpl(ctx, block, Node->l, ShortLabel, Value);
+        L = emitterLogicalBOPImpl(ctx, block, Node->l, shortcont, Value);
 
     else {
         /*Left*/
@@ -480,17 +483,21 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
         asmMove(*block, *Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
     }
 
-    /*Check initial condition*/
+    /*Branch on the LHS*/
+
+    irBlock* unshort = irBlockCreate(ctx->ir);
 
     if (Node->o == opLogicalOr)
-        L.condition = conditionNegate(L.condition);
+        irBranch(*block, L, shortcont, unshort);
 
-    asmBranch(*block, L, ShortLabel);
+    else
+        irBranch(*block, L, unshort, shortcont);
 
-    /*Right*/
-    operand R = emitterValue(ctx, block, Node->r, requestFlags);
+    *block = unshort;
 
-    debugLeave();
+    /*Move the RHS into the flags*/
+
+    operand R = emitterValue(ctx, &unshort, Node->r, requestFlags);
 
     return R;
 }
@@ -582,6 +589,8 @@ static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, co
     /*Move RHS into our reg*/
     emitterValueSuggest(ctx, &ifFalse, Node->r, &Value);
     irJump(ifFalse, continuation);
+
+    *block = continuation;
 
     debugLeave();
 
