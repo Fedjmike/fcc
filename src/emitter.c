@@ -76,7 +76,7 @@ static void emitterModule (emitterCtx* ctx, const ast* Node) {
             emitterFnImpl(ctx, Current);
 
         else if (Current->tag == astDecl)
-            emitterDecl(ctx, Current);
+            emitterDecl(ctx, 0, Current);
 
         else if (Current->tag == astEmpty)
             debugMsg("Empty");
@@ -138,13 +138,13 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /**/
-    irBlock *block = irBlockCreate(ctx->ir),
+    irBlock *prologue = irBlockCreate(ctx->ir),
             *epilogue = irBlockCreate(ctx->ir);
 
     ctx->returnTo = epilogue;
 
-    irFnPrologue(block, Node->symbol->label, stacksize);
-    emitterCode(ctx, block, Node->r, epilogue);
+    irFnPrologue(prologue, Node->symbol->label, stacksize);
+    emitterCode(ctx, prologue, Node->r, epilogue);
     irFnEpilogue(epilogue);
 
     debugLeave();
@@ -201,8 +201,10 @@ static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node) {
     } else if (Node->tag == astEmpty)
         continuation = block;
 
-    else
+    else {
         debugErrorUnhandled("emitterLine", "AST tag", astTagGetStr(Node->tag));
+        continuation = block;
+    }
 
     debugLeave();
 
@@ -212,7 +214,7 @@ static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node) {
 static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node) {
     /*Non void return?*/
     if (Node->r) {
-        operand Ret = emitterValue(ctx, Node->r, requestValue);
+        operand Ret = emitterValue(ctx, &block, Node->r, requestValue);
         int retSize = typeGetSize(ctx->arch, Node->r->dt);
 
         bool retInTemp = retSize > ctx->arch->wordsize;
@@ -222,9 +224,9 @@ static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node) {
             operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
             /*Dereference the temporary*/
-            asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
+            asmMove(ctx->ir, block, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
             /*Copy over the value*/
-            asmMove(ctx->Asm, operandCreateMem(tempRef.base, 0, retSize), Ret);
+            asmMove(ctx->ir, block, operandCreateMem(tempRef.base, 0, retSize), Ret);
             operandFree(Ret);
 
             /*Return the temporary reference*/
@@ -235,7 +237,7 @@ static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node) {
 
         /*Returning either the return value itself or a reference to it*/
         if ((rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize)) != 0) {
-            asmMove(ctx->Asm, operandCreateReg(rax), Ret);
+            asmMove(ctx->ir, block, operandCreateReg(rax), Ret);
             regFree(rax);
 
         } else if (Ret.base != regGet(regRAX))
