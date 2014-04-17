@@ -696,10 +696,20 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
         operandFree(intermediate);
     }
 
-    /*Get the address (usually, as a label) of the proc*/
-    operand Proc = emitterValue(ctx, block, Node->l, requestAny);
-    asmCall(ctx->Asm, Proc);
-    operandFree(Proc);
+    /*Call the function*/
+
+    irBlock* continuation = irBlockCreate(ctx->ir);
+
+    if (Node->l->symbol->ir)
+        irCall(*block, Node->l->symbol->ir, continuation);
+
+    else {
+        operand fn = emitterValue(ctx, block, Node->l, requestAny);
+        irCallIndirect(*block, fn, continuation);
+        operandFree(fn);
+    }
+
+    *block = continuation;
 
     if (!typeIsVoid(Node->dt)) {
         int size = retInTemp ? ctx->arch->wordsize : typeGetSize(ctx->arch, Node->dt);
@@ -826,12 +836,10 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
     else if (Node->litTag == literalBool)
         Value = operandCreateLiteral(*(char*) Node->literal);
 
-    else if (Node->litTag == literalStr) {
-        Value = asmCreateLabel(ctx->Asm, labelROData);
-        Value.tag = operandLabelOffset;
-        asmStringConstant(ctx->Asm, Value, (char*) Node->literal);
+    else if (Node->litTag == literalStr)
+        Value = irStringConstant(ctx->ir, (char*) Node->literal);
 
-    } else {
+    else {
         debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Value = operandCreateInvalid();
     }

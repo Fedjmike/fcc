@@ -1,7 +1,9 @@
 #include "vector.h"
+#include "ast.h"
 #include "operand.h"
 
 typedef struct architecture architecture;
+typedef struct asmCtx asmCtx;
 
 typedef enum irInstrTag {
     instrUndefined,
@@ -12,23 +14,27 @@ typedef enum irInstrTag {
     instrUOP
 } irInstrTag;
 
-typedef enum irOpTag {
-    irAdd
-} irOpTag;
-
 typedef struct irInstr {
     irInstrTag tag;
-    irOpTag opTag;
+    opTag op;
 
-    operand *result, *l, *r;
+    operand dest, l, r;
 } irInstr;
 
 typedef struct irBlock {
     vector/*<irInstr*>*/ instrs;
 } irBlock;
 
-typedef struct irCtx {
+typedef struct irFn {
     vector/*<irBlock*>*/ blocks;
+} irFn;
+
+typedef struct irCtx {
+    vector/*<irFn*>*/ fns;
+    irFn* curFn;
+
+    asmCtx* asm;
+    const architecture* arch;
 } irCtx;
 
 void irInit (irCtx* ctx, const char* output, const architecture* arch);
@@ -39,8 +45,14 @@ void irEmit (irCtx* ctx);
 irBlock* irBlockCreate (irCtx* ir);
 static void irBlockAdd (irBlock* block, irInstr* instr);
 
+operand irStringConstant (irCtx* ir, const char* str);
+
 void irFnPrologue (irBlock* block, const char* name, int stacksize);
 void irFnEpilogue (irBlock* block);
 
+/*:::: BLOCK TERMINATING/LINKING INSTRUCTIONS ::::*/
+
 void irJump (irBlock* block, irBlock* to);
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse);
+void irCall (irBlock* block, irFn* to, irBlock* ret);
+void irCallIndirect (irBlock* block, operand to, irBlock* ret);
