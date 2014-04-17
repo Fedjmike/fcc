@@ -111,7 +111,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     /*Allow an array to decay to a pointer unless being used as an array*/
     if (Value.array && request != requestArray) {
         operand address = operandCreateReg(regAlloc(ctx->arch->wordsize));
-        asmEvalAddress(*block, address, Value);
+        asmEvalAddress(ctx->ir, *block, address, Value);
         operandFree(Value);
         Value = address;
     }
@@ -120,7 +120,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
     if (suggestion) {
         if (!operandIsEqual(Value, *suggestion)) {
-            asmMove(*block, *suggestion, Value);
+            asmMove(ctx->ir, *block, *suggestion, Value);
             operandFree(Value);
             Dest = *suggestion;
 
@@ -139,7 +139,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
         Dest = Value;
 
         if (Value.tag == operandLabelMem) {
-            operand base = emitterGetInReg(*block, Value, ctx->arch->wordsize);
+            operand base = emitterGetInReg(ctx, *block, Value, ctx->arch->wordsize);
             Dest = operandCreateMem(base.base, 0, typeGetSize(ctx->arch, Node->dt));
 
         } else if (Value.tag != operandMem)
@@ -154,7 +154,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
         else {
             Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-            asmMove(*block, Dest, Value);
+            asmMove(ctx->ir, *block, Dest, Value);
             operandFree(Value);
         }
 
@@ -168,7 +168,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
         } else if (Value.tag != operandMem) {
             operand base = operandCreateReg(regAlloc(ctx->arch->wordsize));
-            asmEvalAddress(*block, base, Value);
+            asmEvalAddress(ctx->ir, *block, base, Value);
             operandFree(Value);
             Dest = operandCreateMem(base.base, 0, typeGetSize(ctx->arch, Node->dt));
         }
@@ -176,7 +176,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     /*Compare against zero to get flags*/
     } else if (request == requestFlags) {
         if (Value.tag != operandFlags) {
-            asmCompare(*block, Value, operandCreateLiteral(0));
+            asmCompare(ctx->ir, *block, Value, operandCreateLiteral(0));
             operandFree(Value);
 
             Dest = operandCreateFlags(conditionEqual);
@@ -195,7 +195,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             else
                 Dest.size = ctx->arch->wordsize;
 
-            asmPush(*block, Value);
+            asmPush(ctx->ir, *block, Value);
             operandFree(Value);
 
         } else
@@ -231,7 +231,7 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         R = emitterValue(ctx, block, Node->r, requestValue);
 
         Value = operandCreateFlags(conditionNegate(conditionFromOp(Node->o)));
-        asmCompare(*block, L, R);
+        asmCompare(ctx->ir, *block, L, R);
         operandFree(L);
         operandFree(R);
 
@@ -253,7 +253,7 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
                          Node->o == opBitwiseXor ? bopBitXor : bopUndefined;
 
         if (bop)
-            asmBOP(*block, bop, L, R);
+            asmBOP(ctx->ir, *block, bop, L, R);
 
         else
             debugErrorUnhandled("emitterBOP", "operator", opTagGetStr(Node->o));
@@ -278,11 +278,11 @@ static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* 
     int raxOldSize, rdxOldSize;
 
     /*RAX: take, but save if necessary*/
-    operand RAX = emitterTakeReg(*block, regRAX, &raxOldSize, typeGetSize(ctx->arch, Node->l->dt));
+    operand RAX = emitterTakeReg(ctx, *block, regRAX, &raxOldSize, typeGetSize(ctx->arch, Node->l->dt));
 
     /*RDX: take, (save), clear*/
-    operand RDX = emitterTakeReg(*block, regRDX, &rdxOldSize, ctx->arch->wordsize);
-    asmMove(*block, RDX, operandCreateLiteral(0));
+    operand RDX = emitterTakeReg(ctx, *block, regRDX, &rdxOldSize, ctx->arch->wordsize);
+    asmMove(ctx->ir, *block, RDX, operandCreateLiteral(0));
 
     /*RHS*/
     operand Value, L, R = emitterValue(ctx, block, Node->r, requestRegOrMem);
@@ -291,38 +291,38 @@ static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* 
 
     if (isAssign) {
         L = emitterValue(ctx, block, Node->l, requestMem);
-        asmMove(*block, RAX, L);
+        asmMove(ctx->ir, *block, RAX, L);
 
     } else
         L = emitterValueSuggest(ctx, block, Node->l, &RAX);
 
     /*The calculation*/
-    asmDivision(*block, R);
+    asmDivision(ctx->ir, *block, R);
     operandFree(R);
 
     /*If the result reg was used before, move it to a new reg*/
     if ((isModulo ? rdxOldSize : raxOldSize) != 0) {
         Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-        asmMove(*block, Value, isModulo ? RDX : RAX);
+        asmMove(ctx->ir, *block, Value, isModulo ? RDX : RAX);
 
         /*Restore regs*/
-        emitterGiveBackReg(*block, regRDX, rdxOldSize);
-        emitterGiveBackReg(*block, regRAX, raxOldSize);
+        emitterGiveBackReg(ctx, *block, regRDX, rdxOldSize);
+        emitterGiveBackReg(ctx, *block, regRAX, raxOldSize);
 
     } else {
         if (isModulo) {
             Value = RDX;
-            emitterGiveBackReg(*block, regRAX, raxOldSize);
+            emitterGiveBackReg(ctx, *block, regRAX, raxOldSize);
 
         } else {
             Value = RAX;
-            emitterGiveBackReg(*block, regRDX, rdxOldSize);
+            emitterGiveBackReg(ctx, *block, regRDX, rdxOldSize);
         }
     }
 
     /*If an assignment, also move the result into memory*/
     if (isAssign) {
-        asmMove(*block, L, Value);
+        asmMove(ctx->ir, *block, L, Value);
         operandFree(L);
     }
 
@@ -350,7 +350,7 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
         /*Shifting too is non-orthogonal. RHS goes in RCX, CL used as the operand.
           If RHS >= 2^8 or < 0, too bad.*/
 
-        R = emitterTakeReg(*block, regRCX, &rcxOldSize, typeGetSize(ctx->arch, Node->l->dt));
+        R = emitterTakeReg(ctx, *block, regRCX, &rcxOldSize, typeGetSize(ctx->arch, Node->l->dt));
         emitterValueSuggest(ctx, block, Node->r, &R);
 
         /*Only CL*/
@@ -364,11 +364,11 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
 
     /*Shift*/
     boperation op = Node->o == opShl || Node->o == opShlAssign ? bopShL : bopShR;
-    asmBOP(*block, op, L, R);
+    asmBOP(ctx->ir, *block, op, L, R);
 
     /*Give back RCX*/
     if (!immediate)
-        emitterGiveBackReg(*block, regRCX, rcxOldSize);
+        emitterGiveBackReg(ctx, *block, regRCX, rcxOldSize);
 
     debugLeave();
 
@@ -391,12 +391,12 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast
 
     if (Node->o == opAssign) {
         Value = R;
-        asmMove(*block, L, R);
+        asmMove(ctx->ir, *block, L, R);
         operandFree(L);
 
     } else if (bop != bopUndefined) {
         Value = L;
-        asmBOP(*block, bop, L, R);
+        asmBOP(ctx->ir, *block, bop, L, R);
         operandFree(R);
 
     } else
@@ -421,7 +421,7 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
         R.condition = conditionNegate(R.condition);
 
     /*Move final value*/
-    asmConditionalMove(*block, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
+    asmConditionalMove(ctx->ir, *block, R, Value, operandCreateLiteral(Node->o == opLogicalOr ? 0 : 1));
 
     /*Continue*/
     irJump(*block, continuation);
@@ -430,7 +430,7 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
     return Value;
 }
 
-static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, operand ShortLabel, operand* Value) {
+static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, irBlock* shortcont, operand* Value) {
     debugEnter("LogicalBOP");
 
     /*The job of this function is:
@@ -453,7 +453,7 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 
         /*Set up the short circuit value*/
         *Value = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-        asmMove(*block, *Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
+        asmMove(ctx->ir, *block, *Value, operandCreateLiteral(Node->o == opLogicalAnd ? 0 : 1));
     }
 
     /*Branch on the LHS*/
@@ -490,7 +490,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         /*Post ops: save a copy before inc/dec*/
         if (post) {
             Value = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
-            asmMove(*block, Value, R);
+            asmMove(ctx->ir, *block, Value, R);
 
         } else
             Value = R;
@@ -498,7 +498,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         uoperation op =   Node->o == opPostIncrement || Node->o == opPreIncrement
                         ? uopInc : uopDec;
 
-        asmUOP(*block, op, R);
+        asmUOP(ctx->ir, *block, op, R);
 
         if (post)
             operandFree(R);
@@ -509,7 +509,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         R = emitterValue(ctx, block, Node->r, requestReg);
 
         if (Node->o == opLogicalNot) {
-            asmCompare(*block, R, operandCreateLiteral(0));
+            asmCompare(ctx->ir, *block, R, operandCreateLiteral(0));
             Value = operandCreateFlags(conditionNotEqual);
             operandFree(R);
 
@@ -517,7 +517,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
             Value = R;
 
         } else {
-            asmUOP(*block, Node->o == opNegate ? uopNeg : uopBitwiseNot, R);
+            asmUOP(ctx->ir, *block, Node->o == opNegate ? uopNeg : uopBitwiseNot, R);
             Value = R;
         }
 
@@ -532,7 +532,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
         Value = operandCreateReg(regAlloc(ctx->arch->wordsize));
 
-        asmEvalAddress(*block, Value, R);
+        asmEvalAddress(ctx->ir, *block, Value, R);
         operandFree(R);
 
     } else {
@@ -589,12 +589,12 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
 
         /*LHS has an index but factor matches? Add RHS to the index*/
         } else if (L.index && L.factor == size) {
-            asmBOP(*block, bopAdd, operandCreateReg(L.index), R);
+            asmBOP(ctx->ir, *block, bopAdd, operandCreateReg(L.index), R);
             operandFree(R);
             Value = L;
 
         } else {
-            R = emitterGetInReg(*block, R, typeGetSize(ctx->arch, Node->r->dt));
+            R = emitterGetInReg(ctx, *block, R, typeGetSize(ctx->arch, Node->r->dt));
 
             /*If L doesn't have an index, we can use it directly*/
             if (!L.index) {
@@ -604,7 +604,7 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
             /*Evaluate the address of L, use the result as base of new operand*/
             } else {
                 Value = operandCreateMem(regAlloc(ctx->arch->wordsize), 0, size);
-                asmEvalAddress(*block, operandCreateReg(Value.base), L);
+                asmEvalAddress(ctx->ir, *block, operandCreateReg(Value.base), L);
                 operandFree(L);
             }
 
@@ -628,7 +628,7 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
             int multiplier = size/Value.factor;
 
             if (multiplier != 1)
-                asmBOP(*block, bopMul, R, operandCreateLiteral(multiplier));
+                asmBOP(ctx->ir, *block, bopMul, R, operandCreateLiteral(multiplier));
         }
 
         Value.size = size;
@@ -638,11 +638,11 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
     } else /*if (typeIsPtr(Node->l->dt)*/ {
         /* index = R*sizeof(*L) */
         R = emitterValue(ctx, block, Node->r, requestReg);
-        asmBOP(*block, bopMul, R, operandCreateLiteral(size));
+        asmBOP(ctx->ir, *block, bopMul, R, operandCreateLiteral(size));
 
         L = emitterValue(ctx, block, Node->l, requestValue);
 
-        asmBOP(*block, bopAdd, R, L);
+        asmBOP(ctx->ir, *block, bopAdd, R, L);
         operandFree(L);
 
         Value = operandCreateMem(R.base, 0, size);
@@ -663,7 +663,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
 
         if (regIsUsed(r))
-            asmSaveReg(*block, r);
+            asmSaveReg(ctx->ir, *block, r);
     }
 
     int argSize = 0;
@@ -676,7 +676,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
     if (retInTemp) {
         /*Allocate the temporary space (rounded up to the nearest word)*/
         tempWords = (typeGetSize(ctx->arch, Node->dt)-1)/ctx->arch->wordsize + 1;
-        asmPushN(*block, tempWords);
+        asmPushN(ctx->ir, *block, tempWords);
     }
 
     /*Push the args on backwards (cdecl)*/
@@ -691,8 +691,8 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
       Last, so that a varargs fn can still locate it*/
     if (retInTemp) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
-        asmEvalAddress(*block, intermediate, operandCreateMem(&regs[regRSP], argSize, ctx->arch->wordsize));
-        asmPush(*block, intermediate);
+        asmEvalAddress(ctx->ir, *block, intermediate, operandCreateMem(&regs[regRSP], argSize, ctx->arch->wordsize));
+        asmPush(ctx->ir, *block, intermediate);
         operandFree(intermediate);
     }
 
@@ -710,7 +710,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
             Value = operandCreateReg(regAlloc(size));
             int tmp = regs[regRAX].allocatedAs;
             regs[regRAX].allocatedAs = size;
-            asmMove(*block, Value, operandCreateReg(&regs[regRAX]));
+            asmMove(ctx->ir, *block, Value, operandCreateReg(&regs[regRAX]));
             regs[regRAX].allocatedAs = tmp;
 
         } else
@@ -724,14 +724,14 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
         Value = operandCreateVoid();
 
     /*Pop the args (and temporary return space & reference)*/
-    asmPopN(*block, argSize/ctx->arch->wordsize + tempWords + (retInTemp ? 1 : 0));
+    asmPopN(ctx->ir, *block, argSize/ctx->arch->wordsize + tempWords + (retInTemp ? 1 : 0));
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
     for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
 
         if (regIsUsed(r) && regGet(r) != Value.base)
-            asmRestoreReg(*block, r);
+            asmRestoreReg(ctx->ir, *block, r);
     }
 
     debugLeave();

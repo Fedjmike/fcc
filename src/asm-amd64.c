@@ -2,6 +2,7 @@
 
 #include "../inc/debug.h"
 #include "../inc/architecture.h"
+#include "../inc/ir.h"
 #include "../inc/asm.h"
 #include "../inc/reg.h"
 
