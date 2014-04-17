@@ -6,6 +6,8 @@ typedef struct type type;
 typedef struct ast ast;
 typedef struct sym sym;
 
+typedef struct irFn irFn;
+
 /**
  * Symbol tags
  * @see sym @see sym::tag
@@ -107,6 +109,8 @@ typedef struct sym {
     ///Position in parent's vector
     int nthChild;
 
+    ///For functions
+    irFn* ir;
     ///Label associated with this symbol in the assembly
     char* label;
     ///Offset, in bytes, for stack stored vars/parameters and non

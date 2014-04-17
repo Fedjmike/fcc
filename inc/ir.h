@@ -5,10 +5,13 @@
 typedef struct architecture architecture;
 typedef struct asmCtx asmCtx;
 
+typedef struct irBlock irBlock;
+typedef struct irFn irFn;
+
+/*::::  ::::*/
+
 typedef enum irInstrTag {
     instrUndefined,
-    instrJump,
-    instrBranch,
     instrMove,
     instrBOP,
     instrUOP
@@ -21,17 +24,70 @@ typedef struct irInstr {
     operand dest, l, r;
 } irInstr;
 
+/*::::  ::::*/
+
+typedef enum irTermTag {
+    termUndefined,
+    termJump,
+    termBranch,
+    termCall,
+    termCallIndirect
+} irTermTag;
+
+typedef struct irTerm {
+    irTermTag tag;
+
+    union {
+        /*termJump*/
+        irBlock* to;
+        /*termBranch*/
+        struct {
+            irBlock *ifTrue, *ifFalse;
+            operand cond;
+        };
+        /*termCall termCallIndirect*/
+        struct {
+            irBlock* ret;
+            union {
+                /*termCall*/
+                irFn* toAsFn;
+                /*termCallIndirect*/
+                operand toAsOperand;
+            };
+        };
+    };
+} irTerm;
+
+/*::::  ::::*/
+
+typedef enum irStaticDataTag {
+    dataUndefined,
+    dataStringConstant
+} irStaticDataTag;
+
+typedef struct irStaticData {
+    irStaticDataTag tag;
+
+    void* initial;
+} irStaticData;
+
+/*::::  ::::*/
+
 typedef struct irBlock {
     vector/*<irInstr*>*/ instrs;
+    irTerm* term;
 } irBlock;
 
 typedef struct irFn {
+    irBlock *prologue, *epilogue;
     vector/*<irBlock*>*/ blocks;
 } irFn;
 
 typedef struct irCtx {
     vector/*<irFn*>*/ fns;
     irFn* curFn;
+
+    vector/*<irStaticData*>*/ sdata;
 
     asmCtx* asm;
     const architecture* arch;
@@ -42,15 +98,12 @@ void irFree (irCtx* ctx);
 
 void irEmit (irCtx* ctx);
 
-irBlock* irBlockCreate (irCtx* ir);
-static void irBlockAdd (irBlock* block, irInstr* instr);
+irFn* irFnCreate (irCtx* ctx);
+irBlock* irBlockCreate (irCtx* ctx);
 
-operand irStringConstant (irCtx* ir, const char* str);
+operand irStringConstant (irCtx* ctx, const char* str);
 
-void irFnPrologue (irBlock* block, const char* name, int stacksize);
-void irFnEpilogue (irBlock* block);
-
-/*:::: BLOCK TERMINATING/LINKING INSTRUCTIONS ::::*/
+/*:::: TERMINAL INSTRUCTIONS ::::*/
 
 void irJump (irBlock* block, irBlock* to);
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse);

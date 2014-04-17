@@ -138,14 +138,11 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /**/
-    irBlock *prologue = irBlockCreate(ctx->ir),
-            *epilogue = irBlockCreate(ctx->ir);
+    irFn* fn = irFnCreate(ctx->ir);
+    Node->symbol->ir = fn;
 
-    ctx->returnTo = epilogue;
-
-    irFnPrologue(prologue, Node->symbol->label, stacksize);
-    emitterCode(ctx, prologue, Node->r, epilogue);
-    irFnEpilogue(epilogue);
+    ctx->returnTo = fn->epilogue;
+    emitterCode(ctx, fn->prologue, Node->r, fn->epilogue);
 
     debugLeave();
 }
