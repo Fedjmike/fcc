@@ -58,29 +58,6 @@ static void irAddStaticData (irCtx* ctx, irStaticData* sdata) {
     vectorPush(&ctx->sdata, sdata);
 }
 
-/*:::: STATIC DATA INTERNALS ::::*/
-
-static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
-    irStaticData* data = malloc(sizeof(irStaticData));
-    data->tag = tag;
-
-    irAddStaticData(ctx, data);
-
-    return data;
-}
-
-static void irStaticDataDestroy (irStaticData* data) {
-    free(data->initial);
-    free(data);
-}
-
-/*:::: STATIC DATA ::::*/
-
-operand irStringConstant (irCtx* ctx, const char* str) {
-    irStaticData* data = irStaticDataCreate(ctx, dataStringConstant);
-    data->initial = (void*) strdup(str);
-}
-
 /*:::: FUNCTION INTERNALS ::::*/
 
 irFn* irFnCreate (irCtx* ctx) {
@@ -137,6 +114,32 @@ static void irTerminateBlock (irBlock* block, irTerm* term) {
     }
 
     block->term = term;
+}
+
+/*:::: STATIC DATA INTERNALS ::::*/
+
+static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
+    irStaticData* data = malloc(sizeof(irStaticData));
+    data->tag = tag;
+
+    irAddStaticData(ctx, data);
+
+    return data;
+}
+
+static void irStaticDataDestroy (irStaticData* data) {
+    free(data->initial);
+    free(data);
+}
+
+/*:::: STATIC DATA ::::*/
+
+operand irStringConstant (irCtx* ctx, const char* str) {
+    irStaticData* data = irStaticDataCreate(ctx, dataStringConstant);
+    data->initial = (void*) strdup(str);
+
+    //TODO
+    return operandCreateLabelOffset(strdup(""));
 }
 
 /*:::: INSTRUCTION INTERNALS ::::*/
