@@ -62,9 +62,6 @@ void asmPopN (irBlock* block, int n);
 void asmMove (irBlock* block, operand Dest, operand Src);
 void asmConditionalMove (irBlock* block, operand Cond, operand Dest, operand Src);
 
-operand asmWiden (irBlock* block, operand R, int size);
-operand asmNarrow (irBlock* block, operand R, int size);
-
 void asmEvalAddress (irBlock* block, operand L, operand R);
 
 void asmCompare (irBlock* block, operand L, operand R);

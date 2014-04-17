@@ -14,18 +14,10 @@
 #include "../inc/reg.h"
 
 #include "../inc/emitter.h"
+#include "../inc/emitter-helpers.h"
 
 #include "stdio.h"
 #include "stdlib.h"
-
-static operand emitterGetInReg (irBlock* block, operand src, int size);
-
-/**
- * Forcibly allocate a register, saving its old value on the stack if need be.
- * @see emitterGiveBackReg()
- */
-static operand emitterTakeReg (irBlock* block, regIndex r, int* oldSize, int newSize);
-static void emitterGiveBackReg (irBlock* block, regIndex r, int oldSize);
 
 static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
@@ -272,25 +264,6 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugLeave();
 
     return Value;
-}
-
-static operand emitterTakeReg (irBlock* block, regIndex r, int* oldSize, int newSize) {
-    if (regIsUsed(r)) {
-        *oldSize = regs[r].allocatedAs;
-        asmSaveReg(block, r);
-
-    } else
-        *oldSize = 0;
-
-    regs[r].allocatedAs = newSize;
-    return operandCreateReg(&regs[r]);
-}
-
-static void emitterGiveBackReg (irBlock* block, regIndex r, int oldSize) {
-    regs[r].allocatedAs = oldSize;
-
-    if (oldSize)
-        asmRestoreReg(block, r);
 }
 
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
@@ -597,16 +570,6 @@ static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, co
     return Value;
 }
 
-static operand emitterGetInReg (irBlock* block, operand src, int size) {
-    if (src.tag == operandReg)
-        return src;
-
-    operand dest = operandCreateReg(regAlloc(size));
-    asmMove(block, dest, src);
-    operandFree(src);
-    return dest;
-}
-
 static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugEnter("Index");
 
@@ -787,7 +750,7 @@ static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
         to = typeGetSize(ctx->arch, Node->dt);
 
     if (from != to && to != 0)
-        R = (from < to ? asmWiden : asmNarrow)(*block, R, to);
+        R = (from < to ? emitterWiden : emitterNarrow)(ctx, *block, R, to);
 
     debugLeave();
 

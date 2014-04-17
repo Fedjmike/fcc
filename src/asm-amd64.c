@@ -231,49 +231,6 @@ void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand
     asmLabel(ctx, FalseLabel);
 }
 
-operand asmWiden (struct asmCtx* ctx, operand R, int size) {
-    char* RStr = operandToStr(R);
-
-    operand L;
-
-    if (R.tag == operandReg) {
-        R.base->allocatedAs = size;
-        L = R;
-
-    } else
-        L = operandCreateReg(regAlloc(size));
-
-    char* LStr = operandToStr(L);
-    asmOutLn(ctx, "movsx %s, %s", LStr, RStr);
-    free(LStr);
-    free(RStr);
-
-    if (R.tag != operandReg)
-        operandFree(R);
-
-    return L;
-}
-
-operand asmNarrow (struct asmCtx* ctx, operand R, int size) {
-    operand L;
-
-    if (R.tag == operandReg)
-        L = R;
-
-    else {
-        L = operandCreateReg(regAlloc(operandGetSize(ctx->arch, R)));
-        char* LStr = operandToStr(L);
-        char* RStr = operandToStr(R);
-        asmOutLn(ctx, "mov %s, %s", LStr, RStr);
-        free(LStr);
-        free(RStr);
-        operandFree(R);
-    }
-
-    L.base->allocatedAs = size;
-    return L;
-}
-
 void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
     if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));

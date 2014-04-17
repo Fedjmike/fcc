@@ -15,15 +15,13 @@
 
 #include "../inc/emitter-value.h"
 #include "../inc/emitter-decl.h"
+#include "../inc/emitter-helpers.h"
 
 #include "string.h"
 #include "stdlib.h"
 
 static irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block);
 static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block);
-
-static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
-                                 irBlock* ifTrue, irBlock* ifFalse);
 
 static void emitterModule (emitterCtx* ctx, const ast* Node);
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
@@ -259,12 +257,6 @@ static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
     irBlock* old = ctx->continueTo;
     ctx->continueTo = block;
     return old;
-}
-
-static void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
-                                 irBlock* ifTrue, irBlock* ifFalse) {
-    operand cond = emitterValue(ctx, &block, value, requestFlags);
-    irBranch(block, cond, ifTrue, ifFalse);
 }
 
 static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node) {
