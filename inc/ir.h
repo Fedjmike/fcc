@@ -85,8 +85,6 @@ typedef struct irFn {
 
 typedef struct irCtx {
     vector/*<irFn*>*/ fns;
-    irFn* curFn;
-
     vector/*<irStaticData*>*/ sdata;
 
     asmCtx* asm;
@@ -99,7 +97,7 @@ void irFree (irCtx* ctx);
 void irEmit (irCtx* ctx);
 
 irFn* irFnCreate (irCtx* ctx);
-irBlock* irBlockCreate (irCtx* ctx);
+irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 operand irStringConstant (irCtx* ctx, const char* str);
 

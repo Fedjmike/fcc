@@ -409,7 +409,7 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast
 
 static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     /*Label to jump to if circuit gets shorted*/
-    irBlock* continuation = irBlockCreate(ctx->ir);
+    irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     operand Value;
 
@@ -458,7 +458,7 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 
     /*Branch on the LHS*/
 
-    irBlock* unshort = irBlockCreate(ctx->ir);
+    irBlock* unshort = irBlockCreate(ctx->ir, ctx->curFn);
 
     if (Node->o == opLogicalOr)
         irBranch(*block, L, shortcont, unshort);
@@ -548,9 +548,9 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
     debugEnter("TOP");
 
-    irBlock *continuation = irBlockCreate(ctx->ir),
-            *ifTrue = irBlockCreate(ctx->ir),
-            *ifFalse = irBlockCreate(ctx->ir);
+    irBlock *continuation = irBlockCreate(ctx->ir, ctx->curFn),
+            *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
+            *ifFalse = irBlockCreate(ctx->ir, ctx->curFn);
 
     /*Condition, branch*/
     emitterBranchOnValue(ctx, *block, Node->firstChild, ifTrue, ifFalse);
@@ -698,7 +698,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     /*Call the function*/
 
-    irBlock* continuation = irBlockCreate(ctx->ir);
+    irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     if (Node->l->symbol->ir)
         irCall(*block, Node->l->symbol->ir, continuation);

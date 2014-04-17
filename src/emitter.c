@@ -139,9 +139,9 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
 
     /**/
     irFn* fn = irFnCreate(ctx->ir);
-    Node->symbol->ir = fn;
-
+    ctx->curFn = Node->symbol->ir = fn;
     ctx->returnTo = fn->epilogue;
+
     emitterCode(ctx, fn->prologue, Node->r, fn->epilogue);
 
     debugLeave();
@@ -172,20 +172,20 @@ static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node) {
         continuation = emitterIter(ctx, block, Node);
 
     else if (Node->tag == astCode) {
-        continuation = irBlockCreate(ctx->ir);
+        continuation = irBlockCreate(ctx->ir, ctx->curFn);
         emitterCode(ctx, block, Node, continuation);
 
     } else if (Node->tag == astReturn) {
         emitterReturn(ctx, block, Node);
-        continuation = irBlockCreate(ctx->ir);
+        continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     } else if (Node->tag == astBreak) {
         irJump(block, ctx->breakTo);
-        continuation = irBlockCreate(ctx->ir);
+        continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     } else if (Node->tag == astContinue) {
         irJump(block, ctx->continueTo);
-        continuation = irBlockCreate(ctx->ir);
+        continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     } else if (Node->tag == astDecl) {
         emitterDecl(ctx, &block, Node);
@@ -259,9 +259,9 @@ static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
 }
 
 static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node) {
-    irBlock *continuation = irBlockCreate(ctx->ir),
-            *ifTrue = irBlockCreate(ctx->ir),
-            *ifFalse = irBlockCreate(ctx->ir);
+    irBlock *continuation = irBlockCreate(ctx->ir, ctx->curFn),
+            *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
+            *ifFalse = irBlockCreate(ctx->ir, ctx->curFn);
 
     /*Condition, branch*/
     emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
@@ -274,9 +274,9 @@ static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node)
 }
 
 static irBlock* emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node) {
-    irBlock *continuation = irBlockCreate(ctx->ir),
-            *body = irBlockCreate(ctx->ir),
-            *loopCheck = irBlockCreate(ctx->ir);
+    irBlock *continuation = irBlockCreate(ctx->ir, ctx->curFn),
+            *body = irBlockCreate(ctx->ir, ctx->curFn),
+            *loopCheck = irBlockCreate(ctx->ir, ctx->curFn);
 
     /*Work out which order the condition and code came in
       => whether this is a while or a do while*/
@@ -309,9 +309,9 @@ static irBlock* emitterLoop (emitterCtx* ctx, irBlock* block, const ast* Node) {
 }
 
 static irBlock* emitterIter (emitterCtx* ctx, irBlock* block, const ast* Node) {
-    irBlock *continuation = irBlockCreate(ctx->ir),
-            *body = irBlockCreate(ctx->ir),
-            *iterate = irBlockCreate(ctx->ir);
+    irBlock *continuation = irBlockCreate(ctx->ir, ctx->curFn),
+            *body = irBlockCreate(ctx->ir, ctx->curFn),
+            *iterate = irBlockCreate(ctx->ir, ctx->curFn);
 
     ast *init = Node->firstChild,
         *cond = init->nextSibling,

@@ -36,8 +36,6 @@ enum {
 
 void irInit (irCtx* ctx, const char* output, const architecture* arch) {
     vectorInit(&ctx->fns, irCtxFnNo);
-    ctx->curFn = 0;
-
     vectorInit(&ctx->sdata, irCtxSDataNo);
 
     ctx->asm = asmInit(output, arch);
@@ -108,12 +106,16 @@ static void irAddBlock (irFn* fn, irBlock* block) {
 
 /*:::: BLOCK INTERNALS ::::*/
 
-irBlock* irBlockCreate (irCtx* ctx) {
+irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
     irBlock* block = malloc(sizeof(irBlock));
     vectorInit(&block->instrs, irBlockInstrNo);
     block->term = 0;
 
-    irAddBlock(ctx->curFn, block);
+    block->str = calloc(irBlockStrSize, sizeof(char*));
+    block->length = 0;
+    block->capacity = irBlockStrSize-1;
+
+    irAddBlock(fn, block);
 
     return block;
 }
