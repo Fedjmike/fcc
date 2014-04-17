@@ -32,8 +32,8 @@ void asmFnEpilogue (asmCtx* ctx, operand labelEnd);
 /**
  * Save and restore a register using the stack
  */
-void asmSaveReg (asmCtx* ctx, regIndex r);
-void asmRestoreReg (asmCtx* ctx, regIndex r);
+void asmSaveReg (irBlock* block, regIndex r);
+void asmRestoreReg (irBlock* block, regIndex r);
 
 /**
  * Place a string constant in the rodata section with the given label
@@ -51,26 +51,26 @@ void asmBranch (asmCtx* ctx, operand Condition, operand L);
 /**
  * Call a function with the arguments currently on the stack
  */
-void asmCall (asmCtx* ctx, operand L);
+void asmCall (irBlock* block, operand L);
 
-void asmPush (asmCtx* ctx, operand L);
-void asmPop (asmCtx* ctx, operand L);
+void asmPush (irBlock* block, operand L);
+void asmPop (irBlock* block, operand L);
 
-void asmPushN (asmCtx* ctx, int n);
-void asmPopN (asmCtx* ctx, int n);
+void asmPushN (irBlock* block, int n);
+void asmPopN (irBlock* block, int n);
 
-void asmMove (asmCtx* ctx, operand Dest, operand Src);
-void asmConditionalMove (asmCtx* ctx, operand Cond, operand Dest, operand Src);
+void asmMove (irBlock* block, operand Dest, operand Src);
+void asmConditionalMove (irBlock* block, operand Cond, operand Dest, operand Src);
 
-operand asmWiden (asmCtx* ctx, operand R, int size);
-operand asmNarrow (asmCtx* ctx, operand R, int size);
+operand asmWiden (irBlock* block, operand R, int size);
+operand asmNarrow (irBlock* block, operand R, int size);
 
-void asmEvalAddress (asmCtx* ctx, operand L, operand R);
+void asmEvalAddress (irBlock* block, operand L, operand R);
 
-void asmCompare (asmCtx* ctx, operand L, operand R);
+void asmCompare (irBlock* block, operand L, operand R);
 
-void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R);
+void asmBOP (irBlock* block, boperation Op, operand L, operand R);
 
-void asmDivision (asmCtx* ctx, operand R);
+void asmDivision (irBlock* block, operand R);
 
-void asmUOP (asmCtx* ctx, uoperation Op, operand R);
+void asmUOP (irBlock* block, uoperation Op, operand R);
