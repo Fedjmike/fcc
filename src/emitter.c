@@ -267,8 +267,14 @@ static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node)
     emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
 
     /*Emit the true and false branches*/
+
     emitterCode(ctx, ifTrue, Node->l, continuation);
-    emitterCode(ctx, ifFalse, Node->r, continuation);
+
+    if (Node->r)
+        emitterCode(ctx, ifFalse, Node->r, continuation);
+
+    else
+        irJump(ifFalse, continuation);
 
     return continuation;
 }
