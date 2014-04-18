@@ -148,11 +148,11 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
 }
 
 static void emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
-    for (ast* Current = Node->firstChild;
-         Current;
-         Current = Current->nextSibling) {
-        block = emitterLine(ctx, block, Current);
-    }
+    if (Node)
+        for (ast* Current = Node->firstChild;
+             Current;
+             Current = Current->nextSibling)
+            block = emitterLine(ctx, block, Current);
 
     irJump(block, continuation);
 }
@@ -267,14 +267,8 @@ static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node)
     emitterBranchOnValue(ctx, block, Node->firstChild, ifTrue, ifFalse);
 
     /*Emit the true and false branches*/
-
     emitterCode(ctx, ifTrue, Node->l, continuation);
-
-    if (Node->r)
-        emitterCode(ctx, ifFalse, Node->r, continuation);
-
-    else
-        irJump(ifFalse, continuation);
+    emitterCode(ctx, ifFalse, Node->r, continuation);
 
     return continuation;
 }
