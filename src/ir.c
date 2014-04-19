@@ -54,8 +54,6 @@ void irFree (irCtx* ctx) {
     asmEnd(ctx->asm);
 }
 
-void irEmit (irCtx* ctx);
-
 static void irAddFn (irCtx* ctx, irFn* fn) {
     vectorPush(&ctx->fns, fn);
 }
