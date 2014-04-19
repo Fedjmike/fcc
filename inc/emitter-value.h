@@ -2,6 +2,7 @@
 
 typedef struct ast ast;
 typedef struct emitterCtx emitterCtx;
+typedef struct irBlock irBlock;
 
 typedef enum emitterRequest {
     requestAny,
