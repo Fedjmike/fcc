@@ -64,7 +64,7 @@ static void irAddStaticData (irCtx* ctx, irStaticData* sdata) {
 
 static char* irCreateLabel (irCtx* ctx) {
     char* label = malloc(10);
-    sprintf(label, ".%X", ctx->labelNo++);
+    sprintf(label, ".%04X", ctx->labelNo++);
     return label;
 }
 
