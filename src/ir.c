@@ -25,6 +25,8 @@ static void irInstrDestroy (irInstr* instr);
 static irTerm* irTermCreate (irTermTag tag, irBlock* block);
 static void irTermDestroy (irTerm* term);
 
+static void irReturn (irBlock* block);
+
 enum {
     irCtxFnNo = 8,
     irCtxSDataNo = 8,
@@ -37,6 +39,8 @@ enum {
 void irInit (irCtx* ctx, const char* output, const architecture* arch) {
     vectorInit(&ctx->fns, irCtxFnNo);
     vectorInit(&ctx->sdata, irCtxSDataNo);
+
+    ctx->labelNo = 0;
 
     ctx->asm = asmInit(output, arch);
     ctx->arch = arch;
@@ -58,15 +62,29 @@ static void irAddStaticData (irCtx* ctx, irStaticData* sdata) {
     vectorPush(&ctx->sdata, sdata);
 }
 
+static char* irCreateLabel (irCtx* ctx) {
+    char* label = malloc(10);
+    sprintf(label, ".%X", ctx->labelNo++);
+    return label;
+}
+
 /*:::: FUNCTION INTERNALS ::::*/
 
-irFn* irFnCreate (irCtx* ctx, const char* name) {
+irFn* irFnCreate (irCtx* ctx, const char* name, int stacksize) {
     irFn* fn = malloc(sizeof(irFn));
     fn->name = strdup(name);
-    fn->prologue = irBlockCreate(ctx),
-    fn->epilogue = irBlockCreate(ctx);
-
     vectorInit(&fn->blocks, irFnBlockNo);
+
+    /*These will get added to fn->blocks, which now owns them*/
+    fn->prologue = irBlockCreate(ctx, fn);
+    fn->entryPoint = irBlockCreate(ctx, fn);
+    fn->epilogue = irBlockCreate(ctx, fn);
+
+    asmFnPrologue(ctx, fn->prologue, stacksize);
+    asmFnEpilogue(ctx, fn->epilogue);
+
+    irJump(fn->prologue, fn->entryPoint);
+    irReturn(fn->epilogue);
 
     irAddFn(ctx, fn);
 
@@ -89,6 +107,7 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
     irBlock* block = malloc(sizeof(irBlock));
     vectorInit(&block->instrs, irBlockInstrNo);
     block->term = 0;
+    block->label = irCreateLabel(ctx);
 
     block->str = calloc(irBlockStrSize, sizeof(char*));
     block->length = 0;
@@ -102,6 +121,8 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
 static void irBlockDestroy (irBlock* block) {
     vectorFreeObjs(&block->instrs, (vectorDtor) irInstrDestroy);
     irTermDestroy(block->term);
+
+    free(block->label);
     free(block);
 }
 
@@ -213,4 +234,6 @@ void irCallIndirect (irBlock* block, operand to, irBlock* ret) {
     term->ret = ret;
 }
 
-
+static void irReturn (irBlock* block) {
+    irTermCreate(termReturn, block);
+}

@@ -2,11 +2,11 @@
 #include "ast.h"
 #include "operand.h"
 
+typedef struct sym sym;
 typedef struct architecture architecture;
 typedef struct asmCtx asmCtx;
 
 typedef struct irBlock irBlock;
-typedef struct irFn irFn;
 
 /*::::  ::::*/
 
@@ -31,7 +31,8 @@ typedef enum irTermTag {
     termJump,
     termBranch,
     termCall,
-    termCallIndirect
+    termCallIndirect,
+    termReturn
 } irTermTag;
 
 typedef struct irTerm {
@@ -76,16 +77,21 @@ typedef struct irStaticData {
 typedef struct irBlock {
     vector/*<irInstr*>*/ instrs;
     irTerm* term;
+
+    char* label;
 } irBlock;
 
 typedef struct irFn {
-    irBlock *prologue, *epilogue;
+    char* name;
+    irBlock *prologue, *entryPoint, *epilogue;
     vector/*<irBlock*>*/ blocks;
 } irFn;
 
 typedef struct irCtx {
     vector/*<irFn*>*/ fns;
     vector/*<irStaticData*>*/ sdata;
+
+    int labelNo;
 
     asmCtx* asm;
     const architecture* arch;
