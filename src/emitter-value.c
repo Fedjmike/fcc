@@ -40,8 +40,8 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
 
-operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
-    return emitterValueImpl(ctx, Node, request, 0);
+operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request) {
+    return emitterValueImpl(ctx, block, Node, request, 0);
 }
 
 operand emitterValueSuggest (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* request) {
