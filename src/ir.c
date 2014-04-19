@@ -20,6 +20,11 @@ static void irStaticDataDestroy (irStaticData* data);
 static void irFnDestroy (irFn* fn);
 static void irBlockDestroy (irBlock* block);
 
+/**
+ * Update the preds/succs vectors in from and to
+ */
+static void irBlockLink (irBlock* from, irBlock* to);
+
 static irInstr* irInstrCreate (irInstrTag tag, irBlock* block);
 static void irInstrDestroy (irInstr* instr);
 
@@ -28,12 +33,16 @@ static void irTermDestroy (irTerm* term);
 
 static void irReturn (irBlock* block);
 
+/*Constants for various initializations
+  Initial sizes of vectors, strings and such*/
 enum {
     irCtxFnNo = 8,
     irCtxSDataNo = 8,
     irFnBlockNo = 8,
     irBlockInstrNo = 8,
-    irBlockStrSize = 1024
+    irBlockStrSize = 1024,
+    irBlockPredNo = 2,
+    irBlockSuccNo = 2
 };
 
 /*:::: IR CONTEXT ::::*/
@@ -113,6 +122,9 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
     block->length = 0;
     block->capacity = irBlockStrSize;
 
+    vectorInit(&block->preds, irBlockPredNo);
+    vectorInit(&block->succs, irBlockSuccNo);
+
     irAddBlock(fn, block);
 
     return block;
@@ -162,6 +174,11 @@ static void irTerminateBlock (irBlock* block, irTerm* term) {
     }
 
     block->term = term;
+}
+
+static void irBlockLink (irBlock* from, irBlock* to) {
+    vectorPush(&from->succs, to);
+    vectorPush(&to->preds, from);
 }
 
 /*:::: STATIC DATA INTERNALS ::::*/
@@ -239,6 +256,8 @@ static void irTermDestroy (irTerm* term) {
 void irJump (irBlock* block, irBlock* to) {
     irTerm* term = irTermCreate(termJump, block);
     term->to = to;
+
+    irBlockLink(block, to);
 }
 
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse) {
@@ -246,18 +265,25 @@ void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse) 
     term->cond = cond;
     term->ifTrue = ifTrue;
     term->ifFalse = ifFalse;
+
+    irBlockLink(block, ifTrue);
+    irBlockLink(block, ifFalse);
 }
 
 void irCall (irBlock* block, sym* to, irBlock* ret) {
     irTerm* term = irTermCreate(termCall, block);
     term->toAsSym = to;
     term->ret = ret;
+
+    irBlockLink(block, ret);
 }
 
 void irCallIndirect (irBlock* block, operand to, irBlock* ret) {
     irTerm* term = irTermCreate(termCallIndirect, block);
     term->toAsOperand = to;
     term->ret = ret;
+
+    irBlockLink(block, ret);
 }
 
 static void irReturn (irBlock* block) {

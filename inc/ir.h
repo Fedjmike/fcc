@@ -82,6 +82,10 @@ typedef struct irBlock {
 
     char* str;
     int length, capacity;
+
+    ///Blocks that this block may (at runtime) have (directly)
+    ///come from / go to, respectively
+    vector/*<const irBlock*>*/ preds, succs;
 } irBlock;
 
 typedef struct irFn {
