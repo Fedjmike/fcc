@@ -13,8 +13,8 @@
 static void irEmitStaticData (irCtx* ctx, FILE* file, irStaticData* data);
 
 static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn);
-static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block);
-static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term);
+static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block, irBlock* nextblock);
+static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term, irBlock* nextblock);
 
 void irEmit (irCtx* ctx) {
     FILE* file = ctx->asm->file;
@@ -51,16 +51,15 @@ static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn) {
 
     /*Constituent blocks, including prologue and epilogue*/
     for (int j = 0; j < fn->blocks.length; j++) {
-        irBlock* block = vectorGet(&fn->blocks, j);
-        irEmitBlock(ctx, file, block);
+        irBlock *block = vectorGet(&fn->blocks, j),
+                *nextblock = vectorGet(&fn->blocks, j+1);
+        irEmitBlock(ctx, file, block, nextblock);
     }
 
     debugLeave();
 }
 
-static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block) {
-    (void) ctx;
-
+static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block, irBlock* nextblock) {
     debugEnter(block->label);
 
     asmLabel(ctx->asm, block->label);
@@ -68,7 +67,7 @@ static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block) {
     debugMsg(block->str);
 
     if (block->term)
-        irEmitTerm(ctx, file, block->term);
+        irEmitTerm(ctx, file, block->term, nextblock);
 
     else
         debugError("irEmitBlock", "unterminated block %s", block->label);
@@ -78,26 +77,34 @@ static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block) {
     debugLeave();
 }
 
-static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term) {
+static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term, irBlock* nextblock) {
     (void) file;
 
+    /*Some of the terminals end in a jump
+      Use this to unify the jump logic*/
+    irBlock* jumpTo = 0;
+
     if (term->tag == termJump)
-        asmJump(ctx->asm, term->to->label);
+        jumpTo = term->to;
 
     else if (term->tag == termBranch) {
         asmBranch(ctx->asm, term->cond, term->ifFalse->label);
-        asmJump(ctx->asm, term->ifTrue->label);
+        jumpTo = term->ifTrue;
 
     } else if (term->tag == termCall) {
         asmCall(ctx->asm, term->toAsSym->ident);
-        asmJump(ctx->asm, term->ret->label);
+        jumpTo = term->ret;
 
-    } else if (term->tag == termCallIndirect) {
+    } else if (term->tag == termCallIndirect)
         asmCallIndirect(ctx->asm, term->toAsOperand);
 
-    } else if (term->tag == termReturn)
+    else if (term->tag == termReturn)
         asmReturn(ctx->asm);
 
     else
         debugErrorUnhandledInt("irEmitTerm", "terminal tag", term->tag);
+
+    /*Perform the jump if not redundant*/
+    if (jumpTo && jumpTo != nextblock)
+        asmJump(ctx->asm, jumpTo->label);
 }
