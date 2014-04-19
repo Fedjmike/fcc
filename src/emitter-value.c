@@ -548,9 +548,9 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
     debugEnter("TOP");
 
-    irBlock *continuation = irBlockCreate(ctx->ir, ctx->curFn),
-            *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
-            *ifFalse = irBlockCreate(ctx->ir, ctx->curFn);
+    irBlock *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
+            *ifFalse = irBlockCreate(ctx->ir, ctx->curFn),
+            *continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
     /*Condition, branch*/
     emitterBranchOnValue(ctx, *block, Node->firstChild, ifTrue, ifFalse);
