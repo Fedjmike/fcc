@@ -79,6 +79,9 @@ typedef struct irBlock {
     irTerm* term;
 
     char* label;
+
+    char* str;
+    int length, capacity;
 } irBlock;
 
 typedef struct irFn {
@@ -104,6 +107,8 @@ void irEmit (irCtx* ctx);
 
 irFn* irFnCreate (irCtx* ctx, const char* name);
 irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
+
+void irBlockOut (irBlock* block, const char* format, ...);
 
 operand irStringConstant (irCtx* ctx, const char* str);
 

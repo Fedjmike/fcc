@@ -6,6 +6,7 @@
 #include "../inc/asm.h"
 
 #include "stdlib.h"
+#include "stdarg.h"
 
 static void irAddFn (irCtx* ctx, irFn* fn);
 static void irAddStaticData (irCtx* ctx, irStaticData* sdata);
@@ -31,7 +32,8 @@ enum {
     irCtxFnNo = 8,
     irCtxSDataNo = 8,
     irFnBlockNo = 8,
-    irBlockInstrNo = 8
+    irBlockInstrNo = 8,
+    irBlockStrSize = 1024
 };
 
 /*:::: IR CONTEXT ::::*/
@@ -111,7 +113,7 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
 
     block->str = calloc(irBlockStrSize, sizeof(char*));
     block->length = 0;
-    block->capacity = irBlockStrSize-1;
+    block->capacity = irBlockStrSize;
 
     irAddBlock(fn, block);
 
@@ -123,7 +125,32 @@ static void irBlockDestroy (irBlock* block) {
     irTermDestroy(block->term);
 
     free(block->label);
+    free(block->str);
     free(block);
+}
+
+void irBlockOut (irBlock* block, const char* format, ...) {
+    va_list args[2];
+    va_start(args[0], format);
+    va_copy(args[1], args[0]);
+    debugVarMsg(format, args[1]);
+    va_end(args[1]);
+
+    int length = vsnprintf(block->str+block->length, block->capacity, format, args[0]);
+    va_end(args[0]);
+
+    if (length < 0 || block->length+length >= block->capacity) {
+        block->capacity *= 2;
+        block->capacity += length+2;
+        block->str = realloc(block->str, block->capacity);
+
+        va_start(args[0], format);
+        vsnprintf(block->str+block->length, block->capacity, format, args[0]);
+        va_end(args[0]);
+    }
+
+    block->length += length;
+    block->str[block->length++] = '\n';
 }
 
 static void irAddInstr (irBlock* block, irInstr* instr) {
