@@ -4,32 +4,46 @@
 #include "../inc/debug.h"
 #include "../inc/operand.h"
 #include "../inc/asm.h"
+#include "../inc/asm-amd64.h"
 
 #include "stdlib.h"
 #include "stdarg.h"
 
 static void irAddFn (irCtx* ctx, irFn* fn);
 static void irAddStaticData (irCtx* ctx, irStaticData* sdata);
-static void irAddBlock (irFn* fn, irBlock* block);
-static void irAddInstr (irBlock* block, irInstr* instr);
-static void irTerminateBlock (irBlock* block, irTerm* term);
+
+/*:::: ::::*/
 
 static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag);
 static void irStaticDataDestroy (irStaticData* data);
 
+/*:::: ::::*/
+
 static void irFnDestroy (irFn* fn);
+static void irAddBlock (irFn* fn, irBlock* block);
+
+/*:::: ::::*/
+
 static void irBlockDestroy (irBlock* block);
+static void irAddInstr (irBlock* block, irInstr* instr);
+static void irBlockTerminate (irBlock* block, irTerm* term);
 
 /**
  * Update the preds/succs vectors in from and to
  */
 static void irBlockLink (irBlock* from, irBlock* to);
 
+/*:::: ::::*/
+
 static irInstr* irInstrCreate (irInstrTag tag, irBlock* block);
 static void irInstrDestroy (irInstr* instr);
 
+/*:::: ::::*/
+
 static irTerm* irTermCreate (irTermTag tag, irBlock* block);
 static void irTermDestroy (irTerm* term);
+
+/*:::: ::::*/
 
 static void irReturn (irBlock* block);
 
@@ -167,9 +181,9 @@ static void irAddInstr (irBlock* block, irInstr* instr) {
     vectorPush(&block->instrs, instr);
 }
 
-static void irTerminateBlock (irBlock* block, irTerm* term) {
+static void irBlockTerminate (irBlock* block, irTerm* term) {
     if (block->term) {
-        debugError("irTerminateBlock", "attempted to terminate already terminated block");
+        debugError("irBlockTerminate", "attempted to terminate already terminated block");
         irTermDestroy(block->term);
     }
 
@@ -225,6 +239,7 @@ static irInstr* irInstrCreate (irInstrTag tag, irBlock* block) {
 }
 
 static void irInstrDestroy (irInstr* instr) {
+    (void) irInstrCreate;
     free(instr);
 }
 
@@ -242,7 +257,7 @@ static irTerm* irTermCreate (irTermTag tag, irBlock* block) {
     term->toAsSym = 0;
     term->toAsOperand = operandCreate(operandUndefined);
 
-    irTerminateBlock(block, term);
+    irBlockTerminate(block, term);
 
     return term;
 }
