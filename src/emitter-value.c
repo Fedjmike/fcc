@@ -45,7 +45,7 @@ static operand emitterSizeof (emitterCtx* ctx, const ast* Node);
 static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
-static void emitterElementInit (emitterCtx* ctx, ast* Node, operand L);
+static void emitterElementInit (emitterCtx* ctx, const ast* Node, operand L);
 
 operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, Node, request, 0);
@@ -924,7 +924,7 @@ void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base) {
         emitterValueSuggest(ctx, Node->firstChild, &base);
 }
 
-static void emitterElementInit (emitterCtx* ctx, ast* Node, operand L) {
+static void emitterElementInit (emitterCtx* ctx, const ast* Node, operand L) {
     /*Skipped init*/
     if (Node->tag == astEmpty)
         ;
