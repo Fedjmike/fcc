@@ -109,8 +109,6 @@ typedef struct sym {
     ///Position in parent's vector
     int nthChild;
 
-    ///For functions
-    irFn* ir;
     ///Label associated with this symbol in the assembly
     char* label;
     ///Offset, in bytes, for stack stored vars/parameters and non

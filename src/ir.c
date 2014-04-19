@@ -60,8 +60,9 @@ static void irAddStaticData (irCtx* ctx, irStaticData* sdata) {
 
 /*:::: FUNCTION INTERNALS ::::*/
 
-irFn* irFnCreate (irCtx* ctx) {
+irFn* irFnCreate (irCtx* ctx, const char* name) {
     irFn* fn = malloc(sizeof(irFn));
+    fn->name = strdup(name);
     fn->prologue = irBlockCreate(ctx),
     fn->epilogue = irBlockCreate(ctx);
 
@@ -74,6 +75,7 @@ irFn* irFnCreate (irCtx* ctx) {
 
 static void irFnDestroy (irFn* fn) {
     vectorFreeObjs(&fn->blocks, (vectorDtor) irBlockDestroy);
+    free(fn->name);
     free(fn);
 }
 
@@ -173,7 +175,7 @@ static irTerm* irTermCreate (irTermTag tag, irBlock* block) {
     term->ifTrue = 0;
     term->ifFalse = 0;
     term->ret = 0;
-    term->toAsFn = 0;
+    term->toAsSym = 0;
     term->toAsOperand = operandCreate(operandUndefined);
 
     irTerminateBlock(block, term);
@@ -199,9 +201,9 @@ void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse) 
     term->ifFalse = ifFalse;
 }
 
-void irCall (irBlock* block, irFn* to, irBlock* ret) {
+void irCall (irBlock* block, sym* to, irBlock* ret) {
     irTerm* term = irTermCreate(termCall, block);
-    term->toAsFn = to;
+    term->toAsSym = to;
     term->ret = ret;
 }
 

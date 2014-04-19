@@ -138,8 +138,8 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
 
     /**/
-    irFn* fn = irFnCreate(ctx->ir);
-    ctx->curFn = Node->symbol->ir = fn;
+    irFn* fn = irFnCreate(ctx->ir, Node->symbol->label);
+    ctx->curFn = fn;
     ctx->returnTo = fn->epilogue;
 
     emitterCode(ctx, fn->prologue, Node->r, fn->epilogue);

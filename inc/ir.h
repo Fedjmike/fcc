@@ -50,7 +50,7 @@ typedef struct irTerm {
             irBlock* ret;
             union {
                 /*termCall*/
-                irFn* toAsFn;
+                sym* toAsSym;
                 /*termCallIndirect*/
                 operand toAsOperand;
             };
@@ -96,7 +96,7 @@ void irFree (irCtx* ctx);
 
 void irEmit (irCtx* ctx);
 
-irFn* irFnCreate (irCtx* ctx);
+irFn* irFnCreate (irCtx* ctx, const char* name);
 irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 operand irStringConstant (irCtx* ctx, const char* str);
@@ -105,5 +105,5 @@ operand irStringConstant (irCtx* ctx, const char* str);
 
 void irJump (irBlock* block, irBlock* to);
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse);
-void irCall (irBlock* block, irFn* to, irBlock* ret);
+void irCall (irBlock* block, sym* to, irBlock* ret);
 void irCallIndirect (irBlock* block, operand to, irBlock* ret);
