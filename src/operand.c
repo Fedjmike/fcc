@@ -204,7 +204,7 @@ char* operandToStr (operand Value) {
                 const char* regStr = regGetStr(Value.base);
                 char* ret = malloc(  strlen(sizeStr)
                                    + strlen(regStr)
-                                   + logi(Value.offset, 10) + 2 + 9);
+                                   + logi(Value.offset, 10) + 2 + 10);
                 sprintf(ret, "%s ptr [%s%+d]", sizeStr, regStr, Value.offset);
                 return ret;
             }
