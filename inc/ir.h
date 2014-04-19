@@ -68,7 +68,7 @@ typedef enum irStaticDataTag {
 
 typedef struct irStaticData {
     irStaticDataTag tag;
-
+    char* label;
     void* initial;
 } irStaticData;
 

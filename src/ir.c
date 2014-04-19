@@ -171,6 +171,7 @@ static void irTerminateBlock (irBlock* block, irTerm* term) {
 static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
     irStaticData* data = malloc(sizeof(irStaticData));
     data->tag = tag;
+    data->label = irCreateLabel(ctx);
 
     irAddStaticData(ctx, data);
 
@@ -179,6 +180,7 @@ static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
 
 static void irStaticDataDestroy (irStaticData* data) {
     free(data->initial);
+    free(data->label);
     free(data);
 }
 
@@ -188,8 +190,7 @@ operand irStringConstant (irCtx* ctx, const char* str) {
     irStaticData* data = irStaticDataCreate(ctx, dataStringConstant);
     data->initial = (void*) strdup(str);
 
-    //TODO
-    return operandCreateLabelOffset(strdup(""));
+    return operandCreateLabelOffset(data->label);
 }
 
 /*:::: INSTRUCTION INTERNALS ::::*/
