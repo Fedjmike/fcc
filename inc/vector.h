@@ -26,7 +26,10 @@ void vectorFree (vector* v);
  */
 void vectorFreeObjs (vector* v, void (*dtor)(void*));
 
-void vectorPush (vector* v, void* item);
+/**
+ * Add an item to the end of a vector. Returns the position.
+ */
+int vectorPush (vector* v, void* item);
 
 /**
  * Add to the end of a vector from an array.
@@ -34,10 +37,23 @@ void vectorPush (vector* v, void* item);
  */
 vector* vectorPushFromArray (vector* v, void** array, int length, int elementSize);
 
+vector* vectorPushFromVector (vector* dest, const vector* src);
+
 void* vectorPop (vector* v);
 
 /**
- * Returns the value, or null if out of bounds.
+ * Find an element, returning its index, or 0 if not found.
+ */
+int vectorFind (vector* v, void* item);
+
+/**
+ * Remove an item from the list, moving the last element into its place.
+ * Returns that element, or 0 if n is out of bounds.
+ */
+void* vectorRemoveReorder (vector* v, int n);
+
+/**
+ * Returns the value, or 0 if out of bounds.
  */
 void* vectorGet (const vector* v, int n);
 

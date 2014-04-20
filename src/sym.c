@@ -119,9 +119,8 @@ static void symAddChild (sym* Parent, sym* Child) {
         ;
 
     else {
-        vectorPush(&Parent->children, Child);
         Child->parent = Parent;
-        Child->nthChild = Parent->children.length-1;
+        Child->nthChild = vectorPush(&Parent->children, Child);
     }
 }
 
