@@ -83,6 +83,9 @@ typedef struct irBlock {
     char* str;
     int length, capacity;
 
+    ///Index in the parent Fn's vector
+    int nthChild;
+
     ///Blocks that this block may (at runtime) have (directly)
     ///come from / go to, respectively
     vector/*<const irBlock*>*/ preds, succs;
@@ -90,6 +93,10 @@ typedef struct irBlock {
 
 typedef struct irFn {
     char* name;
+    ///The following blocks are owned by the Fn's vector
+    ///prologue and epilogue manage the stack frame and register saving
+    ///created and managed internally. entryPoint is what the emitter should
+    ///fill, using epilogue as a continuation / return point
     irBlock *prologue, *entryPoint, *epilogue;
     vector/*<irBlock*>*/ blocks;
 } irFn;
@@ -109,7 +116,7 @@ void irFree (irCtx* ctx);
 
 void irEmit (irCtx* ctx);
 
-irFn* irFnCreate (irCtx* ctx, const char* name);
+irFn* irFnCreate (irCtx* ctx, const char* name, int stacksize);
 irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 void irBlockOut (irBlock* block, const char* format, ...);
@@ -122,3 +129,17 @@ void irJump (irBlock* block, irBlock* to);
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse);
 void irCall (irBlock* block, sym* to, irBlock* ret);
 void irCallIndirect (irBlock* block, operand to, irBlock* ret);
+
+/*:::: ::::*/
+
+int irBlockGetPredNo (irFn* fn, irBlock* block);
+int irBlockGetSuccNo (irBlock* block);
+
+/*:::: TRANSFORMATIONS ::::*/
+
+void irBlockDelete (irFn* fn, irBlock* block);
+void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ);
+
+/*:::: ::::*/
+
+void irBlockLevelAnalysis (irCtx* ctx);

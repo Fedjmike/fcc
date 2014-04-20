@@ -57,6 +57,8 @@ void emitter (const ast* Tree, const char* output, const architecture* arch) {
     emitterCtx* ctx = emitterInit(output, arch);
 
     emitterModule(ctx, Tree);
+
+    irBlockLevelAnalysis(ctx->ir);
     irEmit(ctx->ir);
 
     emitterEnd(ctx);

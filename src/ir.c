@@ -7,6 +7,7 @@
 #include "../inc/asm-amd64.h"
 
 #include "stdlib.h"
+#include "string.h"
 #include "stdarg.h"
 
 static void irAddFn (irCtx* ctx, irFn* fn);
@@ -121,7 +122,7 @@ static void irFnDestroy (irFn* fn) {
 }
 
 static void irAddBlock (irFn* fn, irBlock* block) {
-    vectorPush(&fn->blocks, block);
+    block->nthChild = vectorPush(&fn->blocks, block);
 }
 
 /*:::: BLOCK INTERNALS ::::*/
@@ -145,12 +146,23 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
 }
 
 static void irBlockDestroy (irBlock* block) {
+    vectorFree(&block->preds);
+    vectorFree(&block->succs);
+
     vectorFreeObjs(&block->instrs, (vectorDtor) irInstrDestroy);
     irTermDestroy(block->term);
 
     free(block->label);
     free(block->str);
     free(block);
+}
+
+int irBlockGetPredNo (irFn* fn, irBlock* block) {
+    return block->preds.length + (block == fn->prologue ? 1 : 0);
+}
+
+int irBlockGetSuccNo (irBlock* block) {
+    return block->succs.length + (block->term->tag == termCall ? 1 : 0);
 }
 
 void irBlockOut (irBlock* block, const char* format, ...) {
@@ -303,4 +315,64 @@ void irCallIndirect (irBlock* block, operand to, irBlock* ret) {
 
 static void irReturn (irBlock* block) {
     irTermCreate(termReturn, block);
+}
+
+/*:::: TRANSFORMATIONS ::::*/
+
+void irBlockDelete (irFn* fn, irBlock* block) {
+    /*Remove it from the fn's vector*/
+    irBlock* replacement = vectorRemoveReorder(&fn->blocks, block->nthChild);
+    replacement->nthChild = block->nthChild;
+
+    /*Remove it from any preds and succs*/
+
+    for (int i = 0; i < block->preds.length; i++) {
+        irBlock* pred = vectorGet(&block->preds, i);
+
+        int index = vectorFind(&pred->succs, block);
+        vectorRemoveReorder(&pred->succs, index);
+    }
+
+    for (int i = 0; i < block->succs.length; i++) {
+        irBlock* succ = vectorGet(&block->succs, i);
+
+        int index = vectorFind(&succ->preds, block);
+        vectorRemoveReorder(&succ->preds, index);
+    }
+
+    irBlockDestroy(block);
+}
+
+void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ) {
+    /*Combine them by putting everything from the succ into the pred,
+      taking ownership where possible. Then destroy the succ.*/
+
+    /*Cat the instr vectors*/
+    vectorPushFromVector(&pred->instrs, &succ->instrs);
+
+    /*Free the pred's terminal and take the succ's*/
+    irTermDestroy(pred->term);
+    pred->term = succ->term;
+    succ->term = 0;
+
+    /*Cat the strings*/
+
+    int totalLength = pred->length + succ->length-1;
+
+    if (pred->capacity >= totalLength) {
+        strncat(pred->str, succ->str, pred->capacity);
+        pred->length = totalLength;
+
+    } else {
+        char* str = malloc(totalLength);
+        snprintf(str, totalLength, "%s%s", pred->str, succ->str);
+        free(pred->str);
+        pred->str = str;
+    }
+
+    /*Take the succs of the succ*/
+    for (int i = 0; i < succ->succs.length; i++)
+        irBlockLink(pred, vectorGet(&succ->succs, i));
+
+    irBlockDelete(fn, succ);
 }
