@@ -700,10 +700,11 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
-    if (typeIsFunction(Node->l->symbol->dt))
+    if (Node->l->symbol && typeIsFunction(Node->l->symbol->dt)) {
+        emitterValue(ctx, block, Node->l, requestVoid);
         irCall(*block, Node->l->symbol, continuation);
 
-    else {
+    } else {
         operand fn = emitterValue(ctx, block, Node->l, requestAny);
         irCallIndirect(*block, fn, continuation);
         operandFree(fn);
