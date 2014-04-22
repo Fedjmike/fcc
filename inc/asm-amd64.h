@@ -1,4 +1,5 @@
 #include "operand.h"
+#include "stdio.h"
 
 typedef struct asmCtx asmCtx;
 typedef struct irBlock irBlock;
@@ -28,8 +29,10 @@ typedef enum uoperation {
 void asmFilePrologue (asmCtx* ctx);
 void asmFileEpilogue (asmCtx* ctx);
 
-void asmFnPrologue (irCtx* ir, irBlock* block, const char* name, int localSize);
-void asmFnEpilogue (irCtx* ir, irBlock* block, operand labelEnd);
+void asmFnLinkage (FILE* file, const char* name);
+
+void asmFnPrologue (irCtx* ir, irBlock* block, int localSize);
+void asmFnEpilogue (irCtx* ir, irBlock* block);
 
 /**
  * Save and restore a register using the stack
@@ -40,20 +43,23 @@ void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r);
 /**
  * Place a string constant in the rodata section with the given label
  */
-void asmStringConstant (asmCtx* ctx, operand label, const char* str);
+void asmStringConstant (asmCtx* ctx, const char* label, const char* str);
 
 /**
  * Place a previously named label in the output
  */
-void asmLabel (asmCtx* ctx, operand L);
+void asmLabel (asmCtx* ctx, const char* label);
 
-void asmJump (asmCtx* ctx, operand L);
-void asmBranch (asmCtx* ctx, operand Condition, operand L);
+void asmJump (asmCtx* ctx, const char* label);
+void asmBranch (asmCtx* ctx, operand Condition, const char* label);
 
 /**
  * Call a function with the arguments currently on the stack
  */
-void asmCall (irCtx* ir, irBlock* block, operand L);
+void asmCall (asmCtx* ctx, const char* label);
+void asmCallIndirect (asmCtx* ctx, operand fn);
+
+void asmReturn (asmCtx* ctx);
 
 void asmPush (irCtx* ir, irBlock* block, operand L);
 void asmPop (irCtx* ir, irBlock* block, operand L);

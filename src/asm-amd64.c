@@ -23,103 +23,98 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnPrologue (asmCtx* ctx, const char* name, int localSize) {
+void asmFnLinkage (FILE* file, const char* name) {
     /*Symbol, linkage and alignment*/
-    asmOutLn(ctx, ".balign 16");
-    asmOutLn(ctx, ".globl %s", name);
-    asmOutLn(ctx, "%s:", name);
+    fprintf(file, ".balign 16\n");
+    fprintf(file, ".globl %s\n", name);
+    fprintf(file, "%s:\n", name);
+}
+
+void asmFnPrologue (irCtx* ir, irBlock* block, int localSize) {
+    asmCtx* ctx = ir->asm;
 
     /*Register saving, create a new stack frame, stack variables etc*/
 
-    asmPush(ctx, ctx->basePtr);
-    asmMove(ctx, ctx->basePtr, ctx->stackPtr);
+    asmPush(ir, block, ctx->basePtr);
+    asmMove(ir, block, ctx->basePtr, ctx->stackPtr);
 
     if (localSize != 0)
-        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
+        asmBOP(ir, block, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 
     for (int i = 0; i < ctx->arch->calleeSaveRegs.length; i++) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->calleeSaveRegs, i);
-        asmSaveReg(ctx, r);
+        asmSaveReg(ir, block, r);
     }
 }
 
-void asmFnEpilogue (asmCtx* ctx, operand labelEnd) {
-    /*Exit stack frame*/
-    asmOutLn(ctx, "%s:", labelEnd.label);
+void asmFnEpilogue (irCtx* ir, irBlock* block) {
+    asmCtx* ctx = ir->asm;
 
     /*Pop off saved regs in reverse order*/
     for (int i = ctx->arch->calleeSaveRegs.length-1; i >= 0 ; i--) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->calleeSaveRegs, i);
-        asmRestoreReg(ctx, r);
+        asmRestoreReg(ir, block, r);
     }
 
-    asmMove(ctx, ctx->stackPtr, ctx->basePtr);
-    asmPop(ctx, ctx->basePtr);
-    asmOutLn(ctx, "ret");
+    asmMove(ir, block, ctx->stackPtr, ctx->basePtr);
+    asmPop(ir, block, ctx->basePtr);
 }
 
-void asmSaveReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "push %s", regIndexGetName(r, ctx->arch->wordsize));
+void asmSaveReg (irCtx* ir, irBlock* block, regIndex r) {
+    (void) block;
+    asmCtx* ctx = ir->asm;
+    irBlockOut(block, "push %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
-void asmRestoreReg (asmCtx* ctx, regIndex r) {
-    asmOutLn(ctx, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
+void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r) {
+    (void) block;
+    asmCtx* ctx = ir->asm;
+    irBlockOut(block, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
-void asmStringConstant (struct asmCtx* ctx, operand label, const char* str) {
+void asmStringConstant (asmCtx* ctx, const char* label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
-    asmOutLn(ctx, "%s:", label.label);
+    asmOutLn(ctx, "%s:", label);
     asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
     asmOutLn(ctx, ".section .text");
 }
 
-void asmLabel (asmCtx* ctx, operand L) {
-    asmOutLn(ctx, "%s:", L.label);
+void asmLabel (asmCtx* ctx, const char* label) {
+    asmOutLn(ctx, "\t%s:", label);
 }
 
-void asmJump (asmCtx* ctx, operand L) {
-    if (L.tag == operandLabel)
-        asmOutLn(ctx, "jmp %s", L.label);
-
-    else {
-        char* LStr = operandToStr(L);
-        asmOutLn(ctx, "jmp %s", LStr);
-        free(LStr);
-    }
+void asmJump (asmCtx* ctx, const char* label) {
+    asmOutLn(ctx, "jmp %s", label);
 }
 
-void asmBranch (asmCtx* ctx, operand Condition, operand L) {
+void asmBranch (asmCtx* ctx, operand Condition, const char* label) {
     char* CStr = operandToStr(Condition);
-
-    if (L.tag == operandLabel)
-        asmOutLn(ctx, "j%s %s", CStr, L.label);
-
-    else {
-        char* LStr = operandToStr(L);
-        asmOutLn(ctx, "j%s %s", CStr, LStr);
-        free(LStr);
-    }
-
+    asmOutLn(ctx, "j%s %s", CStr, label);
     free(CStr);
 }
 
-void asmCall (asmCtx* ctx, operand L) {
-    if (L.tag == operandLabel)
-        asmOutLn(ctx, "call %s", L.label);
-
-    else {
-        char* LStr = operandToStr(L);
-        asmOutLn(ctx, "call %s", LStr);
-        free(LStr);
-    }
+void asmCall (asmCtx* ctx, const char* label) {
+    asmOutLn(ctx, "call %s", label);
 }
 
-void asmPush (asmCtx* ctx, operand L) {
+void asmCallIndirect (asmCtx* ctx, operand L) {
+    char* LStr = operandToStr(L);
+    asmOutLn(ctx, "call %s", LStr);
+    free(LStr);
+}
+
+void asmReturn (asmCtx* ctx) {
+    asmOutLn(ctx, "ret");
+}
+
+void asmPush (irCtx* ir, irBlock* block, operand L) {
+    asmCtx* ctx = ir->asm;
+
     /*Flags*/
     if (L.tag == operandFlags) {
-        asmPush(ctx, operandCreateLiteral(1));
+        asmPush(ir, block, operandCreateLiteral(1));
         operand top = operandCreateMem(ctx->stackPtr.base, 0, ctx->arch->wordsize);
-        asmConditionalMove(ctx, L, top, operandCreateLiteral(0));
+        asmConditionalMove(ir, block, L, top, operandCreateLiteral(0));
 
     /*Larger than word*/
     } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
@@ -135,40 +130,49 @@ void asmPush (asmCtx* ctx, operand L) {
 
         for (int i = 0; i < size; i += ctx->arch->wordsize) {
             L.offset -= ctx->arch->wordsize;
-            asmPush(ctx, L);
+            asmPush(ir, block, L);
         }
 
     /*Smaller than a word*/
     } else if (L.tag == operandMem && operandGetSize(ctx->arch, L) < ctx->arch->wordsize) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
-        asmMove(ctx, intermediate, L);
-        asmPush(ctx, intermediate);
+        asmMove(ir, block, intermediate, L);
+        asmPush(ir, block, intermediate);
         operandFree(intermediate);
 
     } else {
         char* LStr = operandToStr(L);
-        asmOutLn(ctx, "push %s", LStr);
+        irBlockOut(block, "push %s", LStr);
         free(LStr);
     }
 }
 
-void asmPop (asmCtx* ctx, operand L) {
+void asmPop (irCtx* ir, irBlock* block, operand L) {
+    (void) ir;
+    //asmCtx* ctx = ir->asm;
+
     char* LStr = operandToStr(L);
-    asmOutLn(ctx, "pop %s", LStr);
+    irBlockOut(block, "pop %s", LStr);
     free(LStr);
 }
 
-void asmPushN (asmCtx* ctx, int n) {
+void asmPushN (irCtx* ir, irBlock* block, int n) {
+    asmCtx* ctx = ir->asm;
+
     if (n)
-        asmBOP(ctx, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+        asmBOP(ir, block, bopSub, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
-void asmPopN (asmCtx* ctx, int n) {
+void asmPopN (irCtx* ir, irBlock* block, int n) {
+    asmCtx* ctx = ir->asm;
+
     if (n)
-        asmBOP(ctx, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
+        asmBOP(ir, block, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
-void asmMove (asmCtx* ctx, operand Dest, operand Src) {
+void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
+    asmCtx* ctx = ir->asm;
+
     if (Dest.tag == operandInvalid || Src.tag == operandInvalid)
         return;
 
@@ -188,26 +192,26 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
         for (int i = 0;
              i+chunk <= size;
              i += chunk, Dest.offset += chunk, Src.offset += chunk)
-            asmMove(ctx, Dest, Src);
+            asmMove(ir, block, Dest, Src);
 
         /*Were the operands not an even multiple of the chunk size?*/
         if (size % chunk != 0) {
             /*Final chunk size is the remainder*/
             Dest.size = Src.size = size % chunk;
-            asmMove(ctx, Dest, Src);
+            asmMove(ir, block, Dest, Src);
         }
 
     /*Both memory operands*/
     } else if (Dest.tag == operandMem && Src.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
-        asmMove(ctx, intermediate, Src);
-        asmMove(ctx, Dest, intermediate);
+        asmMove(ir, block, intermediate, Src);
+        asmMove(ir, block, Dest, intermediate);
         operandFree(intermediate);
 
     /*Flags*/
     } else if (Src.tag == operandFlags) {
-        asmMove(ctx, Dest, operandCreateLiteral(1));
-        asmConditionalMove(ctx, Src, Dest, operandCreateLiteral(0));
+        asmMove(ir, block, Dest, operandCreateLiteral(1));
+        asmConditionalMove(ir, block, Src, Dest, operandCreateLiteral(0));
 
     } else {
         char* DestStr = operandToStr(Dest);
@@ -215,74 +219,92 @@ void asmMove (asmCtx* ctx, operand Dest, operand Src) {
 
         if (operandGetSize(ctx->arch, Dest) > operandGetSize(ctx->arch, Src) &&
             Src.tag != operandLiteral)
-            asmOutLn(ctx, "movzx %s, %s", DestStr, SrcStr);
+            irBlockOut(block, "movzx %s, %s", DestStr, SrcStr);
 
         else
-            asmOutLn(ctx, "mov %s, %s", DestStr, SrcStr);
+            irBlockOut(block, "mov %s, %s", DestStr, SrcStr);
 
         free(DestStr);
         free(SrcStr);
     }
 }
 
-void asmConditionalMove (struct asmCtx* ctx, operand Cond, operand Dest, operand Src) {
-    operand FalseLabel = asmCreateLabel(ctx, labelEndIf);
-    asmBranch(ctx, operandCreateFlags(conditionNegate(Cond.condition)), FalseLabel);
-    asmMove(ctx, Dest, Src);
-    asmLabel(ctx, FalseLabel);
+void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src) {
+    (void) ir;
+    //asmCtx* ctx = ir->asm;
+
+    static int labelNo = 0;
+    char falseLabel[10];
+    sprintf(falseLabel, "..%X", labelNo++);
+
+    Cond.condition = conditionNegate(Cond.condition);
+    char* cond = operandToStr(Cond);
+
+    irBlockOut(block, "j%s %s", cond, falseLabel);
+    asmMove(ir, block, Dest, Src);
+    irBlockOut(block, "%s:", falseLabel);
+
+    free(cond);
 }
 
-void asmEvalAddress (asmCtx* ctx, operand L, operand R) {
+void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
+    asmCtx* ctx = ir->asm;
+
     if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
-        asmEvalAddress(ctx, intermediate, R);
-        asmMove(ctx, L, intermediate);
+        asmEvalAddress(ir, block, intermediate, R);
+        asmMove(ir, block, L, intermediate);
         operandFree(intermediate);
 
     } else {
         char* LStr = operandToStr(L);
         R.size = ctx->arch->wordsize;
         char* RStr = operandToStr(R);
-        asmOutLn(ctx, "lea %s, %s", LStr, RStr);
+        irBlockOut(block, "lea %s, %s", LStr, RStr);
         free(LStr);
         free(RStr);
     }
 }
 
-void asmCompare (asmCtx* ctx, operand L, operand R) {
+void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
+    asmCtx* ctx = ir->asm;
+
     if (   (L.tag == operandMem && R.tag == operandMem)
         || (L.tag == operandLiteral && R.tag == operandLiteral)) {
         operand intermediate = operandCreateReg(regAlloc(L.tag == operandMem ? max(L.size, R.size)
                                                                              : ctx->arch->wordsize));
-        asmMove(ctx, intermediate, L);
-        asmCompare(ctx, intermediate, R);
+        asmMove(ir, block, intermediate, L);
+        asmCompare(ir, block, intermediate, R);
         operandFree(intermediate);
 
     } else if (L.tag == operandLiteral) {
-        asmCompare(ctx, R, L);
+        asmCompare(ir, block, R, L);
 
     } else {
         char* LStr = operandToStr(L);
         char* RStr = operandToStr(R);
-        asmOutLn(ctx, "cmp %s, %s", LStr, RStr);
+        irBlockOut(block, "cmp %s, %s", LStr, RStr);
         free(LStr);
         free(RStr);
     }
 }
 
-void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
+void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R) {
+    (void) ir;
+    //asmCtx* ctx = ir->asm;
+
     if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
-        asmMove(ctx, intermediate, R);
-        asmBOP(ctx, Op, L, intermediate);
+        asmMove(ir, block, intermediate, R);
+        asmBOP(ir, block, Op, L, intermediate);
         operandFree(intermediate);
 
     /*imul mem, <...> isnt a thing
       Sucks, right?*/
     } else if (Op == bopMul && L.tag == operandMem) {
         if (R.tag == operandReg) {
-            asmBOP(ctx, bopMul, R, L);
-            asmMove(ctx, L, R);
+            asmBOP(ir, block, bopMul, R, L);
+            asmMove(ir, block, L, R);
             operandFree(R);
 
         } else {
@@ -291,12 +313,12 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
             char* LStr = operandToStr(L);
             char* RStr = operandToStr(R);
             char* tmpStr = operandToStr(tmp);
-            asmOutLn(ctx, "imul %s, %s, %s", tmpStr, LStr, RStr);
+            irBlockOut(block, "imul %s, %s, %s", tmpStr, LStr, RStr);
             free(tmpStr);
             free(LStr);
             free(RStr);
 
-            asmMove(ctx, L, tmp);
+            asmMove(ir, block, L, tmp);
             operandFree(tmp);
         }
 
@@ -314,7 +336,7 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
                             Op == bopShL ? "sal" : 0;
 
         if (OpStr)
-            asmOutLn(ctx, "%s %s, %s", OpStr, LStr, RStr);
+            irBlockOut(block, "%s %s, %s", OpStr, LStr, RStr);
 
         else
             printf("asmBOP(): unhandled operator '%d'\n", Op);
@@ -324,23 +346,29 @@ void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R) {
     }
 }
 
-void asmDivision (asmCtx* ctx, operand R) {
+void asmDivision (irCtx* ir, irBlock* block, operand R) {
+    (void) ir;
+    //asmCtx* ctx = ir->asm;
+
     char* RStr = operandToStr(R);
-    asmOutLn(ctx, "idiv %s", RStr);
+    irBlockOut(block, "idiv %s", RStr);
     free(RStr);
 }
 
-void asmUOP (asmCtx* ctx, uoperation Op, operand R) {
+void asmUOP (irCtx* ir, irBlock* block, uoperation Op, operand R) {
+    (void) ir;
+    //asmCtx* ctx = ir->asm;
+
     char* RStr = operandToStr(R);
 
     if (Op == uopInc)
-        asmOutLn(ctx, "add %s, 1", RStr);
+        irBlockOut(block, "add %s, 1", RStr);
 
     else if (Op == uopDec)
-        asmOutLn(ctx, "sub %s, 1", RStr);
+        irBlockOut(block, "sub %s, 1", RStr);
 
     else if (Op == uopNeg || Op == uopBitwiseNot)
-        asmOutLn(ctx, "%s %s", Op == uopNeg ? "neg" : "not", RStr);
+        irBlockOut(block, "%s %s", Op == uopNeg ? "neg" : "not", RStr);
 
     else
         printf("asmUOP(): unhandled operator tag, %d", Op);
