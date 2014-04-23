@@ -95,10 +95,11 @@ static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term, irBlock* nextblock
         asmCall(ctx->asm, term->toAsSym->ident);
         jumpTo = term->ret;
 
-    } else if (term->tag == termCallIndirect)
+    } else if (term->tag == termCallIndirect) {
         asmCallIndirect(ctx->asm, term->toAsOperand);
+        jumpTo = term->ret;
 
-    else if (term->tag == termReturn)
+    } else if (term->tag == termReturn)
         asmReturn(ctx->asm);
 
     else
