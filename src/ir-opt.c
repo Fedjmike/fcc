@@ -1,5 +1,7 @@
 #include "../inc/ir.h"
 
+#include "stdio.h"
+
 static bool ubrBlock (irFn* fn, irBlock* block);
 static bool lbcBlock (irFn* fn, irBlock* block);
 
@@ -44,8 +46,11 @@ void irBlockLevelAnalysis (irCtx* ctx) {
 }
 
 static bool ubrBlock (irFn* fn, irBlock* block) {
+    //printf("block: %s...\n", block->label);
+
     /*No predecessors => unreachable code => delete*/
     if (irBlockGetPredNo(fn, block) == 0) {
+        //printf("... deleting\n");
         irBlockDelete(fn, block);
         return true;
     }
@@ -54,6 +59,8 @@ static bool ubrBlock (irFn* fn, irBlock* block) {
 }
 
 static bool lbcBlock (irFn* fn, irBlock* block) {
+    //printf("block: %s...\n", block->label);
+
     irBlock *pred = vectorGet(&block->preds, 0),
             *succ = vectorGet(&block->succs, 0);
 
@@ -61,6 +68,7 @@ static bool lbcBlock (irFn* fn, irBlock* block) {
       => combine*/
     if (   irBlockGetSuccNo(block) == 1
         && irBlockGetPredNo(fn, succ) == 1) {
+        //printf("... combining with succ %s\n", succ->label);
         irBlocksCombine(fn, block, succ);
         return true;
     }
@@ -68,6 +76,7 @@ static bool lbcBlock (irFn* fn, irBlock* block) {
     /*Same deal with our predecessor*/
     if (   irBlockGetPredNo(fn, block) == 1
         && irBlockGetSuccNo(pred) == 1) {
+        //printf("... combining with pred %s\n", pred->label);
         irBlocksCombine(fn, pred, block);
         return true;
     }

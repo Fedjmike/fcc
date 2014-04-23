@@ -257,6 +257,7 @@ const char* literalTagGetStr (literalTag tag) {
     else if (tag == literalBool) return "literalBool";
     else if (tag == literalCompound) return "literalCompound";
     else if (tag == literalInit) return "literalInit";
+    else if (tag == literalLambda) return "literalLambda";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

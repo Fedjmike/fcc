@@ -2,8 +2,14 @@
 
 typedef struct ast ast;
 typedef struct irBlock irBlock;
+typedef struct irFn irFn;
 typedef struct emitterCtx emitterCtx;
 typedef enum regIndex regIndex;
+
+irFn* emitterSetFn (emitterCtx* ctx, irFn* fn);
+irBlock* emitterSetReturnTo (emitterCtx* ctx, irBlock* block);
+irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block);
+irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block);
 
 operand emitterGetInReg (emitterCtx* ctx, irBlock* block, operand src, int size);
 

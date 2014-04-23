@@ -261,15 +261,26 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
 
     /*Return type, if any, matches?*/
 
-    if (Node->r) {
-        const type* R = analyzerValue(ctx, Node->r);
+    if (ctx->fnctx.returnType) {
+        if (Node->r) {
+            const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsCompatible(R, ctx->fnctx.returnType))
-            errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
+            if (!typeIsCompatible(R, ctx->fnctx.returnType))
+                errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
 
-    } else if (!typeIsVoid(ctx->fnctx.returnType)) {
-        Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
-        errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType);
+        } else if (!typeIsVoid(ctx->fnctx.returnType)) {
+            Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
+            errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType);
+        }
+
+    /*No known return type because we're in a lambda
+      Infer the type from the expression given. Any further returns will be
+      checked against this, and it will also be used for the type of the lambda
+      itself.*/
+    } else {
+        ctx->fnctx.returnType =   Node->r
+                                ? typeDeepDuplicate(analyzerValue(ctx, Node->r))
+                                : typeCreateBasic(ctx->types[builtinVoid]);
     }
 
     debugLeave();

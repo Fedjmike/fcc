@@ -15,3 +15,6 @@ typedef struct emitterCtx {
 } emitterCtx;
 
 void emitter (const ast* Tree, const char* output, const architecture* arch);
+
+int emitterFnAllocateStack (const architecture* arch, sym* fn);
+irBlock* emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation);

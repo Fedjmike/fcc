@@ -11,6 +11,8 @@
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-decl.h"
 
+#include "stdlib.h"
+
 static const type* analyzerBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
 static const type* analyzerLogicalBOP (analyzerCtx* ctx, ast* Node);
@@ -26,6 +28,7 @@ static const type* analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static const type* analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
 static const type* analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected);
+static const type* analyzerLambda (analyzerCtx* ctx, ast* Node);
 
 static bool isNodeLvalue (const ast* Node) {
     if (Node->tag == astBOP) {
@@ -70,10 +73,10 @@ static bool isNodeLvalue (const ast* Node) {
         return    (Node->litTag == literalIdent && !typeIsFunction(Node->dt))
                || Node->litTag == literalCompound;
 
-    else if (Node->tag == astInvalid) {
+    else if (Node->tag == astInvalid)
         return true;
 
-    } else {
+    else {
         debugErrorUnhandled("isNodeLvalue", "AST tag", astTagGetStr(Node->tag));
         return true;
     }
@@ -538,6 +541,9 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
     } else if (Node->litTag == literalCompound) {
         analyzerCompoundLiteral(ctx, Node);
 
+    } else if (Node->litTag == literalLambda) {
+        analyzerLambda(ctx, Node);
+
     } else if (Node->litTag == literalInit) {
         errorCompoundLiteralWithoutType(ctx, Node);
         Node->dt = typeCreateInvalid();
@@ -653,6 +659,51 @@ static const type* analyzerElementInit (analyzerCtx* ctx, ast* Node, const type*
     /*Regular value*/
     else
         analyzerValue(ctx, Node);
+
+    debugLeave();
+
+    return Node->dt;
+}
+
+static analyzerFnCtx analyzerPushLambda (analyzerCtx* ctx, sym* fn) {
+    analyzerFnCtx old = ctx->fnctx;
+    ctx->fnctx.fn = fn;
+    ctx->fnctx.returnType = 0;
+    return old;
+}
+
+static const type* analyzerLambda (analyzerCtx* ctx, ast* Node) {
+    debugEnter("Lambda");
+
+    /*Params*/
+
+    type** paramTypes = calloc(Node->children, sizeof(type*));
+    int i = 0;
+
+    for (ast* param = Node->firstChild;
+         param;
+         param = param->nextSibling) {
+        analyzerParam(ctx, param);
+        paramTypes[i++] = typeDeepDuplicate(param->dt);
+    }
+
+    /*Body*/
+
+    type* ret;
+
+    if (Node->r->tag == astCode) {
+        analyzerFnCtx old = analyzerPushLambda(ctx, Node->symbol);
+        analyzerNode(ctx, Node->r);
+        /*Take ownership of the ret type which has been inferred from the code*/
+        ret = ctx->fnctx.returnType ? ctx->fnctx.returnType : typeCreateBasic(ctx->types[builtinVoid]);
+        ctx->fnctx = old;
+
+    } else
+        ret = typeDeepDuplicate(analyzerValue(ctx, Node->r));
+
+    /*Result*/
+    Node->dt = typeCreateFunction(ret, paramTypes, Node->children, false);
+    Node->symbol->dt = typeDeepDuplicate(Node->dt);
 
     debugLeave();
 

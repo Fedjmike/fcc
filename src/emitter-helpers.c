@@ -10,6 +10,30 @@
 
 #include "stdlib.h"
 
+irFn* emitterSetFn (emitterCtx* ctx, irFn* fn) {
+    irFn* old = ctx->curFn;
+    ctx->curFn = fn;
+    return old;
+}
+
+irBlock* emitterSetReturnTo (emitterCtx* ctx, irBlock* block) {
+    irBlock* old = ctx->returnTo;
+    ctx->returnTo = block;
+    return old;
+}
+
+irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block) {
+    irBlock* old = ctx->breakTo;
+    ctx->breakTo = block;
+    return old;
+}
+
+irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
+    irBlock* old = ctx->continueTo;
+    ctx->continueTo = block;
+    return old;
+}
+
 operand emitterGetInReg (emitterCtx* ctx,  irBlock* block, operand src, int size) {
     if (src.tag == operandReg)
         return src;

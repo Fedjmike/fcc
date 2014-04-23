@@ -20,13 +20,9 @@
 #include "string.h"
 #include "stdlib.h"
 
-static irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block);
-static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block);
-
 static void emitterModule (emitterCtx* ctx, const ast* Node);
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node);
 
-static irBlock* emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation);
 static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node);
 
 static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node);
@@ -108,38 +104,42 @@ static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int 
     return offset;
 }
 
+int emitterFnAllocateStack (const architecture* arch, sym* fn) {
+    /*Two words already on the stack:
+      return ptr and saved base pointer*/
+    int lastOffset = 2*arch->wordsize;
+
+    /*Returning through temporary?*/
+    if (typeGetSize(arch, typeGetReturn(fn->dt)) > arch->wordsize)
+        lastOffset += arch->wordsize;
+
+    /*Assign offsets to all the parameters*/
+    for (int n = 0; n < fn->children.length; n++) {
+        sym* param = vectorGet(&fn->children, n);
+
+        if (param->tag != symParam)
+            break;
+
+        param->offset = lastOffset;
+        lastOffset += typeGetSize(arch, param->dt);
+
+        reportSymbol(param);
+    }
+
+    /*Allocate stack space for all the auto variables
+      Stack grows down, so the amount is the negation of the last offset*/
+    return -emitterScopeAssignOffsets(arch, fn, 0);
+}
+
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
     if (Node->symbol->label == 0)
         ctx->arch->symbolMangler(Node->symbol);
 
-    /*Two words already on the stack:
-      return ptr and saved base pointer*/
-    int lastOffset = 2*ctx->arch->wordsize;
+    int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
 
-    /*Returning through temporary?*/
-    if (typeGetSize(ctx->arch, typeGetReturn(Node->symbol->dt)) > ctx->arch->wordsize)
-        lastOffset += ctx->arch->wordsize;
-
-    /*Asign offsets to all the parameters*/
-    for (int n = 0; n < Node->symbol->children.length; n++) {
-        sym* Symbol = vectorGet(&Node->symbol->children, n);
-
-        if (Symbol->tag != symParam)
-            break;
-
-        Symbol->offset = lastOffset;
-        lastOffset += typeGetSize(ctx->arch, Symbol->dt);
-
-        reportSymbol(Symbol);
-    }
-
-    /*Allocate stack space for all the auto variables
-      Stack grows down, so the amount is the negation of the last offset*/
-    int stacksize = -emitterScopeAssignOffsets(ctx->arch, Node->symbol, 0);
-
-    /**/
+    /* */
     irFn* fn = irFnCreate(ctx->ir, Node->symbol->label, stacksize);
     ctx->curFn = fn;
     ctx->returnTo = fn->epilogue;
@@ -149,7 +149,7 @@ static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 }
 
-static irBlock* emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
+irBlock* emitterCode (emitterCtx* ctx, irBlock* block, const ast* Node, irBlock* continuation) {
     if (Node)
         for (ast* Current = Node->firstChild;
              Current;
@@ -209,52 +209,10 @@ static irBlock* emitterLine (emitterCtx* ctx, irBlock* block, const ast* Node) {
 
 static void emitterReturn (emitterCtx* ctx, irBlock* block, const ast* Node) {
     /*Non void return?*/
-    if (Node->r) {
-        operand Ret = emitterValue(ctx, &block, Node->r, requestValue);
-        int retSize = typeGetSize(ctx->arch, Node->r->dt);
-
-        bool retInTemp = retSize > ctx->arch->wordsize;
-
-        /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
-        if (retInTemp) {
-            operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
-
-            /*Dereference the temporary*/
-            asmMove(ctx->ir, block, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
-            /*Copy over the value*/
-            asmMove(ctx->ir, block, operandCreateMem(tempRef.base, 0, retSize), Ret);
-            operandFree(Ret);
-
-            /*Return the temporary reference*/
-            Ret = tempRef;
-        }
-
-        reg* rax;
-
-        /*Returning either the return value itself or a reference to it*/
-        if ((rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize)) != 0) {
-            asmMove(ctx->ir, block, operandCreateReg(rax), Ret);
-            regFree(rax);
-
-        } else if (Ret.base != regGet(regRAX))
-            debugError("emitterLine", "unable to allocate RAX for return");
-
-        operandFree(Ret);
-    }
+    if (Node->r)
+        emitterValue(ctx, &block, Node->r, requestReturn);
 
     irJump(block, ctx->returnTo);
-}
-
-static irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block) {
-    irBlock* old = ctx->breakTo;
-    ctx->breakTo = block;
-    return old;
-}
-
-static irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
-    irBlock* old = ctx->continueTo;
-    ctx->continueTo = block;
-    return old;
 }
 
 static irBlock* emitterBranch (emitterCtx* ctx, irBlock* block, const ast* Node) {

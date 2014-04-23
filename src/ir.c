@@ -96,7 +96,7 @@ static char* irCreateLabel (irCtx* ctx) {
 
 irFn* irFnCreate (irCtx* ctx, const char* name, int stacksize) {
     irFn* fn = malloc(sizeof(irFn));
-    fn->name = strdup(name);
+    fn->name = name ? strdup(name) : irCreateLabel(ctx);
     vectorInit(&fn->blocks, irFnBlockNo);
 
     /*These will get added to fn->blocks, which now owns them*/
@@ -162,7 +162,7 @@ int irBlockGetPredNo (irFn* fn, irBlock* block) {
 }
 
 int irBlockGetSuccNo (irBlock* block) {
-    return block->succs.length + (block->term->tag == termCall ? 1 : 0);
+    return block->succs.length + (block->term->tag == termCall || block->term->tag == termCallIndirect ? 1 : 0);
 }
 
 void irBlockOut (irBlock* block, const char* format, ...) {

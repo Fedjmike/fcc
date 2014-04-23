@@ -39,6 +39,7 @@ static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node)
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
+static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node);
 
 operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, block, Node, request, 0);
@@ -90,17 +91,10 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     else if (Node->tag == astSizeof)
         Value = emitterSizeof(ctx, block, Node);
 
-    else if (Node->tag == astLiteral) {
-        if (Node->litTag == literalIdent)
-            Value = emitterSymbol(ctx, block, Node);
+    else if (Node->tag == astLiteral)
+        Value = emitterLiteral(ctx, block, Node);
 
-        else if (Node->litTag == literalCompound)
-            Value = emitterCompoundLiteral(ctx, block, Node);
-
-        else
-            Value = emitterLiteral(ctx, block, Node);
-
-    } else {
+    else {
         debugErrorUnhandled("emitterValueImpl", "AST tag", astTagGetStr(Node->tag));
         Value = operandCreate(operandUndefined);
         request = requestAny;
@@ -184,6 +178,39 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
         } else
             Dest = Value;
 
+    /*Return space*/
+    } else if (request == requestReturn) {
+        int retSize = typeGetSize(ctx->arch, Node->dt);
+
+        bool retInTemp = retSize > ctx->arch->wordsize;
+
+        /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
+        if (retInTemp) {
+            operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
+
+            /*Dereference the temporary*/
+            asmMove(ctx->ir, *block, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
+            /*Copy over the value*/
+            asmMove(ctx->ir, *block, operandCreateMem(tempRef.base, 0, retSize), Value);
+            operandFree(Value);
+
+            /*Return the temporary reference*/
+            Value = tempRef;
+        }
+
+        reg* rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize);
+
+        /*Return in RAX either the return value itself or a reference to it*/
+        if (rax != 0) {
+            asmMove(ctx->ir, *block, operandCreateReg(rax), Value);
+            regFree(rax);
+
+        } else if (Value.base != regGet(regRAX))
+            debugError("emitterValueImpl", "unable to allocate RAX for return");
+
+        operandFree(Value);
+        Dest = operandCreateVoid();
+
     /*Push onto stack*/
     } else if (request == requestStack) {
         if (Value.tag != operandStack) {
@@ -200,7 +227,6 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
         } else
             Dest = Value;
-
     }
 
     return Dest;
@@ -822,8 +848,6 @@ static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node)
 }
 
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    (void) ctx;
-
     debugEnter("Literal");
 
     operand Value;
@@ -839,6 +863,15 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
 
     else if (Node->litTag == literalStr)
         Value = irStringConstant(ctx->ir, (char*) Node->literal);
+
+    else if (Node->litTag == literalIdent)
+        Value = emitterSymbol(ctx, block, Node);
+
+    else if (Node->litTag == literalCompound)
+        Value = emitterCompoundLiteral(ctx, block, Node);
+
+    else if (Node->litTag == literalLambda)
+        Value = emitterLambda(ctx, block, Node);
 
     else {
         debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));
@@ -902,6 +935,8 @@ void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, ope
     /*Scalar*/
     } else
         emitterValueSuggest(ctx, block, Node->firstChild, &base);
+
+    debugLeave();
 }
 
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L) {
@@ -916,4 +951,52 @@ static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Nod
     /*Regular value*/
     else
         emitterValueSuggest(ctx, block, Node, &L);
+}
+
+static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    (void) block;
+
+    debugEnter("Lambda");
+
+    int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
+
+    /*IR representation*/
+    irFn* fn = irFnCreate(ctx->ir, 0, stacksize);
+    irFn* oldFn = emitterSetFn(ctx, fn);
+    irBlock* oldReturnTo = emitterSetReturnTo(ctx, fn->epilogue);
+
+    free(Node->symbol->ident);
+    Node->symbol->ident = strdup(fn->name);
+
+    /*Body*/
+
+    irBlock* body = fn->entryPoint;
+
+    if (Node->r->tag == astCode)
+        emitterCode(ctx, body, Node->r, fn->epilogue);
+
+    else {
+        operand ret = emitterValue(ctx, &body, Node->r, requestAny);
+        reg* rax = regRequest(regRAX, ctx->arch->wordsize);
+
+        if (rax != 0) {
+            asmMove(ctx->ir, body, operandCreateReg(rax), ret);
+            regFree(rax);
+
+        } else if (ret.base != regGet(regRAX))
+            debugError("emitterLambda", "unable to allocate RAX for return");
+
+        irJump(body, fn->epilogue);
+    }
+
+    /*Pop IR context*/
+    ctx->curFn = oldFn;
+    ctx->returnTo = oldReturnTo;
+
+    /*Return the label*/
+    operand Value = operandCreateLabel(fn->name);
+
+    debugLeave();
+
+    return Value;
 }

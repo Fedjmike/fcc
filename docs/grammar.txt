@@ -27,7 +27,10 @@ Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
-         | <Int> | <Bool> | <Str> | <Char> | <Ident>
+         | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
+Lambda = "[" "]"
+         "(" [ Param [{ "," Param }] ] ")"
+         ( "{" Code "}" ) | ( "(" Value ")" )
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )

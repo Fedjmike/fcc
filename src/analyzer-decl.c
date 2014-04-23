@@ -13,8 +13,6 @@
 
 #include "stdlib.h"
 
-static void analyzerParam (analyzerCtx* ctx, ast* Node);
-
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
 static void analyzerStruct (analyzerCtx* ctx, ast* Node);
 static void analyzerUnion (analyzerCtx* ctx, ast* Node);
@@ -64,7 +62,7 @@ const type* analyzerType (analyzerCtx* ctx, struct ast* Node) {
     return Node->dt;
 }
 
-static void analyzerParam (analyzerCtx* ctx, ast* Node) {
+void analyzerParam (analyzerCtx* ctx, ast* Node) {
     debugEnter("Param");
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);

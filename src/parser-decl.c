@@ -14,7 +14,6 @@
 
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);
-static ast* parserParam (parserCtx* ctx, bool inDecl);
 
 static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
@@ -220,7 +219,7 @@ static ast* parserEnumField (parserCtx* ctx) {
  * DeclExpr is told to accept but not require identifiers and symbol
  * creation if and only if inDecl is true.
  */
-static ast* parserParam (parserCtx* ctx, bool inDecl) {
+ast* parserParam (parserCtx* ctx, bool inDecl) {
     debugEnter("Param");
 
     tokenLocation loc = ctx->location;
