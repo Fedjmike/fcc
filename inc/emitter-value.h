@@ -14,6 +14,7 @@ typedef enum emitterRequest {
     requestValue,
     requestArray,
     requestFlags,
+    requestReturn,
     requestStack
 } emitterRequest;
 

@@ -193,6 +193,39 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
         } else
             Dest = Value;
 
+    /*Return space*/
+    } else if (request == requestReturn) {
+        int retSize = typeGetSize(ctx->arch, Node->dt);
+
+        bool retInTemp = retSize > ctx->arch->wordsize;
+
+        /*Larger than word size ret => copy into caller allocated temporary pushed after args*/
+        if (retInTemp) {
+            operand tempRef = operandCreateReg(regAlloc(ctx->arch->wordsize));
+
+            /*Dereference the temporary*/
+            asmMove(ctx->Asm, tempRef, operandCreateMem(&regs[regRBP], 2*ctx->arch->wordsize, ctx->arch->wordsize));
+            /*Copy over the value*/
+            asmMove(ctx->Asm, operandCreateMem(tempRef.base, 0, retSize), Value);
+            operandFree(Value);
+
+            /*Return the temporary reference*/
+            Value = tempRef;
+        }
+
+        reg* rax = regRequest(regRAX, retInTemp ? ctx->arch->wordsize : retSize);
+
+        /*Return in RAX either the return value itself or a reference to it*/
+        if (rax != 0) {
+            asmMove(ctx->Asm, operandCreateReg(rax), Value);
+            regFree(rax);
+
+        } else if (Value.base != regGet(regRAX))
+            debugError("emitterValueImpl", "unable to allocate RAX for return");
+
+        operandFree(Value);
+        Dest = operandCreateVoid();
+
     /*Push onto stack*/
     } else if (request == requestStack) {
         if (Value.tag != operandStack) {
