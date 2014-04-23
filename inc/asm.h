@@ -16,7 +16,9 @@ typedef enum labelTag {
     labelContinue,
     labelBreak,
     labelShortCircuit,
-    labelROData
+    labelROData,
+    labelLambda,
+    labelPostLambda
 } labelTag;
 
 /**

@@ -46,6 +46,7 @@ static operand emitterSymbol (emitterCtx* ctx, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, const ast* Node, operand L);
+static operand emitterLambda (emitterCtx* ctx, const ast* Node);
 
 operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, Node, request, 0);
@@ -99,17 +100,10 @@ static operand emitterValueImpl (emitterCtx* ctx, const ast* Node,
     else if (Node->tag == astSizeof)
         Value = emitterSizeof(ctx, Node);
 
-    else if (Node->tag == astLiteral) {
-        if (Node->litTag == literalIdent)
-            Value = emitterSymbol(ctx, Node);
+    else if (Node->tag == astLiteral)
+        Value = emitterLiteral(ctx, Node);
 
-        else if (Node->litTag == literalCompound)
-            Value = emitterCompoundLiteral(ctx, Node);
-
-        else
-            Value = emitterLiteral(ctx, Node);
-
-    } else {
+    else {
         debugErrorUnhandled("emitterValueImpl", "AST tag", astTagGetStr(Node->tag));
         Value = operandCreate(operandUndefined);
         request = requestAny;
@@ -893,7 +887,16 @@ static operand emitterLiteral (emitterCtx* ctx, const ast* Node) {
         Value.tag = operandLabelOffset;
         asmStringConstant(ctx->Asm, Value, (char*) Node->literal);
 
-    } else {
+    } else if (Node->litTag == literalIdent)
+        Value = emitterSymbol(ctx, Node);
+
+    else if (Node->litTag == literalCompound)
+        Value = emitterCompoundLiteral(ctx, Node);
+
+    else if (Node->litTag == literalLambda)
+        Value = emitterLambda(ctx, Node);
+
+    else {
         debugErrorUnhandled("emitterLiteral", "literal tag", literalTagGetStr(Node->litTag));
         Value = operandCreateInvalid();
     }
@@ -955,6 +958,8 @@ void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base) {
     /*Scalar*/
     } else
         emitterValueSuggest(ctx, Node->firstChild, &base);
+
+    debugLeave();
 }
 
 static void emitterElementInit (emitterCtx* ctx, const ast* Node, operand L) {
@@ -969,4 +974,49 @@ static void emitterElementInit (emitterCtx* ctx, const ast* Node, operand L) {
     /*Regular value*/
     else
         emitterValueSuggest(ctx, Node, &L);
+}
+
+static operand emitterSetReturnTo (emitterCtx* ctx, operand returnTo) {
+    operand old = ctx->labelReturnTo;
+    ctx->labelReturnTo = returnTo;
+    return old;
+}
+
+static operand emitterLambda (emitterCtx* ctx, const ast* Node) {
+    debugEnter("Lambda");
+
+    operand fn = asmCreateLabel(ctx->Asm, labelLambda),
+            postFn = asmCreateLabel(ctx->Asm, labelPostLambda);
+
+    asmJump(ctx->Asm, postFn);
+
+    free(Node->symbol->ident);
+    Node->symbol->ident = strdup(fn.label);
+
+    int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
+
+    asmFnPrologue(ctx->Asm, fn.label, stacksize);
+
+    /*Label to jump to from returns*/
+    operand returnTo = asmCreateLabel(ctx->Asm, labelReturn);
+    operand oldReturnTo = emitterSetReturnTo(ctx, returnTo);
+
+    if (Node->r->tag == astCode)
+        emitterCode(ctx, Node->r);
+
+    else
+        emitterValue(ctx, Node->r, requestReturn);
+
+    ctx->labelReturnTo = oldReturnTo;
+
+    asmFnEpilogue(ctx->Asm, returnTo);
+
+    asmLabel(ctx->Asm, postFn);
+
+    /*Return the label*/
+    operand Value = operandCreateLabel(fn.label);
+
+    debugLeave();
+
+    return Value;
 }

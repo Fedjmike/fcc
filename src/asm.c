@@ -68,7 +68,9 @@ operand asmCreateLabel (asmCtx* ctx, labelTag tag) {
                        tag == labelFor ? "for" :
                        tag == labelContinue ? "continue" :
                        tag == labelBreak ? "break" :
-                       tag == labelROData ? "data" : ".";
+                       tag == labelROData ? "data" :
+                       tag == labelLambda ? "lambda" :
+                       tag == labelPostLambda ? "postlambda" : ".";
 
     char* label = malloc(strlen(name) + 9);
     sprintf(label, "%s%08d", name, ctx->labels.length);
