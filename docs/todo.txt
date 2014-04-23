@@ -41,7 +41,11 @@ Medium:
 [ ] x ?: y
 [ ] String literal concatenation
 [x] % /
-[ ] >> <<
+[x] >> <<
+[-] Closures
+	- Syntax?
+	[x] Capture-less lambdas
+[ ] auto type inference
 [ ] assert
 [ ] Warnings
 	[ ] main conformance
@@ -59,9 +63,10 @@ Medium:
 
 Low:
 
+[ ] Unicode
 [ ] Pretty printing control by command line
 [ ] string
-[ ] New IR
+[-] New IR
     - Expression only (to start with)
 [ ] Designated initializers in compound literals
 [ ] Lexer errors
@@ -95,6 +100,9 @@ Other issues:
 	[ ] ast
 	[x] sym
 [ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
+[ ] Declare structs inside modules, not their headers, if not part of the interface
+[ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
+[ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
 
 Parser:
 
@@ -144,4 +152,5 @@ Emitter:
 	=> as well as offset
 	=> offsetOf?
 	=> eval.c
+	o OR not, handle in IR?
 [ ] Optimize pointer indexing similar to array indexing
