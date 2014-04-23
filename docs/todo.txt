@@ -124,13 +124,10 @@ Semantic analyzer:
 
 Emitter:
 
-[-] Get rid of global state in registers and labels
-[ ] Free operands before use, so can do things like:
-      mov rbx, dword ptr [rbp+16]
-      mov _rbx_, dword ptr [rbx+8]
-[-] Get rid of &regs[] use outside reg.c
-    - Make stack operations
-    - Differentiate between top and base operands
+[-] Remove global state
+	[x] labels
+	[ ] registers
+	[ ] debug?
 [-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
