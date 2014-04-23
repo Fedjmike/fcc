@@ -976,16 +976,7 @@ static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node)
         emitterCode(ctx, body, Node->r, fn->epilogue);
 
     else {
-        operand ret = emitterValue(ctx, &body, Node->r, requestAny);
-        reg* rax = regRequest(regRAX, ctx->arch->wordsize);
-
-        if (rax != 0) {
-            asmMove(ctx->ir, body, operandCreateReg(rax), ret);
-            regFree(rax);
-
-        } else if (ret.base != regGet(regRAX))
-            debugError("emitterLambda", "unable to allocate RAX for return");
-
+        emitterValue(ctx, &body, Node->r, requestReturn);
         irJump(body, fn->epilogue);
     }
 
