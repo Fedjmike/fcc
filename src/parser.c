@@ -34,6 +34,7 @@ static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullna
 
     ctx->comp = comp;
 
+    ctx->module = scope;
     ctx->scope = scope;
 
     ctx->breakLevel = 0;

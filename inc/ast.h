@@ -8,6 +8,20 @@ typedef struct type type;
 typedef struct sym sym;
 typedef struct ast ast;
 
+
+/**
+ * Kind of AST node. Adding a new one requires:
+ *  - Deciding if it is a value tag
+ *  - Classifying it with astIsValueTag
+ *  - Updating astTagGetStr
+ *  - Adding a constructor, presumably
+ *  - Adding some code to the parser, presumably
+ *  - Handling it in:
+ *    - analyzer*.c
+ *      - isNodeLvalue if a value tag
+ *    - eval.c
+ *    - emitter*.c
+ */
 typedef enum astTag {
     astUndefined,
     astInvalid,
@@ -47,7 +61,8 @@ typedef enum literalTag {
     literalBool,
     literalStr,
     literalCompound,
-    literalInit
+    literalInit,
+    literalLambda
 } literalTag;
 
 typedef struct ast {

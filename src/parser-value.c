@@ -25,6 +25,7 @@ static ast* parserUnary (parserCtx* ctx);
 static ast* parserPostUnary (parserCtx* ctx);
 static ast* parserObject (parserCtx* ctx);
 static ast* parserFactor (parserCtx* ctx);
+static ast* parserLambda (parserCtx* ctx);
 
 /**
  * Value = Comma
@@ -331,7 +332,7 @@ static ast* parserObject (parserCtx* ctx) {
  *          | ( "(" Type ")" Unary )
  *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
- *          | <Int> | <Bool> | <Str> | <Char> | <Ident>
+ *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");
@@ -408,6 +409,10 @@ static ast* parserFactor (parserCtx* ctx) {
 
         Node = astCreateSizeof(loc, Node);
 
+    /*Lambda*/
+    } else if (tokenIsPunct(ctx, punctLBracket)) {
+        Node = parserLambda(ctx);
+
     /*Integer*/
     } else if (tokenIsInt(ctx)) {
         Node = astCreateLiteral(ctx->location, literalInt);
@@ -454,6 +459,52 @@ static ast* parserFactor (parserCtx* ctx) {
         errorExpected(ctx, "expression");
         tokenNext(ctx);
     }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Lambda = "[" "]"
+ *          "(" [ Param [{ "," Param }] ] ")"
+ *          ( "{" Code "}" ) | ( "(" Value ")" )
+ */
+static ast* parserLambda (parserCtx* ctx) {
+    debugEnter("Lambda");
+
+    ast* Node = astCreateLiteral(ctx->location, literalLambda);
+    Node->symbol = symCreateNamed(symId, ctx->module, "");
+    sym* oldScope = scopeSet(ctx, Node->symbol);
+
+    /*Capture (not supported yet)*/
+
+    tokenMatchPunct(ctx, punctLBracket);
+    tokenMatchPunct(ctx, punctRBracket);
+
+    /*Params*/
+
+    tokenMatchPunct(ctx, punctLParen);
+
+    if (!tokenIsPunct(ctx, punctRParen)) do {
+        astAddChild(Node, parserParam(ctx, true));
+    } while (tokenTryMatchPunct(ctx, punctComma));
+
+    tokenMatchPunct(ctx, punctRParen);
+
+    /*Body*/
+
+    if (tokenIsPunct(ctx, punctLBrace))
+        Node->r = parserCode(ctx);
+
+    else if (tokenTryMatchPunct(ctx, punctLParen)) {
+        Node->r = parserValue(ctx);
+        tokenTryMatchPunct(ctx, punctRParen);
+
+    } else
+        errorExpected(ctx, "lambda body");
+
+    ctx->scope = oldScope;
 
     debugLeave();
 
