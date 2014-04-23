@@ -73,10 +73,10 @@ static bool isNodeLvalue (const ast* Node) {
         return    (Node->litTag == literalIdent && !typeIsFunction(Node->dt))
                || Node->litTag == literalCompound;
 
-    else if (Node->tag == astInvalid) {
+    else if (Node->tag == astInvalid)
         return true;
 
-    } else {
+    else {
         debugErrorUnhandled("isNodeLvalue", "AST tag", astTagGetStr(Node->tag));
         return true;
     }
@@ -540,6 +540,9 @@ static const type* analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 
     } else if (Node->litTag == literalCompound) {
         analyzerCompoundLiteral(ctx, Node);
+
+    } else if (Node->litTag == literalLambda) {
+        analyzerLambda(ctx, Node);
 
     } else if (Node->litTag == literalInit) {
         errorCompoundLiteralWithoutType(ctx, Node);
