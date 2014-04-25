@@ -11,11 +11,11 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
-static void irEmitStaticData (irCtx* ctx, FILE* file, irStaticData* data);
+static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data);
 
-static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn);
-static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block, irBlock* nextblock);
-static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term, irBlock* nextblock);
+static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn);
+static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* block, const irBlock* nextblock);
+static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBlock* nextblock);
 
 void irEmit (irCtx* ctx) {
     FILE* file = ctx->asm->file;
@@ -35,7 +35,7 @@ void irEmit (irCtx* ctx) {
     asmFileEpilogue(ctx->asm);
 }
 
-static void irEmitStaticData (irCtx* ctx, FILE* file, irStaticData* data) {
+static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data) {
     (void) file;
 
     if (data->tag == dataStringConstant)
@@ -45,7 +45,7 @@ static void irEmitStaticData (irCtx* ctx, FILE* file, irStaticData* data) {
         debugErrorUnhandledInt("irEmitStaticData", "static data tag", data->tag);
 }
 
-static void irEmitBlockChain (irCtx* ctx, FILE* file, intset* done, vector* priority, irBlock* block) {
+static void irEmitBlockChain (irCtx* ctx, FILE* file, intset* done, vector* priority, const irBlock* block) {
     /*Already put in the priority list, leave*/
     if (intsetAdd(done, (uintptr_t) block))
         return;
@@ -63,7 +63,7 @@ static void irEmitBlockChain (irCtx* ctx, FILE* file, intset* done, vector* prio
     vectorPush(priority, (void*) block);
 }
 
-static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn) {
+static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
     debugEnter(fn->name);
 
     asmFnLinkage(file, fn->name);
@@ -87,7 +87,7 @@ static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn) {
     debugLeave();
 }
 
-static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block, irBlock* nextblock) {
+static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* block, const irBlock* nextblock) {
     debugEnter(block->label);
 
     asmLabel(ctx->asm, block->label);
@@ -105,7 +105,7 @@ static void irEmitBlock (irCtx* ctx, FILE* file, irBlock* block, irBlock* nextbl
     debugLeave();
 }
 
-static void irEmitTerm (irCtx* ctx, FILE* file, irTerm* term, irBlock* nextblock) {
+static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBlock* nextblock) {
     (void) file;
 
     /*Some of the terminals end in a jump
