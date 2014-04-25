@@ -1,6 +1,7 @@
 #include "../inc/ir.h"
 
 #include "../inc/vector.h"
+#include "../inc/hashmap.h"
 #include "../inc/sym.h"
 #include "../inc/debug.h"
 #include "../inc/operand.h"
@@ -44,15 +45,42 @@ static void irEmitStaticData (irCtx* ctx, FILE* file, irStaticData* data) {
         debugErrorUnhandledInt("irEmitStaticData", "static data tag", data->tag);
 }
 
+static void irEmitBlockChain (irCtx* ctx, FILE* file, intset* done, vector* priority, irBlock* block) {
+    /*Already put in the priority list, leave*/
+    if (intsetAdd(done, (uintptr_t) block))
+        return;
+
+    printf("master: %s\n", block->label);
+
+    /*Add all the predecessors and their predecessors to the list*/
+    for (int j = 0; j < block->preds.length; j++) {
+        irBlock* pred = vectorGet(&block->preds, j);
+        printf("chain: %s\n", pred->label);
+        irEmitBlockChain(ctx, file, done, priority, pred);
+    }
+
+    /*Followed by this block*/
+    vectorPush(priority, (void*) block);
+}
+
 static void irEmitFn (irCtx* ctx, FILE* file, irFn* fn) {
     debugEnter(fn->name);
 
     asmFnLinkage(file, fn->name);
 
-    /*Constituent blocks, including prologue and epilogue*/
-    for (int j = 0; j < fn->blocks.length; j++) {
-        irBlock *block = vectorGet(&fn->blocks, j),
-                *nextblock = vectorGet(&fn->blocks, j+1);
+    intset done;
+    intsetInit(&done, fn->blocks.length*2);
+
+    vector priority;
+    vectorInit(&priority, fn->blocks.length);
+
+    /*Decide an order to emit the blocks in to minimize unnecessary jumps*/
+    irEmitBlockChain(ctx, file, &done, &priority, fn->epilogue);
+
+    /*Order decided, emit*/
+    for (int j = 0; j < priority.length; j++) {
+        irBlock *block = vectorGet(&priority, j),
+                *nextblock = vectorGet(&priority, j+1);
         irEmitBlock(ctx, file, block, nextblock);
     }
 
