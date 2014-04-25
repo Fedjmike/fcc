@@ -370,9 +370,13 @@ void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ) {
         pred->str = str;
     }
 
-    /*Take the succs of the succ*/
+    /*Link to the succs of the succ*/
     for (int i = 0; i < succ->succs.length; i++)
         irBlockLink(pred, vectorGet(&succ->succs, i));
+
+    /*Make sure there is always a valid epilogue*/
+    if (fn->epilogue == succ)
+        fn->epilogue = pred;
 
     irBlockDelete(fn, succ);
 }
