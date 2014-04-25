@@ -387,8 +387,6 @@ static struct ast* parserEnum (parserCtx* ctx) {
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
         tokenMatchPunct(ctx, punctLBrace);
 
-        Node->symbol->complete = true;
-
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));
         } while (tokenTryMatchPunct(ctx, punctComma) && !tokenIsPunct(ctx, punctRBrace));
