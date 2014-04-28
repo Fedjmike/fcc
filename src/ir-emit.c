@@ -14,7 +14,8 @@
 static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data);
 
 static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn);
-static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* prevblock, const irBlock* block, const irBlock* nextblock);
+static void irEmitBlock (irCtx* ctx, FILE* file,
+                         const irBlock* prevblock, const irBlock* block, const irBlock* nextblock);
 static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBlock* nextblock);
 
 void irEmit (irCtx* ctx) {
@@ -45,7 +46,9 @@ static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data) 
         debugErrorUnhandledInt("irEmitStaticData", "static data tag", data->tag);
 }
 
-static void irEmitBlockChain (irCtx* ctx, FILE* file, intset* done, vector* priority, const irBlock* block) {
+static void irEmitBlockChain (irCtx* ctx, FILE* file,
+                              intset/*<irBlock*>*/* done, vector/*<irBlock*>*/* priority,
+                              const irBlock* block) {
     /*Already put in the priority list, leave*/
     if (intsetAdd(done, (uintptr_t) block))
         return;
@@ -68,10 +71,10 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
 
     asmFnLinkage(file, fn->name);
 
-    intset done;
+    intset/*<irBlock*>*/ done;
     intsetInit(&done, fn->blocks.length*2);
 
-    vector priority;
+    vector/*<irBlock*>*/ priority;
     vectorInit(&priority, fn->blocks.length);
 
     /*Decide an order to emit the blocks in to minimize unnecessary jumps*/
@@ -88,7 +91,8 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
     debugLeave();
 }
 
-static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* prevblock, const irBlock* block, const irBlock* nextblock) {
+static void irEmitBlock (irCtx* ctx, FILE* file,
+                         const irBlock* prevblock, const irBlock* block, const irBlock* nextblock) {
     debugEnter(block->label);
 
     /*Don't emit the label if no preds / single pred emitted directly before
