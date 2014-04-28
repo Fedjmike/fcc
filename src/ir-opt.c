@@ -1,12 +1,17 @@
 #include "../inc/ir.h"
 
+#include "../inc/hashmap.h"
+
 #include "stdio.h"
+
+static void blaFn (irFn* fn);
+static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block);
 
 static bool ubrBlock (irFn* fn, irBlock* block);
 static bool lbcBlock (irFn* fn, irBlock* block);
 
 /*Block Level Analysis (BLA) involves two optimizations:
-    1. Unreachable Block Removal (DBR)
+    1. Unreachable Block Removal (UBR)
         - Blocks with no predecessors are removed.
     2. Linear Block Combination (LBC)
         - Pairs of blocks with only each other as predecessor/successor
@@ -24,30 +29,39 @@ static bool lbcBlock (irFn* fn, irBlock* block);
 void irBlockLevelAnalysis (irCtx* ctx) {
     for (int i = 0; i < ctx->fns.length; i++) {
         irFn* fn = vectorGet(&ctx->fns, i);
-
-        /*Unreachable Block Removal*/
-        for (int j = 0; j < fn->blocks.length; j++) {
-            irBlock *block = vectorGet(&fn->blocks, j);
-            bool deleted = ubrBlock(fn, block);
-
-            if (deleted)
-                j = 0;
-        }
-
-        /*Linear Block Combination*/
-        for (int j = 0; j < fn->blocks.length; j++) {
-            irBlock *block = vectorGet(&fn->blocks, j);
-            bool deleted = lbcBlock(fn, block);
-
-            if (deleted)
-                j = 0;
-        }
+        blaFn(fn);
     }
 }
 
-static bool ubrBlock (irFn* fn, irBlock* block) {
+static void blaFn (irFn* fn) {
+    intset/*<irBlock*>*/ done;
+    intsetInit(&done, fn->blocks.length);
+
+    blaBlock(fn, &done, fn->epilogue);
+}
+
+static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block) {
+    /*Avoid cycles*/
+    if (intsetAdd(done, (uintptr_t) block))
+        return false;
+
+    //printf("chain: %s...\n", block->label);
+
+    /*Recursively analyze any preds*/
+    for (int i = 0; i < block->preds.length; i++) {
+        irBlock* pred = vectorGet(&block->preds, i);
+        bool deleted = blaBlock(fn, done, pred);
+
+        if (deleted)
+            i--;
+    }
+
     //printf("block: %s...\n", block->label);
 
+    return ubrBlock(fn, block) || lbcBlock(fn, block);
+}
+
+static bool ubrBlock (irFn* fn, irBlock* block) {
     /*No predecessors => unreachable code => delete*/
     if (irBlockGetPredNo(fn, block) == 0) {
         //printf("... deleting\n");
@@ -59,22 +73,11 @@ static bool ubrBlock (irFn* fn, irBlock* block) {
 }
 
 static bool lbcBlock (irFn* fn, irBlock* block) {
-    //printf("block: %s...\n", block->label);
+    irBlock *pred = vectorGet(&block->preds, 0);
 
-    irBlock *pred = vectorGet(&block->preds, 0),
-            *succ = vectorGet(&block->succs, 0);
-
-    /*Only one successor, and we're its only predecessor
+    /*Only one predecessor, and we're its only successor
       => combine*/
-    if (   irBlockGetSuccNo(block) == 1
-        && irBlockGetPredNo(fn, succ) == 1) {
-        //printf("... combining with succ %s\n", succ->label);
-        irBlocksCombine(fn, block, succ);
-        return true;
-    }
-
-    /*Same deal with our predecessor*/
-    if (   irBlockGetPredNo(fn, block) == 1
+    if (   block->preds.length == 1
         && irBlockGetSuccNo(pred) == 1) {
         //printf("... combining with pred %s\n", pred->label);
         irBlocksCombine(fn, pred, block);
