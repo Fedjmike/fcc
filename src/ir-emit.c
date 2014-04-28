@@ -14,7 +14,7 @@
 static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data);
 
 static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn);
-static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* block, const irBlock* nextblock);
+static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* prevblock, const irBlock* block, const irBlock* nextblock);
 static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBlock* nextblock);
 
 void irEmit (irCtx* ctx) {
@@ -77,20 +77,28 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
     /*Decide an order to emit the blocks in to minimize unnecessary jumps*/
     irEmitBlockChain(ctx, file, &done, &priority, fn->epilogue);
 
-    /*Order decided, emit*/
+    /*Emit*/
     for (int j = 0; j < priority.length; j++) {
-        irBlock *block = vectorGet(&priority, j),
+        irBlock *prevblock = vectorGet(&priority, j-1),
+                *block = vectorGet(&priority, j),
                 *nextblock = vectorGet(&priority, j+1);
-        irEmitBlock(ctx, file, block, nextblock);
+        irEmitBlock(ctx, file, prevblock, block, nextblock);
     }
 
     debugLeave();
 }
 
-static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* block, const irBlock* nextblock) {
+static void irEmitBlock (irCtx* ctx, FILE* file, const irBlock* prevblock, const irBlock* block, const irBlock* nextblock) {
     debugEnter(block->label);
 
-    asmLabel(ctx->asm, block->label);
+    /*Don't emit the label if no preds / single pred emitted directly before
+      Doesn't use irBlockGetPredNo as that gets the *logical* pred no (special
+      handling for prologue).*/
+    if (!(   block->preds.length <= 1
+          && (block->preds.length == 1 ? vectorGet(&block->preds, 0) == prevblock
+                                        : true)))
+        asmLabel(ctx->asm, block->label);
+
     fputs(block->str, file);
     debugMsg(block->str);
 
