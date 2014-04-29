@@ -143,7 +143,8 @@ static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBloc
         jumpTo = term->ret;
 
     } else if (term->tag == termCallIndirect) {
-        asmCallIndirect(ctx->asm, term->toAsOperand);
+        /*Hack, done in irCallIndirect instead*/
+        //asmCallIndirect(ctx->asm, term->toAsOperand);
         jumpTo = term->ret;
 
     } else if (term->tag == termReturn)

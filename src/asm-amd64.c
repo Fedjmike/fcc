@@ -95,9 +95,9 @@ void asmCall (asmCtx* ctx, const char* label) {
     asmOutLn(ctx, "call %s", label);
 }
 
-void asmCallIndirect (asmCtx* ctx, operand L) {
+void asmCallIndirect (irBlock* block, operand L) {
     char* LStr = operandToStr(L);
-    asmOutLn(ctx, "call %s", LStr);
+    irBlockOut(block, "call %s", LStr);
     free(LStr);
 }
 

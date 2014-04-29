@@ -311,6 +311,10 @@ void irCallIndirect (irBlock* block, operand to, irBlock* ret) {
     term->ret = ret;
 
     irBlockLink(block, ret);
+
+    /*Hack! Emit the first part of the call now while the operand and any regs
+      involved are still valid.*/
+    asmCallIndirect(block, to);
 }
 
 static void irReturn (irBlock* block) {

@@ -57,7 +57,7 @@ void asmBranch (asmCtx* ctx, operand Condition, const char* label);
  * Call a function with the arguments currently on the stack
  */
 void asmCall (asmCtx* ctx, const char* label);
-void asmCallIndirect (asmCtx* ctx, operand fn);
+void asmCallIndirect (irBlock* block, operand L);
 
 void asmReturn (asmCtx* ctx);
 
