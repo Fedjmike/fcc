@@ -227,9 +227,8 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
 }
 
 void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src) {
-    static int labelNo = 0;
     char falseLabel[10];
-    sprintf(falseLabel, "..%X", labelNo++);
+    sprintf(falseLabel, ".%X", ir->labelNo++);
 
     Cond.condition = conditionNegate(Cond.condition);
     char* cond = operandToStr(Cond);
