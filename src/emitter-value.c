@@ -173,7 +173,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             asmCompare(ctx->ir, *block, Value, operandCreateLiteral(0));
             operandFree(Value);
 
-            Dest = operandCreateFlags(conditionEqual);
+            Dest = operandCreateFlags(conditionNotEqual);
 
         } else
             Dest = Value;
@@ -256,7 +256,7 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         L = emitterValue(ctx, block, Node->l, requestRegOrMem);
         R = emitterValue(ctx, block, Node->r, requestValue);
 
-        Value = operandCreateFlags(conditionNegate(conditionFromOp(Node->o)));
+        Value = operandCreateFlags(conditionFromOp(Node->o));
         asmCompare(ctx->ir, *block, L, R);
         operandFree(L);
         operandFree(R);
@@ -443,7 +443,7 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
       return the condition as flags in R*/
     operand R = emitterLogicalBOPImpl(ctx, block, Node, continuation, &Value);
 
-    if (Node->o == opLogicalAnd)
+    if (Node->o == opLogicalOr)
         R.condition = conditionNegate(R.condition);
 
     /*Move final value*/
@@ -536,7 +536,7 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
         if (Node->o == opLogicalNot) {
             asmCompare(ctx->ir, *block, R, operandCreateLiteral(0));
-            Value = operandCreateFlags(conditionNotEqual);
+            Value = operandCreateFlags(conditionEqual);
             operandFree(R);
 
         } else if (Node->o == opUnaryPlus) {

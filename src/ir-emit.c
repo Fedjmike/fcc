@@ -128,14 +128,14 @@ static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBloc
         jumpTo = term->to;
 
     else if (term->tag == termBranch) {
-        if (term->ifFalse == nextblock) {
+        if (term->ifTrue == nextblock) {
             operand cond = operandCreateFlags(conditionNegate(term->cond.condition));
-            asmBranch(ctx->asm, cond, term->ifTrue->label);
-            jumpTo = term->ifFalse;
+            asmBranch(ctx->asm, cond, term->ifFalse->label);
+            jumpTo = term->ifTrue;
 
         } else {
-            asmBranch(ctx->asm, term->cond, term->ifFalse->label);
-            jumpTo = term->ifTrue;
+            asmBranch(ctx->asm, term->cond, term->ifTrue->label);
+            jumpTo = term->ifFalse;
         }
 
     } else if (term->tag == termCall) {
