@@ -18,11 +18,11 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
 
-static void emitterDeclNode (emitterCtx* ctx, ast* Node);
-static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node);
+static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclName (emitterCtx* ctx, const ast* Node);
 
-void emitterDecl (emitterCtx* ctx, const ast* Node) {
+void emitterDecl (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugEnter("Decl");
 
     emitterDeclBasic(ctx, Node->l);
@@ -30,7 +30,7 @@ void emitterDecl (emitterCtx* ctx, const ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling)
-        emitterDeclNode(ctx, Current);
+        emitterDeclNode(ctx, block, Current);
 
     debugLeave();
 }
@@ -111,35 +111,35 @@ static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
     debugLeave();
 }
 
-static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
     if (Node->tag == astInvalid || Node->tag == astEmpty)
         ;
 
     else if (Node->tag == astBOP) {
         if (Node->o == opAssign)
-            emitterDeclAssignBOP(ctx, Node);
+            emitterDeclAssignBOP(ctx, block, Node);
 
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astConst) {
-        emitterDeclNode(ctx, Node->r);
+        emitterDeclNode(ctx, block, Node->r);
 
     } else if (Node->tag == astUOP) {
         if (Node->o == opDeref)
-            emitterDeclNode(ctx, Node->r);
+            emitterDeclNode(ctx, block, Node->r);
 
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astCall) {
         /*Nothing to do with the params*/
-        emitterDeclNode(ctx, Node->l);
+        emitterDeclNode(ctx, block, Node->l);
 
     } else if (Node->tag == astIndex) {
         /*The emitter does nothing the to size of the array, so only go
           down the left branch*/
-        emitterDeclNode(ctx, Node->l);
+        emitterDeclNode(ctx, block, Node->l);
 
     } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
@@ -152,10 +152,10 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
         debugErrorUnhandled("emitterDeclNode", "AST tag", astTagGetStr(Node->tag));
 }
 
-static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
+static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugEnter("DeclAssignBOP");
 
-    emitterDeclNode(ctx, Node->l);
+    emitterDeclNode(ctx, block, Node->l);
 
     operand L = operandCreateMem(&regs[regRBP],
                                  Node->symbol->offset,
@@ -163,11 +163,11 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
                                              Node->symbol->dt));
 
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        emitterCompoundInit(ctx, Node->r, L);
+        emitterCompoundInit(ctx, block, Node->r, L);
 
     else {
         if (Node->symbol->storage == storageAuto)
-            emitterValueSuggest(ctx, Node->r, &L);
+            emitterValueSuggest(ctx, block, Node->r, &L);
 
         else
             debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));

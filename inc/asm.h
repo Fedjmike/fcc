@@ -39,9 +39,6 @@ typedef struct asmCtx {
     operand stackPtr;
     ///Base (of stack) pointer - RBP
     operand basePtr;
-
-    ///Owns the strings in it
-    vector/*<char*>*/ labels;
 } asmCtx;
 
 asmCtx* asmInit (const char* output, const architecture* arch);
@@ -56,5 +53,3 @@ void asmComment (asmCtx* ctx, char* str);
  */
 void asmEnter (asmCtx* ctx);
 void asmLeave (asmCtx* ctx);
-
-operand asmCreateLabel (asmCtx* ctx, labelTag tag);

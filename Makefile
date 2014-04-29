@@ -21,7 +21,7 @@ CONFIG ?= release
 
 CC ?= gcc
 CFLAGS ?= -std=c11
-CFLAGS += -Werror -Wall -Wextra
+CFLAGS += -Werror -Wall -Wextra -g
 CFLAGS += -include defaults.h
 
 ifeq ($(CONFIG),debug)

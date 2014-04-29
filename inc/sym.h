@@ -6,6 +6,8 @@ typedef struct type type;
 typedef struct ast ast;
 typedef struct sym sym;
 
+typedef struct irFn irFn;
+
 /**
  * Symbol tags
  * @see sym @see sym::tag
