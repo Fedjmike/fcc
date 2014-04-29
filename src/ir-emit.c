@@ -53,12 +53,9 @@ static void irEmitBlockChain (irCtx* ctx, FILE* file,
     if (intsetAdd(done, (uintptr_t) block))
         return;
 
-    printf("master: %s\n", block->label);
-
     /*Add all the predecessors and their predecessors to the list*/
     for (int j = 0; j < block->preds.length; j++) {
         irBlock* pred = vectorGet(&block->preds, j);
-        printf("chain: %s\n", pred->label);
         irEmitBlockChain(ctx, file, done, priority, pred);
     }
 

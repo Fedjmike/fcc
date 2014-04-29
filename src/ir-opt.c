@@ -45,8 +45,6 @@ static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block) {
     if (intsetAdd(done, (uintptr_t) block))
         return false;
 
-    //printf("chain: %s...\n", block->label);
-
     /*Recursively analyze any preds*/
     for (int i = 0; i < block->preds.length; i++) {
         irBlock* pred = vectorGet(&block->preds, i);
@@ -56,15 +54,12 @@ static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block) {
             i--;
     }
 
-    //printf("block: %s...\n", block->label);
-
     return ubrBlock(fn, block) || lbcBlock(fn, block);
 }
 
 static bool ubrBlock (irFn* fn, irBlock* block) {
     /*No predecessors => unreachable code => delete*/
     if (irBlockGetPredNo(fn, block) == 0) {
-        //printf("... deleting\n");
         irBlockDelete(fn, block);
         return true;
     }
@@ -79,7 +74,6 @@ static bool lbcBlock (irFn* fn, irBlock* block) {
       => combine*/
     if (   block->preds.length == 1
         && irBlockGetSuccNo(pred) == 1) {
-        //printf("... combining with pred %s\n", pred->label);
         irBlocksCombine(fn, pred, block);
         return true;
     }
