@@ -1,6 +1,7 @@
 #include "operand.h"
 
 typedef struct ast ast;
+typedef struct architecture architecture;
 typedef struct irBlock irBlock;
 typedef struct irFn irFn;
 typedef struct emitterCtx emitterCtx;
@@ -10,6 +11,8 @@ irFn* emitterSetFn (emitterCtx* ctx, irFn* fn);
 irBlock* emitterSetReturnTo (emitterCtx* ctx, irBlock* block);
 irBlock* emitterSetBreakTo (emitterCtx* ctx, irBlock* block);
 irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block);
+
+int emitterFnAllocateStack (const architecture* arch, sym* fn);
 
 operand emitterGetInReg (emitterCtx* ctx, irBlock* block, operand src, int size);
 

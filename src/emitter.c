@@ -104,33 +104,6 @@ static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int 
     return offset;
 }
 
-int emitterFnAllocateStack (const architecture* arch, sym* fn) {
-    /*Two words already on the stack:
-      return ptr and saved base pointer*/
-    int lastOffset = 2*arch->wordsize;
-
-    /*Returning through temporary?*/
-    if (typeGetSize(arch, typeGetReturn(fn->dt)) > arch->wordsize)
-        lastOffset += arch->wordsize;
-
-    /*Assign offsets to all the parameters*/
-    for (int n = 0; n < fn->children.length; n++) {
-        sym* param = vectorGet(&fn->children, n);
-
-        if (param->tag != symParam)
-            break;
-
-        param->offset = lastOffset;
-        lastOffset += typeGetSize(arch, param->dt);
-
-        reportSymbol(param);
-    }
-
-    /*Allocate stack space for all the auto variables
-      Stack grows down, so the amount is the negation of the last offset*/
-    return -emitterScopeAssignOffsets(arch, fn, 0);
-}
-
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
