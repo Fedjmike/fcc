@@ -496,7 +496,7 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 
     /*Move the RHS into the flags*/
 
-    operand R = emitterValue(ctx, &unshort, Node->r, requestFlags);
+    operand R = emitterValue(ctx, block, Node->r, requestFlags);
 
     return R;
 }
