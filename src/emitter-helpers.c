@@ -1,5 +1,8 @@
 #include "../inc/emitter-helpers.h"
 
+#include "../inc/debug.h"
+#include "../inc/type.h"
+#include "../inc/sym.h"
 #include "../inc/ir.h"
 #include "../inc/reg.h"
 #include "../inc/asm.h"
@@ -9,6 +12,8 @@
 #include "../inc/emitter-value.h"
 
 #include "stdlib.h"
+
+static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset);
 
 irFn* emitterSetFn (emitterCtx* ctx, irFn* fn) {
     irFn* old = ctx->curFn;
@@ -32,6 +37,24 @@ irBlock* emitterSetContinueTo (emitterCtx* ctx, irBlock* block) {
     irBlock* old = ctx->continueTo;
     ctx->continueTo = block;
     return old;
+}
+
+static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset) {
+    for (int n = 0; n < Scope->children.length; n++) {
+        sym* Symbol = vectorGet(&Scope->children, n);
+
+        if (Symbol->tag == symScope)
+            offset = emitterScopeAssignOffsets(arch, Symbol, offset);
+
+        else if (Symbol->tag == symId) {
+            offset -= typeGetSize(arch, Symbol->dt);
+            Symbol->offset = offset;
+            reportSymbol(Symbol);
+
+        } else {}
+    }
+
+    return offset;
 }
 
 int emitterFnAllocateStack (const architecture* arch, sym* fn) {

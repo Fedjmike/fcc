@@ -86,24 +86,6 @@ static void emitterModule (emitterCtx* ctx, const ast* Node) {
     debugLeave();
 }
 
-static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset) {
-    for (int n = 0; n < Scope->children.length; n++) {
-        sym* Symbol = vectorGet(&Scope->children, n);
-
-        if (Symbol->tag == symScope)
-            offset = emitterScopeAssignOffsets(arch, Symbol, offset);
-
-        else if (Symbol->tag == symId) {
-            offset -= typeGetSize(arch, Symbol->dt);
-            Symbol->offset = offset;
-            reportSymbol(Symbol);
-
-        } else {}
-    }
-
-    return offset;
-}
-
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
