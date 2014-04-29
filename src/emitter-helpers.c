@@ -97,7 +97,6 @@ void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
 }
 
 operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
-    (void) block;
     operand L;
 
     if (R.tag == operandReg) {
@@ -109,7 +108,7 @@ operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
 
     char* LStr = operandToStr(L);
     char* RStr = operandToStr(R);
-    asmOutLn(ctx->ir->asm, "movsx %s, %s", LStr, RStr);
+    irBlockOut(block, "movsx %s, %s", LStr, RStr);
     free(LStr);
     free(RStr);
 
