@@ -61,13 +61,11 @@ void asmFnEpilogue (irCtx* ir, irBlock* block) {
 }
 
 void asmSaveReg (irCtx* ir, irBlock* block, regIndex r) {
-    (void) block;
     asmCtx* ctx = ir->asm;
     irBlockOut(block, "push %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
 void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r) {
-    (void) block;
     asmCtx* ctx = ir->asm;
     irBlockOut(block, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
@@ -149,7 +147,6 @@ void asmPush (irCtx* ir, irBlock* block, operand L) {
 
 void asmPop (irCtx* ir, irBlock* block, operand L) {
     (void) ir;
-    //asmCtx* ctx = ir->asm;
 
     char* LStr = operandToStr(L);
     irBlockOut(block, "pop %s", LStr);
@@ -230,9 +227,6 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
 }
 
 void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src) {
-    (void) ir;
-    //asmCtx* ctx = ir->asm;
-
     static int labelNo = 0;
     char falseLabel[10];
     sprintf(falseLabel, "..%X", labelNo++);
@@ -290,9 +284,6 @@ void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
 }
 
 void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R) {
-    (void) ir;
-    //asmCtx* ctx = ir->asm;
-
     if (L.tag == operandMem && R.tag == operandMem) {
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ir, block, intermediate, R);
@@ -348,7 +339,6 @@ void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R) {
 
 void asmDivision (irCtx* ir, irBlock* block, operand R) {
     (void) ir;
-    //asmCtx* ctx = ir->asm;
 
     char* RStr = operandToStr(R);
     irBlockOut(block, "idiv %s", RStr);
@@ -357,7 +347,6 @@ void asmDivision (irCtx* ir, irBlock* block, operand R) {
 
 void asmUOP (irCtx* ir, irBlock* block, uoperation Op, operand R) {
     (void) ir;
-    //asmCtx* ctx = ir->asm;
 
     char* RStr = operandToStr(R);
 
