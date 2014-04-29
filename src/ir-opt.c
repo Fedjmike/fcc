@@ -38,6 +38,8 @@ static void blaFn (irFn* fn) {
     intsetInit(&done, fn->blocks.length);
 
     blaBlock(fn, &done, fn->epilogue);
+
+    intsetFree(&done);
 }
 
 static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block) {

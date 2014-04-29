@@ -85,6 +85,9 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
         irEmitBlock(ctx, file, prevblock, block, nextblock);
     }
 
+    vectorFree(&priority);
+    intsetFree(&done);
+
     debugLeave();
 }
 
