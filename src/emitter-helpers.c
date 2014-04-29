@@ -120,6 +120,7 @@ void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
 }
 
 operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
+    (void) ctx;
     operand L;
 
     if (R.tag == operandReg) {
