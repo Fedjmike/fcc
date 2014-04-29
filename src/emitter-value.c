@@ -94,6 +94,9 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     else if (Node->tag == astLiteral)
         Value = emitterLiteral(ctx, block, Node);
 
+    else if (Node->tag == astEmpty)
+        Value = operandCreateVoid();
+
     else {
         debugErrorUnhandled("emitterValueImpl", "AST tag", astTagGetStr(Node->tag));
         Value = operandCreate(operandUndefined);
