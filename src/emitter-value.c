@@ -276,7 +276,7 @@ static operand emitterBOP (emitterCtx* ctx, const ast* Node) {
     /* ',' */
     } else if (Node->o == opComma) {
         operandFree(emitterValue(ctx, Node->l, requestAny));
-        Value = R = emitterValue(ctx, Node->r, requestAny);
+        Value = emitterValue(ctx, Node->r, requestAny);
 
     /*Numeric operator*/
     } else {
