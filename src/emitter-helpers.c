@@ -115,8 +115,13 @@ void emitterGiveBackReg (emitterCtx* ctx, irBlock* block, regIndex r, int oldSiz
 
 void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
                            irBlock* ifTrue, irBlock* ifFalse) {
-    operand cond = emitterValue(ctx, &block, value, requestFlags);
-    irBranch(block, cond, ifTrue, ifFalse);
+    if (value->tag == astEmpty)
+        irJump(block, ifTrue);
+
+    else {
+        operand cond = emitterValue(ctx, &block, value, requestFlags);
+        irBranch(block, cond, ifTrue, ifFalse);
+    }
 }
 
 operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
