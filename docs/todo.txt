@@ -23,8 +23,9 @@ High importance:
     [ ] Disallow all others?
 [ ] Disallow global variables
 [-] Modules
-    [ ] Separated namespaces
+    [-] Separated namespaces
     [x] Include once only
+	[ ] Infinite loops
 
 Medium:
 
@@ -60,6 +61,7 @@ Medium:
 	[ ] Constant propogation?
 	[ ] Factorization (CSE)
 	[ ] Operand commutation => Strahler number
+[ ] Octal and hex literals
 
 Low:
 
@@ -75,6 +77,7 @@ Low:
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
 	[ ] Newline in string
+	[ ] Suffix on integer literal
 [ ] Modules
     [ ] header & using, special meaning?
 	[ ] Different dialect?
