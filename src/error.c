@@ -255,7 +255,7 @@ void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
 }
 
 void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) {
-    errorAnalyzer(ctx, init, "incompatible initialization of $a from $a", variable, init);
+    errorAnalyzer(ctx, init, "incompatible initialization of $n from $a", variable->symbol, init);
 }
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
@@ -300,14 +300,14 @@ void errorAlreadyConst (analyzerCtx* ctx, const ast* Node) {
         errorAnalyzer(ctx, Node, "type was already qualified with $h", "const");
 }
 
-void errorIllegalConst (analyzerCtx* ctx, const ast* Node) {
+void errorIllegalConst (analyzerCtx* ctx, const ast* Node, const type* DT) {
     if (Node->symbol && Node->symbol->ident)
         errorAnalyzer(ctx, Node, "illegal qualification of a$s, $n, as $h",
-                      typeIsArray(Node->dt) ? "n array" : " function", Node->symbol, "const");
+                      typeIsArray(DT) ? "n array" : " function", Node->symbol, "const");
 
     else
-        errorAnalyzer(ctx, Node, "illegal qualification of a , $s, as $h",
-                      typeIsArray(Node->dt) ? "array" : "function", "const");
+        errorAnalyzer(ctx, Node, "illegal qualification of a$s as $h",
+                      typeIsArray(DT) ? "n array" : " function", "const");
 }
 
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
@@ -335,7 +335,7 @@ void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o) {
         errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $a", o, Node);
 }
 
-void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node) {
+void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT) {
     const sym* basic = typeGetBasic(Node->dt);
 
     /*Again, only once (decl and ptr errors counted separately)*/
@@ -346,10 +346,10 @@ void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node) {
         errorAnalyzer(ctx, Node, "$n declared with incomplete type", Node->symbol);
 
     else
-        errorAnalyzer(ctx, Node, "variable declared with incomplete type $t", Node->dt);
+        errorAnalyzer(ctx, Node, "variable declared with incomplete type $t", DT);
 }
 
-void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n) {
+void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT) {
     const sym* basic = typeGetBasic(Node->dt);
 
     if (basic && intsetAdd(&ctx->incompleteDeclIgnore, (intptr_t) basic))
@@ -366,13 +366,13 @@ void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn,
         errorAnalyzer(ctx, Node, "parameter $d$s$h, $h declared with incomplete type $t", n, of, ident, Node->symbol->ident, Node->dt);
 
     else
-        errorAnalyzer(ctx, Node, "parameter $d$s$h declared with incomplete type $t", n, of, ident, Node->dt);
+        errorAnalyzer(ctx, Node, "parameter $d$s$h declared with incomplete type $t", n, of, ident, DT);
 }
 
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt) {
     errorAnalyzer(ctx, Node, "function $n declared with incomplete return type $t", Node->symbol, dt);
 }
 
-void errorConstAssignment (struct analyzerCtx* ctx, const struct ast* Node, opTag o) {
+void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }

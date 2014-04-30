@@ -5,4 +5,4 @@ typedef struct analyzerCtx analyzerCtx;
 
 void analyzerDecl (analyzerCtx* ctx, ast* Node);
 const type* analyzerType (analyzerCtx* ctx, ast* Node);
-void analyzerParam (analyzerCtx* ctx, ast* Node);
+const type* analyzerParam (analyzerCtx* ctx, ast* Node);

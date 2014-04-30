@@ -51,6 +51,8 @@ operand emitterValueSuggest (emitterCtx* ctx, irBlock** block, const ast* Node, 
 
 static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* Node,
                                  emitterRequest request, const operand* suggestion) {
+    debugEnter(astTagGetStr(Node->tag));
+
     operand Value;
 
     /*Calculate the value*/
@@ -232,12 +234,12 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             Dest = Value;
     }
 
+    debugLeave();
+
     return Dest;
 }
 
 static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("BOP");
-
     operand L, R, Value;
 
     /* '.' */
@@ -290,14 +292,10 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         operandFree(R);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("DivisionBOP");
-
     /*x86 is really non-orthogonal for division. EDX:EAX is treated as the LHS
       and then EDX stores the remainder and EAX the quotient*/
 
@@ -355,14 +353,10 @@ static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* 
         operandFree(L);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("ShiftBOP");
-
     operand R;
     int rcxOldSize;
 
@@ -399,14 +393,10 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
     if (!immediate)
         emitterGiveBackReg(ctx, *block, regRCX, rcxOldSize);
 
-    debugLeave();
-
     return L;
 }
 
 static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("AssignnentBOP");
-
     /*Keep the left in memory so that the lvalue gets modified*/
     operand Value, R = emitterValue(ctx, block, Node->r, requestValue),
                    L = emitterValue(ctx, block, Node->l, requestMem);
@@ -430,8 +420,6 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast
 
     } else
         debugErrorUnhandled("emitterAssignmentBOP", "operator", opTagGetStr(Node->o));
-
-    debugLeave();
 
     return Value;
 }
@@ -460,8 +448,6 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
 }
 
 static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, irBlock* shortcont, operand* Value) {
-    debugEnter("LogicalBOP");
-
     /*The job of this function is:
         - Move the default into Value (possibly passing the buck recursively)
         - Branch to the short block depending on LHS
@@ -505,8 +491,6 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 }
 
 static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("UOP");
-
     operand R, Value;
 
     /*Increment/decrement ops*/
@@ -569,14 +553,10 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         Value = operandCreateInvalid();
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
-    debugEnter("TOP");
-
     irBlock *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
             *ifFalse = irBlockCreate(ctx->ir, ctx->curFn),
             *continuation = irBlockCreate(ctx->ir, ctx->curFn);
@@ -594,14 +574,10 @@ static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, co
 
     *block = continuation;
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Index");
-
     operand L, R, Value;
 
     int size = typeGetSize(ctx->arch, Node->dt);
@@ -677,14 +653,10 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
         Value = operandCreateMem(R.base, 0, size);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Call");
-
     operand Value;
 
     /*Caller save registers: only if in use*/
@@ -774,14 +746,10 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
             asmRestoreReg(ctx->ir, *block, r);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Cast");
-
     operand R = emitterValue(ctx, block, Node->r, requestValue);
 
     /*Widen or narrow, if needed*/
@@ -792,28 +760,17 @@ static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
     if (from != to && to != 0)
         R = (from < to ? emitterWiden : emitterNarrow)(ctx, *block, R, to);
 
-    debugLeave();
-
     return R;
 }
 
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node) {
     (void) block;
 
-    debugEnter("Sizeof");
-
-    const type* DT = Node->r->dt;
-    operand Value = operandCreateLiteral(typeGetSize(ctx->arch, DT));
-
-    debugLeave();
-
-    return Value;
+    return operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
 }
 
 static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node) {
     (void) block;
-
-    debugEnter("Symbol");
 
     operand Value = operandCreate(operandUndefined);
 
@@ -845,14 +802,10 @@ static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node)
         Value.array = array;
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Literal");
-
     operand Value;
 
     if (Node->litTag == literalInt)
@@ -881,25 +834,17 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
         Value = operandCreateInvalid();
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("CompoundLiteral");
-
     operand Value = emitterSymbol(ctx, block, Node);
     emitterCompoundInit(ctx, block, Node, Value);
-
-    debugLeave();
 
     return Value;
 }
 
 void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base) {
-    debugEnter("CompoundInit");
-
     /*Struct initialization*/
     if (typeIsStruct(Node->dt)) {
         const sym* record = typeGetBasic(Node->dt);
@@ -938,8 +883,6 @@ void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, ope
     /*Scalar*/
     } else
         emitterValueSuggest(ctx, block, Node->firstChild, &base);
-
-    debugLeave();
 }
 
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L) {
@@ -958,8 +901,6 @@ static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Nod
 
 static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node) {
     (void) block;
-
-    debugEnter("Lambda");
 
     int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
 
@@ -989,8 +930,6 @@ static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node)
 
     /*Return the label*/
     operand Value = operandCreateLabel(fn->name);
-
-    debugLeave();
 
     return Value;
 }

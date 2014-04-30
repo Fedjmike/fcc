@@ -78,6 +78,8 @@ analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch) {
 }
 
 void analyzerNode (analyzerCtx* ctx, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astEmpty)
         debugMsg("Empty");
 
@@ -120,33 +122,23 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 
     else
         debugErrorUnhandled("analyzerNode", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
 }
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Module");
-
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling) {
+         Current = Current->nextSibling)
         analyzerNode(ctx, Current);
-        //debugWait();
-    }
-
-    debugLeave();
 }
 
 static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Using");
-
     if (Node->r)
         analyzerNode(ctx, Node->r);
-
-    debugLeave();
 }
 
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
-    debugEnter("FnImpl");
-
     /*Analyze the prototype*/
 
     analyzerDecl(ctx, Node->l);
@@ -162,24 +154,16 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
     analyzerNode(ctx, Node->r);
 
     analyzerPopFnctx(ctx, oldFnctx);
-
-    debugLeave();
 }
 
 static void analyzerCode (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Code");
-
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling)
         analyzerNode(ctx, Current);
-
-    debugLeave();
 }
 
 static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Branch");
-
     /*Is the condition a valid condition?*/
 
     ast* cond = Node->firstChild;
@@ -194,13 +178,9 @@ static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
 
     if (Node->r)
         analyzerNode(ctx, Node->r);
-
-    debugLeave();
 }
 
 static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Loop");
-
     /*do while?*/
     bool isDo = Node->l->tag == astCode;
     ast* cond = isDo ? Node->r : Node->l;
@@ -216,13 +196,9 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
     /*Code*/
 
     analyzerNode(ctx, code);
-
-    debugLeave();
 }
 
 static void analyzerIter (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Iter");
-
     ast* init = Node->firstChild;
     ast* cond = init->nextSibling;
     ast* iter = cond->nextSibling;
@@ -252,13 +228,9 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
     /*Code*/
 
     analyzerNode(ctx, Node->l);
-
-    debugLeave();
 }
 
 static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Return");
-
     /*Return type, if any, matches?*/
 
     if (ctx->fnctx.returnType) {
@@ -282,7 +254,5 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
                                 ? typeDeepDuplicate(analyzerValue(ctx, Node->r))
                                 : typeCreateBasic(ctx->types[builtinVoid]);
     }
-
-    debugLeave();
 }
 

@@ -33,7 +33,7 @@ void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
                                    const sym* Symbol, const type* found);
 void errorRedeclared (analyzerCtx* ctx, const ast* Node, const sym* Symbol);
 void errorAlreadyConst (analyzerCtx* ctx, const ast* Node);
-void errorIllegalConst (analyzerCtx* ctx, const ast* Node);
+void errorIllegalConst (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol);
 void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node,
                             const sym* Symbol, const char* what);
@@ -41,7 +41,7 @@ void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
                             const sym* Symbol, int size);
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node);
 void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o);
-void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node);
-void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n);
+void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT);
+void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT);
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt);
 void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o);

@@ -36,6 +36,8 @@ void emitterDecl (emitterCtx* ctx, irBlock** block, const ast* Node) {
 }
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astStruct || Node->tag == astUnion)
         emitterStructOrUnion(ctx, Node->symbol, 0);
 
@@ -50,11 +52,11 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
 
     else
         debugErrorUnhandled("emitterDeclBasic", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
 }
 
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) {
-    debugEnter("StructOrUnion");
-
     record->size = 0;
 
     /*For every field*/
@@ -98,20 +100,16 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
     }
 
     reportSymbol(record);
-
-    debugLeave();
 }
 
 static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
-    debugEnter("Enum");
-
     Symbol->size = ctx->arch->wordsize;
     reportSymbol(Symbol);
-
-    debugLeave();
 }
 
 static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astInvalid || Node->tag == astEmpty)
         ;
 
@@ -150,11 +148,11 @@ static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
 
     } else
         debugErrorUnhandled("emitterDeclNode", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
 }
 
 static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("DeclAssignBOP");
-
     emitterDeclNode(ctx, block, Node->l);
 
     operand L = operandCreateMem(&regs[regRBP],
@@ -172,15 +170,9 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* N
         else
             debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
     }
-
-    debugLeave();
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    debugEnter("DeclName");
-
     if (Node->symbol->label == 0)
         ctx->arch->symbolMangler(Node->symbol);
-
-    debugLeave();
 }
