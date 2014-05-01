@@ -6,9 +6,11 @@ Features
 
 The compiler implements a language quite similar to C, but there are some major differences. The following list is probably not exhaustive, but attempts to be.
 
-- Addition of:
+- Features added:
+  - Lambdas
   - Simple module system
   - `bool` type
+  - Some operators including inverse comma (`` ` ``) and coalesce (`??`)
 - Different semantics:
   - Unified variable/typedef/struct/union/enum namespace
   - Logical operators (`||`, `&&`, and `!`) return `bool`
@@ -43,6 +45,21 @@ The compiler is advanced enough to self-host much of itself with the rest compil
 - Lambdas/closures
 - Option types (`option` in ML, `Maybe` in Haskell)
 - Algebraic types (a more general solution to option types)
+
+Extensions
+----------
+
+```c
+[] (parameters, ...) {body}
+[](parameters, ...) (expression)
+```
+
+Lambdas have the same syntax as those in C++. Closures are not implemented yet, so the opening square brackets must be empty. 
+
+A second form with parentheses instead of curly braces is also allowed. This takes a single expression which is the return value of the function.
+
+In either case the result of the expression is a function pointer whose return type is inferred from any and all return expressions in the body. This differs from C++, where there is a special implementation defined type incompatible with normal functions.
+
 
 Output
 ------
