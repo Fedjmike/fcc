@@ -10,7 +10,6 @@ The compiler implements a language quite similar to C, but there are some major 
   - Lambdas
   - Simple module system
   - `bool` type
-  - Some operators including inverse comma (`` ` ``) and coalesce (`??`)
 - Different semantics:
   - Unified variable/typedef/struct/union/enum namespace
   - Logical operators (`||`, `&&`, and `!`) return `bool`
