@@ -70,7 +70,10 @@ static bool isNodeLvalue (const ast* Node) {
 
     else if (Node->tag == astLiteral)
         /*Refers to an object?*/
-        return    (Node->litTag == literalIdent && !typeIsFunction(Node->dt))
+        return    (   Node->litTag == literalIdent
+                   && (Node->symbol && (   Node->symbol->tag == symId
+                                        || Node->symbol->tag == symParam))
+                   && !typeIsFunction(Node->dt))
                || Node->litTag == literalCompound;
 
     else if (Node->tag == astInvalid)
