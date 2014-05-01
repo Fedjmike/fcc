@@ -110,9 +110,9 @@ void asmPush (irCtx* ir, irBlock* block, operand L) {
 
     /*Flags*/
     if (L.tag == operandFlags) {
-        asmPush(ir, block, operandCreateLiteral(1));
+        asmPush(ir, block, operandCreateLiteral(0));
         operand top = operandCreateMem(ctx->stackPtr.base, 0, ctx->arch->wordsize);
-        asmConditionalMove(ir, block, L, top, operandCreateLiteral(0));
+        asmConditionalMove(ir, block, L, top, operandCreateLiteral(1));
 
     /*Larger than word*/
     } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
@@ -207,8 +207,8 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
 
     /*Flags*/
     } else if (Src.tag == operandFlags) {
-        asmMove(ir, block, Dest, operandCreateLiteral(1));
-        asmConditionalMove(ir, block, Src, Dest, operandCreateLiteral(0));
+        asmMove(ir, block, Dest, operandCreateLiteral(0));
+        asmConditionalMove(ir, block, Src, Dest, operandCreateLiteral(1));
 
     } else {
         char* DestStr = operandToStr(Dest);
