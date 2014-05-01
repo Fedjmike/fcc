@@ -65,6 +65,44 @@ typedef enum literalTag {
     literalLambda
 } literalTag;
 
+/**
+ * Syntax tree node
+ *
+ * Subclasses:
+ *   o Values
+ *      - Defined as those that are returned by parserValue.
+ *      - One of: BOP, UOP, TOP, Index, Call, Cast, Sizeof, Literal, Empty
+ *      - They represent value returning expressions.
+ *      - Handled by functions such as analyzerValue, emitterValue.
+ *
+ *   o DeclExprs
+ *      - Defined as those that are returned by parserDeclExpr.
+ *      - One of: BOP, UOP, Index, Call, Const, Literal
+ *      - Represent direct declarators, in the language of the standard.
+ *      - Handlers such as analyzerDeclNode.
+ *
+ * These subclasses are mutually exclusive.
+ *
+ * Invariants:
+ *   - location is the location of the first token in the grammatical
+ *     construction, or another location appropriate for errors to
+ *     appear at. For example, the location of a BOP will be the operator.
+ *
+ *   - For Values:
+ *      - Any child is itself a value, other than
+ *         1. The right child of a Sizeof which can be a Type or Value,
+ *         2. The left child of a Cast.
+ *      - After analysis, dt will be a type representing the result of
+ *        the expression.
+ *
+ *   - For DeclExprs:
+ *      - Any child is itself a DeclExpr, other than
+ *         1. The right child of a BOP[o=Assign],
+ *         2. The right child of an Index,
+ *         3. The linked list children of a Call.
+ *      - After parsing, if the DeclExpr declares a symbol it will be
+ *        stored in symbol.
+ */
 typedef struct ast {
     astTag tag;
 
