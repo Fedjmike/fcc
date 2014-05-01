@@ -114,14 +114,8 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
 }
 
 static void symAddChild (sym* Parent, sym* Child) {
-    if (   debugAssert("symAddChild", "null child", Child != 0)
-        || debugAssert("symAddChild", "null parent", Parent != 0))
-        ;
-
-    else {
-        Child->parent = Parent;
-        Child->nthChild = vectorPush(&Parent->children, Child);
-    }
+    Child->parent = Parent;
+    Child->nthChild = vectorPush(&Parent->children, Child);
 }
 
 void symChangeParent (sym* Symbol, sym* parent) {
@@ -134,10 +128,6 @@ void symChangeParent (sym* Symbol, sym* parent) {
 }
 
 sym* symChild (const sym* Scope, const char* look) {
-    if (   debugAssert("symChild", "null scope", Scope != 0)
-        || debugAssert("symChild", "null string", look != 0))
-        return 0;
-
     //printf("searching: %s\n", Scope->ident);
 
     for (int n = 0; n < Scope->children.length; n++) {
@@ -179,10 +169,6 @@ sym* symChild (const sym* Scope, const char* look) {
 }
 
 sym* symFind (const sym* Scope, const char* look) {
-    if (   debugAssert("symFind", "null scope", Scope != 0)
-        || debugAssert("symFind", "null string", look != 0))
-        return 0;
-
     //printf("look: %s\n", look);
 
     /*Search the current namespace and all its ancestors*/

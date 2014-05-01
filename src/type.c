@@ -90,9 +90,6 @@ type* typeCreateInvalid () {
 }
 
 void typeDestroy (type* DT) {
-    if (debugAssert("typeDestroy", "null parameter", DT != 0))
-        return;
-
     if (DT->tag == typeBasic || DT->tag == typeInvalid)
         ;
 
@@ -112,9 +109,6 @@ void typeDestroy (type* DT) {
 }
 
 type* typeDeepDuplicate (const type* DT) {
-    if (debugAssert("typeDeepDuplicate", "null parameter", DT != 0))
-        return typeCreateInvalid();
-
     type* copy;
 
     if (DT->tag == typeInvalid)
@@ -478,9 +472,6 @@ const char* typeTagGetStr (typeTag tag) {
 }
 
 int typeGetSize (const architecture* arch, const type* DT) {
-    if (debugAssert("typeGetSize", "null parameter", DT != 0))
-        return arch->wordsize;
-
     DT = typeTryThroughTypedef(DT);
 
     if (typeIsInvalid(DT))

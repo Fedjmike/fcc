@@ -32,9 +32,6 @@ ast* astCreate (astTag tag, tokenLocation location) {
 }
 
 void astDestroy (ast* Node) {
-    if (debugAssert("astDestroy", "null param", Node != 0))
-        return;
-
     for (ast *Current = Node->firstChild, *Next = Current ? Current->nextSibling : 0;
          Current;
          Current = Next, Next = Next ? Next->nextSibling : 0)
@@ -184,12 +181,6 @@ ast* astCreateEllipsis (tokenLocation location) {
 }
 
 void astAddChild (ast* Parent, ast* Child) {
-    if (!Child || !Parent) {
-        printf("astAddChild(): null %s given.\n",
-               !Parent ? "parent" : "child");
-        return;
-    }
-
     if (Parent->firstChild == 0) {
         Parent->firstChild = Child;
         Parent->lastChild = Child;
