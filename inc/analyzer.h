@@ -1,5 +1,9 @@
 #include "hashmap.h"
 
+using "forward.h";
+
+using "hashmap.h";
+
 typedef struct ast ast;
 typedef struct sym sym;
 typedef struct type type;
@@ -52,9 +56,7 @@ typedef struct analyzerResult {
  * Attaches types to AST nodes and symbols and validates their semantics.
  *
  * Assumes a well formed AST in terms of fields filled and constraints on
- * what fills them upheld. For example, the children of a value tag are
- * assumed to all be value tags themselves. The o string in a BOP is
- * assumed to be a valid operator.
+ * what fills them upheld.
  */
 analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch);
 
