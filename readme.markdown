@@ -53,7 +53,7 @@ Extensions
 [] (parameters, ...) (expression)
 ```
 
-Lambdas have the same syntax as those in C++. Closures are not implemented yet, so the opening square brackets must be empty. 
+The syntax for lambdas is similar to that in C++. Closures are not implemented yet, so the opening square brackets must be empty.
 
 A second form with parentheses instead of curly braces is also allowed. This takes a single expression which is the return value of the function.
 
