@@ -501,8 +501,10 @@ static ast* parserLambda (parserCtx* ctx) {
         Node->r = parserValue(ctx);
         tokenTryMatchPunct(ctx, punctRParen);
 
-    } else
+    } else {
         errorExpected(ctx, "lambda body");
+        Node->r = astCreateInvalid(ctx->location);
+    }
 
     ctx->scope = oldScope;
 
