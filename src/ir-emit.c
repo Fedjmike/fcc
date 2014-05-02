@@ -50,7 +50,7 @@ static void irEmitBlockChain (irCtx* ctx, FILE* file,
                               intset/*<irBlock*>*/* done, vector/*<irBlock*>*/* priority,
                               const irBlock* block) {
     /*Already put in the priority list, leave*/
-    if (intsetAdd(done, (uintptr_t) block))
+    if (intsetAdd(done, (intptr_t) block))
         return;
 
     /*Add all the predecessors and their predecessors to the list*/

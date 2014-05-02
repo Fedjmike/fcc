@@ -44,7 +44,7 @@ static void blaFn (irFn* fn) {
 
 static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block) {
     /*Avoid cycles*/
-    if (intsetAdd(done, (uintptr_t) block))
+    if (intsetAdd(done, (intptr_t) block))
         return false;
 
     /*Recursively analyze any preds*/
