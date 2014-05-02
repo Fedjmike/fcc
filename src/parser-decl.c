@@ -77,7 +77,8 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
             if (!ident)
                 break;
 
-            else if (ident->tag == astBOP || ident->tag == astIndex)
+            else if (   ident->tag == astBOP || ident->tag == astIndex
+                     || ident->tag == astCall)
                 ident = ident->l;
 
             else if (   ident->tag == astUOP || ident->tag == astConst
@@ -101,7 +102,8 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
 
             ident->symbol = param->symbol;
 
-            if (ident->tag == astBOP || ident->tag == astIndex)
+            if (   ident->tag == astBOP || ident->tag == astIndex
+                || ident->tag == astCall)
                 ident = ident->l;
 
             else if (   ident->tag == astUOP || ident->tag == astConst
