@@ -136,7 +136,7 @@ print-tests:
 selfbuild: bin/self/fcc
 
 bin/self/fcc: $(OUT) selfbuild.sh
-	@echo " [FCC+CC] fcc"
+	@echo " [FCC+GCC] $@"
 	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
 	
