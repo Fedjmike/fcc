@@ -34,11 +34,11 @@ static int hashstr (const char* key, int mapsize) {
     for (int i = 0; key[i]; i++)
         hash += key[i];
 
-    return hash % mapsize;
+    return (hash % (mapsize-1)) + 1;
 }
 
 static int hashint (int element, int mapsize) {
-    return element % mapsize;
+    return (element % (mapsize-1)) + 1;
 }
 
 /*:::: GENERALMAP ::::*/
