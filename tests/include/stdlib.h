@@ -7,3 +7,5 @@ void srand (int);
 int rand ();
 
 int atoi (const char*);
+
+int system (const char*);
