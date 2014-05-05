@@ -197,7 +197,8 @@ void astAddChild (ast* Parent, ast* Child) {
 bool astIsValueTag (astTag tag) {
     return    tag == astBOP || tag == astUOP || tag == astTOP
            || tag == astCall || tag == astIndex || tag == astCast
-           || tag == astSizeof || tag == astLiteral;
+           || tag == astSizeof || tag == astLiteral || tag == astVAStart
+           || tag == astVAEnd || tag == astVAArg || tag == astVACopy;
 }
 
 const char* astTagGetStr (astTag tag) {
@@ -230,6 +231,10 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astSizeof) return "astSizeof";
     else if (tag == astLiteral) return "astLiteral";
     else if (tag == astEllipsis) return "astEllipsis";
+    else if (tag == astVAStart) return "astVAStart";
+    else if (tag == astVAEnd) return "astVAEnd";
+    else if (tag == astVAArg) return "astVAArg";
+    else if (tag == astVACopy) return "astVACopy";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

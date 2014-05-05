@@ -41,6 +41,11 @@ static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const a
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
 static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node);
 
+static operand emitterVAStart (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVAEnd (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVAArg (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node);
+
 operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, block, Node, request, 0);
 }
@@ -95,6 +100,18 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
     else if (Node->tag == astLiteral)
         Value = emitterLiteral(ctx, block, Node);
+
+    else if (Node->tag == astVAStart)
+        Value = emitterVAStart(ctx, block, Node);
+
+    else if (Node->tag == astVAEnd)
+        Value = emitterVAEnd(ctx, block, Node);
+
+    else if (Node->tag == astVAArg)
+        Value = emitterVAArg(ctx, block, Node);
+
+    else if (Node->tag == astVACopy)
+        Value = emitterVACopy(ctx, block, Node);
 
     else if (Node->tag == astEmpty)
         Value = operandCreateVoid();
@@ -932,4 +949,66 @@ static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node)
     operand Value = operandCreateLabel(fn->name);
 
     return Value;
+}
+
+static operand emitterVAStart (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*args = (char*) &lastParam + sizeof(lastParam)
+      Calculate it in tmp*/
+
+    operand args = emitterValue(ctx, block, Node->l, requestMem);
+
+    operand tmp = operandCreateReg(regAlloc(ctx->arch->wordsize));
+
+    /*Get the address of the given parameter*/
+    operand lastParam = emitterValue(ctx, block, Node->r, requestMem);
+    asmEvalAddress(ctx->ir, *block, tmp, lastParam);
+
+    /*Add its size to move past it*/
+    operand lastParamSize = operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
+    asmBOP(ctx->ir, *block, bopAdd, tmp, lastParamSize);
+
+    /*Move it into the va_list*/
+    asmMove(ctx->ir, *block, args, tmp);
+
+    operandFree(tmp);
+    operandFree(args);
+
+    return operandCreateVoid();
+}
+
+static operand emitterVAEnd (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    (void) ctx, (void) block, (void) Node;
+    return operandCreateVoid();
+}
+
+static operand emitterVAArg (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*void* tmp = args;
+      args += sizeof(thisParam);
+      return *(thisParam*) tmp;*/
+
+    operand args = emitterValue(ctx, block, Node->l, requestMem);
+
+    /*Store the old param ptr in a register*/
+    operand Value = emitterGetInReg(ctx, *block, args, ctx->arch->wordsize);
+
+    /*Increment it in the va_list*/
+    int thisParamSize = typeGetSize(ctx->arch, Node->r->dt);
+    asmBOP(ctx->ir, *block, bopAdd, args, operandCreateLiteral(thisParamSize));
+
+    operandFree(args);
+
+    /*Return the saved copy*/
+    return operandCreateMem(Value.base, 0, thisParamSize);
+}
+
+static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*dest = src*/
+
+    /*Assumes va_list can fit in a register*/
+    operand L = emitterValue(ctx, block, Node->l, requestMem);
+    operand R = emitterValue(ctx, block, Node->r, requestValue);
+
+    asmMove(ctx->ir, *block, L, R);
+
+    return operandCreateVoid();
 }

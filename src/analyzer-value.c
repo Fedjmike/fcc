@@ -30,6 +30,12 @@ static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
 static void analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected);
 static void analyzerLambda (analyzerCtx* ctx, ast* Node);
 
+static void analyzerVAStart (analyzerCtx* ctx, ast* Node);
+static void analyzerVAEnd (analyzerCtx* ctx, ast* Node);
+static void analyzerVAArg (analyzerCtx* ctx, ast* Node);
+static void analyzerVACopy (analyzerCtx* ctx, ast* Node);
+static void analyzerVAListParam (analyzerCtx* ctx, ast* Node, const char* where, const char* which);
+
 static bool isNodeLvalue (const ast* Node) {
     if (Node->tag == astBOP) {
         if (   opIsNumeric(Node->o) || opIsOrdinal(Node->o)
@@ -61,8 +67,9 @@ static bool isNodeLvalue (const ast* Node) {
     else if (Node->tag == astIndex)
         return true;
 
-    else if (   Node->tag == astCall
-             || Node->tag == astSizeof)
+    else if (   Node->tag == astCall || Node->tag == astSizeof
+             || Node->tag == astVAStart || Node->tag == astVAEnd
+             || Node->tag == astVAArg || Node->tag == astVACopy)
         return false;
 
     else if (Node->tag == astCast)
@@ -129,6 +136,18 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
 
     else if (Node->tag == astLiteral)
         analyzerLiteral(ctx, Node);
+
+    else if (Node->tag == astVAStart)
+        analyzerVAStart(ctx, Node);
+
+    else if (Node->tag == astVAEnd)
+        analyzerVAEnd(ctx, Node);
+
+    else if (Node->tag == astVAArg)
+        analyzerVAArg(ctx, Node);
+
+    else if (Node->tag == astVACopy)
+        analyzerVACopy(ctx, Node);
 
     else if (Node->tag == astInvalid)
         Node->dt = typeCreateInvalid();
@@ -618,4 +637,41 @@ static void analyzerLambda (analyzerCtx* ctx, ast* Node) {
     /*Result*/
     Node->dt = typeCreateFunction(ret, paramTypes, Node->children, false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
+}
+
+static void analyzerVAStart (analyzerCtx* ctx, ast* Node) {
+    analyzerVAListParam(ctx, Node->l, "va_start", "first");
+
+    analyzerValue(ctx, Node->r);
+
+    if (Node->r->symbol->tag != symParam)
+        errorVAStartNonParam(ctx, Node->r);
+
+    Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
+}
+
+static void analyzerVAEnd (analyzerCtx* ctx, ast* Node) {
+    analyzerVAListParam(ctx, Node->l, "va_end", "first");
+}
+
+static void analyzerVAArg (analyzerCtx* ctx, ast* Node) {
+    analyzerVAListParam(ctx, Node->l, "va_arg", "first");
+
+    const type* R = analyzerType(ctx, Node->r);
+    Node->dt = typeDeepDuplicate(R);
+}
+
+static void analyzerVACopy (analyzerCtx* ctx, ast* Node) {
+    analyzerVAListParam(ctx, Node->l, "va_copy", "first");
+    analyzerVAListParam(ctx, Node->r, "va_copy", "second");
+}
+
+static void analyzerVAListParam (analyzerCtx* ctx, ast* Node, const char* where, const char* which) {
+    const type* DT = analyzerValue(ctx, Node);
+
+    if (typeGetBasic(DT) != ctx->types[builtinVAList])
+        errorVAxList(ctx, Node, where, which);
+
+    else if (!isNodeLvalue(Node))
+        errorVAxLvalue(ctx, Node, where, which);
 }

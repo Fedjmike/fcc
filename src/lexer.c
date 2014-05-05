@@ -270,7 +270,6 @@ static keywordTag lookKeyword (const char* str) {
     case 'a': return !strcmp(rest[0], "uto") ? keywordAuto : keywordUndefined;
     case 'd': return !strcmp(rest[0], "o") ? keywordDo : keywordUndefined;
     case 'r': return !strcmp(rest[0], "eturn") ? keywordReturn : keywordUndefined;
-    case 'v': return !strcmp(rest[0], "oid") ? keywordVoid : keywordUndefined;
     case 'w': return !strcmp(rest[0], "hile") ? keywordWhile : keywordUndefined;
 
     case 'b':
@@ -346,6 +345,25 @@ static keywordTag lookKeyword (const char* str) {
         default: return keywordUndefined;
         }
 
+    case 'v':
+        switch (str[1]) {
+        case 'a':
+            if (str[2] == '_') {
+                switch (str[3]) {
+                    case 'a': return !strcmp(rest[3], "rg") ? keywordVAArg : keywordUndefined;
+                    case 'c': return !strcmp(rest[3], "opy") ? keywordVACopy : keywordUndefined;
+                    case 'e': return !strcmp(rest[3], "nd") ? keywordVAEnd : keywordUndefined;
+                    case 's': return !strcmp(rest[3], "tart") ? keywordVAStart : keywordUndefined;
+                    default: return keywordUndefined;
+                }
+
+            } else
+                return keywordUndefined;
+
+        case 'o': return !strcmp(rest[1], "id") ? keywordVoid : keywordUndefined;
+        default: return keywordUndefined;
+        }
+
     default: return keywordUndefined;
     }
 }
@@ -376,6 +394,10 @@ const char* keywordTagGetStr (keywordTag tag) {
     else if (tag == keywordInt) return "int";
     else if (tag == keywordTrue) return "true";
     else if (tag == keywordFalse) return "false";
+    else if (tag == keywordVAStart) return "va_start";
+    else if (tag == keywordVAEnd) return "va_end";
+    else if (tag == keywordVAArg) return "va_arg";
+    else if (tag == keywordVACopy) return "va_copy";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

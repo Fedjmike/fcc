@@ -26,6 +26,7 @@ static ast* parserPostUnary (parserCtx* ctx);
 static ast* parserObject (parserCtx* ctx);
 static ast* parserFactor (parserCtx* ctx);
 static ast* parserLambda (parserCtx* ctx);
+static ast* parserVA (parserCtx* ctx);
 
 /**
  * Value = Comma
@@ -332,6 +333,7 @@ static ast* parserObject (parserCtx* ctx) {
  *          | ( "(" Type ")" Unary )
  *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
+ *          | VAStart | VAEnd | VAArg | VACopy
  *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
@@ -438,6 +440,13 @@ static ast* parserFactor (parserCtx* ctx) {
         Node->literal = malloc(sizeof(char));
         *(char*) Node->literal = tokenMatchChar(ctx);
 
+    /*va_start va_end va_arg va_copy*/
+    } else if (   tokenIsKeyword(ctx, keywordVAStart)
+               || tokenIsKeyword(ctx, keywordVAEnd)
+               || tokenIsKeyword(ctx, keywordVAArg)
+               || tokenIsKeyword(ctx, keywordVACopy)) {
+        Node = parserVA(ctx);
+
     /*Identifier*/
     } else if (tokenIsIdent(ctx)) {
         sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
@@ -507,6 +516,66 @@ static ast* parserLambda (parserCtx* ctx) {
     }
 
     ctx->scope = oldScope;
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * VAStart = va_start "(" AssignValue "," <Ident> ")"
+ * VAEnd = va_end "(" AssignValue ")"
+ * VAArg = va_arg "(" AssignValue "," Type ")"
+ * VACopy = va_copy "(" AssignValue "," AssignValue ")"
+ */
+static ast* parserVA (parserCtx* ctx) {
+    debugEnter("VA");
+
+    /*Parse all builtins in one, remembering which keyword was found.*/
+
+    tokenLocation loc = ctx->location;
+
+    keywordTag keyword =   tokenTryMatchKeyword(ctx, keywordVAStart) ? keywordVAStart
+                         : tokenTryMatchKeyword(ctx, keywordVAEnd) ? keywordVAEnd
+                         : tokenTryMatchKeyword(ctx, keywordVACopy) ? keywordVACopy
+                         : (tokenMatchKeyword(ctx, keywordVAArg), keywordVAArg);
+
+    astTag tag =   keyword == keywordVAStart ? astVAStart
+                 : keyword == keywordVAEnd ? astVAEnd
+                 : keyword == keywordVAArg ? astVAArg : astVACopy;
+
+    ast* Node = astCreate(tag, loc);
+
+    tokenMatchPunct(ctx, punctLParen);
+
+    Node->l = parserAssignValue(ctx);
+
+    if (keyword != keywordVAEnd) {
+        tokenMatchPunct(ctx, punctComma);
+
+        /*va_start takes a parameter name
+          Validate it as an ident but don't validate the symbol*/
+        if (keyword == keywordVAStart) {
+            sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
+
+            if (tokenIsIdent(ctx) && Symbol) {
+                Node->r = astCreateLiteral(ctx->location, literalIdent);
+                Node->r->literal = (char*) tokenDupMatch(ctx);
+                Node->r->symbol = Symbol;
+
+            } else {
+                errorExpected(ctx, "parameter name");
+                Node->r = astCreateInvalid(ctx->location);
+            }
+
+        } else if (keyword == keywordVAArg)
+            Node->r = parserType(ctx);
+
+        else /*if (keyword == keywordVACopy)*/
+            Node->r = parserAssignValue(ctx);
+    }
+
+    tokenMatchPunct(ctx, punctRParen);
 
     debugLeave();
 

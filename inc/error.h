@@ -26,6 +26,9 @@ void errorDegree (analyzerCtx* ctx, const ast* Node,
 void errorMember (analyzerCtx* ctx, const ast* Node, const char* field);
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                          const ast* fn, int n, const type* expected, const type* found);
+void errorVAxList (analyzerCtx* ctx, const ast* Node, const char* where, const char* which);
+void errorVAxLvalue (analyzerCtx* ctx, const ast* Node, const char* where, const char* which);
+void errorVAStartNonParam (analyzerCtx* ctx, const ast* Node);
 void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init);
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
                              const sym* structSym, const sym* fieldSym);

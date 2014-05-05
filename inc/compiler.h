@@ -17,6 +17,7 @@ enum {
     builtinBool,
     builtinChar,
     builtinInt,
+    builtinVAList,
     builtinTotal
 };
 

@@ -1,12 +1,10 @@
-using "_stdarg.h";
-
 struct FILE;
 
 FILE* fopen (const char*, const char*);
 int fclose (FILE*);
 
 int fprintf (FILE*, const char*, ...);
-int vfprintf (FILE*, const char*, _va_list);
+int vfprintf (FILE*, const char*, va_list);
 int fputc (int, FILE*);
 
 int fseek (FILE*, int, int);

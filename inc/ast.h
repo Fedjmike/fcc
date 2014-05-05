@@ -32,7 +32,7 @@ typedef enum astTag {
     astType, astDecl, astParam, astStruct, astUnion, astEnum, astConst,
     astCode, astBranch, astLoop, astIter, astReturn, astBreak, astContinue,
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
-    astEllipsis
+    astVAStart, astVAEnd, astVAArg, astVACopy, astEllipsis
 } astTag;
 
 typedef enum opTag {
@@ -91,7 +91,8 @@ typedef enum literalTag {
  *   - For Values:
  *      - Any child is itself a value, other than
  *         1. The right child of a Sizeof which can be a Type or Value,
- *         2. The left child of a Cast.
+ *         2. The left child of a Cast, a Type,
+ *         3. The right child of a VAArg, a Type.
  *      - After analysis, dt will be a type representing the result of
  *        the expression.
  *

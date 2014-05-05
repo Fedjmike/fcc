@@ -27,10 +27,15 @@ Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
+		 | VAStart | VAEnd | VAArg | VACopy
          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
 Lambda = "[" "]"
          "(" [ Param [{ "," Param }] ] ")"
          ( "{" Code "}" ) | ( "(" Value ")" )
+VAStart = va_start "(" AssignValue "," <Ident> ")"
+VAEnd = va_end "(" AssignValue ")"
+VAArg = va_arg "(" AssignValue "," Type ")"
+VACopy = va_copy "(" AssignValue "," AssignValue ")"
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )

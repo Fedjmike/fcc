@@ -254,6 +254,18 @@ void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
     errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", Node->o, Node->l, field);
 }
 
+void errorVAxList (analyzerCtx* ctx, const ast* Node, const char* where, const char* which) {
+    errorAnalyzer(ctx, Node, "$s parameter of $h requires $h", which, where, "va_list");
+}
+
+void errorVAxLvalue (analyzerCtx* ctx, const ast* Node, const char* where, const char* which) {
+    errorAnalyzer(ctx, Node, "$s parameter of $h requires an lvalue", which, where);
+}
+
+void errorVAStartNonParam (analyzerCtx* ctx, const ast* Node) {
+    errorAnalyzer(ctx, Node, "$h expected parameter name, found $n", "va_start", Node->symbol);
+}
+
 void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) {
     errorAnalyzer(ctx, init, "incompatible initialization of $n from $a", variable->symbol, init);
 }
