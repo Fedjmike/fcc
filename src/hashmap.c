@@ -103,7 +103,7 @@ static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, gene
 static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp) {
     if (cmp)
         return    map->hashes[index] == hash
-               && (!cmp || !cmp(map->keysStr[index], key));
+               && !cmp(map->keysStr[index], key);
 
     else
         return map->keysStr[index] == key;
