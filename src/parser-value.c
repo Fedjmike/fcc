@@ -357,7 +357,7 @@ static ast* parserFactor (parserCtx* ctx) {
                 Node->symbol = symCreateNamed(symId, ctx->scope, "");
                 Node->l = tmp;
 
-                do {
+                if (!tokenIsPunct(ctx, punctRBrace)) do {
                     /*Skipped field/element*/
                     if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
                         astAddChild(Node, astCreateEmpty(ctx->location));
@@ -382,7 +382,7 @@ static ast* parserFactor (parserCtx* ctx) {
     } else if (tokenTryMatchPunct(ctx, punctLBrace)) {
         Node = astCreateLiteral(loc, literalInit);
 
-        do {
+        if (!tokenIsPunct(ctx, punctRBrace)) do {
             /*Skipped field/element*/
             if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
                 astAddChild(Node, astCreateEmpty(ctx->location));
