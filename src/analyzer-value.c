@@ -67,13 +67,11 @@ static bool isNodeLvalue (const ast* Node) {
     else if (Node->tag == astIndex)
         return true;
 
-    else if (   Node->tag == astCall || Node->tag == astSizeof
+    else if (   Node->tag == astCall || Node->tag == astCast
              || Node->tag == astVAStart || Node->tag == astVAEnd
-             || Node->tag == astVAArg || Node->tag == astVACopy)
+             || Node->tag == astVAArg || Node->tag == astVACopy
+             || Node->tag == astSizeof )
         return false;
-
-    else if (Node->tag == astCast)
-        return isNodeLvalue(Node->r);
 
     else if (Node->tag == astLiteral)
         /*Refers to an object?*/
