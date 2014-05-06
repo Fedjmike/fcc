@@ -143,12 +143,3 @@ void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ);
 /*:::: ::::*/
 
 void irBlockLevelAnalysis (irCtx* ctx);
-
-/*void irPush (irBlock* block, operand R);
-
-void irMove (irBlock* block, operand dest, operand R);
-void irEvalAddress (irBlock* block, operand dest, operand R);
-
-void irCompare (irBlock* block, operand L, operand R);
-
-void irBOP (irBlock* block, opTag op, operand L, operand R);*/
