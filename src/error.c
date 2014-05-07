@@ -126,9 +126,8 @@ static void verrorf (const char* format, va_list args) {
             } else if (format[i] == '\0')
                 break;
 
-            /*Unknown, ignore*/
             else
-                {}
+                debugErrorUnhandledChar("verrorf", "format specifier", format[i]);
 
         } else
             putchar(format[i]);

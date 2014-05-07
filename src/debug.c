@@ -126,6 +126,12 @@ void debugErrorUnhandledInt (const char* functionName,
     debugError(functionName, "unhandled %s: %d", className, classInt);
 }
 
+void debugErrorUnhandledChar (const char* functionName,
+                              const char* className,
+                              char classChar) {
+    debugError(functionName, "unhandled %s: '%c'", className, classChar);
+}
+
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
 void report (const char* str) {
