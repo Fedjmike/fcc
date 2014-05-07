@@ -347,6 +347,10 @@ void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol
     errorAnalyzer(ctx, Node, "declaration of $h needed a compile-time known $s", Symbol->ident, what);
 }
 
+void errorStaticCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol) {
+    errorAnalyzer(ctx, Node, "initialization of static variable $h needed a compile-time known value", Symbol->ident);
+}
+
 void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
                             const sym* Symbol, int size) {
     errorAnalyzer(ctx, Node, "declaration of array $s expected positive size, found $d", Symbol, size);

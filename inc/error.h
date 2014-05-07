@@ -45,6 +45,7 @@ void errorIllegalConst (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIllegalSymAsValue (analyzerCtx* ctx, const ast* Node, const sym* Symbol);
 void errorCompileTimeKnown (analyzerCtx* ctx, const ast* Node,
                             const sym* Symbol, const char* what);
+void errorStaticCompileTimeKnown (analyzerCtx* ctx, const ast* Node, const sym* Symbol);
 void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
                             const sym* Symbol, int size);
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node);

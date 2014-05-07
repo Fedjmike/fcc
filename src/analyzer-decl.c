@@ -269,6 +269,13 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
 
         if (Node->l->symbol->storage == storageExtern)
             errorExternInit(ctx, Node);
+
+        else if (Node->l->symbol->storage == storageStatic) {
+            evalResult result = eval(ctx->arch, Node->r);
+
+            if (!result.known)
+                errorStaticCompileTimeKnown(ctx, Node->r, Node->l->symbol);
+        }
     }
 
     return L;
