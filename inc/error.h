@@ -17,6 +17,8 @@ void errorFileNotFound (parserCtx* ctx, const char* name);
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node,
                         const char* where, const char* expected);
+void errorOpTypeExpected (analyzerCtx* ctx, const ast* Node,
+                          opTag o, const char* expected);
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node,
                             const char* where, const type* expected);
 void errorLvalue (analyzerCtx* ctx, const ast* Node, opTag o);

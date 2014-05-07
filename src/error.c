@@ -213,6 +213,10 @@ void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, co
     errorAnalyzer(ctx, Node, "$h requires $s, found $a", where, expected, Node);
 }
 
+void errorOpTypeExpected (analyzerCtx* ctx, const ast* Node, opTag o, const char* expected) {
+    errorAnalyzer(ctx, Node, "$o requires $s, found $a", o, expected, Node);
+}
+
 void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where, const type* expected) {
     errorAnalyzer(ctx, Node, "$s requires $t, found $t", where, expected, Node->dt);
 }

@@ -48,7 +48,7 @@ typedef enum opTag {
     opShr, opShl,
     opAdd, opSubtract, opMultiply, opDivide, opModulo,
     opLogicalNot, opBitwiseNot, opUnaryPlus, opNegate, opDeref, opAddressOf,
-    opIndex,
+    opIndex, opCall,
     opPreIncrement, opPreDecrement, opPostIncrement, opPostDecrement,
     opMember, opMemberDeref
 } opTag;

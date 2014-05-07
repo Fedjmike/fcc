@@ -262,7 +262,7 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
         const type* R = analyzerValue(ctx, Node->r);
 
         if (!typeIsAssignment(L))
-            errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "assignable type");
+            errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
         else if (!typeIsCompatible(R, L))
             errorInitMismatch(ctx, Node->l, Node->r);

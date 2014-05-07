@@ -169,19 +169,19 @@ static void analyzerBOP (analyzerCtx* ctx, ast* Node) {
     if (opIsBitwise(Node->o)) {
         if (   !(typeIsNumeric(L) || typeIsCondition(L))
             || !(typeIsNumeric(R) || (typeIsCondition(R))))
-            errorTypeExpected(ctx, !(typeIsNumeric(L) || typeIsCondition(L)) ? Node->l : Node->r,
-                              opTagGetStr(Node->o), "numeric type");
+            errorOpTypeExpected(ctx, !(typeIsNumeric(L) || typeIsCondition(L)) ? Node->l : Node->r,
+                                Node->o, "numeric type");
 
     } else {
         if (opIsNumeric(Node->o))
             if (!typeIsNumeric(L) || !typeIsNumeric(R))
-                errorTypeExpected(ctx, !typeIsNumeric(L) ? Node->l : Node->r,
-                                  opTagGetStr(Node->o), "numeric type");
+                errorOpTypeExpected(ctx, !typeIsNumeric(L) ? Node->l : Node->r,
+                                    Node->o, "numeric type");
     }
 
     if (opIsAssignment(Node->o)) {
         if (!typeIsAssignment(L))
-            errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "assignable type");
+            errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
         if (!isNodeLvalue(Node->l))
             errorLvalue(ctx, Node->l, Node->o);
@@ -209,13 +209,13 @@ static void analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
 
     if (opIsOrdinal(Node->o)) {
         if (!typeIsOrdinal(L) || !typeIsOrdinal(R))
-            errorTypeExpected(ctx, !typeIsOrdinal(L) ? Node->l : Node->r,
-                              opTagGetStr(Node->o), "comparable type");
+            errorOpTypeExpected(ctx, !typeIsOrdinal(L) ? Node->l : Node->r,
+                                Node->o, "comparable type");
 
     } else /*if (opIsEquality(Node->o))*/
         if (!typeIsEquality(L) || !typeIsEquality(R))
-            errorTypeExpected(ctx, !typeIsEquality(L) ? Node->l : Node->r,
-                              opTagGetStr(Node->o), "comparable type");
+            errorOpTypeExpected(ctx, !typeIsEquality(L) ? Node->l : Node->r,
+                                Node->o, "comparable type");
 
     if (!typeIsCompatible(L, R))
         errorMismatch(ctx, Node, Node->o);
@@ -232,8 +232,8 @@ static void analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
     /*Allowed*/
 
     if (!typeIsCondition(L) || !typeIsCondition(R))
-        errorTypeExpected(ctx, !typeIsCondition(L) ? Node->l : Node->r,
-                          opTagGetStr(Node->o), "condition");
+        errorOpTypeExpected(ctx, !typeIsCondition(L) ? Node->l : Node->r,
+                            Node->o, "condition");
 
     /*Result: bool*/
     Node->dt = typeCreateBasic(ctx->types[builtinBool]);
@@ -249,9 +249,9 @@ static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
     /*Record, or ptr to record? Irrespective of which we actually need*/
     else if (!record) {
-        errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o),
-                          opIsDeref(Node->o) ? "structure or union pointer"
-                                             : "structure or union type");
+        errorOpTypeExpected(ctx, Node->l, Node->o,
+                            opIsDeref(Node->o) ? "structure or union pointer"
+                                               : "structure or union type");
         Node->dt = typeCreateInvalid();
 
     } else {
@@ -259,11 +259,11 @@ static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
         if (opIsDeref(Node->o)) {
             if (!typeIsPtr(L))
-                errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "pointer");
+                errorOpTypeExpected(ctx, Node->l, Node->o, "pointer");
 
         } else
             if (!typeIsInvalid(L) && typeIsPtr(L))
-                errorTypeExpected(ctx, Node->l, opTagGetStr(Node->o), "direct structure or union");
+                errorOpTypeExpected(ctx, Node->l, Node->o, "direct structure or union");
 
         /*Incomplete, won't find any fields*/
         if (!record->complete) {
@@ -304,7 +304,7 @@ static void analyzerUOP (analyzerCtx* ctx, ast* Node) {
         || Node->o == opPreIncrement || Node->o == opPreDecrement
         || Node->o == opBitwiseNot) {
         if (!typeIsNumeric(R)) {
-            errorTypeExpected(ctx, Node->r, opTagGetStr(Node->o), "numeric type");
+            errorOpTypeExpected(ctx, Node->r, Node->o, "numeric type");
             Node->dt = typeCreateInvalid();
 
         } else {
@@ -324,7 +324,7 @@ static void analyzerUOP (analyzerCtx* ctx, ast* Node) {
     /*Logical negation*/
     } else if (Node->o == opLogicalNot) {
         if (!typeIsCondition(R))
-            errorTypeExpected(ctx, Node->r, opTagGetStr(Node->o), "condition");
+            errorOpTypeExpected(ctx, Node->r, Node->o, "condition");
 
         Node->dt = typeCreateBasic(ctx->types[builtinBool]);
 
@@ -337,7 +337,7 @@ static void analyzerUOP (analyzerCtx* ctx, ast* Node) {
                 errorIncompletePtr(ctx, Node->r, Node->o);
 
         } else {
-            errorTypeExpected(ctx, Node->r, opTagGetStr(Node->o), "pointer");
+            errorOpTypeExpected(ctx, Node->r, Node->o, "pointer");
             Node->dt = typeCreateInvalid();
         }
 
@@ -362,7 +362,7 @@ static void analyzerTernary (analyzerCtx* ctx, ast* Node) {
     /*Operation allowed*/
 
     if (!typeIsCondition(Cond))
-        errorTypeExpected(ctx, Node->firstChild, "ternary ?:", "condition value");
+        errorOpTypeExpected(ctx, Node->firstChild, opTernary, "condition value");
 
     /*Result types match => return type*/
 
@@ -380,7 +380,7 @@ static void analyzerIndex (analyzerCtx* ctx, ast* Node) {
     const type* R = analyzerValue(ctx, Node->r);
 
     if (!typeIsNumeric(R))
-        errorTypeExpected(ctx, Node->r, "[]", "numeric index");
+        errorOpTypeExpected(ctx, Node->r, opIndex, "numeric index");
 
     if (typeIsArray(L) || typeIsPtr(L)) {
         Node->dt = typeDeriveBase(L);
@@ -389,7 +389,7 @@ static void analyzerIndex (analyzerCtx* ctx, ast* Node) {
             errorIncompletePtr(ctx, Node->l, opIndex);
 
     } else {
-        errorTypeExpected(ctx, Node->l, "[]", "array or pointer");
+        errorOpTypeExpected(ctx, Node->l, opIndex, "array or pointer");
         Node->dt = typeCreateInvalid();
     }
 }
@@ -402,7 +402,7 @@ static void analyzerCall (analyzerCtx* ctx, ast* Node) {
 
     if (typeIsInvalid(L) || !fn) {
         if (!typeIsInvalid(L))
-            errorTypeExpected(ctx, Node->l, "()", "function");
+            errorOpTypeExpected(ctx, Node->l, opCall, "function");
 
         Node->dt = typeCreateInvalid();
 
