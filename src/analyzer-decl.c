@@ -198,9 +198,8 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base) {
 
     const type* DT = 0;
 
-    /*No symbol in chain, ownership passes to  the deepest astNode*/
     if (Node->tag == astInvalid || Node->tag == astEmpty)
-        Node->dt = base;
+        ;
 
     else if (Node->tag == astBOP) {
         if (Node->o == opAssign)
@@ -239,6 +238,9 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base) {
 
     if (Node->symbol && !Node->symbol->dt)
         Node->symbol->dt = base;
+
+    else if (!DT)
+        Node->dt = base;
 
     if (!DT)
         DT = base;
