@@ -68,7 +68,9 @@ static void symDestroy (sym* Symbol) {
     if (Symbol->dt)
         typeDestroy(Symbol->dt);
 
-    free(Symbol->label);
+    if (Symbol->storage == storageStatic || Symbol->storage == storageExtern)
+        free(Symbol->label);
+
     free(Symbol);
 }
 

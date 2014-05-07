@@ -165,6 +165,8 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* N
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    if (Node->symbol->label == 0)
+    if (   Node->symbol->label == 0
+        && (   Node->symbol->storage == storageStatic
+            || Node->symbol->storage == storageExtern))
         ctx->arch->symbolMangler(Node->symbol);
 }
