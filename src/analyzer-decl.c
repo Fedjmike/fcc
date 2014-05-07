@@ -335,18 +335,21 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base) {
 }
 
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base) {
-    if (Node->symbol) {
+    if (   Node->symbol
+        && (   Node->symbol->tag == symId
+            || Node->symbol->tag == symParam
+            || Node->symbol->tag == symEnumConstant
+            || Node->symbol->tag == symTypedef)) {
         /*Assign the type*/
         if (!Node->symbol->dt) {
             Node->symbol->dt = base;
 
             if (typeIsFunction(base) && Node->symbol->storage == storageAuto)
                 Node->symbol->storage = storageExtern;
-        }
 
         /*Don't bother checking types if param
           Any conflicts will be reported by the function itself*/
-        else if (Node->symbol->tag == symParam)
+        } else if (Node->symbol->tag == symParam)
             ;
 
         /*Not the first declaration of this symbol, check type matches*/
