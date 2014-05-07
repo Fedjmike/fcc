@@ -627,13 +627,13 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
         } else {
-            if (inDecl)
+            if (inDecl) {
                 Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
+                Node->symbol->storage = storage;
+            }
         }
 
         if (Node->symbol) {
-            Node->symbol->storage = storage;
-
             /*Can't tell whether this is a duplicate declaration
               or a (matching) redefinition*/
             vectorPush(&Node->symbol->decls, Node);
