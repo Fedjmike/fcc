@@ -127,6 +127,20 @@ void symChangeParent (sym* Symbol, sym* parent) {
     symAddChild(parent, Symbol);
 }
 
+const sym* symGetNthParam (const sym* fn, int n) {
+    int paramNo = 0;
+
+    for (int i = 0; i < fn->children.length; i++) {
+        const sym* child = vectorGet(&fn->children, i);
+
+        if (child->tag == symParam)
+            if (paramNo++ == n)
+                return child;
+    }
+
+    return 0;
+}
+
 sym* symChild (const sym* Scope, const char* look) {
     //printf("searching: %s\n", Scope->ident);
 
