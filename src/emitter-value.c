@@ -718,7 +718,9 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
-    if (Node->l->symbol && typeIsFunction(Node->l->symbol->dt)) {
+    if (   Node->l->symbol && Node->l->symbol->ident
+        && (   Node->l->symbol->storage == storageStatic
+            || Node->l->symbol->storage == storageExtern)) {
         emitterValue(ctx, block, Node->l, requestVoid);
         irCall(*block, Node->l->symbol, continuation);
 
@@ -791,12 +793,8 @@ static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node)
 
     operand Value = operandCreate(operandUndefined);
 
-    /*function*/
-    if (typeIsFunction(Node->symbol->dt))
-        Value = operandCreateLabel(Node->symbol->label);
-
     /*enum constant*/
-    else if (Node->symbol->tag == symEnumConstant)
+    if (Node->symbol->tag == symEnumConstant)
         Value = operandCreateLiteral(Node->symbol->constValue);
 
     /*variable or param*/
@@ -810,10 +808,14 @@ static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node)
             Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
 
         else if (   Node->symbol->storage == storageStatic
-                   || Node->symbol->storage == storageExtern)
-            Value = operandCreateLabelMem(Node->symbol->label, size);
+                 || Node->symbol->storage == storageExtern) {
+            if (typeIsFunction(Node->symbol->dt))
+                Value = operandCreateLabel(Node->symbol->label);
 
-        else
+            else
+                Value = operandCreateLabelMem(Node->symbol->label, size);
+
+        } else
             debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
 
         Value.array = array;
