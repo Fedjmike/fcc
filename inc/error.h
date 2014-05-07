@@ -6,6 +6,7 @@ typedef enum symTag symTag;
 
 typedef struct parserCtx parserCtx;
 typedef struct analyzerCtx analyzerCtx;
+typedef struct analyzerFnCtx analyzerFnCtx;
 
 void errorExpected (parserCtx* ctx, const char* expected);
 void errorUndefSym (parserCtx* ctx);
@@ -51,3 +52,4 @@ void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT);
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt);
 void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o);
+void errorReturnType (analyzerCtx* ctx, ast* Node, analyzerFnCtx fnctx);

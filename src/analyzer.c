@@ -238,11 +238,11 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
             const type* R = analyzerValue(ctx, Node->r);
 
             if (!typeIsCompatible(R, ctx->fnctx.returnType))
-                errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
+                errorReturnType(ctx, Node->r, ctx->fnctx);
 
         } else if (!typeIsVoid(ctx->fnctx.returnType)) {
             Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
-            errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType);
+            errorReturnType(ctx, Node->r, ctx->fnctx);
         }
 
     /*No known return type because we're in a lambda

@@ -400,3 +400,13 @@ void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* d
 void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }
+
+void errorReturnType (analyzerCtx* ctx, ast* Node, analyzerFnCtx fnctx) {
+    if (fnctx.fn && fnctx.fn->ident)
+        errorAnalyzer(ctx, Node, "return type of $h declared as $t, given $t",
+                      fnctx.fn->ident, fnctx.returnType, Node->dt);
+
+    else
+        errorAnalyzer(ctx, Node, "return statement requires $t, given $t",
+                      fnctx.returnType, Node->dt);
+}
