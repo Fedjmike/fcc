@@ -64,11 +64,36 @@ const type* analyzerType (analyzerCtx* ctx, struct ast* Node) {
     return Node->dt;
 }
 
-const type* analyzerParam (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Param");
+type* analyzerParamList (analyzerCtx* ctx, ast* Node, type* returnType) {
+    debugEnter("ParamList");
 
-    const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
-    const type* DT = analyzerDeclNode(ctx, Node->r, typeDeepDuplicate(BasicDT));
+    bool variadic = false;
+    type** paramTypes = calloc(Node->children, sizeof(type*));
+    int paramNo = 0;
+
+    for (ast* param = Node->firstChild;
+         param;
+         param = param->nextSibling) {
+        /*Ellipsis to indicate variadic function. The grammar has already
+          ensured there is only one and that it is the final parameter.*/
+        if (param->tag == astEllipsis) {
+            variadic = true;
+            debugMsg("Ellipsis");
+
+        } else if (param->tag == astParam) {
+            const type* BasicDT = analyzerDeclBasic(ctx, param->l);
+            const type* paramType = analyzerDeclNode(ctx, param->r, typeDeepDuplicate(BasicDT));
+
+            paramTypes[paramNo++] = typeDeepDuplicate(paramType);
+
+            if (!typeIsComplete(paramType))
+                errorIncompleteParamDecl(ctx, param, Node, paramNo, paramType);
+
+        } else
+            debugErrorUnhandled("analyzerParamList", "AST tag", astTagGetStr(param->tag));
+    }
+
+    type* DT = typeCreateFunction(returnType, paramTypes, paramNo, variadic);
 
     debugLeave();
 
@@ -265,33 +290,7 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnTy
     if (!typeIsComplete(returnType))
         errorIncompleteReturnDecl(ctx, Node, returnType);
 
-    /*Param types*/
-
-    bool variadic = false;
-    type** paramTypes = calloc(Node->children, sizeof(type*));
-    int paramNo = 0;
-
-    for (ast* param = Node->firstChild;
-         param;
-         param = param->nextSibling) {
-        if (param->tag == astEllipsis) {
-            variadic = true;
-            debugMsg("Ellipsis");
-
-        } else if (param->tag == astParam) {
-            const type* paramType = analyzerParam(ctx, param);
-            paramTypes[paramNo++] = typeDeepDuplicate(paramType);
-
-            if (!typeIsComplete(paramType))
-                errorIncompleteParamDecl(ctx, param, Node, paramNo, paramType);
-
-        } else
-            debugErrorUnhandled("analyzerDeclCall", "AST tag", astTagGetStr(param->tag));
-    }
-
-    /* */
-
-    type* DT = typeCreateFunction(returnType, paramTypes, paramNo, variadic);
+    type* DT = analyzerParamList(ctx, Node, returnType);
     return analyzerDeclNode(ctx, Node->l, DT);
 }
 
