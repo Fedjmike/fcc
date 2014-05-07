@@ -278,6 +278,11 @@ void errorVAStartNonParam (analyzerCtx* ctx, const ast* Node) {
     errorAnalyzer(ctx, Node, "$h expected parameter name, found $n", "va_start", Node->symbol);
 }
 
+void errorExternInit (analyzerCtx* ctx, const ast* Node) {
+    errorAnalyzer(ctx, Node, "illegal initialization of extern variable $h",
+                  Node->l->symbol->ident ? Node->l->symbol->ident : "\b");
+}
+
 void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) {
     errorAnalyzer(ctx, init, "incompatible initialization of $n from $a", variable->symbol, init);
 }
