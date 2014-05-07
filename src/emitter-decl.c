@@ -155,21 +155,13 @@ static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
 static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     emitterDeclNode(ctx, block, Node->l);
 
-    operand L = operandCreateMem(&regs[regRBP],
-                                 Node->symbol->offset,
-                                 typeGetSize(ctx->arch,
-                                             Node->symbol->dt));
+    operand L = emitterSymbol(ctx, Node->l->symbol);
 
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
         emitterCompoundInit(ctx, block, Node->r, L);
 
-    else {
-        if (Node->symbol->storage == storageAuto)
-            emitterValueSuggest(ctx, block, Node->r, &L);
-
-        else
-            debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
-    }
+    else
+        emitterValueSuggest(ctx, block, Node->r, &L);
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {

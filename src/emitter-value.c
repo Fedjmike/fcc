@@ -788,7 +788,7 @@ static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node)
     return operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
 }
 
-static operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
+operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
     operand Value = operandCreate(operandUndefined);
 
     /*enum constant*/
