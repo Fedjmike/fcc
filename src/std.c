@@ -172,13 +172,14 @@ int systemf (const char* format, ...) {
     return ret;
 }
 
-#undef min
-#undef max
-
+#ifndef max
 int max (int x, int y) {
 	return x > y ? x : y;
 }
+#endif
 
-int mix (int x, int y) {
+#ifndef min
+int min (int x, int y) {
 	return x < y ? x : y;
 }
+#endif
