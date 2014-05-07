@@ -529,7 +529,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
 
         if (!end) do {
             if (tokenIsPunct(ctx, punctEllipsis)) {
-                astAddChild(Node, astCreateEllipsis(ctx->location));
+                astAddChild(Node, astCreate(astEllipsis, ctx->location));
                 tokenMatch(ctx);
                 break;
 
