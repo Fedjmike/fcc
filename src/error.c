@@ -52,30 +52,32 @@ static void verrorf (const char* format, va_list args) {
 
     for (int i = 0; i < flen; i++) {
         if (format[i] == '$') {
+            i++;
+
             /*Regular string*/
-            if (format[i+1] == 's')
+            if (format[i] == 's')
                 printf("%s", va_arg(args, char*));
 
             /*Highlighted string*/
-            else if (format[i+1] == 'h')
+            else if (format[i] == 'h')
                 printf("%s%s%s", colourString, va_arg(args, char*), consoleNormal);
 
             /*Operator*/
-            else if (format[i+1] == 'o')
+            else if (format[i] == 'o')
                 printf("%s%s%s", colourOp, opTagGetStr(va_arg(args, opTag)), consoleNormal);
 
             /*Integer*/
-            else if (format[i+1] == 'd')
+            else if (format[i] == 'd')
                 printf("%s%d%s", colourNumber, va_arg(args, int), consoleNormal);
 
             /*Raw type*/
-            else if (format[i+1] == 't') {
+            else if (format[i] == 't') {
                 char* typeStr = typeToStr(va_arg(args, type*));
                 printf("%s%s%s", colourType, typeStr, consoleNormal);
                 free(typeStr);
 
             /*Named symbol*/
-            } else if (format[i+1] == 'n') {
+            } else if (format[i] == 'n') {
                 const sym* Symbol = va_arg(args, sym*);
                 const char* ident = Symbol->ident ? Symbol->ident : "";
 
@@ -95,7 +97,7 @@ static void verrorf (const char* format, va_list args) {
                     printf("%s%s%s %s%s", colourTag, symTagGetStr(Symbol->tag), colourIdent, ident, consoleNormal);
 
             /*AST node*/
-            } else if (format[i+1] == 'a') {
+            } else if (format[i] == 'a') {
                 const ast* Node = va_arg(args, ast*);
 
                 if (Node->symbol && Node->symbol->ident)
@@ -105,7 +107,7 @@ static void verrorf (const char* format, va_list args) {
                     errorf("$t", Node->dt);
 
             /*Symbol tag, semantic "class"*/
-            } else if (format[i+1] == 'c') {
+            } else if (format[i] == 'c') {
                 const sym* Symbol = va_arg(args, sym*);
                 const char* classStr;
 
@@ -121,14 +123,12 @@ static void verrorf (const char* format, va_list args) {
 
                 printf("%s%s%s", colourTag, classStr, consoleNormal);
 
-            } else if (format[i+1] == '\0')
+            } else if (format[i] == '\0')
                 break;
 
             /*Unknown, ignore*/
             else
                 {}
-
-            i++;
 
         } else
             putchar(format[i]);
