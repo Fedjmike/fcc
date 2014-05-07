@@ -23,6 +23,7 @@ void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node,
                             const char* where, const type* expected);
 void errorLvalue (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o);
+void errorVoidDeref (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where);
 void errorMember (analyzerCtx* ctx, const ast* Node, const char* field);

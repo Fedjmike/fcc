@@ -230,6 +230,14 @@ void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o) {
                   Node->l->dt, Node->r->dt, o);
 }
 
+void errorVoidDeref (analyzerCtx* ctx, const ast* Node, opTag o) {
+    if (Node->symbol && Node->symbol->ident)
+        errorAnalyzer(ctx, Node, "$o dereference of $h would result in void value", o, Node->symbol->ident);
+
+    else
+        errorAnalyzer(ctx, Node, "$o derefence would result in void value", o);
+}
+
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
     errorAnalyzer(ctx, Node, "too $s $s given to $h: expected $d, given $d",
