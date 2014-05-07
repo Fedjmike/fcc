@@ -35,7 +35,7 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node);
-static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterSymbol (emitterCtx* ctx, const sym* Symbol);
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
@@ -788,35 +788,33 @@ static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node)
     return operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
 }
 
-static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    (void) block;
-
+static operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
     operand Value = operandCreate(operandUndefined);
 
     /*enum constant*/
-    if (Node->symbol->tag == symEnumConstant)
-        Value = operandCreateLiteral(Node->symbol->constValue);
+    if (Symbol->tag == symEnumConstant)
+        Value = operandCreateLiteral(Symbol->constValue);
 
     /*variable or param*/
     else {
-        bool array = typeIsArray(Node->symbol->dt);
+        bool array = typeIsArray(Symbol->dt);
         int size = typeGetSize(ctx->arch,   array
-                                          ? typeGetBase(Node->symbol->dt)
-                                          : Node->symbol->dt);
+                                          ? typeGetBase(Symbol->dt)
+                                          : Symbol->dt);
 
-        if (Node->symbol->storage == storageAuto)
-            Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
+        if (Symbol->storage == storageAuto)
+            Value = operandCreateMem(&regs[regRBP], Symbol->offset, size);
 
-        else if (   Node->symbol->storage == storageStatic
-                 || Node->symbol->storage == storageExtern) {
-            if (typeIsFunction(Node->symbol->dt))
-                Value = operandCreateLabel(Node->symbol->label);
+        else if (   Symbol->storage == storageStatic
+                 || Symbol->storage == storageExtern) {
+            if (typeIsFunction(Symbol->dt))
+                Value = operandCreateLabel(Symbol->label);
 
             else
-                Value = operandCreateLabelMem(Node->symbol->label, size);
+                Value = operandCreateLabelMem(Symbol->label, size);
 
         } else
-            debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
+            debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Symbol->storage));
 
         Value.array = array;
     }
@@ -840,7 +838,7 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
         Value = irStringConstant(ctx->ir, (char*) Node->literal);
 
     else if (Node->litTag == literalIdent)
-        Value = emitterSymbol(ctx, block, Node);
+        Value = emitterSymbol(ctx, Node->symbol);
 
     else if (Node->litTag == literalCompound)
         Value = emitterCompoundLiteral(ctx, block, Node);
@@ -857,7 +855,7 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
 }
 
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    operand Value = emitterSymbol(ctx, block, Node);
+    operand Value = emitterSymbol(ctx, Node->symbol);
     emitterCompoundInit(ctx, block, Node, Value);
 
     return Value;
