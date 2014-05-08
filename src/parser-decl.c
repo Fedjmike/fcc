@@ -411,6 +411,13 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
+        /*Only error if not already errored for wrong tag*/
+        if (Node->symbol->impl && Node->symbol->tag == symEnum)
+            errorReimplementedSym(ctx, Node->symbol);
+
+        else
+            Node->symbol->impl = Node;
+
         tokenMatchPunct(ctx, punctLBrace);
 
         if (!tokenIsPunct(ctx, punctRBrace)) do {
