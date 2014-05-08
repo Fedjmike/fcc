@@ -14,15 +14,6 @@
 #include "stdlib.h"
 #include "string.h"
 
-const char* consoleNormal  = "\033[1;0m";
-const char* consoleRed     = "\033[1;31m";
-const char* consoleGreen   = "\033[1;32m";
-const char* consoleYellow  = "\033[1;33m";
-const char* consoleBlue    = "\033[1;34m";
-const char* consoleMagenta = "\033[1;35m";
-const char* consoleCyan    = "\033[1;36m";
-const char* consoleWhite   = "\033[1;37m";
-
 static void tokenLocationMsg (tokenLocation loc);
 static void errorf (const char* format, ...);
 static void verrorf (const char* format, va_list args);
@@ -41,6 +32,15 @@ static void errorf (const char* format, ...) {
 }
 
 static void verrorf (const char* format, va_list args) {
+    const char* consoleNormal  = "\e[1;0m";
+    const char* consoleRed     = "\e[1;31m";
+    const char* consoleGreen   = "\e[1;32m";
+    //const char* consoleYellow  = "\e[1;33m";
+    //const char* consoleBlue    = "\e[1;34m";
+    const char* consoleMagenta = "\e[1;35m";
+    const char* consoleCyan    = "\e[1;36m";
+    const char* consoleWhite   = "\e[1;37m";
+
     const char* colourString = consoleWhite;
     const char* colourNumber = consoleMagenta;
     const char* colourOp = consoleCyan;
@@ -61,6 +61,10 @@ static void verrorf (const char* format, va_list args) {
             /*Highlighted string*/
             else if (format[i] == 'h')
                 printf("%s%s%s", colourString, va_arg(args, char*), consoleNormal);
+
+            /*Red string*/
+            else if (format[i] == 'r')
+                printf("%s%s%s", consoleRed, va_arg(args, char*), consoleNormal);
 
             /*Operator*/
             else if (format[i] == 'o')
@@ -100,7 +104,7 @@ static void verrorf (const char* format, va_list args) {
             } else if (format[i] == 'a') {
                 const ast* Node = va_arg(args, ast*);
 
-                if (Node->symbol && Node->symbol->ident)
+                if (Node->symbol && Node->symbol->ident && Node->symbol->dt)
                     errorf("$n", Node->symbol);
 
                 else
@@ -139,7 +143,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
         return;
 
     tokenLocationMsg(ctx->location);
-    printf("%serror%s: ", consoleRed, consoleNormal);
+    errorf("$r: ", "error");
 
     va_list args;
     va_start(args, format);
@@ -155,7 +159,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
 
 static void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...) {
     tokenLocationMsg(Node->location);
-    printf("%serror%s: ", consoleRed, consoleNormal);
+    errorf("$r: ", "error");
 
     va_list args;
     va_start(args, format);
@@ -221,7 +225,7 @@ void errorTypeExpectedType (analyzerCtx* ctx, const ast* Node, const char* where
 }
 
 void errorLvalue (analyzerCtx* ctx, const ast* Node, opTag o) {
-    errorAnalyzer(ctx, Node, "$o requires lvalue", o);
+    errorAnalyzer(ctx, Node, "$o requires an lvalue", o);
 }
 
 void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o) {
@@ -356,7 +360,7 @@ void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
 }
 
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node) {
-    errorAnalyzer(ctx, Node, "compound literal without explicit type");
+    errorAnalyzer(ctx, Node, "compound literal is missing an explicit type");
 }
 
 void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o) {
