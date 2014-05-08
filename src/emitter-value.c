@@ -35,7 +35,6 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node);
-static operand emitterSymbol (emitterCtx* ctx, const sym* Symbol);
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
