@@ -12,6 +12,8 @@
 
 #include "stdlib.h"
 
+static ast* parserFnImpl (parserCtx* ctx, ast* decl);
+
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);
 
@@ -118,7 +120,7 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
 
 /**
  * Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
- *                                            | Code# )
+ *                                            | FnImpl )
  *
  * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
@@ -131,6 +133,7 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
+    /*Declares no symbols*/
     if (tokenTryMatchPunct(ctx, punctSemicolon))
         ;
 
@@ -141,26 +144,14 @@ ast* parserDecl (parserCtx* ctx, bool module) {
 
         astAddChild(Node, parserDeclExpr(ctx, true, symt, storage));
 
+        /*Function*/
         if (tokenIsPunct(ctx, punctLBrace)) {
-            Node = astCreateFnImpl(ctx->location, Node);
-            Node->symbol = Node->l->firstChild->symbol;
-
-            if (Node->symbol->impl)
-                errorReimplementedSym(ctx, Node->symbol);
-
-            else {
-                Node->symbol->impl = Node;
-                /*Now that we have the implementation, create param symbols*/
-                parserCreateParamSymbols(Node->l->firstChild, Node->symbol);
-            }
-
             if (!module)
                 errorIllegalOutside(ctx, "function implementation", "module level code");
 
-            sym* OldScope = scopeSet(ctx, Node->symbol);
-            Node->r = parserCode(ctx);
-            ctx->scope = OldScope;
+            Node = parserFnImpl(ctx, Node);
 
+        /*Regular decl*/
         } else {
             while (tokenTryMatchPunct(ctx, punctComma))
                 astAddChild(Node, parserDeclExpr(ctx, true, symt, storage));
@@ -168,6 +159,39 @@ ast* parserDecl (parserCtx* ctx, bool module) {
             tokenMatchPunct(ctx, punctSemicolon);
         }
     }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * FnImpl = Code
+ */
+static ast* parserFnImpl (parserCtx* ctx, ast* decl) {
+    debugEnter("FnImpl");
+
+    sym* fn = decl->firstChild->symbol;
+
+    ast* Node = astCreateFnImpl(ctx->location, decl);
+    Node->symbol = fn;
+
+    /*Is a function implementation valid for this symbol?*/
+
+    if (fn->impl)
+        errorReimplementedSym(ctx, fn);
+
+    else {
+        fn->impl = Node;
+        /*Now that we have the implementation, create param symbols*/
+        parserCreateParamSymbols(decl->firstChild, fn);
+    }
+
+    /*Body*/
+
+    sym* OldScope = scopeSet(ctx, fn);
+    Node->r = parserCode(ctx);
+    ctx->scope = OldScope;
 
     debugLeave();
 

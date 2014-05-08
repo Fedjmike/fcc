@@ -39,7 +39,8 @@ VACopy = va_copy "(" AssignValue "," AssignValue ")"
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
-									       | Code# )
+									       | FnImpl )
+FnImpl = Code
 
 Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
 EnumField = Name# [ "=" AssignValue ]
