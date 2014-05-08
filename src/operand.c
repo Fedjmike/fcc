@@ -9,7 +9,16 @@
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
-const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
+using "../inc/operand.h";
+
+using "stdlib.h";
+using "string.h";
+using "stdio.h";
+
+using "../inc/debug.h";
+using "../inc/ast.h";
+using "../inc/architecture.h";
+using "../inc/reg.h";
 
 operand operandCreate (operandTag tag) {
     operand ret;
@@ -49,7 +58,7 @@ operand operandCreateReg (reg* r) {
 operand operandCreateMem (reg* base, int offset, int size) {
     operand ret = operandCreate(operandMem);
     ret.base = base;
-    ret.index = regUndefined;
+    ret.index = 0;
     ret.factor = 0;
     ret.offset = offset;
     ret.size = size;
@@ -184,7 +193,7 @@ char* operandToStr (operand Value) {
         else if (Value.size == 16)
             sizeStr = "oword";
         else
-            sizeStr = "undefined";
+            sizeStr = "dword";
 
         if (Value.tag == operandLabelMem) {
             char* ret = malloc(  strlen(sizeStr)
@@ -204,7 +213,7 @@ char* operandToStr (operand Value) {
                 const char* regStr = regGetStr(Value.base);
                 char* ret = malloc(  strlen(sizeStr)
                                    + strlen(regStr)
-                                   + logi(Value.offset, 10) + 2 + 10);
+                                   + logi(Value.offset, 10) + 3 + 10);
                 sprintf(ret, "%s ptr [%s%+d]", sizeStr, regStr, Value.offset);
                 return ret;
             }
@@ -216,7 +225,7 @@ char* operandToStr (operand Value) {
                                + strlen(regStr)
                                + logi(Value.factor, 10) + 3
                                + strlen(indexStr)
-                               + logi(Value.offset, 10) + 2 + 9);
+                               + logi(Value.offset, 10) + 3 + 10);
             sprintf(ret, "%s ptr [%s%+d*%s%+d]",
                      sizeStr, regStr, Value.factor, indexStr, Value.offset);
             return ret;
