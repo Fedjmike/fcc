@@ -65,7 +65,11 @@ static void symDestroy (sym* Symbol) {
     else
         vectorFree(&Symbol->children);
 
-    if (Symbol->dt)
+    if (   (   Symbol->tag == symId
+            || Symbol->tag == symParam
+            || Symbol->tag == symEnumConstant
+            || Symbol->tag == symTypedef)
+        && Symbol->dt)
         typeDestroy(Symbol->dt);
 
     if (Symbol->storage == storageStatic || Symbol->storage == storageExtern)
