@@ -272,8 +272,11 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
         else if (!typeIsCompatible(R, L))
             errorInitMismatch(ctx, Node->l, Node->r);
 
-        if (Node->l->symbol->storage == storageExtern)
-            errorExternInit(ctx, Node);
+        if (Node->l->symbol->tag == symTypedef)
+            errorIllegalInit(ctx, Node, "typedef");
+
+        else if (Node->l->symbol->storage == storageExtern)
+            errorIllegalInit(ctx, Node, "extern variable");
 
         else if (Node->l->symbol->storage == storageStatic) {
             evalResult result = eval(ctx->arch, Node->r);
