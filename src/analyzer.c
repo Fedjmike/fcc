@@ -143,7 +143,10 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
 
     analyzerDecl(ctx, Node->l);
 
-    if (!typeIsFunction(Node->symbol->dt))
+    if (Node->symbol->tag != symId)
+        errorFnTag(ctx, Node);
+
+    else if (!typeIsFunction(Node->symbol->dt))
         errorTypeExpected(ctx, Node->l->firstChild, "implementation", "function");
 
     /*Analyze the implementation*/

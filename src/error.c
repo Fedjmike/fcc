@@ -409,6 +409,11 @@ void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }
 
+void errorFnTag (analyzerCtx* ctx, ast* Node) {
+    errorAnalyzer(ctx, Node, "function implementation illegally given to $n, a $c",
+                  Node->symbol, Node->symbol);
+}
+
 void errorReturnType (analyzerCtx* ctx, ast* Node, analyzerFnCtx fnctx) {
     if (fnctx.fn && fnctx.fn->ident)
         errorAnalyzer(ctx, Node, "return type of $h declared as $t, given $t",

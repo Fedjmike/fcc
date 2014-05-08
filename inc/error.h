@@ -54,4 +54,5 @@ void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT);
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt);
 void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o);
+void errorFnTag (analyzerCtx* ctx, ast* Node);
 void errorReturnType (analyzerCtx* ctx, ast* Node, analyzerFnCtx fnctx);
