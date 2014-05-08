@@ -14,8 +14,8 @@ const char *const conditions[] = {"condition", "e", "ne", "g", "ge", "l", "le"};
 operand operandCreate (operandTag tag) {
     operand ret;
     ret.tag = tag;
-    ret.base = regUndefined;
-    ret.index = regUndefined;
+    ret.base = 0;
+    ret.index = 0;
     ret.factor = 0;
     ret.offset = 0;
     ret.literal = 0;
