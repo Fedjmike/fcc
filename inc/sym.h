@@ -140,6 +140,8 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
  */
 void symChangeParent (sym* Symbol, sym* parent);
 
+const sym* symGetNthParam (const sym* fn, int n);
+
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search
  * inside contained enums, anon. unions but will not look at parent scopes.
