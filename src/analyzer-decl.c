@@ -58,7 +58,7 @@ void analyzerDecl (analyzerCtx* ctx, ast* Node) {
     debugLeave();
 }
 
-const type* analyzerType (analyzerCtx* ctx, struct ast* Node) {
+const type* analyzerType (analyzerCtx* ctx, ast* Node) {
     debugEnter("Type");
 
     const type* BasicDT = analyzerDeclBasic(ctx, Node->l);
