@@ -176,10 +176,6 @@ ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
     return Node;
 }
 
-ast* astCreateEllipsis (tokenLocation location) {
-    return astCreate(astEllipsis, location);
-}
-
 void astAddChild (ast* Parent, ast* Child) {
     if (Parent->firstChild == 0) {
         Parent->firstChild = Child;
