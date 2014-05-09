@@ -625,14 +625,14 @@ static void analyzerLambda (analyzerCtx* ctx, ast* Node) {
         analyzerNode(ctx, Node->r);
         /*Take ownership of the ret type which has been inferred from the code*/
         fn->returnType = ctx->fnctx.returnType ? ctx->fnctx.returnType
-                                                     : typeCreateBasic(ctx->types[builtinVoid]);
+                                               : typeCreateBasic(ctx->types[builtinVoid]);
         ctx->fnctx = old;
 
     } else
         fn->returnType = typeDeepDuplicate(analyzerValue(ctx, Node->r));
 
     /*Result*/
-    Node->dt = typeCreatePtr(fn);
+    Node->dt = fn;
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
 }
 
