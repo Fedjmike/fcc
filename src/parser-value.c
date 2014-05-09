@@ -250,7 +250,6 @@ static ast* parserUnary (parserCtx* ctx) {
         Node = astCreateUOP(loc, o, parserUnary(ctx));
 
     else
-        /*Interestingly, this call to parserObject parses itself*/
         Node = parserPostUnary(ctx);
 
     debugLeave();
@@ -264,6 +263,7 @@ static ast* parserUnary (parserCtx* ctx) {
 static ast* parserPostUnary (parserCtx* ctx) {
     debugEnter("PostUnary");
 
+    /*Interestingly, this call to parserObject parses itself*/
     ast* Node = parserObject(ctx);
     tokenLocation loc = ctx->location;
     opTag o;
