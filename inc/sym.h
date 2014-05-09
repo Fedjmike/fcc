@@ -39,11 +39,11 @@ typedef enum symTag {
  * Storage tags for a symbol, defining their linkage and lifetime
  */
 typedef enum storageTag {
-    storageUndefined,
     storageAuto,
     storageStatic,
     storageExtern,
-    storageTypedef
+    storageTypedef,
+    storageUndefined
 } storageTag;
 
 /**
