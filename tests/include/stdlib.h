@@ -3,6 +3,8 @@ void* calloc (int, int);
 void* realloc (void*, int);
 void free (void*);
 
+void* memset (void*, int, int);
+
 void srand (int);
 int rand ();
 

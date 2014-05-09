@@ -17,6 +17,8 @@ int vprintf (const char*, va_list);
 int puts (const char*);
 int putchar (int);
 
+int getchar (void);
+
 int sprintf (char*, const char*, ...);
 int snprintf (char*, int, const char*, ...);
 int vsnprintf (char*, int, const char*, va_list);
