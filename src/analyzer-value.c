@@ -79,7 +79,8 @@ static bool isNodeLvalue (const ast* Node) {
                    && (Node->symbol && (   Node->symbol->tag == symId
                                         || Node->symbol->tag == symParam))
                    && !typeIsFunction(Node->dt))
-               || Node->litTag == literalCompound;
+               || Node->litTag == literalCompound
+               || typeIsInvalid(Node->dt);
 
     else if (Node->tag == astInvalid)
         return true;
