@@ -11,11 +11,12 @@
 #include "stdarg.h"
 
 static void irAddFn (irCtx* ctx, irFn* fn);
-static void irAddStaticData (irCtx* ctx, irStaticData* sdata);
+static void irAddData (irCtx* ctx, irStaticData* data);
+static void irAddROData (irCtx* ctx, irStaticData* data);
 
 /*:::: ::::*/
 
-static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag);
+static irStaticData* irStaticDataCreate (irCtx* ctx, bool ro, irStaticDataTag tag);
 static void irStaticDataDestroy (irStaticData* data);
 
 /*:::: ::::*/
@@ -52,7 +53,8 @@ static void irReturn (irBlock* block);
   Initial sizes of vectors, strings and such*/
 enum {
     irCtxFnNo = 8,
-    irCtxSDataNo = 8,
+    irCtxDataNo = 8,
+    irCtxRODataNo = 64,
     irFnBlockNo = 8,
     irBlockInstrNo = 8,
     irBlockStrSize = 1024,
@@ -64,7 +66,8 @@ enum {
 
 void irInit (irCtx* ctx, const char* output, const architecture* arch) {
     vectorInit(&ctx->fns, irCtxFnNo);
-    vectorInit(&ctx->sdata, irCtxSDataNo);
+    vectorInit(&ctx->data, irCtxDataNo);
+    vectorInit(&ctx->rodata, irCtxRODataNo);
 
     ctx->labelNo = 0;
 
@@ -74,7 +77,8 @@ void irInit (irCtx* ctx, const char* output, const architecture* arch) {
 
 void irFree (irCtx* ctx) {
     vectorFreeObjs(&ctx->fns, (vectorDtor) irFnDestroy);
-    vectorFreeObjs(&ctx->sdata, (vectorDtor) irStaticDataDestroy);
+    vectorFreeObjs(&ctx->data, (vectorDtor) irStaticDataDestroy);
+    vectorFreeObjs(&ctx->rodata, (vectorDtor) irStaticDataDestroy);
     asmEnd(ctx->asm);
 }
 
@@ -82,8 +86,12 @@ static void irAddFn (irCtx* ctx, irFn* fn) {
     vectorPush(&ctx->fns, fn);
 }
 
-static void irAddStaticData (irCtx* ctx, irStaticData* sdata) {
-    vectorPush(&ctx->sdata, sdata);
+static void irAddData (irCtx* ctx, irStaticData* data) {
+    vectorPush(&ctx->data, data);
+}
+
+static void irAddROData (irCtx* ctx, irStaticData* data) {
+    vectorPush(&ctx->rodata, data);
 }
 
 static char* irCreateLabel (irCtx* ctx) {
@@ -209,11 +217,11 @@ static void irBlockLink (irBlock* from, irBlock* to) {
 
 /*:::: STATIC DATA INTERNALS ::::*/
 
-static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
+static irStaticData* irStaticDataCreate (irCtx* ctx, bool ro, irStaticDataTag tag) {
     irStaticData* data = malloc(sizeof(irStaticData));
     data->tag = tag;
 
-    irAddStaticData(ctx, data);
+    (ro ? irAddROData : irAddData)(ctx, data);
 
     return data;
 }
@@ -230,7 +238,7 @@ static void irStaticDataDestroy (irStaticData* data) {
 /*:::: STATIC DATA ::::*/
 
 void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
-    irStaticData* data = irStaticDataCreate(ctx, dataRegular);
+    irStaticData* data = irStaticDataCreate(ctx, false, dataRegular);
     data->label = label;
     data->global = global;
     data->size = size;
@@ -238,7 +246,7 @@ void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr
 }
 
 operand irStringConstant (irCtx* ctx, const char* str) {
-    irStaticData* data = irStaticDataCreate(ctx, dataStringConstant);
+    irStaticData* data = irStaticDataCreate(ctx, true, dataStringConstant);
     data->strlabel = irCreateLabel(ctx);
     data->str = (void*) strdup(str);
 

@@ -28,8 +28,17 @@ void irEmit (irCtx* ctx) {
         irEmitFn(ctx, file, fn);
     }
 
-    for (int i = 0; i < ctx->sdata.length; i++) {
-        irStaticData* data = vectorGet(&ctx->sdata, i);
+    asmDataSection(ctx->asm);
+
+    for (int i = 0; i < ctx->data.length; i++) {
+        irStaticData* data = vectorGet(&ctx->data, i);
+        irEmitStaticData(ctx, file, data);
+    }
+
+    asmRODataSection(ctx->asm);
+
+    for (int i = 0; i < ctx->rodata.length; i++) {
+        irStaticData* data = vectorGet(&ctx->rodata, i);
         irEmitStaticData(ctx, file, data);
     }
 

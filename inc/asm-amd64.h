@@ -40,6 +40,9 @@ void asmFnEpilogue (irCtx* ir, irBlock* block);
 void asmSaveReg (irCtx* ir, irBlock* block, regIndex r);
 void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r);
 
+void asmDataSection (asmCtx* ctx);
+void asmRODataSection (asmCtx* ctx);
+
 void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial);
 
 /**

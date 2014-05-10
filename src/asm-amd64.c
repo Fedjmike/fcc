@@ -70,9 +70,15 @@ void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r) {
     irBlockOut(block, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
-void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
+void asmDataSection (asmCtx* ctx) {
     asmOutLn(ctx, ".section .data");
+}
 
+void asmRODataSection (asmCtx* ctx) {
+    asmOutLn(ctx, ".section .rodata");
+}
+
+void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
     if (global)
         asmOutLn(ctx, ".globl %s", label);
 
@@ -92,15 +98,11 @@ void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intpt
 
     else
         debugErrorUnhandledInt("asmStaticData", "data size", size);
-
-    asmOutLn(ctx, ".section .text");
 }
 
 void asmStringConstant (asmCtx* ctx, const char* label, const char* str) {
-    asmOutLn(ctx, ".section .rodata");
     asmOutLn(ctx, "%s:", label);
-    asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
-    asmOutLn(ctx, ".section .text");
+    asmOutLn(ctx, ".asciz \"%s\"", str);
 }
 
 void asmLabel (asmCtx* ctx, const char* label) {
