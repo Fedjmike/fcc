@@ -153,11 +153,8 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     } else if (request == requestMem) {
         Dest = Value;
 
-        if (Value.tag == operandLabelMem) {
-            operand base = emitterGetInReg(ctx, *block, Value, ctx->arch->wordsize);
-            Dest = operandCreateMem(base.base, 0, typeGetSize(ctx->arch, Node->dt));
-
-        } else if (Value.tag != operandMem)
+        if (   Value.tag != operandMem
+            && Value.tag == operandLabelMem)
             debugError("emitterValueImpl", "unable to convert non lvalue operand tag, %s", operandTagGetStr(Value.tag));
 
     /*Specific class of operand*/
@@ -717,9 +714,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
-    if (   Node->l->symbol && Node->l->symbol->ident
-        && (   Node->l->symbol->storage == storageStatic
-            || Node->l->symbol->storage == storageExtern)) {
+    if (Node->l->symbol && symIsFunction(Node->l->symbol)) {
         emitterValue(ctx, block, Node->l, requestVoid);
         irCall(*block, Node->l->symbol, continuation);
 
@@ -790,18 +785,17 @@ static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node)
 operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
     operand Value = operandCreate(operandUndefined);
 
-    /*enum constant*/
     if (Symbol->tag == symEnumConstant)
         Value = operandCreateLiteral(Symbol->constValue);
 
-    /*variable or param*/
-    else {
+    else if (Symbol->tag == symId || Symbol->tag == symParam) {
         bool array = typeIsArray(Symbol->dt);
         int size = typeGetSize(ctx->arch,   array
                                           ? typeGetBase(Symbol->dt)
                                           : Symbol->dt);
 
-        if (Symbol->storage == storageAuto)
+        if (   Symbol->tag == symParam
+            || Symbol->storage == storageAuto)
             Value = operandCreateMem(&regs[regRBP], Symbol->offset, size);
 
         else if (   Symbol->storage == storageStatic
@@ -816,7 +810,9 @@ operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
             debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Symbol->storage));
 
         Value.array = array;
-    }
+
+    } else
+        debugErrorUnhandled("emitterSymbol", "symbol tag", symTagGetStr(Symbol->tag));
 
     return Value;
 }

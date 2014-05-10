@@ -7,10 +7,9 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/architecture.h"
-#include "../inc/reg.h"
-#include "../inc/asm.h"
-#include "../inc/asm-amd64.h"
+#include "../inc/ir.h"
 
+#include "../inc/eval.h"
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
@@ -155,18 +154,42 @@ static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
 static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     emitterDeclNode(ctx, block, Node->l);
 
-    operand L = emitterSymbol(ctx, Node->l->symbol);
+    if (   Node->symbol->storage == storageStatic
+        || Node->symbol->storage == storageExtern) {
+        if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+            debugError("emitterDeclAssignBOP", "compound initializers for static objects unsupported");
 
-    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        emitterCompoundInit(ctx, block, Node->r, L);
+        else
+            irStaticValue(ctx->ir, Node->symbol->label, Node->symbol->storage == storageExtern,
+                          typeGetSize(ctx->arch, Node->symbol->dt), eval(ctx->arch, Node->r).value);
 
-    else
-        emitterValueSuggest(ctx, block, Node->r, &L);
+    } else if (Node->symbol->storage == storageAuto) {
+        operand L = emitterSymbol(ctx, Node->symbol);
+
+        if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+            emitterCompoundInit(ctx, block, Node->r, L);
+
+        else {
+            emitterValueSuggest(ctx, block, Node->r, &L);
+        }
+
+    } else if (Node->symbol->storage != storageExtern)
+        debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    if (   Node->symbol->label == 0
+    /*Function or statically stored variable? Provide a label if none*/
+    if (   Node->symbol->tag == symId
+        && Node->symbol->label == 0
         && (   Node->symbol->storage == storageStatic
             || Node->symbol->storage == storageExtern))
         ctx->arch->symbolMangler(Node->symbol);
+
+    /*Static delcaration without an explicit initializer?*/
+    if (   Node->symbol->tag == symId
+        && Node->storage == storageStatic
+        && !Node->symbol->impl)
+        /*Emit, and initialize to zero*/
+        irStaticValue(ctx->ir, Node->symbol->label, Node->symbol->storage == storageExtern,
+                      typeGetSize(ctx->arch, Node->symbol->dt), 0);
 }

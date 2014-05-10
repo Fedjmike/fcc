@@ -460,6 +460,7 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
 
         Node = astCreateBOP(loc, Node, opAssign, parserAssignValue(ctx));
         Node->symbol = Node->l->symbol;
+        Node->symbol->impl = Node->r;
     }
 
     debugLeave();
@@ -624,6 +625,23 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag) {
     return Node;
 }
 
+static bool isTypedefException (sym* Symbol, symTag newtag) {
+    /*SPECIAL EXCEPTION
+      In C, there are multiple symbol tables for variables, typedefs, structs etc
+      But not in fcc! So there is this special exception: structs and unions and
+      enums may be redeclared as typedefs, to allow for this idiom:
+
+      typedef struct x {
+          ...
+      } x;
+
+      Doesn't guarantee that it's redeclaring the *right* symbol.*/
+    return    newtag == symTypedef
+           && (   Symbol->tag == symStruct
+               || Symbol->tag == symUnion
+               || Symbol->tag == symEnum);
+}
+
 /**
  * Name = <UnqualifiedIdent>
  *
@@ -647,21 +665,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
             Node->symbol = Symbol;
             symChangeParent(Symbol, ctx->scope);
 
-            /*SPECIAL EXCEPTION
-              In C, there are multiple symbol tables for variables, typedefs, structs etc
-              But not in fcc! So there is this special exception: structs and unions and
-              enums may be redeclared as typedefs, to allow for this idiom:
-
-              typedef struct x {
-                  ...
-              } x;
-
-              Doesn't guarantee that it's redeclaring the *right* symbol.*/
-            if (   Node->symbol->tag != tag
-                && !(   (   Node->symbol->tag == symStruct
-                         || Node->symbol->tag == symUnion
-                         || Node->symbol->tag == symEnum)
-                     && tag == symTypedef))
+            if (Node->symbol->tag != tag && !isTypedefException(Node->symbol, tag))
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
         } else if (inDecl)
