@@ -303,11 +303,11 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
             errorInitMismatch(ctx, Node->l, Node->r);
 
         if (Node->l->symbol->tag == symTypedef)
-            errorIllegalInit(ctx, Node, "typedef");
+            errorIllegalInit(ctx, Node, "a typedef");
 
         /*The initialization is illegal if /this/ is an extern decl*/
         else if (storage == storageExtern)
-            errorIllegalInit(ctx, Node, "extern variable");
+            errorIllegalInit(ctx, Node, "an extern variable");
 
         /*If this symbol is statically stored (implicitly, or by a
           previous decl) require a constant initializer*/
