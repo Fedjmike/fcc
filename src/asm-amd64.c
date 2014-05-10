@@ -195,6 +195,10 @@ void asmPopN (irCtx* ir, irBlock* block, int n) {
         asmBOP(ir, block, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
+static bool operandIsMem (operand L) {
+    return L.tag == operandMem || L.tag == operandLabelMem;
+}
+
 void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
     asmCtx* ctx = ir->asm;
 
@@ -227,7 +231,7 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
         }
 
     /*Both memory operands*/
-    } else if (Dest.tag == operandMem && Src.tag == operandMem) {
+    } else if (operandIsMem(Dest) && operandIsMem(Src)) {
         operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
         asmMove(ir, block, intermediate, Src);
         asmMove(ir, block, Dest, intermediate);
@@ -271,7 +275,7 @@ void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, 
 void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
     asmCtx* ctx = ir->asm;
 
-    if (L.tag == operandMem && R.tag == operandMem) {
+    if (operandIsMem(L) && operandIsMem(R)) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
         asmEvalAddress(ir, block, intermediate, R);
         asmMove(ir, block, L, intermediate);
@@ -290,7 +294,7 @@ void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
 void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
     asmCtx* ctx = ir->asm;
 
-    if (   (L.tag == operandMem && R.tag == operandMem)
+    if (   (operandIsMem(L) && operandIsMem(R))
         || (L.tag == operandLiteral && R.tag == operandLiteral)) {
         operand intermediate = operandCreateReg(regAlloc(L.tag == operandMem ? max(L.size, R.size)
                                                                              : ctx->arch->wordsize));
@@ -311,7 +315,7 @@ void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
 }
 
 void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R) {
-    if (L.tag == operandMem && R.tag == operandMem) {
+    if (operandIsMem(L) && operandIsMem(R)) {
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ir, block, intermediate, R);
         asmBOP(ir, block, Op, L, intermediate);
