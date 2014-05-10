@@ -91,6 +91,7 @@ bool typeIsInvalid (const type* DT);
 
 bool typeIsComplete (const type* DT);
 bool typeIsVoid (const type* DT);
+bool typeIsNonVoid (const type* DT);
 bool typeIsStruct (const type* DT);
 bool typeIsUnion (const type* DT);
 bool typeIsMutable (const type* DT);

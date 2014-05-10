@@ -337,7 +337,7 @@ static void analyzerUOP (analyzerCtx* ctx, ast* Node) {
             if (!typeIsComplete(Node->dt))
                 errorIncompletePtr(ctx, Node->r, Node->o);
 
-            else if (typeIsVoid(Node->dt))
+            else if (!typeIsNonVoid(Node->dt))
                 errorVoidDeref(ctx, Node->r, Node->o);
 
         } else {
@@ -392,7 +392,7 @@ static void analyzerIndex (analyzerCtx* ctx, ast* Node) {
         if (!typeIsComplete(Node->dt))
             errorIncompletePtr(ctx, Node->l, opIndex);
 
-        else if (typeIsVoid(Node->dt))
+        else if (!typeIsNonVoid(Node->dt))
             errorVoidDeref(ctx, Node->l, opIndex);
 
     } else {

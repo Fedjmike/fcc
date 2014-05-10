@@ -321,6 +321,14 @@ bool typeIsVoid (const type* DT) {
            || typeIsInvalid(DT);
 }
 
+bool typeIsNonVoid (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return    (   DT->tag != typeBasic
+               || DT->basic->tag != symType
+               || DT->basic->size != 0)
+           || typeIsInvalid(DT);
+}
+
 bool typeIsStruct (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return    (   DT->tag == typeBasic && DT->basic->tag == symStruct)
