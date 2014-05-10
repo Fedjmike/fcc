@@ -154,7 +154,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
         Dest = Value;
 
         if (   Value.tag != operandMem
-            && Value.tag == operandLabelMem)
+            && Value.tag != operandLabelMem)
             debugError("emitterValueImpl", "unable to convert non lvalue operand tag, %s", operandTagGetStr(Value.tag));
 
     /*Specific class of operand*/
