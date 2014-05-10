@@ -2,6 +2,8 @@
 #include "ast.h"
 #include "operand.h"
 
+#include "stdint.h"
+
 typedef struct sym sym;
 typedef struct architecture architecture;
 typedef struct asmCtx asmCtx;
