@@ -39,8 +39,11 @@ void irEmit (irCtx* ctx) {
 static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data) {
     (void) file;
 
-    if (data->tag == dataStringConstant)
-        asmStringConstant(ctx->asm, data->label, (char*) data->initial);
+    if (data->tag == dataRegular)
+        asmStaticData(ctx->asm, data->label, data->global, data->size, data->initial);
+
+    else if (data->tag == dataStringConstant)
+        asmStringConstant(ctx->asm, data->strlabel, data->str);
 
     else
         debugErrorUnhandledInt("irEmitStaticData", "static data tag", data->tag);

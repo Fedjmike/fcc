@@ -63,13 +63,27 @@ typedef struct irTerm {
 
 typedef enum irStaticDataTag {
     dataUndefined,
+    dataRegular,
     dataStringConstant
 } irStaticDataTag;
 
 typedef struct irStaticData {
     irStaticDataTag tag;
-    char* label;
-    void* initial;
+
+    union {
+        /*dataRegular*/
+        struct {
+            const char* label;
+            bool global;
+            int size;
+            intptr_t initial;
+        };
+        /*dataStringConstant*/
+        struct {
+            char* strlabel;
+            char* str;
+        };
+    };
 } irStaticData;
 
 /*::::  ::::*/
@@ -121,6 +135,9 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 void irBlockOut (irBlock* block, const char* format, ...);
 
+/*:::: STATIC DATA ::::*/
+
+void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial);
 operand irStringConstant (irCtx* ctx, const char* str);
 
 /*:::: TERMINAL INSTRUCTIONS ::::*/

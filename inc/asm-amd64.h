@@ -40,6 +40,8 @@ void asmFnEpilogue (irCtx* ir, irBlock* block);
 void asmSaveReg (irCtx* ir, irBlock* block, regIndex r);
 void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r);
 
+void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial);
+
 /**
  * Place a string constant in the rodata section with the given label
  */

@@ -70,6 +70,32 @@ void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r) {
     irBlockOut(block, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
+void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
+    asmOutLn(ctx, ".section .data");
+
+    if (global)
+        asmOutLn(ctx, ".globl %s", label);
+
+    asmOutLn(ctx, "%s:", label);
+
+    if (size == 1)
+        asmOutLn(ctx, ".byte %d", initial);
+
+    else if (size == 2)
+        asmOutLn(ctx, ".word %d", initial);
+
+    else if (size == 4)
+        asmOutLn(ctx, ".quad %d", initial);
+
+    else if (size == 8)
+        asmOutLn(ctx, ".octa %d", initial);
+
+    else
+        debugErrorUnhandledInt("asmStaticData", "data size", size);
+
+    asmOutLn(ctx, ".section .text");
+}
+
 void asmStringConstant (asmCtx* ctx, const char* label, const char* str) {
     asmOutLn(ctx, ".section .rodata");
     asmOutLn(ctx, "%s:", label);

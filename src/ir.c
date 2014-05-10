@@ -212,7 +212,6 @@ static void irBlockLink (irBlock* from, irBlock* to) {
 static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
     irStaticData* data = malloc(sizeof(irStaticData));
     data->tag = tag;
-    data->label = irCreateLabel(ctx);
 
     irAddStaticData(ctx, data);
 
@@ -220,16 +219,28 @@ static irStaticData* irStaticDataCreate (irCtx* ctx, irStaticDataTag tag) {
 }
 
 static void irStaticDataDestroy (irStaticData* data) {
-    free(data->initial);
-    free(data->label);
+    if (data->tag == dataStringConstant) {
+        free(data->strlabel);
+        free(data->str);
+    }
+
     free(data);
 }
 
 /*:::: STATIC DATA ::::*/
 
+void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
+    irStaticData* data = irStaticDataCreate(ctx, dataRegular);
+    data->label = label;
+    data->global = global;
+    data->size = size;
+    data->initial = initial;
+}
+
 operand irStringConstant (irCtx* ctx, const char* str) {
     irStaticData* data = irStaticDataCreate(ctx, dataStringConstant);
-    data->initial = (void*) strdup(str);
+    data->strlabel = irCreateLabel(ctx);
+    data->str = (void*) strdup(str);
 
     return operandCreateLabelOffset(data->label);
 }
