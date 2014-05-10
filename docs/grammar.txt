@@ -40,13 +40,13 @@ VACopy = va_copy "(" AssignValue "," AssignValue ")"
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
 									       | FnImpl )
+Storage = [ "auto" | "static" | "extern" | "typedef" ]
 FnImpl = Code
 
 Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
 EnumField = Name# [ "=" AssignValue ]
 Param = DeclBasic DeclExpr#
 
-Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = [ "const" ] <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
 Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )

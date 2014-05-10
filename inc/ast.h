@@ -2,6 +2,8 @@
 
 #include "../std/std.h"
 
+#include "sym.h"
+
 #include "parser.h"
 
 typedef struct type type;
@@ -25,6 +27,7 @@ typedef struct ast ast;
 typedef enum astTag {
     astUndefined,
     astInvalid,
+    astMarker,
     astEmpty,
     astModule,
     astUsing,
@@ -34,6 +37,13 @@ typedef enum astTag {
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
     astVAStart, astVAEnd, astVAArg, astVACopy, astEllipsis
 } astTag;
+
+typedef enum markerTag {
+    markerUndefined,
+    markerAuto,
+    markerStatic,
+    markerExtern
+} markerTag;
 
 typedef enum opTag {
     opUndefined,
@@ -123,16 +133,25 @@ typedef struct ast {
     type* dt;    /*Result data type*/
 
     sym* symbol;
+    /*(DeclExpr) astLiteral[literalIdent]*/
+    storageTag storage;
 
-    /*Literals*/
-    literalTag litTag;
-    void* literal;
+    union {
+        /*astMarker*/
+        markerTag marker;
+        /*astLiteral*/
+        struct {
+            literalTag litTag;
+            void* literal;
+        };
+    };
 } ast;
 
 ast* astCreate (astTag tag, tokenLocation location);
 void astDestroy (ast* Node);
 
 ast* astCreateInvalid (tokenLocation location);
+ast* astCreateMarker (tokenLocation location, markerTag marker);
 ast* astCreateEmpty (tokenLocation location);
 
 ast* astCreateUsing (tokenLocation location, char* name);

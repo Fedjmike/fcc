@@ -521,6 +521,7 @@ static void analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     analyzerCompoundInit(ctx, Node, analyzerType(ctx, Node->l), false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
+    Node->symbol->storage = storageAuto;
 }
 
 void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit) {
@@ -634,6 +635,7 @@ static void analyzerLambda (analyzerCtx* ctx, ast* Node) {
     /*Result*/
     Node->dt = fn;
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
+    Node->symbol->storage = storageStatic;
 }
 
 static void analyzerVAStart (analyzerCtx* ctx, ast* Node) {

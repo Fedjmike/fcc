@@ -96,7 +96,7 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
         analyzerFnImpl(ctx, Node);
 
     else if (Node->tag == astDecl)
-        analyzerDecl(ctx, Node);
+        analyzerDecl(ctx, Node, false);
 
     else if (Node->tag == astCode)
         analyzerCode(ctx, Node);
@@ -129,8 +129,19 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 static void analyzerModule (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
-         Current = Current->nextSibling)
-        analyzerNode(ctx, Current);
+         Current = Current->nextSibling) {
+        if (Current->tag == astUsing)
+            analyzerUsing(ctx, Current);
+
+        else if (Current->tag == astFnImpl)
+            analyzerFnImpl(ctx, Current);
+
+        else if (Current->tag == astDecl)
+            analyzerDecl(ctx, Current, true);
+
+        else
+            debugErrorUnhandled("analyzerModule", "AST tag", astTagGetStr(Node->tag));
+    }
 }
 
 static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
@@ -141,7 +152,7 @@ static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
     /*Analyze the prototype*/
 
-    analyzerDecl(ctx, Node->l);
+    analyzerDecl(ctx, Node->l, true);
 
     if (Node->symbol->tag != symId)
         errorFnTag(ctx, Node);
@@ -208,11 +219,7 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 
     /*Initializer*/
 
-    if (init->tag == astDecl)
-        analyzerNode(ctx, init);
-
-    else if (init->tag != astEmpty)
-        analyzerValue(ctx, init);
+    analyzerNode(ctx, init);
 
     /*Condition*/
 

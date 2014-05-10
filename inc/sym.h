@@ -39,11 +39,10 @@ typedef enum symTag {
  * Storage tags for a symbol, defining their linkage and lifetime
  */
 typedef enum storageTag {
+    storageUndefined,
     storageAuto,
     storageStatic,
-    storageExtern,
-    storageTypedef,
-    storageUndefined
+    storageExtern
 } storageTag;
 
 /**
@@ -149,6 +148,7 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
  */
 void symChangeParent (sym* Symbol, sym* parent);
 
+bool symIsFunction (const sym* Symbol);
 const sym* symGetNthParam (const sym* fn, int n);
 
 /**

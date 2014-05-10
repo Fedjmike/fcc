@@ -31,7 +31,7 @@ static sym* symCreate (symTag tag) {
     vectorInit(&Symbol->decls, 2);
     Symbol->impl = 0;
 
-    Symbol->storage = storageAuto;
+    Symbol->storage = storageUndefined;
     Symbol->dt = 0;
 
     Symbol->size = 0;
@@ -72,7 +72,8 @@ static void symDestroy (sym* Symbol) {
         && Symbol->dt)
         typeDestroy(Symbol->dt);
 
-    if (Symbol->storage == storageStatic || Symbol->storage == storageExtern)
+    if (   Symbol->tag == symId
+        && (Symbol->storage == storageStatic || Symbol->storage == storageExtern))
         free(Symbol->label);
 
     free(Symbol);
@@ -131,6 +132,11 @@ void symChangeParent (sym* Symbol, sym* parent) {
 
     /*Add it to the new parent*/
     symAddChild(parent, Symbol);
+}
+
+bool symIsFunction (const sym* Symbol) {
+    return    Symbol->tag == symId && typeIsFunction(Symbol->dt)
+           && (Symbol->storage == storageStatic || Symbol->storage == storageExtern);
 }
 
 const sym* symGetNthParam (const sym* fn, int n) {
@@ -237,7 +243,6 @@ const char* storageTagGetStr (storageTag tag) {
     else if (tag == storageAuto) return "storageAuto";
     else if (tag == storageStatic) return "storageStatic";
     else if (tag == storageExtern) return "storageExtern";
-    else if (tag == storageTypedef) return "storageTypedef";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);
