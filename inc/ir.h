@@ -119,7 +119,7 @@ typedef struct irFn {
 
 typedef struct irCtx {
     vector/*<irFn*>*/ fns;
-    vector/*<irStaticData*>*/ sdata;
+    vector/*<irStaticData*>*/ data, rodata;
 
     int labelNo;
 
