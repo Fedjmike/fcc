@@ -1,4 +1,6 @@
 #include "operand.h"
+
+#include "stdint.h"
 #include "stdio.h"
 
 typedef struct asmCtx asmCtx;
