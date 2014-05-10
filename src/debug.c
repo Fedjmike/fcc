@@ -17,12 +17,11 @@ debugMode mode;
 //Indentation level of debug output
 int depth;
 
-int internalErrors = 0;
+int internalErrors;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;
     debugSetMode(debugFull);
-    internalErrors = 0;
 }
 
 debugMode debugSetMode (debugMode nmode) {
