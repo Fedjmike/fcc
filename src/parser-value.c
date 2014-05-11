@@ -535,14 +535,10 @@ static ast* parserVA (parserCtx* ctx) {
 
     tokenLocation loc = ctx->location;
 
-    keywordTag keyword =   tokenTryMatchKeyword(ctx, keywordVAStart) ? keywordVAStart
-                         : tokenTryMatchKeyword(ctx, keywordVAEnd) ? keywordVAEnd
-                         : tokenTryMatchKeyword(ctx, keywordVACopy) ? keywordVACopy
-                         : (tokenMatchKeyword(ctx, keywordVAArg), keywordVAArg);
-
-    astTag tag =   keyword == keywordVAStart ? astVAStart
-                 : keyword == keywordVAEnd ? astVAEnd
-                 : keyword == keywordVAArg ? astVAArg : astVACopy;
+    astTag tag =   tokenTryMatchKeyword(ctx, keywordVAStart) ? astVAStart
+                 : tokenTryMatchKeyword(ctx, keywordVAEnd) ? astVAEnd
+                 : tokenTryMatchKeyword(ctx, keywordVACopy) ? astVACopy
+                 : (tokenMatchKeyword(ctx, keywordVAArg), astVAArg);
 
     ast* Node = astCreate(tag, loc);
 
@@ -550,12 +546,15 @@ static ast* parserVA (parserCtx* ctx) {
 
     Node->l = parserAssignValue(ctx);
 
-    if (keyword != keywordVAEnd) {
+    if (tag == astVAEnd)
+        ;
+
+    else {
         tokenMatchPunct(ctx, punctComma);
 
         /*va_start takes a parameter name
           Validate it as an ident but don't validate the symbol*/
-        if (keyword == keywordVAStart) {
+        if (tag == astVAStart) {
             sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
 
             if (tokenIsIdent(ctx) && Symbol) {
@@ -568,10 +567,10 @@ static ast* parserVA (parserCtx* ctx) {
                 Node->r = astCreateInvalid(ctx->location);
             }
 
-        } else if (keyword == keywordVAArg)
+        } else if (tag == astVAArg)
             Node->r = parserType(ctx);
 
-        else /*if (keyword == keywordVACopy)*/
+        else /*if (tag == astVACopy)*/
             Node->r = parserAssignValue(ctx);
     }
 
