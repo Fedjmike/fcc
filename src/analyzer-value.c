@@ -651,6 +651,7 @@ static void analyzerVAStart (analyzerCtx* ctx, ast* Node) {
 
 static void analyzerVAEnd (analyzerCtx* ctx, ast* Node) {
     analyzerVAListParam(ctx, Node->l, "va_end", "first");
+    Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
 }
 
 static void analyzerVAArg (analyzerCtx* ctx, ast* Node) {
@@ -663,6 +664,7 @@ static void analyzerVAArg (analyzerCtx* ctx, ast* Node) {
 static void analyzerVACopy (analyzerCtx* ctx, ast* Node) {
     analyzerVAListParam(ctx, Node->l, "va_copy", "first");
     analyzerVAListParam(ctx, Node->r, "va_copy", "second");
+    Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
 }
 
 static void analyzerVAListParam (analyzerCtx* ctx, ast* Node, const char* where, const char* which) {
