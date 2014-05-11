@@ -25,10 +25,14 @@ Object = Factor [{   ( "[" Value "]" )
                    | ( "." | "->" <Ident> ) }]
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
-         | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
+         | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," [ ElementInit ] }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
 		 | VAStart | VAEnd | VAArg | VACopy
          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
+ElementInit = [   (   ( "." <Ident> )
+                    | ( "[" Value "]" ) DesignatedInit )
+                | AssignValue ]
+DesignatedInit = "=" AssignValue
 Lambda = "[" "]"
          "(" [ Param [{ "," Param }] ] ")"
          ( "{" Code "}" ) | ( "(" Value ")" )
