@@ -57,6 +57,7 @@ void errorIllegalArraySize (analyzerCtx* ctx, const ast* Node,
 
 void errorCompoundLiteralWithoutType (analyzerCtx* ctx, const ast* Node);
 
+void errorIncompleteCompound (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT);

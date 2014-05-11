@@ -519,7 +519,12 @@ static void analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 }
 
 static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
-    analyzerCompoundInit(ctx, Node, analyzerType(ctx, Node->l), false);
+    const type* L = analyzerType(ctx, Node->l);
+
+    if (!typeIsComplete(L))
+        errorIncompleteCompound(ctx, Node, L);
+
+    analyzerCompoundInit(ctx, Node, L, false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
     Node->symbol->storage = storageAuto;
 }

@@ -371,6 +371,11 @@ void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o) {
         errorAnalyzer(ctx, Node, "$o cannot dereference incomplete pointer $a", o, Node);
 }
 
+
+void errorIncompleteCompound (analyzerCtx* ctx, const ast* Node, const type* DT) {
+    errorAnalyzer(ctx, Node, "cannot initialize compound literal of incomplete type $t", DT);
+}
+
 void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT) {
     const sym* basic = typeGetBasic(Node->dt);
 
