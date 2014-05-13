@@ -91,6 +91,15 @@ static bool isNodeLvalue (const ast* Node) {
     }
 }
 
+static sym* analyzerRecordMember (analyzerCtx* ctx, ast* Node, opTag o, const sym* record) {
+    Node->symbol = symChild(record, (char*) Node->literal);
+
+    if (!Node->symbol)
+        errorMember(ctx, Node, o, (char*) Node->literal);
+
+    return Node->symbol;
+}
+
 const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
     debugEnter(astTagGetStr(Node->tag));
 
@@ -269,23 +278,17 @@ static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
         /*Incomplete, won't find any fields*/
         if (!record->complete) {
             /*Only give an error if it was a pointer, otherwise the true mistake
-              probably lies elsewhere and will already have errored*/
+              probably lies in the declaration and will already have errored*/
             if (typeIsPtr(L))
                 errorIncompletePtr(ctx, Node->l, Node->o);
 
             Node->dt = typeCreateInvalid();
 
-        /*Try to find the field inside record and get return type*/
+        /*Try to find the field inside the record and get the return type*/
         } else {
-            Node->symbol = symChild(record, (char*) Node->r->literal);
-
-            if (Node->symbol)
-                Node->dt = typeDeepDuplicate(Node->symbol->dt);
-
-            else {
-                errorMember(ctx, Node, (char*) Node->r->literal);
-                Node->dt = typeCreateInvalid();
-            }
+            Node->symbol = analyzerRecordMember(ctx, Node->r, Node->o, record);
+            Node->dt = Node->symbol ? typeDeepDuplicate(Node->symbol->dt)
+                                    : typeCreateInvalid();
         }
     }
 }
