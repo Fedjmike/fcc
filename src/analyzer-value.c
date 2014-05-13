@@ -27,6 +27,7 @@ static void analyzerCast (analyzerCtx* ctx, ast* Node);
 static void analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static void analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
+static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT);
 static void analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected);
 static void analyzerLambda (analyzerCtx* ctx, ast* Node);
 
@@ -538,37 +539,11 @@ void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool dir
     if (typeIsInvalid(DT))
         ;
 
-    /*struct: check each field in order, check lengths match*/
-    else if (typeIsStruct(DT)) {
-        const sym* record = typeGetBasic(DT);
-        int fieldNo = record->children.length;
-
-        /*Only force direct initializations (excl. compound literals) to specify
-          no fields*/
-        if (Node->children == 0 && !directInit)
-            ;
-
-        else if (fieldNo != Node->children)
-            errorDegree(ctx, Node, "fields", fieldNo, Node->children, record->ident);
-
-        else {
-            ast* current;
-            int n = 0;
-
-            for (current = Node->firstChild, n = 0;
-                 current && n < fieldNo;
-                 current = current->nextSibling, n++) {
-                sym* field = vectorGet(&record->children, n);
-
-                analyzerElementInit(ctx, current, field->dt);
-
-                if (!typeIsCompatible(current->dt, field->dt))
-                    errorInitFieldMismatch(ctx, current, record, field);
-            }
-        }
+    else if (typeIsStruct(DT))
+        analyzerStructInit(ctx, Node, DT);
 
     /*Array: check that all are of the right type, complain only once*/
-    } else if (typeIsArray(DT)) {
+    else if (typeIsArray(DT)) {
         int elementNo = typeGetArraySize(DT);
         const type* base = typeGetBase(DT);
 
@@ -598,6 +573,63 @@ void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool dir
 
             if (!typeIsCompatible(R, DT))
                 errorTypeExpectedType(ctx, Node->r, "variable initialization", DT);
+        }
+    }
+}
+
+static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
+    const sym* record = typeGetBasic(DT);
+
+    /*If there is an error relating to designators, there will be no way to
+      reliably pick fields to compare against. This flag will remain set
+      until the next designator.*/
+    bool error = false;
+
+    /*Index of the next field to analyze*/
+    int index = 0;
+
+    for (ast* current = Node->firstChild;
+         current;
+         current = current->nextSibling) {
+        ast* value;
+        const sym* field = 0;
+
+        /*Explicit field?*/
+        if (current->tag == astMarker) {
+            if (current->marker == markerStructDesignatedInit) {
+                /*Try to find the field in the record, emitting an error if not present*/
+                field = analyzerRecordMember(ctx, current->l, opMember, record);
+                value = current->r;
+                error = false;
+
+            } else if (current->marker == markerArrayDesignatedInit) {
+                errorWrongInitDesignator(ctx, current, DT);
+                error = true;
+
+            } else {
+                debugErrorUnhandledInt("analyzerStructElementInit", "AST marker tag", current->marker);
+                error = true;
+            }
+
+        /*Implied, get the next field*/
+        } else if (!error) {
+            field = vectorGet(&record->children, index);
+            value = current;
+
+            if (!field) {
+                errorInitExcessFields(ctx, current, record, field);
+                break;
+            }
+        }
+
+        /*If a field was determined, analyze the value and compare types*/
+        if (field) {
+            analyzerElementInit(ctx, value, field->dt);
+
+            if (!typeIsCompatible(value->dt, field->dt))
+                errorInitFieldMismatch(ctx, value, record, field);
+
+            index = field->nthChild+1;
         }
     }
 }
