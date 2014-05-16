@@ -26,7 +26,7 @@ static ast* parserPostUnary (parserCtx* ctx);
 static ast* parserObject (parserCtx* ctx);
 static ast* parserFactor (parserCtx* ctx);
 static ast* parserElementInit (parserCtx* ctx);
-static ast* parserDesignatedInit (parserCtx* ctx, ast* element);
+static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array);
 static ast* parserLambda (parserCtx* ctx, bool partial);
 static ast* parserVA (parserCtx* ctx);
 
@@ -492,7 +492,7 @@ static ast* parserElementInit (parserCtx* ctx) {
         else
             errorExpected(ctx, "field name");
 
-        Node = parserDesignatedInit(ctx, field);
+        Node = parserDesignatedInit(ctx, field, false);
 
     /*Array designated initializer, or the beginning of a lambda*/
     } else if (tokenTryMatchPunct(ctx, punctLBracket)) {
@@ -502,10 +502,10 @@ static ast* parserElementInit (parserCtx* ctx) {
 
         /*Designated initializer*/
         else {
-            ast* field = parserValue(ctx);
+            ast* element = parserValue(ctx);
             tokenMatchPunct(ctx, punctRBracket);
 
-            Node = parserDesignatedInit(ctx, field);
+            Node = parserDesignatedInit(ctx, element, true);
         }
 
     /*Regular value*/
@@ -520,13 +520,16 @@ static ast* parserElementInit (parserCtx* ctx) {
 /**
  * DesignatedInit = "=" AssignValue
  */
-static ast* parserDesignatedInit (parserCtx* ctx, ast* element) {
+static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array) {
     debugEnter("DesignatedInit");
 
     tokenLocation loc = ctx->location;
     tokenMatchPunct(ctx, punctAssign);
 
-    ast* Node = astCreateBOP(loc, element, opAssign, parserAssignValue(ctx));
+    ast* Node = astCreateMarker(loc, array ? markerArrayDesignatedInit
+                                           : markerStructDesignatedInit);
+    Node->l = element;
+    Node->r = parserAssignValue(ctx);
 
     debugLeave();
 

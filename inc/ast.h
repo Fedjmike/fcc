@@ -6,6 +6,8 @@
 
 #include "parser.h"
 
+#include "stdint.h"
+
 typedef struct type type;
 typedef struct sym sym;
 typedef struct ast ast;
@@ -42,7 +44,9 @@ typedef enum markerTag {
     markerUndefined,
     markerAuto,
     markerStatic,
-    markerExtern
+    markerExtern,
+    markerArrayDesignatedInit,
+    markerStructDesignatedInit
 } markerTag;
 
 typedef enum opTag {
