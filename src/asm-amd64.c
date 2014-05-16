@@ -10,7 +10,7 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-void asmComment (asmCtx* ctx, char* str) {
+void asmComment (asmCtx* ctx, const char* str) {
     asmOutLn(ctx, ";%s", str);
 }
 
