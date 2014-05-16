@@ -110,8 +110,8 @@ static void archSetupDriverFlags (architecture* arch, osTag os) {
         arch->ldflags = strdup("-m64");
 
     } else {
-        arch->asflags = "";
-        arch->ldflags = "";
+        arch->asflags = strdup("");
+        arch->ldflags = strdup("");
     }
 }
 

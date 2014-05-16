@@ -35,11 +35,15 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node);
-static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
 static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node);
+
+static operand emitterVAStart (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVAEnd (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVAArg (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node);
 
 operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, block, Node, request, 0);
@@ -51,6 +55,8 @@ operand emitterValueSuggest (emitterCtx* ctx, irBlock** block, const ast* Node, 
 
 static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* Node,
                                  emitterRequest request, const operand* suggestion) {
+    debugEnter(astTagGetStr(Node->tag));
+
     operand Value;
 
     /*Calculate the value*/
@@ -94,6 +100,21 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     else if (Node->tag == astLiteral)
         Value = emitterLiteral(ctx, block, Node);
 
+    else if (Node->tag == astVAStart)
+        Value = emitterVAStart(ctx, block, Node);
+
+    else if (Node->tag == astVAEnd)
+        Value = emitterVAEnd(ctx, block, Node);
+
+    else if (Node->tag == astVAArg)
+        Value = emitterVAArg(ctx, block, Node);
+
+    else if (Node->tag == astVACopy)
+        Value = emitterVACopy(ctx, block, Node);
+
+    else if (Node->tag == astEmpty)
+        Value = operandCreateVoid();
+
     else {
         debugErrorUnhandled("emitterValueImpl", "AST tag", astTagGetStr(Node->tag));
         Value = operandCreate(operandUndefined);
@@ -132,11 +153,8 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     } else if (request == requestMem) {
         Dest = Value;
 
-        if (Value.tag == operandLabelMem) {
-            operand base = emitterGetInReg(ctx, *block, Value, ctx->arch->wordsize);
-            Dest = operandCreateMem(base.base, 0, typeGetSize(ctx->arch, Node->dt));
-
-        } else if (Value.tag != operandMem)
+        if (   Value.tag != operandMem
+            && Value.tag != operandLabelMem)
             debugError("emitterValueImpl", "unable to convert non lvalue operand tag, %s", operandTagGetStr(Value.tag));
 
     /*Specific class of operand*/
@@ -229,12 +247,12 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             Dest = Value;
     }
 
+    debugLeave();
+
     return Dest;
 }
 
 static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("BOP");
-
     operand L, R, Value;
 
     /* '.' */
@@ -264,7 +282,7 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     /* ',' */
     } else if (Node->o == opComma) {
         operandFree(emitterValue(ctx, block, Node->l, requestAny));
-        Value = R = emitterValue(ctx, block, Node->r, requestAny);
+        Value = emitterValue(ctx, block, Node->r, requestAny);
 
     /*Numeric operator*/
     } else {
@@ -287,14 +305,10 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         operandFree(R);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("DivisionBOP");
-
     /*x86 is really non-orthogonal for division. EDX:EAX is treated as the LHS
       and then EDX stores the remainder and EAX the quotient*/
 
@@ -352,14 +366,10 @@ static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* 
         operandFree(L);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("ShiftBOP");
-
     operand R;
     int rcxOldSize;
 
@@ -396,14 +406,10 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
     if (!immediate)
         emitterGiveBackReg(ctx, *block, regRCX, rcxOldSize);
 
-    debugLeave();
-
     return L;
 }
 
 static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("AssignnentBOP");
-
     /*Keep the left in memory so that the lvalue gets modified*/
     operand Value, R = emitterValue(ctx, block, Node->r, requestValue),
                    L = emitterValue(ctx, block, Node->l, requestMem);
@@ -427,8 +433,6 @@ static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast
 
     } else
         debugErrorUnhandled("emitterAssignmentBOP", "operator", opTagGetStr(Node->o));
-
-    debugLeave();
 
     return Value;
 }
@@ -457,8 +461,6 @@ static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* N
 }
 
 static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, irBlock* shortcont, operand* Value) {
-    debugEnter("LogicalBOP");
-
     /*The job of this function is:
         - Move the default into Value (possibly passing the buck recursively)
         - Branch to the short block depending on LHS
@@ -496,14 +498,12 @@ static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const as
 
     /*Move the RHS into the flags*/
 
-    operand R = emitterValue(ctx, &unshort, Node->r, requestFlags);
+    operand R = emitterValue(ctx, block, Node->r, requestFlags);
 
     return R;
 }
 
 static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("UOP");
-
     operand R, Value;
 
     /*Increment/decrement ops*/
@@ -566,14 +566,10 @@ static operand emitterUOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         Value = operandCreateInvalid();
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
-    debugEnter("TOP");
-
     irBlock *ifTrue = irBlockCreate(ctx->ir, ctx->curFn),
             *ifFalse = irBlockCreate(ctx->ir, ctx->curFn),
             *continuation = irBlockCreate(ctx->ir, ctx->curFn);
@@ -591,14 +587,10 @@ static operand emitterTOP (emitterCtx* ctx, irBlock** block, const ast* Node, co
 
     *block = continuation;
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Index");
-
     operand L, R, Value;
 
     int size = typeGetSize(ctx->arch, Node->dt);
@@ -674,14 +666,10 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
         Value = operandCreateMem(R.base, 0, size);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Call");
-
     operand Value;
 
     /*Caller save registers: only if in use*/
@@ -726,7 +714,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     irBlock* continuation = irBlockCreate(ctx->ir, ctx->curFn);
 
-    if (Node->l->symbol && typeIsFunction(Node->l->symbol->dt)) {
+    if (Node->l->symbol && symIsFunction(Node->l->symbol)) {
         emitterValue(ctx, block, Node->l, requestVoid);
         irCall(*block, Node->l->symbol, continuation);
 
@@ -771,14 +759,10 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
             asmRestoreReg(ctx->ir, *block, r);
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Cast");
-
     operand R = emitterValue(ctx, block, Node->r, requestValue);
 
     /*Widen or narrow, if needed*/
@@ -789,67 +773,51 @@ static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
     if (from != to && to != 0)
         R = (from < to ? emitterWiden : emitterNarrow)(ctx, *block, R, to);
 
-    debugLeave();
-
     return R;
 }
 
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node) {
     (void) block;
 
-    debugEnter("Sizeof");
-
-    const type* DT = Node->r->dt;
-    operand Value = operandCreateLiteral(typeGetSize(ctx->arch, DT));
-
-    debugLeave();
-
-    return Value;
+    return operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
 }
 
-static operand emitterSymbol (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    (void) block;
-
-    debugEnter("Symbol");
-
+operand emitterSymbol (emitterCtx* ctx, const sym* Symbol) {
     operand Value = operandCreate(operandUndefined);
 
-    /*function*/
-    if (typeIsFunction(Node->symbol->dt))
-        Value = operandCreateLabel(Node->symbol->label);
+    if (Symbol->tag == symEnumConstant)
+        Value = operandCreateLiteral(Symbol->constValue);
 
-    /*enum constant*/
-    else if (Node->symbol->tag == symEnumConstant)
-        Value = operandCreateLiteral(Node->symbol->constValue);
-
-    /*variable or param*/
-    else {
-        bool array = typeIsArray(Node->symbol->dt);
+    else if (Symbol->tag == symId || Symbol->tag == symParam) {
+        bool array = typeIsArray(Symbol->dt);
         int size = typeGetSize(ctx->arch,   array
-                                          ? typeGetBase(Node->symbol->dt)
-                                          : Node->symbol->dt);
+                                          ? typeGetBase(Symbol->dt)
+                                          : Symbol->dt);
 
-        if (Node->symbol->storage == storageAuto)
-            Value = operandCreateMem(&regs[regRBP], Node->symbol->offset, size);
+        if (   Symbol->tag == symParam
+            || Symbol->storage == storageAuto)
+            Value = operandCreateMem(&regs[regRBP], Symbol->offset, size);
 
-        else if (   Node->symbol->storage == storageStatic
-                   || Node->symbol->storage == storageExtern)
-            Value = operandCreateLabelMem(Node->symbol->label, size);
+        else if (   Symbol->storage == storageStatic
+                 || Symbol->storage == storageExtern) {
+            if (typeIsFunction(Symbol->dt))
+                Value = operandCreateLabel(Symbol->label);
 
-        else
-            debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Node->symbol->storage));
+            else
+                Value = operandCreateLabelMem(Symbol->label, size);
+
+        } else
+            debugErrorUnhandled("emitterSymbol", "storage tag", storageTagGetStr(Symbol->storage));
 
         Value.array = array;
-    }
 
-    debugLeave();
+    } else
+        debugErrorUnhandled("emitterSymbol", "symbol tag", symTagGetStr(Symbol->tag));
 
     return Value;
 }
 
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("Literal");
-
     operand Value;
 
     if (Node->litTag == literalInt)
@@ -865,7 +833,7 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
         Value = irStringConstant(ctx->ir, (char*) Node->literal);
 
     else if (Node->litTag == literalIdent)
-        Value = emitterSymbol(ctx, block, Node);
+        Value = emitterSymbol(ctx, Node->symbol);
 
     else if (Node->litTag == literalCompound)
         Value = emitterCompoundLiteral(ctx, block, Node);
@@ -878,25 +846,17 @@ static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node
         Value = operandCreateInvalid();
     }
 
-    debugLeave();
-
     return Value;
 }
 
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    debugEnter("CompoundLiteral");
-
-    operand Value = emitterSymbol(ctx, block, Node);
+    operand Value = emitterSymbol(ctx, Node->symbol);
     emitterCompoundInit(ctx, block, Node, Value);
-
-    debugLeave();
 
     return Value;
 }
 
 void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base) {
-    debugEnter("CompoundInit");
-
     /*Struct initialization*/
     if (typeIsStruct(Node->dt)) {
         const sym* record = typeGetBasic(Node->dt);
@@ -935,8 +895,6 @@ void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, ope
     /*Scalar*/
     } else
         emitterValueSuggest(ctx, block, Node->firstChild, &base);
-
-    debugLeave();
 }
 
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L) {
@@ -955,8 +913,6 @@ static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Nod
 
 static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node) {
     (void) block;
-
-    debugEnter("Lambda");
 
     int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
 
@@ -987,7 +943,67 @@ static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node)
     /*Return the label*/
     operand Value = operandCreateLabel(fn->name);
 
-    debugLeave();
-
     return Value;
+}
+
+static operand emitterVAStart (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*args = (char*) &lastParam + sizeof(lastParam)
+      Calculate it in tmp*/
+
+    operand args = emitterValue(ctx, block, Node->l, requestMem);
+
+    operand tmp = operandCreateReg(regAlloc(ctx->arch->wordsize));
+
+    /*Get the address of the given parameter*/
+    operand lastParam = emitterValue(ctx, block, Node->r, requestMem);
+    asmEvalAddress(ctx->ir, *block, tmp, lastParam);
+
+    /*Add its size to move past it*/
+    operand lastParamSize = operandCreateLiteral(typeGetSize(ctx->arch, Node->r->dt));
+    asmBOP(ctx->ir, *block, bopAdd, tmp, lastParamSize);
+
+    /*Move it into the va_list*/
+    asmMove(ctx->ir, *block, args, tmp);
+
+    operandFree(tmp);
+    operandFree(args);
+
+    return operandCreateVoid();
+}
+
+static operand emitterVAEnd (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    (void) ctx, (void) block, (void) Node;
+    return operandCreateVoid();
+}
+
+static operand emitterVAArg (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*void* tmp = args;
+      args += sizeof(thisParam);
+      return *(thisParam*) tmp;*/
+
+    operand args = emitterValue(ctx, block, Node->l, requestMem);
+
+    /*Store the old param ptr in a register*/
+    operand Value = emitterGetInReg(ctx, *block, args, ctx->arch->wordsize);
+
+    /*Increment it in the va_list*/
+    int thisParamSize = typeGetSize(ctx->arch, Node->r->dt);
+    asmBOP(ctx->ir, *block, bopAdd, args, operandCreateLiteral(thisParamSize));
+
+    operandFree(args);
+
+    /*Return the saved copy*/
+    return operandCreateMem(Value.base, 0, thisParamSize);
+}
+
+static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*dest = src*/
+
+    /*Assumes va_list can fit in a register*/
+    operand L = emitterValue(ctx, block, Node->l, requestMem);
+    operand R = emitterValue(ctx, block, Node->r, requestValue);
+
+    asmMove(ctx->ir, *block, L, R);
+
+    return operandCreateVoid();
 }

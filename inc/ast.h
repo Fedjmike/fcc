@@ -2,7 +2,11 @@
 
 #include "../std/std.h"
 
+#include "sym.h"
+
 #include "parser.h"
+
+#include "stdint.h"
 
 typedef struct type type;
 typedef struct sym sym;
@@ -25,6 +29,7 @@ typedef struct ast ast;
 typedef enum astTag {
     astUndefined,
     astInvalid,
+    astMarker,
     astEmpty,
     astModule,
     astUsing,
@@ -32,8 +37,17 @@ typedef enum astTag {
     astType, astDecl, astParam, astStruct, astUnion, astEnum, astConst,
     astCode, astBranch, astLoop, astIter, astReturn, astBreak, astContinue,
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
-    astEllipsis
+    astVAStart, astVAEnd, astVAArg, astVACopy, astEllipsis
 } astTag;
+
+typedef enum markerTag {
+    markerUndefined,
+    markerAuto,
+    markerStatic,
+    markerExtern,
+    markerArrayDesignatedInit,
+    markerStructDesignatedInit
+} markerTag;
 
 typedef enum opTag {
     opUndefined,
@@ -48,7 +62,7 @@ typedef enum opTag {
     opShr, opShl,
     opAdd, opSubtract, opMultiply, opDivide, opModulo,
     opLogicalNot, opBitwiseNot, opUnaryPlus, opNegate, opDeref, opAddressOf,
-    opIndex,
+    opIndex, opCall,
     opPreIncrement, opPreDecrement, opPostIncrement, opPostDecrement,
     opMember, opMemberDeref
 } opTag;
@@ -65,6 +79,45 @@ typedef enum literalTag {
     literalLambda
 } literalTag;
 
+/**
+ * Syntax tree node
+ *
+ * Subclasses:
+ *   o Values
+ *      - Defined as those that are returned by parserValue.
+ *      - One of: BOP, UOP, TOP, Index, Call, Cast, Sizeof, Literal, Empty
+ *      - They represent value returning expressions.
+ *      - Handled by functions such as analyzerValue, emitterValue.
+ *
+ *   o DeclExprs
+ *      - Defined as those that are returned by parserDeclExpr.
+ *      - One of: BOP, UOP, Index, Call, Const, Literal
+ *      - Represent direct declarators, in the language of the standard.
+ *      - Handlers such as analyzerDeclNode.
+ *
+ * These subclasses are mutually exclusive.
+ *
+ * Invariants:
+ *   - location is the location of the first token in the grammatical
+ *     construction, or another location appropriate for errors to
+ *     appear at. For example, the location of a BOP will be the operator.
+ *
+ *   - For Values:
+ *      - Any child is itself a value, other than
+ *         1. The right child of a Sizeof which can be a Type or Value,
+ *         2. The left child of a Cast, a Type,
+ *         3. The right child of a VAArg, a Type.
+ *      - After analysis, dt will be a type representing the result of
+ *        the expression.
+ *
+ *   - For DeclExprs:
+ *      - Any child is itself a DeclExpr, other than
+ *         1. The right child of a BOP[o=Assign],
+ *         2. The right child of an Index,
+ *         3. The linked list children of a Call.
+ *      - After parsing, if the DeclExpr declares a symbol it will be
+ *        stored in symbol.
+ */
 typedef struct ast {
     astTag tag;
 
@@ -84,16 +137,25 @@ typedef struct ast {
     type* dt;    /*Result data type*/
 
     sym* symbol;
+    /*(DeclExpr) astLiteral[literalIdent]*/
+    storageTag storage;
 
-    /*Literals*/
-    literalTag litTag;
-    void* literal;
+    union {
+        /*astMarker*/
+        markerTag marker;
+        /*astLiteral*/
+        struct {
+            literalTag litTag;
+            void* literal;
+        };
+    };
 } ast;
 
 ast* astCreate (astTag tag, tokenLocation location);
 void astDestroy (ast* Node);
 
 ast* astCreateInvalid (tokenLocation location);
+ast* astCreateMarker (tokenLocation location, markerTag marker);
 ast* astCreateEmpty (tokenLocation location);
 
 ast* astCreateUsing (tokenLocation location, char* name);
@@ -117,8 +179,6 @@ ast* astCreateCast (tokenLocation location, ast* result, ast* r);
 ast* astCreateSizeof (tokenLocation location, ast* r);
 ast* astCreateLiteral (tokenLocation location, literalTag litTag);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
-
-ast* astCreateEllipsis (tokenLocation location);
 
 void astAddChild (ast* Parent, ast* Child);
 

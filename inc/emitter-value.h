@@ -31,4 +31,6 @@ operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitter
  */
 operand emitterValueSuggest (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* request);
 
+operand emitterSymbol (emitterCtx* ctx, const sym* Symbol);
+
 void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base);

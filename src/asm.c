@@ -29,7 +29,7 @@ void asmEnd (asmCtx* ctx) {
     free(ctx);
 }
 
-void asmOutLn (asmCtx* ctx, char* format, ...) {
+void asmOutLn (asmCtx* ctx, const char* format, ...) {
     for (int i = 0; i < 4*ctx->depth; i++)
         fputc(' ', ctx->file);
 

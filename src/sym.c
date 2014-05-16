@@ -31,7 +31,7 @@ static sym* symCreate (symTag tag) {
     vectorInit(&Symbol->decls, 2);
     Symbol->impl = 0;
 
-    Symbol->storage = storageAuto;
+    Symbol->storage = storageUndefined;
     Symbol->dt = 0;
 
     Symbol->size = 0;
@@ -65,10 +65,17 @@ static void symDestroy (sym* Symbol) {
     else
         vectorFree(&Symbol->children);
 
-    if (Symbol->dt)
+    if (   (   Symbol->tag == symId
+            || Symbol->tag == symParam
+            || Symbol->tag == symEnumConstant
+            || Symbol->tag == symTypedef)
+        && Symbol->dt)
         typeDestroy(Symbol->dt);
 
-    free(Symbol->label);
+    if (   Symbol->tag == symId
+        && (Symbol->storage == storageStatic || Symbol->storage == storageExtern))
+        free(Symbol->label);
+
     free(Symbol);
 }
 
@@ -114,14 +121,8 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident) {
 }
 
 static void symAddChild (sym* Parent, sym* Child) {
-    if (   debugAssert("symAddChild", "null child", Child != 0)
-        || debugAssert("symAddChild", "null parent", Parent != 0))
-        ;
-
-    else {
-        Child->parent = Parent;
-        Child->nthChild = vectorPush(&Parent->children, Child);
-    }
+    Child->parent = Parent;
+    Child->nthChild = vectorPush(&Parent->children, Child);
 }
 
 void symChangeParent (sym* Symbol, sym* parent) {
@@ -133,11 +134,26 @@ void symChangeParent (sym* Symbol, sym* parent) {
     symAddChild(parent, Symbol);
 }
 
-sym* symChild (const sym* Scope, const char* look) {
-    if (   debugAssert("symChild", "null scope", Scope != 0)
-        || debugAssert("symChild", "null string", look != 0))
-        return 0;
+bool symIsFunction (const sym* Symbol) {
+    return    Symbol->tag == symId && typeIsFunction(Symbol->dt)
+           && (Symbol->storage == storageStatic || Symbol->storage == storageExtern);
+}
 
+const sym* symGetNthParam (const sym* fn, int n) {
+    int paramNo = 0;
+
+    for (int i = 0; i < fn->children.length; i++) {
+        const sym* child = vectorGet(&fn->children, i);
+
+        if (child->tag == symParam)
+            if (paramNo++ == n)
+                return child;
+    }
+
+    return 0;
+}
+
+sym* symChild (const sym* Scope, const char* look) {
     //printf("searching: %s\n", Scope->ident);
 
     for (int n = 0; n < Scope->children.length; n++) {
@@ -179,10 +195,6 @@ sym* symChild (const sym* Scope, const char* look) {
 }
 
 sym* symFind (const sym* Scope, const char* look) {
-    if (   debugAssert("symFind", "null scope", Scope != 0)
-        || debugAssert("symFind", "null string", look != 0))
-        return 0;
-
     //printf("look: %s\n", look);
 
     /*Search the current namespace and all its ancestors*/
@@ -231,7 +243,6 @@ const char* storageTagGetStr (storageTag tag) {
     else if (tag == storageAuto) return "storageAuto";
     else if (tag == storageStatic) return "storageStatic";
     else if (tag == storageExtern) return "storageExtern";
-    else if (tag == storageTypedef) return "storageTypedef";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

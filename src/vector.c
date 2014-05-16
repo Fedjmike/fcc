@@ -86,7 +86,7 @@ void* vectorRemoveReorder (vector* v, int n) {
 }
 
 void* vectorGet (const vector* v, int n) {
-    if (n < v->length)
+    if (n < v->length && n >= 0)
         return v->buffer[n];
 
     else

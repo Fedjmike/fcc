@@ -44,9 +44,9 @@ typedef struct asmCtx {
 asmCtx* asmInit (const char* output, const architecture* arch);
 void asmEnd (asmCtx* ctx);
 
-void asmOutLn (asmCtx* ctx, char* format, ...);
+void asmOutLn (asmCtx* ctx, const char* format, ...);
 
-void asmComment (asmCtx* ctx, char* str);
+void asmComment (asmCtx* ctx, const char* str);
 
 /**
  * Enter a block (signalled by indentation)

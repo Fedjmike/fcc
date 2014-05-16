@@ -2,6 +2,7 @@
 
 #include "../inc/debug.h"
 #include "../inc/type.h"
+#include "../inc/sym.h"
 
 #include "stdio.h"
 #include "stdlib.h"
@@ -24,6 +25,9 @@ ast* astCreate (astTag tag, tokenLocation location) {
     Node->dt = 0;
 
     Node->symbol = 0;
+    Node->storage = storageUndefined;
+
+    Node->marker = markerUndefined;
 
     Node->litTag = literalUndefined;
     Node->literal = 0;
@@ -32,9 +36,6 @@ ast* astCreate (astTag tag, tokenLocation location) {
 }
 
 void astDestroy (ast* Node) {
-    if (debugAssert("astDestroy", "null param", Node != 0))
-        return;
-
     for (ast *Current = Node->firstChild, *Next = Current ? Current->nextSibling : 0;
          Current;
          Current = Next, Next = Next ? Next->nextSibling : 0)
@@ -55,6 +56,12 @@ void astDestroy (ast* Node) {
 
 ast* astCreateInvalid (tokenLocation location) {
     return astCreate(astInvalid, location);
+}
+
+ast* astCreateMarker (tokenLocation location, markerTag marker) {
+    ast* Node = astCreate(astMarker, location);
+    Node->marker = marker;
+    return Node;
 }
 
 ast* astCreateEmpty (tokenLocation location) {
@@ -179,17 +186,7 @@ ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
     return Node;
 }
 
-ast* astCreateEllipsis (tokenLocation location) {
-    return astCreate(astEllipsis, location);
-}
-
 void astAddChild (ast* Parent, ast* Child) {
-    if (!Child || !Parent) {
-        printf("astAddChild(): null %s given.\n",
-               !Parent ? "parent" : "child");
-        return;
-    }
-
     if (Parent->firstChild == 0) {
         Parent->firstChild = Child;
         Parent->lastChild = Child;
@@ -206,12 +203,14 @@ void astAddChild (ast* Parent, ast* Child) {
 bool astIsValueTag (astTag tag) {
     return    tag == astBOP || tag == astUOP || tag == astTOP
            || tag == astCall || tag == astIndex || tag == astCast
-           || tag == astSizeof || tag == astLiteral;
+           || tag == astSizeof || tag == astLiteral || tag == astVAStart
+           || tag == astVAEnd || tag == astVAArg || tag == astVACopy;
 }
 
 const char* astTagGetStr (astTag tag) {
     if (tag == astUndefined) return "astUndefined";
     else if (tag == astInvalid) return "astInvalid";
+    else if (tag == astMarker) return "astMarker";
     else if (tag == astEmpty) return "astEmpty";
     else if (tag == astModule) return "astModule";
     else if (tag == astUsing) return "astUsing";
@@ -239,6 +238,10 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astSizeof) return "astSizeof";
     else if (tag == astLiteral) return "astLiteral";
     else if (tag == astEllipsis) return "astEllipsis";
+    else if (tag == astVAStart) return "astVAStart";
+    else if (tag == astVAEnd) return "astVAEnd";
+    else if (tag == astVAArg) return "astVAArg";
+    else if (tag == astVACopy) return "astVACopy";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

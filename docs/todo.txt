@@ -16,15 +16,16 @@ High importance:
 [-] Type completeness
 	[ ] Incomplete arrays
 	[ ] Cast to incomplete
-[-] Varargs
+[x] Varargs
 [-] extern
 [-] static
     [ ] Function linkage
     [ ] Disallow all others?
 [ ] Disallow global variables
 [-] Modules
-    [ ] Separated namespaces
+    [-] Separated namespaces
     [x] Include once only
+	[ ] Infinite loops
 
 Medium:
 
@@ -45,7 +46,8 @@ Medium:
 [-] Closures
 	- Syntax?
 	[x] Capture-less lambdas
-[ ] auto type inference
+[ ] Designated initializers in compound literals
+[-] auto type inference
 [ ] assert
 [ ] Warnings
 	[ ] main conformance
@@ -60,21 +62,20 @@ Medium:
 	[ ] Constant propogation?
 	[ ] Factorization (CSE)
 	[ ] Operand commutation => Strahler number
+[ ] Octal and hex literals
 
 Low:
 
 [ ] Unicode
 [ ] Pretty printing control by command line
-[ ] string
 [-] New IR
-    - Expression only (to start with)
-[ ] Designated initializers in compound literals
 [ ] Lexer errors
     [ ] Multichar
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
 	[ ] Newline in string
+	[ ] Suffix on integer literal
 [ ] Modules
     [ ] header & using, special meaning?
 	[ ] Different dialect?
@@ -99,14 +100,13 @@ Other issues:
 [-] Use vector in:
 	[ ] ast
 	[x] sym
-[ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
+[x] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
 [ ] Declare structs inside modules, not their headers, if not part of the interface
 [ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
 [ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
 
 Parser:
 
-[x] Fix AST node location
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
 [ ] Complain about keywords as idents
@@ -119,9 +119,8 @@ Semantic analyzer:
 
 [ ] Array size detection (basic x[] = {...})
     - analyzer-decl.c
-[ ] Check that fn impl and var init are semantically valid
 [-] Make sure prototypes and implementation match exactly (static)
-[ ] Initialization of extern and typedef
+[x] Initialization/impl_n of extern and typedef
 [ ] Evaluate casts properly
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
@@ -145,8 +144,7 @@ Emitter:
       sends them off to emitterValue, handles operands and reg
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
-[-] Let asm stuff return operand?
-[ ] requestReturn for eax
+[x] requestReturn for eax
 [ ] Cache sym size
 	=> move to analyzer?
 	=> as well as offset

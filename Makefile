@@ -21,8 +21,13 @@ CONFIG ?= release
 
 CC ?= gcc
 CFLAGS ?= -std=c11
-CFLAGS += -Werror -Wall -Wextra -g
+CFLAGS += -Werror -Wall -Wextra -Wvla -Wstrict-aliasing -Wstrict-overflow=5 -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wmissing-field-initializers -g
 CFLAGS += -include defaults.h
+
+ifeq ($(STRICT),yes)
+	CFLAGS += -Wformat=2 -Wmissing-include-dirs -Wconversion -pedantic
+	CFLAGS += -Wno-format-nonliteral -Wno-sign-conversion
+endif
 
 ifeq ($(CONFIG),debug)
 	CFLAGS += -DFCC_DEBUGMODE -g
@@ -61,7 +66,7 @@ OUT = $(BIN)/$(BINNAME)
 all: $(OUT)
 
 defaults.h: defaults.in.h
-	@echo " [makedefaults.h] $@"
+	@echo " [makedefaults.sh] $@"
 	@OS=$(OS_) WORDSIZE=$(WORDSIZE) bash makedefaults.sh $< >$@
 
 $(OBJ)/%.o: src/%.c $(HEADERS)
@@ -98,16 +103,18 @@ print:
 #
 
 TFLAGS = -I tests/include
-TESTS = $(patsubst %, bin/tests/%, xor-list hashset xor-list-error.txt)
+TOUT = xor-list hashset xor-list-error.txt
+TESTS = $(patsubst %, bin/tests/%, $(TOUT))
 
 ifneq ($(shell command -v valgrind; echo $?),)
-	VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes
+	VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes --error-exitcode=1
 	VALGRIND ?= valgrind $(VFLAGS)
 endif
 
 tests-all: $(TESTS)
 	
 bin/tests/%-error.txt: tests/%-error.c $(FCC)
+	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
 	@$(VALGRIND) $(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
 	$(POSTBUILD)
@@ -136,8 +143,8 @@ print-tests:
 selfbuild: bin/self/fcc
 
 bin/self/fcc: $(OUT) selfbuild.sh
-	@echo " [FCC+CC] fcc"
-	@CC=$(CC) CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
+	@echo " [FCC+GCC] $@"
+	@CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
 	$(POSTBUILD)
 	
 #	

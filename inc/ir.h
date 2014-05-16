@@ -2,6 +2,8 @@
 #include "ast.h"
 #include "operand.h"
 
+#include "stdint.h"
+
 typedef struct sym sym;
 typedef struct architecture architecture;
 typedef struct asmCtx asmCtx;
@@ -63,13 +65,27 @@ typedef struct irTerm {
 
 typedef enum irStaticDataTag {
     dataUndefined,
+    dataRegular,
     dataStringConstant
 } irStaticDataTag;
 
 typedef struct irStaticData {
     irStaticDataTag tag;
-    char* label;
-    void* initial;
+
+    union {
+        /*dataRegular*/
+        struct {
+            const char* label;
+            bool global;
+            int size;
+            intptr_t initial;
+        };
+        /*dataStringConstant*/
+        struct {
+            char* strlabel;
+            char* str;
+        };
+    };
 } irStaticData;
 
 /*::::  ::::*/
@@ -103,7 +119,7 @@ typedef struct irFn {
 
 typedef struct irCtx {
     vector/*<irFn*>*/ fns;
-    vector/*<irStaticData*>*/ sdata;
+    vector/*<irStaticData*>*/ data, rodata;
 
     int labelNo;
 
@@ -121,6 +137,9 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 void irBlockOut (irBlock* block, const char* format, ...);
 
+/*:::: STATIC DATA ::::*/
+
+void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial);
 operand irStringConstant (irCtx* ctx, const char* str);
 
 /*:::: TERMINAL INSTRUCTIONS ::::*/
@@ -143,12 +162,3 @@ void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ);
 /*:::: ::::*/
 
 void irBlockLevelAnalysis (irCtx* ctx);
-
-/*void irPush (irBlock* block, operand R);
-
-void irMove (irBlock* block, operand dest, operand R);
-void irEvalAddress (irBlock* block, operand dest, operand R);
-
-void irCompare (irBlock* block, operand L, operand R);
-
-void irBOP (irBlock* block, opTag op, operand L, operand R);*/

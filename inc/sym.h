@@ -42,8 +42,7 @@ typedef enum storageTag {
     storageUndefined,
     storageAuto,
     storageStatic,
-    storageExtern,
-    storageTypedef
+    storageExtern
 } storageTag;
 
 /**
@@ -91,17 +90,22 @@ typedef struct sym {
     ///Points to the astFnImpl, astStruct etc, whichever relevant if any
     const ast* impl;
 
-    /*Functions, params, vars only*/
-    storageTag storage;
-    ///In the case of functions, the return type
-    type* dt;
-
-    /*Types and structs only*/
-    ///Size in bytes
-    int size;
-    ///A mask defining operator capabilities
-    symTypeMask typeMask;
-    bool complete;
+    union {
+        struct {
+            /*symId symParam*/
+            storageTag storage;
+            /*symId symParam symTypedef symEnumConstant*/
+            type* dt;
+        };
+        /*symType symStruct symUnion symEnum*/
+        struct {
+            ///Size in bytes
+            int size;
+            ///A mask defining operator capabilities
+            symTypeMask typeMask;
+            bool complete;
+        };
+    };
 
     ///Children, including parameters for functions and constants in enums
     vector/*<sym*>*/ children;
@@ -109,13 +113,17 @@ typedef struct sym {
     ///Position in parent's vector
     int nthChild;
 
-    ///Label associated with this symbol in the assembly
-    char* label;
-    ///Offset, in bytes, for stack stored vars/parameters and non
-    ///static fields
-    int offset;
-    ///For enum constants
-    int constValue;
+    /*Emitter specifics*/
+    union {
+        /*symId: storageStatic storageExtern*/
+        ///Label associated with this symbol in the assembly
+        char* label;
+        /*symId: storageAuto symParam*/
+        ///Offset in bytes, from the top of the stack frame or struct/union
+        int offset;
+        /*symEnumConstants*/
+        int constValue;
+    };
 } sym;
 
 /**
@@ -139,6 +147,9 @@ sym* symCreateNamed (symTag tag, sym* Parent, const char* ident);
  * Changes the parent of a symbol, replacing it with a symLink
  */
 void symChangeParent (sym* Symbol, sym* parent);
+
+bool symIsFunction (const sym* Symbol);
+const sym* symGetNthParam (const sym* fn, int n);
 
 /**
  * Attempt to find a symbol directly accessible from a scope. Will search

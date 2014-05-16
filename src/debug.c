@@ -17,12 +17,11 @@ debugMode mode;
 //Indentation level of debug output
 int depth;
 
-int internalErrors = 0;
+int internalErrors;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;
     debugSetMode(debugFull);
-    internalErrors = 0;
 }
 
 debugMode debugSetMode (debugMode nmode) {
@@ -124,6 +123,12 @@ void debugErrorUnhandledInt (const char* functionName,
                              const char* className,
                              int classInt) {
     debugError(functionName, "unhandled %s: %d", className, classInt);
+}
+
+void debugErrorUnhandledChar (const char* functionName,
+                              const char* className,
+                              char classChar) {
+    debugError(functionName, "unhandled %s: '%c'", className, classChar);
 }
 
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/

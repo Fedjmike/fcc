@@ -1,14 +1,26 @@
 mkdir -p {obj,bin}/self
 
-PATTERN="vector|architecture|ast|sym|type|parser.*|analyzer.*|emittEer.*|eval|compiler|options|main"
+ANTIPATTERN="debug|error|lexer|reg"
 
 set -e
 
-pushd obj/self
-HOSTING=`find ../../src/*.c | egrep "$PATTERN"`
-../../bin/$CONFIG/fcc -I ../../tests/include -c $HOSTING
-popd
+cd src
+HOSTING=`find *.c | egrep -v "$ANTIPATTERN"`
+echo $HOSTING
+cd ..
 
-EXT=`find src/*.c | egrep -v "$PATTERN"`
-$CC -m32 $CFLAGS $EXT obj/self/*.o -o bin/self/fcc
+pushd obj/self >/dev/null
+HOSTING=`find ../../src/*.c | egrep -v "$ANTIPATTERN"`
+../../bin/$CONFIG/fcc -I ../../tests/include -c $HOSTING
+popd >/dev/null
+
+EXT=`find src/*.c | egrep "$ANTIPATTERN"`
+gcc -g -m32 $CFLAGS $EXT obj/self/*.o -o bin/self/fcc
 rm -f src/*.o
+
+HOSTING=`find src/*.c | egrep -v "$ANTIPATTERN"`
+HNO=`cat $HOSTING | wc -l`
+ENO=`cat $EXT | wc -l`
+echo $EXT
+CALC=$HNO/\($ENO+$HNO\)*100
+echo $HNO / `bc -l <<< $ENO+$HNO` = `bc -l <<< $CALC`

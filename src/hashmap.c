@@ -10,6 +10,7 @@ typedef void (*generalmapValueDtor)(void* value);
 typedef int (*generalmapHash)(const char* key, int mapsize);
 //Like strcmp, returns 0 for match
 typedef int (*generalmapCmp)(const char* actual, const char* key);
+typedef char* (*generalmapDup)(const char* key);
 
 static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values);
 
@@ -20,7 +21,7 @@ static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, gene
 static bool generalmapAdd (generalmap* map, const char* key, void* value,
                            generalmapHash hashf, generalmapCmp cmp, bool values);
 static void generalmapMerge (generalmap* dest, const generalmap* src,
-                             generalmapHash hash, generalmapCmp cmp, bool values, bool dup);
+                             generalmapHash hash, generalmapCmp cmp, generalmapDup dup, bool values);
 
 static void* generalmapMap (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
 static bool generalmapTest (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
@@ -33,11 +34,11 @@ static int hashstr (const char* key, int mapsize) {
     for (int i = 0; key[i]; i++)
         hash += key[i];
 
-    return hash % mapsize;
+    return (hash % (mapsize-1)) + 1;
 }
 
 static int hashint (int element, int mapsize) {
-    return element % mapsize;
+    return (element % (mapsize-1)) + 1;
 }
 
 /*:::: GENERALMAP ::::*/
@@ -102,7 +103,7 @@ static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, gene
 static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp) {
     if (cmp)
         return    map->hashes[index] == hash
-               && (!cmp || !cmp(map->keysStr[index], key));
+               && !cmp(map->keysStr[index], key);
 
     else
         return map->keysStr[index] == key;
@@ -160,7 +161,7 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
     } else {
         generalmap newmap;
         generalmapInit(&newmap, map->size*2, cmp != 0, values);
-        generalmapMerge(&newmap, map, hashf, cmp, values, false);
+        generalmapMerge(&newmap, map, hashf, cmp, 0, values);
         generalmapAdd(&newmap, key, value, hashf, cmp, values);
 
         generalmapFree(map, values, cmp != 0);
@@ -170,7 +171,7 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
 }
 
 static void generalmapMerge (generalmap* dest, const generalmap* src,
-                             generalmapHash hash, generalmapCmp cmp, bool values, bool dup) {
+                             generalmapHash hash, generalmapCmp cmp, generalmapDup dup, bool values) {
     for (int index = 0; index < src->size; index++) {
         if (src->keysInt[index] == 0)
             continue;
@@ -178,7 +179,7 @@ static void generalmapMerge (generalmap* dest, const generalmap* src,
         char* key = src->keysStrMutable[index];
 
         if (dup)
-            key = strdup(key);
+            key = dup(key);
 
         generalmapAdd(dest, key, values ? src->values[index] : 0, hash, cmp, values);
     }
@@ -215,11 +216,11 @@ bool hashmapAdd (hashmap* map, const char* key, void* value) {
 }
 
 void hashmapMerge (hashmap* dest, hashmap* src) {
-    generalmapMerge(dest, src, hashstr, strcmp, true, false);
+    generalmapMerge(dest, src, hashstr, strcmp, 0, true);
 }
 
 void hashmapMergeDup (hashmap* dest, const hashmap* src) {
-    generalmapMerge(dest, src, hashstr, strcmp, true, true);
+    generalmapMerge(dest, src, hashstr, strcmp, strdup, true);
 }
 
 void* hashmapMap (const hashmap* map, const char* key) {
@@ -245,7 +246,7 @@ bool intmapAdd (intmap* map, intptr_t element, void* value) {
 }
 
 void intmapMerge (intmap* dest, const intmap* src) {
-    generalmapMerge(dest, src, (generalmapHash) hashint, 0, true, false);
+    generalmapMerge(dest, src, (generalmapHash) hashint, 0, 0, true);
 }
 
 void* intmapMap (const intmap* map, intptr_t element) {
@@ -271,11 +272,11 @@ bool hashsetAdd (hashset* set, const char* element) {
 }
 
 void hashsetMerge (hashset* dest, hashset* src) {
-    generalmapMerge(dest, src, hashstr, strcmp, false, false);
+    generalmapMerge(dest, src, hashstr, strcmp, 0, false);
 }
 
 void hashsetMergeDup (hashset* dest, const hashset* src) {
-    generalmapMerge(dest, src, hashstr, strcmp, false, true);
+    generalmapMerge(dest, src, hashstr, strcmp, strdup, false);
 }
 
 bool hashsetTest (const hashset* set, const char* element) {
@@ -298,7 +299,7 @@ bool intsetAdd (intset* set, intptr_t element) {
 }
 
 void intsetMerge (intset* dest, const intset* src) {
-    generalmapMerge(dest, src, (generalmapHash) hashint, 0, false, false);
+    generalmapMerge(dest, src, (generalmapHash) hashint, 0, 0, false);
 }
 
 bool intsetTest (const intset* set, intptr_t element) {

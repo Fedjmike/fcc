@@ -10,7 +10,7 @@
 #include "stdarg.h"
 #include "stdio.h"
 
-void asmComment (asmCtx* ctx, char* str) {
+void asmComment (asmCtx* ctx, const char* str) {
     asmOutLn(ctx, ";%s", str);
 }
 
@@ -70,11 +70,39 @@ void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r) {
     irBlockOut(block, "pop %s", regIndexGetName(r, ctx->arch->wordsize));
 }
 
-void asmStringConstant (asmCtx* ctx, const char* label, const char* str) {
+void asmDataSection (asmCtx* ctx) {
+    asmOutLn(ctx, ".section .data");
+}
+
+void asmRODataSection (asmCtx* ctx) {
     asmOutLn(ctx, ".section .rodata");
+}
+
+void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
+    if (global)
+        asmOutLn(ctx, ".globl %s", label);
+
     asmOutLn(ctx, "%s:", label);
-    asmOutLn(ctx, ".ascii \"%s\\0\"", str);    /* .ascii "%s\0" */
-    asmOutLn(ctx, ".section .text");
+
+    if (size == 1)
+        asmOutLn(ctx, ".byte %d", initial);
+
+    else if (size == 2)
+        asmOutLn(ctx, ".word %d", initial);
+
+    else if (size == 4)
+        asmOutLn(ctx, ".quad %d", initial);
+
+    else if (size == 8)
+        asmOutLn(ctx, ".octa %d", initial);
+
+    else
+        debugErrorUnhandledInt("asmStaticData", "data size", size);
+}
+
+void asmStringConstant (asmCtx* ctx, const char* label, const char* str) {
+    asmOutLn(ctx, "%s:", label);
+    asmOutLn(ctx, ".asciz \"%s\"", str);
 }
 
 void asmLabel (asmCtx* ctx, const char* label) {
@@ -95,9 +123,9 @@ void asmCall (asmCtx* ctx, const char* label) {
     asmOutLn(ctx, "call %s", label);
 }
 
-void asmCallIndirect (asmCtx* ctx, operand L) {
+void asmCallIndirect (irBlock* block, operand L) {
     char* LStr = operandToStr(L);
-    asmOutLn(ctx, "call %s", LStr);
+    irBlockOut(block, "call %s", LStr);
     free(LStr);
 }
 
@@ -110,9 +138,9 @@ void asmPush (irCtx* ir, irBlock* block, operand L) {
 
     /*Flags*/
     if (L.tag == operandFlags) {
-        asmPush(ir, block, operandCreateLiteral(1));
+        asmPush(ir, block, operandCreateLiteral(0));
         operand top = operandCreateMem(ctx->stackPtr.base, 0, ctx->arch->wordsize);
-        asmConditionalMove(ir, block, L, top, operandCreateLiteral(0));
+        asmConditionalMove(ir, block, L, top, operandCreateLiteral(1));
 
     /*Larger than word*/
     } else if (operandGetSize(ctx->arch, L) > ctx->arch->wordsize) {
@@ -167,6 +195,10 @@ void asmPopN (irCtx* ir, irBlock* block, int n) {
         asmBOP(ir, block, bopAdd, ctx->stackPtr, operandCreateLiteral(n*ctx->arch->wordsize));
 }
 
+static bool operandIsMem (operand L) {
+    return L.tag == operandMem || L.tag == operandLabelMem;
+}
+
 void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
     asmCtx* ctx = ir->asm;
 
@@ -199,7 +231,7 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
         }
 
     /*Both memory operands*/
-    } else if (Dest.tag == operandMem && Src.tag == operandMem) {
+    } else if (operandIsMem(Dest) && operandIsMem(Src)) {
         operand intermediate = operandCreateReg(regAlloc(max(Dest.size, Src.size)));
         asmMove(ir, block, intermediate, Src);
         asmMove(ir, block, Dest, intermediate);
@@ -207,8 +239,8 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
 
     /*Flags*/
     } else if (Src.tag == operandFlags) {
-        asmMove(ir, block, Dest, operandCreateLiteral(1));
-        asmConditionalMove(ir, block, Src, Dest, operandCreateLiteral(0));
+        asmMove(ir, block, Dest, operandCreateLiteral(0));
+        asmConditionalMove(ir, block, Src, Dest, operandCreateLiteral(1));
 
     } else {
         char* DestStr = operandToStr(Dest);
@@ -227,9 +259,8 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
 }
 
 void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src) {
-    static int labelNo = 0;
     char falseLabel[10];
-    sprintf(falseLabel, "..%X", labelNo++);
+    sprintf(falseLabel, ".%X", ir->labelNo++);
 
     Cond.condition = conditionNegate(Cond.condition);
     char* cond = operandToStr(Cond);
@@ -244,7 +275,7 @@ void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, 
 void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
     asmCtx* ctx = ir->asm;
 
-    if (L.tag == operandMem && R.tag == operandMem) {
+    if (operandIsMem(L) && operandIsMem(R)) {
         operand intermediate = operandCreateReg(regAlloc(ctx->arch->wordsize));
         asmEvalAddress(ir, block, intermediate, R);
         asmMove(ir, block, L, intermediate);
@@ -263,7 +294,7 @@ void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
 void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
     asmCtx* ctx = ir->asm;
 
-    if (   (L.tag == operandMem && R.tag == operandMem)
+    if (   (operandIsMem(L) && operandIsMem(R))
         || (L.tag == operandLiteral && R.tag == operandLiteral)) {
         operand intermediate = operandCreateReg(regAlloc(L.tag == operandMem ? max(L.size, R.size)
                                                                              : ctx->arch->wordsize));
@@ -284,7 +315,7 @@ void asmCompare (irCtx* ir, irBlock* block, operand L, operand R) {
 }
 
 void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R) {
-    if (L.tag == operandMem && R.tag == operandMem) {
+    if (operandIsMem(L) && operandIsMem(R)) {
         operand intermediate = operandCreateReg(regAlloc(max(L.size, R.size)));
         asmMove(ir, block, intermediate, R);
         asmBOP(ir, block, Op, L, intermediate);

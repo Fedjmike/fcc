@@ -28,8 +28,17 @@ void irEmit (irCtx* ctx) {
         irEmitFn(ctx, file, fn);
     }
 
-    for (int i = 0; i < ctx->sdata.length; i++) {
-        irStaticData* data = vectorGet(&ctx->sdata, i);
+    asmDataSection(ctx->asm);
+
+    for (int i = 0; i < ctx->data.length; i++) {
+        irStaticData* data = vectorGet(&ctx->data, i);
+        irEmitStaticData(ctx, file, data);
+    }
+
+    asmRODataSection(ctx->asm);
+
+    for (int i = 0; i < ctx->rodata.length; i++) {
+        irStaticData* data = vectorGet(&ctx->rodata, i);
         irEmitStaticData(ctx, file, data);
     }
 
@@ -39,8 +48,11 @@ void irEmit (irCtx* ctx) {
 static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data) {
     (void) file;
 
-    if (data->tag == dataStringConstant)
-        asmStringConstant(ctx->asm, data->label, (char*) data->initial);
+    if (data->tag == dataRegular)
+        asmStaticData(ctx->asm, data->label, data->global, data->size, data->initial);
+
+    else if (data->tag == dataStringConstant)
+        asmStringConstant(ctx->asm, data->strlabel, data->str);
 
     else
         debugErrorUnhandledInt("irEmitStaticData", "static data tag", data->tag);
@@ -50,7 +62,7 @@ static void irEmitBlockChain (irCtx* ctx, FILE* file,
                               intset/*<irBlock*>*/* done, vector/*<irBlock*>*/* priority,
                               const irBlock* block) {
     /*Already put in the priority list, leave*/
-    if (intsetAdd(done, (uintptr_t) block))
+    if (intsetAdd(done, (intptr_t) block))
         return;
 
     /*Add all the predecessors and their predecessors to the list*/
@@ -143,7 +155,8 @@ static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBloc
         jumpTo = term->ret;
 
     } else if (term->tag == termCallIndirect) {
-        asmCallIndirect(ctx->asm, term->toAsOperand);
+        /*Hack, done in irCallIndirect instead*/
+        //asmCallIndirect(ctx->asm, term->toAsOperand);
         jumpTo = term->ret;
 
     } else if (term->tag == termReturn)

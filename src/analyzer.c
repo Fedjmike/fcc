@@ -78,6 +78,8 @@ analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch) {
 }
 
 void analyzerNode (analyzerCtx* ctx, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astEmpty)
         debugMsg("Empty");
 
@@ -94,7 +96,7 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
         analyzerFnImpl(ctx, Node);
 
     else if (Node->tag == astDecl)
-        analyzerDecl(ctx, Node);
+        analyzerDecl(ctx, Node, false);
 
     else if (Node->tag == astCode)
         analyzerCode(ctx, Node);
@@ -120,38 +122,42 @@ void analyzerNode (analyzerCtx* ctx, ast* Node) {
 
     else
         debugErrorUnhandled("analyzerNode", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
 }
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Module");
-
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
-        analyzerNode(ctx, Current);
-        //debugWait();
-    }
+        if (Current->tag == astUsing)
+            analyzerUsing(ctx, Current);
 
-    debugLeave();
+        else if (Current->tag == astFnImpl)
+            analyzerFnImpl(ctx, Current);
+
+        else if (Current->tag == astDecl)
+            analyzerDecl(ctx, Current, true);
+
+        else
+            debugErrorUnhandled("analyzerModule", "AST tag", astTagGetStr(Node->tag));
+    }
 }
 
 static void analyzerUsing (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Using");
-
     if (Node->r)
         analyzerNode(ctx, Node->r);
-
-    debugLeave();
 }
 
 static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
-    debugEnter("FnImpl");
-
     /*Analyze the prototype*/
 
-    analyzerDecl(ctx, Node->l);
+    analyzerDecl(ctx, Node->l, true);
 
-    if (!typeIsFunction(Node->symbol->dt))
+    if (Node->symbol->tag != symId)
+        errorFnTag(ctx, Node);
+
+    else if (!typeIsFunction(Node->symbol->dt))
         errorTypeExpected(ctx, Node->l->firstChild, "implementation", "function");
 
     /*Analyze the implementation*/
@@ -162,24 +168,16 @@ static void analyzerFnImpl (analyzerCtx* ctx, ast* Node) {
     analyzerNode(ctx, Node->r);
 
     analyzerPopFnctx(ctx, oldFnctx);
-
-    debugLeave();
 }
 
 static void analyzerCode (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Code");
-
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling)
         analyzerNode(ctx, Current);
-
-    debugLeave();
 }
 
 static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Branch");
-
     /*Is the condition a valid condition?*/
 
     ast* cond = Node->firstChild;
@@ -194,13 +192,9 @@ static void analyzerBranch (analyzerCtx* ctx, ast* Node) {
 
     if (Node->r)
         analyzerNode(ctx, Node->r);
-
-    debugLeave();
 }
 
 static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Loop");
-
     /*do while?*/
     bool isDo = Node->l->tag == astCode;
     ast* cond = isDo ? Node->r : Node->l;
@@ -216,24 +210,16 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
     /*Code*/
 
     analyzerNode(ctx, code);
-
-    debugLeave();
 }
 
 static void analyzerIter (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Iter");
-
     ast* init = Node->firstChild;
     ast* cond = init->nextSibling;
     ast* iter = cond->nextSibling;
 
     /*Initializer*/
 
-    if (init->tag == astDecl)
-        analyzerNode(ctx, init);
-
-    else if (init->tag != astEmpty)
-        analyzerValue(ctx, init);
+    analyzerNode(ctx, init);
 
     /*Condition*/
 
@@ -252,13 +238,9 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
     /*Code*/
 
     analyzerNode(ctx, Node->l);
-
-    debugLeave();
 }
 
 static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
-    debugEnter("Return");
-
     /*Return type, if any, matches?*/
 
     if (ctx->fnctx.returnType) {
@@ -266,11 +248,11 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
             const type* R = analyzerValue(ctx, Node->r);
 
             if (!typeIsCompatible(R, ctx->fnctx.returnType))
-                errorTypeExpectedType(ctx, Node->r, "return", ctx->fnctx.returnType);
+                errorReturnType(ctx, Node->r, ctx->fnctx);
 
         } else if (!typeIsVoid(ctx->fnctx.returnType)) {
             Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
-            errorTypeExpectedType(ctx, Node, "return statement", ctx->fnctx.returnType);
+            errorReturnType(ctx, Node->r, ctx->fnctx);
         }
 
     /*No known return type because we're in a lambda
@@ -282,7 +264,5 @@ static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
                                 ? typeDeepDuplicate(analyzerValue(ctx, Node->r))
                                 : typeCreateBasic(ctx->types[builtinVoid]);
     }
-
-    debugLeave();
 }
 

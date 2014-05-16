@@ -115,12 +115,23 @@ void emitterGiveBackReg (emitterCtx* ctx, irBlock* block, regIndex r, int oldSiz
 
 void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
                            irBlock* ifTrue, irBlock* ifFalse) {
-    operand cond = emitterValue(ctx, &block, value, requestFlags);
-    irBranch(block, cond, ifTrue, ifFalse);
+    if (value->tag == astEmpty)
+        irJump(block, ifTrue);
+
+    else {
+        operand cond = emitterValue(ctx, &block, value, requestFlags);
+        irBranch(block, cond, ifTrue, ifFalse);
+    }
 }
 
 operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
     (void) ctx;
+
+    if (R.tag == operandLiteral)
+        return R;
+
+    char* RStr = operandToStr(R);
+
     operand L;
 
     if (R.tag == operandReg) {
@@ -131,7 +142,6 @@ operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
         L = operandCreateReg(regAlloc(size));
 
     char* LStr = operandToStr(L);
-    char* RStr = operandToStr(R);
     irBlockOut(block, "movsx %s, %s", LStr, RStr);
     free(LStr);
     free(RStr);
@@ -143,6 +153,9 @@ operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size) {
 }
 
 operand emitterNarrow (emitterCtx* ctx, irBlock* block, operand R, int size) {
+    if (R.tag == operandLiteral)
+        return R;
+
     operand L = emitterGetInReg(ctx, block, R, operandGetSize(ctx->arch, R));
     L.base->allocatedAs = size;
     return L;

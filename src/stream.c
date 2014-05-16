@@ -28,7 +28,7 @@ char streamNext (streamCtx* ctx) {
     char old = ctx->current;
     ctx->current = fgetc(ctx->file);
 
-    if (feof(ctx->file) || ctx->current == ((char) 0xFF))
+    if (feof(ctx->file) || ctx->current == '\255')
         ctx->current = 0;
 
     ctx->lineChar++;

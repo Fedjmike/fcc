@@ -44,6 +44,10 @@ void debugErrorUnhandledInt (const char* functionName,
                              const char* className,
                              int classInt);
 
+void debugErrorUnhandledChar (const char* functionName,
+                              const char* className,
+                              char classChar);
+
 void report (const char* str);
 void reportType (const type* DT);
 void reportSymbol (const sym* Symbol);
