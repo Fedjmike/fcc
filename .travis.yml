@@ -5,5 +5,5 @@ before_install: sudo apt-get install g++-multilib valgrind
 branches:
     except: ir
 script: >
-        make print all &&
+        make --keep-going print all &&
         make --keep-going print-tests tests-all
