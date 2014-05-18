@@ -137,8 +137,14 @@ typedef struct ast {
     type* dt;    /*Result data type*/
 
     sym* symbol;
-    /*(DeclExpr) astLiteral[literalIdent]*/
-    storageTag storage;
+
+    union {
+        /*(DeclExpr) astLiteral[lit=Ident]*/
+        storageTag storage;
+        /*(DeclExpr) astBOP[o=Assign]
+          astMarker[m=ArrayDesignator]*/
+        intptr_t constant;
+    };
 
     union {
         /*astMarker*/

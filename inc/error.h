@@ -37,8 +37,10 @@ void errorVAStartNonParam (analyzerCtx* ctx, const ast* Node);
 
 void errorIllegalInit (analyzerCtx* ctx, const ast* Node, const char* what);
 void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init);
-void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
-                             const sym* structSym, const sym* fieldSym);
+void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node, const sym* record, const sym* field);
+void errorInitExcessFields (analyzerCtx* ctx, const ast* Node, const sym* record, const sym* field);
+void errorWrongInitDesignator (analyzerCtx* ctx, const ast* Node, const type* DT);
+void errorConstantInitIndex (analyzerCtx* ctx, ast* Node);
 
 void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
                                    const sym* Symbol, const type* found);

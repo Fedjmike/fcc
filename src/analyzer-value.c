@@ -8,6 +8,7 @@
 
 #include "../inc/compiler.h"
 
+#include "../inc/eval.h"
 #include "../inc/analyzer.h"
 #include "../inc/analyzer-decl.h"
 
@@ -28,6 +29,7 @@ static void analyzerSizeof (analyzerCtx* ctx, ast* Node);
 static void analyzerLiteral (analyzerCtx* ctx, ast* Node);
 static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node);
 static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT);
+static void analyzerArrayInit (analyzerCtx* ctx, ast* Node, const type* DT);
 static void analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected);
 static void analyzerLambda (analyzerCtx* ctx, ast* Node);
 
@@ -542,26 +544,11 @@ void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool dir
     else if (typeIsStruct(DT))
         analyzerStructInit(ctx, Node, DT);
 
-    /*Array: check that all are of the right type, complain only once*/
-    else if (typeIsArray(DT)) {
-        int elementNo = typeGetArraySize(DT);
-        const type* base = typeGetBase(DT);
-
-        /*Allow as many inits as elements, but not more*/
-        if (elementNo && elementNo >= 0 && elementNo < Node->children)
-            errorDegree(ctx, Node, "elements", elementNo, Node->children, "array");
-
-        for (ast* current = Node->firstChild;
-             current;
-             current = current->nextSibling) {
-            analyzerElementInit(ctx, current, base);
-
-            if (!typeIsCompatible(current->dt, base))
-                errorTypeExpectedType(ctx, current, "array initialization", base);
-        }
+    else if (typeIsArray(DT))
+        analyzerArrayInit(ctx, Node, DT);
 
     /*Scalar*/
-    } else {
+    else {
         if (Node->children == 0 && !directInit)
             ;
 
@@ -632,6 +619,58 @@ static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
             index = field->nthChild+1;
         }
     }
+}
+
+static void analyzerArrayInit (analyzerCtx* ctx, ast* Node, const type* DT) {
+    int elementNo = typeGetArraySize(DT);
+    const type* base = typeGetBase(DT);
+
+    bool error = false;
+    int maxIndex = 0, index = 0;
+
+    for (ast *current = Node->firstChild;
+         current;
+         current = current->nextSibling) {
+        ast* value = current;
+
+        /*Explicit index?*/
+        if (current->tag == astMarker) {
+            if (current->marker == markerArrayDesignatedInit) {
+                evalResult desig = eval(ctx->arch, current->l);
+
+                if (!desig.known)
+                    errorConstantInitIndex(ctx, Node);
+
+                index = current->l->constant = desig.value;
+
+                value = current->r;
+                error = false;
+
+            } else if (current->marker == markerStructDesignatedInit) {
+                errorWrongInitDesignator(ctx, current, DT);
+                error = true;
+
+            } else {
+                debugErrorUnhandledInt("analyzerStructElementInit", "AST marker tag", current->marker);
+                error = true;
+            }
+        }
+
+        if (!error) {
+            analyzerElementInit(ctx, value, base);
+
+            if (!typeIsCompatible(value->dt, base))
+                errorTypeExpectedType(ctx, value, "array initialization", base);
+
+            if (index > maxIndex)
+                maxIndex = index;
+
+            index++;
+        }
+    }
+
+    if (maxIndex >= elementNo)
+        errorDegree(ctx, Node, "elements", elementNo, maxIndex+1, "array");
 }
 
 static void analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expected) {

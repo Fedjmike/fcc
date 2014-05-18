@@ -243,7 +243,7 @@ void errorVoidDeref (analyzerCtx* ctx, const ast* Node, opTag o) {
 
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where) {
-    errorAnalyzer(ctx, Node, "too $s $s given to $h: expected $d, given $d",
+    errorAnalyzer(ctx, Node, "too $s $s given to $s: expected $d, given $d",
                   expected > found ? "few" : "many", thing, where, expected, found);
 }
 
@@ -291,9 +291,37 @@ void errorInitMismatch (analyzerCtx* ctx, const ast* variable, const ast* init) 
 }
 
 void errorInitFieldMismatch (analyzerCtx* ctx, const ast* Node,
-                             const sym* structSym, const sym* fieldSym) {
-    errorAnalyzer(ctx, Node, "type mismatch: $t given for initialization of field $n in $n",
-                  Node->dt, fieldSym, structSym);
+                             const sym* record, const sym* field) {
+    errorAnalyzer(ctx, Node, "type mismatch: initialization of $n field $n given $t",
+                  record, field, Node->dt);
+}
+
+void errorInitExcessFields (analyzerCtx* ctx, const ast* Node, const sym* record, const sym* field) {
+    if (field)
+        errorAnalyzer(ctx, Node, "excess initializers after the last field of $n, $n", record, field);
+
+    else
+        errorAnalyzer(ctx, Node, "excess initializers after the last field of $n", record);
+}
+
+void errorWrongInitDesignator (analyzerCtx* ctx, const ast* Node, const type* DT) {
+    const char *got, *expected;
+
+    if (typeIsArray(DT)) {
+        got = "struct";
+        expected = "array";
+
+    } else {
+        got = "array";
+        expected = "struct";
+    }
+
+    errorAnalyzer(ctx, Node, "$s designator given for initialization of $s $t",
+                  got, expected, DT);
+}
+
+void errorConstantInitIndex (analyzerCtx* ctx, ast* Node) {
+    errorAnalyzer(ctx, Node, "non-constant index given to designated initializer");
 }
 
 void errorConflictingDeclarations (analyzerCtx* ctx, const ast* Node,
