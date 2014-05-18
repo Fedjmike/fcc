@@ -359,6 +359,7 @@ const char* opTagGetStr (opTag tag) {
     else if (tag == opPostIncrement) return "++";
     else if (tag == opPostDecrement) return "--";
     else if (tag == opIndex) return "[]";
+    else if (tag == opCall) return "()";
     else if (tag == opMember) return ".";
     else if (tag == opMemberDeref) return "->";
     else {

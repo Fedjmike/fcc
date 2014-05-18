@@ -79,6 +79,12 @@ typedef enum symTypeMask {
  * Can represent functions, structs, parameters, unnamed scopes etc
  *
  * @see symInit @see symEnd
+ *
+ * Owns:
+ *   - ident
+ *   - Its children
+ *   - dt
+ *   - label (if static or extern)
  */
 typedef struct sym {
     symTag tag;
@@ -91,11 +97,11 @@ typedef struct sym {
     const ast* impl;
 
     union {
+        /*symId symParam symTypedef symEnumConstant*/
         struct {
+            type* dt;
             /*symId symParam*/
             storageTag storage;
-            /*symId symParam symTypedef symEnumConstant*/
-            type* dt;
         };
         /*symType symStruct symUnion symEnum*/
         struct {

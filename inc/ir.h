@@ -109,11 +109,11 @@ typedef struct irBlock {
 
 typedef struct irFn {
     char* name;
-    ///The following blocks are owned by the Fn's vector
     ///prologue and epilogue manage the stack frame and register saving
     ///created and managed internally. entryPoint is what the emitter should
     ///fill, using epilogue as a continuation / return point
     irBlock *prologue, *entryPoint, *epilogue;
+    ///Includes and owns the above blocks, as well as all others
     vector/*<irBlock*>*/ blocks;
 } irFn;
 

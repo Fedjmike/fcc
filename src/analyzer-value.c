@@ -578,7 +578,7 @@ static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
     for (ast* current = Node->firstChild;
          current;
          current = current->nextSibling) {
-        ast* value;
+        ast* value = current;
         const sym* field = 0;
 
         /*Explicit field?*/
@@ -601,7 +601,6 @@ static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
         /*Implied, get the next field*/
         } else if (!error) {
             field = vectorGet(&record->children, index);
-            value = current;
 
             if (!field) {
                 errorInitExcessFields(ctx, current, record, field);

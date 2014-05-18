@@ -27,7 +27,7 @@ void errorMismatch (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorVoidDeref (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorDegree (analyzerCtx* ctx, const ast* Node,
                   const char* thing, int expected, int found, const char* where);
-void errorMember (analyzerCtx* ctx, const ast* Node, const char* field);
+void errorMember (analyzerCtx* ctx, const ast* Node, opTag o, const char* field);
 void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                          const ast* fn, int n, const type* expected, const type* found);
 
@@ -64,7 +64,6 @@ void errorIncompletePtr (analyzerCtx* ctx, const ast* Node, opTag o);
 void errorIncompleteDecl (analyzerCtx* ctx, const ast* Node, const type* DT);
 void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn, int n, const type* DT);
 void errorIncompleteReturnDecl (analyzerCtx* ctx, const ast* Node, const type* dt);
-
 
 void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o);
 

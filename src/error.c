@@ -265,8 +265,8 @@ void errorParamMismatch (analyzerCtx* ctx, const ast* Node,
                   n+1, expected, found);
 }
 
-void errorMember (analyzerCtx* ctx, const ast* Node, const char* field) {
-    errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", Node->o, Node->l, field);
+void errorMember (analyzerCtx* ctx, const ast* Node, opTag o, const char* field) {
+    errorAnalyzer(ctx, Node, "$o expected field of $a, found $h", o, Node->l, field);
 }
 
 void errorVAxList (analyzerCtx* ctx, const ast* Node, const char* where, const char* which) {

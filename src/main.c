@@ -82,7 +82,7 @@ int main (int argc, char** argv) {
         puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 
     } else if (conf.mode == modeHelp) {
-        puts("Usage: fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>");
+        puts("Usage: fcc [options...] <files...>");
         puts("Options:");
         puts("  -I <dir>   Add a directory to be searched for headers");
         puts("  -c         Compile and assemble only, do not link");

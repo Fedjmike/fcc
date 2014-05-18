@@ -9,9 +9,7 @@
 #include "stdint.h"
 
 typedef struct type type;
-typedef struct sym sym;
 typedef struct ast ast;
-
 
 /**
  * Kind of AST node. Adding a new one requires:
@@ -103,20 +101,24 @@ typedef enum literalTag {
  *     appear at. For example, the location of a BOP will be the operator.
  *
  *   - For Values:
- *      - Any child is itself a value, other than
- *         1. The right child of a Sizeof which can be a Type or Value,
- *         2. The left child of a Cast, a Type,
- *         3. The right child of a VAArg, a Type.
+ *      - Any child is itself a value, other than those of
+ *         - Sizeof, Cast, Literal[lit=Init, Compound, Lambda], VAArg
  *      - After analysis, dt will be a type representing the result of
  *        the expression.
  *
  *   - For DeclExprs:
  *      - Any child is itself a DeclExpr, other than
- *         1. The right child of a BOP[o=Assign],
- *         2. The right child of an Index,
- *         3. The linked list children of a Call.
+ *         - The right child of a BOP[o=Assign],
+ *         - The right child of an Index,
+ *         - The linked list children of a Call.
  *      - After parsing, if the DeclExpr declares a symbol it will be
  *        stored in symbol.
+ *
+ * Owns:
+ *   - All children
+ *      - Except for the right child of an astUsing.
+ *   - dt
+ *   - literal
  */
 typedef struct ast {
     astTag tag;

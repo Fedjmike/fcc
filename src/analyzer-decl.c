@@ -419,7 +419,7 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* 
         reportType(base);
 
     /*Take ownership of the base if unable to give it to a symbol*/
-    if (!(Node->symbol && Node->symbol->dt == base))
+    if (!Node->symbol || Node->symbol->dt != base)
         Node->dt = base;
 
     return base;

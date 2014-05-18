@@ -752,7 +752,7 @@ static operand emitterCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
     asmPopN(ctx->ir, *block, argSize/ctx->arch->wordsize + tempWords + (retInTemp ? 1 : 0));
 
     /*Restore the saved registers (backwards as stacks are LIFO)*/
-    for (int i = ctx->arch->scratchRegs.length-1; i >= 0 ; i--) {
+    for (int i = ctx->arch->scratchRegs.length-1; i >= 0; i--) {
         regIndex r = (regIndex) vectorGet(&ctx->arch->scratchRegs, i);
 
         if (regIsUsed(r) && regGet(r) != Value.base)
@@ -767,7 +767,7 @@ static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     /*Widen or narrow, if needed*/
 
-    int from = typeGetSize(ctx->arch, Node->r->dt),
+    int from = operandGetSize(ctx->arch, R),
         to = typeGetSize(ctx->arch, Node->dt);
 
     if (from != to && to != 0)

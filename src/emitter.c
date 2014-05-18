@@ -239,6 +239,7 @@ static irBlock* emitterIter (emitterCtx* ctx, irBlock* block, const ast* Node) {
         emitterValue(ctx, &block, init, requestVoid);
 
     /*Condition*/
+
     emitterBranchOnValue(ctx, block, cond, body, continuation);
 
     /*Body*/
