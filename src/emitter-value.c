@@ -861,14 +861,20 @@ void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, ope
     if (typeIsStruct(Node->dt)) {
         const sym* record = typeGetBasic(Node->dt);
 
-        ast* value;
-        int n = 0;
+        int index = 0;
 
         /*For every field*/
-        for (value = Node->firstChild, n = 0;
-             value && n < record->children.length;
-             value = value->nextSibling, n++) {
-            sym* field = vectorGet(&record->children, n);
+        for (ast* current = Node->firstChild;
+             current;
+             current = current->nextSibling) {
+            ast* value = current;
+            sym* field = vectorGet(&record->children, index);
+
+            /*Explicit field?*/
+            if (current->tag == astMarker && current->marker == markerStructDesignatedInit) {
+                field = current->l->symbol;
+                value = current->r;
+            }
 
             /*Prepare the left operand*/
             operand L = base;
@@ -876,18 +882,34 @@ void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, ope
             L.offset += field->offset;
 
             emitterElementInit(ctx, block, value, L);
+
+            index = field->nthChild+1;
         }
 
     /*Array initialization*/
     } else if (typeIsArray(Node->dt)) {
         int elementSize = typeGetSize(ctx->arch, typeGetBase(Node->dt));
+
+        base.size = elementSize;
         operand L = base;
-        L.size = elementSize;
+
+        int index = 0;
 
         /*For every element*/
-        for (ast* value = Node->firstChild;
-             value;
-             value = value->nextSibling) {
+        for (ast* current = Node->firstChild;
+             current;
+             current = current->nextSibling, index++) {
+            ast* value = current;
+
+            /*Explicit index?*/
+            if (current->tag == astMarker && current->marker == markerArrayDesignatedInit) {
+                index = current->l->constant;
+                value = current->r;
+
+                L = base;
+                L.offset += index*elementSize;
+            }
+
             emitterElementInit(ctx, block, value, L);
             L.offset += elementSize;
         }
