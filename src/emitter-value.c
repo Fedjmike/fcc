@@ -260,9 +260,12 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     /* '.' */
     if (Node->o == opMember) {
-        Value = L = emitterValue(ctx, block, Node->l, requestMem);
-        Value.offset += Node->symbol->offset;
-        Value.size = typeGetSize(ctx->arch, Node->symbol->dt);
+        L = emitterValue(ctx, block, Node->l, requestMem);
+
+        Value = operandCreateMem(L.base,
+                                 L.offset + Node->symbol->offset,
+                                 typeGetSize(ctx->arch, Node->dt));
+        Value.array = typeIsArray(Node->dt);
 
     /* '->' */
     } else if (Node->o == opMemberDeref) {
@@ -271,6 +274,7 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
         Value = operandCreateMem(L.base,
                                  Node->symbol->offset,
                                  typeGetSize(ctx->arch, Node->dt));
+        Value.array = typeIsArray(Node->dt);
 
     /*Comparison operator*/
     } else if (opIsEquality(Node->o) || opIsOrdinal(Node->o)) {
@@ -653,7 +657,7 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
         }
 
         Value.size = size;
-        Value.array = false;
+        Value.array = typeIsArray(Node->dt);
 
     /*Is it instead a pointer? Get value and offset*/
     } else /*if (typeIsPtr(Node->l->dt)*/ {
