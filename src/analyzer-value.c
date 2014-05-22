@@ -593,10 +593,8 @@ static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
                 errorWrongInitDesignator(ctx, current, DT);
                 error = true;
 
-            } else {
+            } else
                 debugErrorUnhandledInt("analyzerStructElementInit", "AST marker tag", current->marker);
-                error = true;
-            }
 
         /*Implied, get the next field*/
         } else if (!error) {
@@ -649,10 +647,8 @@ static void analyzerArrayInit (analyzerCtx* ctx, ast* Node, const type* DT) {
                 errorWrongInitDesignator(ctx, current, DT);
                 error = true;
 
-            } else {
-                debugErrorUnhandledInt("analyzerStructElementInit", "AST marker tag", current->marker);
-                error = true;
-            }
+            } else
+                debugErrorUnhandledInt("analyzerArrayInit", "AST marker tag", current->marker);
         }
 
         if (!error) {
