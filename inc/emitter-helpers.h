@@ -28,3 +28,5 @@ void emitterBranchOnValue (emitterCtx* ctx, irBlock* block, const ast* value,
 
 operand emitterWiden (emitterCtx* ctx, irBlock* block, operand R, int size);
 operand emitterNarrow (emitterCtx* ctx, irBlock* block, operand R, int size);
+
+void emitterZeroMem (emitterCtx* ctx, irBlock* block, operand L);

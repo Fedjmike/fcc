@@ -272,6 +272,18 @@ void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, 
     free(cond);
 }
 
+void asmRepStos (irCtx* ir, irBlock* block, operand RAX, operand RCX, operand RDI,
+                 operand Dest, int length, operand Src) {
+    int chunksize = ir->arch->wordsize,
+        iterations = length/chunksize;
+
+    asmMove(ir, block, RAX, Src);
+    asmMove(ir, block, RCX, operandCreateLiteral(iterations));
+    asmEvalAddress(ir, block, RDI, Dest);
+
+    irBlockOut(block, "rep stos%s", chunksize == 8 ? "q" : "d");
+}
+
 void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R) {
     asmCtx* ctx = ir->asm;
 

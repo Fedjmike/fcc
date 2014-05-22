@@ -76,6 +76,8 @@ void asmPopN (irCtx* ir, irBlock* block, int n);
 
 void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src);
 void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src);
+void asmRepStos (irCtx* ir, irBlock* block, operand RAX, operand RCX, operand RDI,
+                 operand Dest, int length, operand Src);
 
 void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R);
 

@@ -160,3 +160,44 @@ operand emitterNarrow (emitterCtx* ctx, irBlock* block, operand R, int size) {
     L.base->allocatedAs = size;
     return L;
 }
+
+void emitterZeroMem (emitterCtx* ctx, irBlock* block, operand L) {
+    int size = operandGetSize(ctx->arch, L);
+
+    operand zero = operandCreateLiteral(0);
+
+    int regPressure =   (regIsUsed(regRAX) ? 1 : 0)
+                      + (regIsUsed(regRCX) ? 1 : 0)
+                      + (regIsUsed(regRDI) ? 1 : 0);
+
+    if (size >= ctx->arch->wordsize*10*(1+regPressure)) {
+        int raxOldSize, rcxOldSize, rdxOldSize;
+        operand RAX = emitterTakeReg(ctx, block, regRAX, &raxOldSize, ctx->arch->wordsize);
+        operand RCX = emitterTakeReg(ctx, block, regRCX, &rcxOldSize, ctx->arch->wordsize);
+        operand RDI = emitterTakeReg(ctx, block, regRDI, &rdxOldSize, ctx->arch->wordsize);
+
+        int excess = size % ctx->arch->wordsize;
+        asmRepStos(ctx->ir, block, RAX, RCX, RDI, L, size-excess, zero);
+
+        if (excess != 0)
+            asmMove(ctx->ir, block, operandCreateMem(RDI.base, 0, excess), zero);
+
+        emitterGiveBackReg(ctx, block, regRAX, raxOldSize);
+        emitterGiveBackReg(ctx, block, regRCX, rcxOldSize);
+        emitterGiveBackReg(ctx, block, regRDI, rdxOldSize);
+
+    } else {
+        int chunk = ctx->arch->wordsize;
+        L.size = chunk;
+
+        for (int i = 0;
+             i+chunk <= size;
+             i += chunk, L.offset += chunk)
+            asmMove(ctx->ir, block, L, zero);
+
+        if (size % chunk != 0) {
+            L.size = size % chunk;
+            asmMove(ctx->ir, block, L, zero);
+        }
+    }
+}

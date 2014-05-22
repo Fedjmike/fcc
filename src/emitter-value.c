@@ -3,6 +3,7 @@
 #include "../std/std.h"
 
 #include "../inc/debug.h"
+#include "../inc/bitarray.h"
 #include "../inc/type.h"
 #include "../inc/ast.h"
 #include "../inc/sym.h"
@@ -37,6 +38,8 @@ static operand emitterCast (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterSizeof (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const ast* Node);
+static void emitterStructInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base);
+static void emitterArrayInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base);
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L);
 static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node);
 
@@ -857,66 +860,123 @@ static operand emitterCompoundLiteral (emitterCtx* ctx, irBlock** block, const a
 }
 
 void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base) {
-    /*Struct initialization*/
-    if (typeIsStruct(Node->dt)) {
-        const sym* record = typeGetBasic(Node->dt);
+    if (typeIsStruct(Node->dt))
+        emitterStructInit(ctx, block, Node, base);
 
-        int index = 0;
+    else if (typeIsArray(Node->dt))
+        emitterArrayInit(ctx, block, Node, base);
 
-        /*For every field*/
-        for (ast* current = Node->firstChild;
-             current;
-             current = current->nextSibling) {
-            ast* value = current;
-            sym* field = vectorGet(&record->children, index);
+    /*Scalar*/
+    else
+        emitterValueSuggest(ctx, block, Node->firstChild, &base);
+}
 
-            /*Explicit field?*/
-            if (current->tag == astMarker && current->marker == markerStructDesignatedInit) {
-                field = current->l->symbol;
-                value = current->r;
-            }
+static void emitterStructInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base) {
+    const sym* record = typeGetBasic(Node->dt);
 
-            /*Prepare the left operand*/
+    /*Each bit records whether the nth field has been initialized*/
+    bitarray initd;
+    bitarrayInit(&initd, record->children.length);
+
+    int index = 0;
+
+    /*For every field*/
+    for (ast* current = Node->firstChild;
+         current;
+         current = current->nextSibling) {
+        ast* value = current;
+        sym* field = vectorGet(&record->children, index);
+
+        /*Explicit field?*/
+        if (current->tag == astMarker && current->marker == markerStructDesignatedInit) {
+            field = current->l->symbol;
+            value = current->r;
+
+            index = field->nthChild;
+        }
+
+        /*Prepare the left operand*/
+        operand L = base;
+        L.size = typeGetSize(ctx->arch, field->dt);
+        L.offset += field->offset;
+
+        emitterElementInit(ctx, block, value, L);
+
+        bitarraySet(&initd, index++);
+    }
+
+    /*Zero the fields not otherwise initialized*/
+    for (int i = 0; i < record->children.length; i++) {
+        if (!bitarrayTest(&initd, i)) {
+            sym* field = vectorGet(&record->children, i);
+
             operand L = base;
             L.size = typeGetSize(ctx->arch, field->dt);
             L.offset += field->offset;
 
-            emitterElementInit(ctx, block, value, L);
+            emitterZeroMem(ctx, *block, L);
+        }
+    }
 
-            index = field->nthChild+1;
+    bitarrayFree(&initd);
+}
+
+static void emitterArrayInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base) {
+    int elementSize = typeGetSize(ctx->arch, typeGetBase(Node->dt)),
+        elementNo = typeGetSize(ctx->arch, Node->dt) / elementSize;
+
+    bitarray initd = {};
+
+    /*If there are many elements, it would be too costly to initialize them
+      individually and, if very many, store the bitfield.*/
+    bool prefill = elementNo >= 10;
+
+    if (prefill)
+        emitterZeroMem(ctx, *block, base);
+
+    else
+        bitarrayInit(&initd, elementNo);
+
+    base.size = elementSize;
+    operand L = base;
+
+    int index = 0;
+
+    /*For every element*/
+    for (ast* current = Node->firstChild;
+         current;
+         current = current->nextSibling, index++) {
+        ast* value = current;
+
+        /*Explicit index?*/
+        if (current->tag == astMarker && current->marker == markerArrayDesignatedInit) {
+            index = current->l->constant;
+            value = current->r;
+
+            L = base;
+            L.offset += index*elementSize;
         }
 
-    /*Array initialization*/
-    } else if (typeIsArray(Node->dt)) {
-        int elementSize = typeGetSize(ctx->arch, typeGetBase(Node->dt));
+        emitterElementInit(ctx, block, value, L);
+        L.offset += elementSize;
 
-        base.size = elementSize;
-        operand L = base;
+        if (!prefill)
+            bitarraySet(&initd, index++);
+    }
 
-        int index = 0;
-
-        /*For every element*/
-        for (ast* current = Node->firstChild;
-             current;
-             current = current->nextSibling, index++) {
-            ast* value = current;
-
-            /*Explicit index?*/
-            if (current->tag == astMarker && current->marker == markerArrayDesignatedInit) {
-                index = current->l->constant;
-                value = current->r;
-
+    if (!prefill) {
+        /*Zero the elements not otherwise initialized*/
+        for (index = 0; index < initd.bitno; index++) {
+            if (!bitarrayTest(&initd, index)) {
                 L = base;
                 L.offset += index*elementSize;
+
+                emitterZeroMem(ctx, *block, L);
             }
-
-            emitterElementInit(ctx, block, value, L);
-            L.offset += elementSize;
         }
+    }
 
-    /*Scalar*/
-    } else
-        emitterValueSuggest(ctx, block, Node->firstChild, &base);
+    bitarrayFree(&initd);
 }
 
 static void emitterElementInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand L) {
