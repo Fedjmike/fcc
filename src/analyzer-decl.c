@@ -286,7 +286,12 @@ static const type* analyzerDeclNode (analyzerCtx* ctx, ast* Node, type* base, bo
 }
 
 static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
+    /*Verify types*/
+
     const type* L = analyzerDeclNode(ctx, Node->l, base, module, storage);
+
+    if (!typeIsAssignment(L))
+        errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
     /*Struct/array initializer?*/
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
@@ -296,27 +301,24 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
     else {
         const type* R = analyzerValue(ctx, Node->r);
 
-        if (!typeIsAssignment(L))
-            errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
-
-        else if (!typeIsCompatible(R, L))
+        if (!typeIsCompatible(R, L))
             errorInitMismatch(ctx, Node->l, Node->r);
+    }
 
-        if (Node->l->symbol->tag == symTypedef)
-            errorIllegalInit(ctx, Node, "a typedef");
+    /*Is an assignment to this symbol valid?*/
 
-        /*The initialization is illegal if /this/ is an extern decl*/
-        else if (storage == storageExtern)
-            errorIllegalInit(ctx, Node, "an extern variable");
+    if (Node->l->symbol->tag == symTypedef)
+        errorIllegalInit(ctx, Node, "a typedef");
 
-        /*If this symbol is statically stored (implicitly, or by a
-          previous decl) require a constant initializer*/
-        else if (Node->l->symbol->storage == storageStatic) {
-            evalResult result = eval(ctx->arch, Node->r);
+    /*The initialization is illegal if /this/ is an extern decl*/
+    else if (storage == storageExtern)
+        errorIllegalInit(ctx, Node, "an extern variable");
 
-            if (!result.known)
-                errorStaticCompileTimeKnown(ctx, Node->r, Node->l->symbol);
-        }
+    /*If this symbol is statically stored (implicitly, or by a
+      previous decl) require a constant initializer*/
+    else if (Node->l->symbol->storage == storageStatic) {
+        if (evalIsConstantInit(Node->r))
+            errorStaticCompileTimeKnown(ctx, Node->r, Node->l->symbol);
     }
 
     return L;
