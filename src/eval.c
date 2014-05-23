@@ -35,7 +35,9 @@ evalResult eval (const architecture* arch, const ast* Node) {
         return evalLiteral(arch, Node);
 
     /*Never known*/
-    else if (Node->tag == astCall || Node->tag == astIndex)
+    else if (   Node->tag == astCall || Node->tag == astIndex
+             || Node->tag == astVAStart || Node->tag == astVAEnd
+             || Node->tag == astVAArg|| Node->tag == astVACopy)
         return (evalResult) {false, 0};
 
     else if (Node->tag == astInvalid)
@@ -181,7 +183,8 @@ static evalResult evalLiteral (const architecture* arch, const ast* Node) {
 
     else if (   Node->litTag == literalStr
              || Node->litTag == literalCompound
-             || Node->litTag == literalInit)
+             || Node->litTag == literalInit
+             || Node->litTag == literalLambda)
         return (evalResult) {false, 0};
 
     else {
