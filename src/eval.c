@@ -189,3 +189,27 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
         return (evalResult) {false, 0};
     }
 }
+
+bool evalIsConstantInit (const ast* Node) {
+    /*Compound initializer: constant if all the fields/elements are constant*/
+    if (Node->tag == astLiteral && Node->litTag == literalInit) {
+        for (ast* current = Node->firstChild;
+             current;
+             current = current->nextSibling) {
+            ast* value = current;
+
+            /*Designated initializer?*/
+            if (   current->tag == astMarker
+                && (   current->marker == markerStructDesignatedInit
+                    || current->marker == markerArrayDesignatedInit))
+                value = current->r;
+
+            if (!evalIsConstantInit(value))
+                return false;
+        }
+
+        return true;
+
+    } else
+        return eval(&(architecture) {}, Node).known;
+}

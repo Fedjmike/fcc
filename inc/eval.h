@@ -9,3 +9,5 @@ typedef struct evalResult {
 } evalResult;
 
 evalResult eval (const architecture* arch, ast* Node);
+
+bool evalIsConstantInit (const ast* Node);
