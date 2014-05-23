@@ -260,11 +260,9 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     /* '.' */
     if (Node->o == opMember) {
-        L = emitterValue(ctx, block, Node->l, requestMem);
-
-        Value = operandCreateMem(L.base,
-                                 L.offset + Node->symbol->offset,
-                                 typeGetSize(ctx->arch, Node->dt));
+        Value = emitterValue(ctx, block, Node->l, requestMem);
+        Value.offset += Node->symbol->offset,
+        Value.size = typeGetSize(ctx->arch, Node->dt);
         Value.array = typeIsArray(Node->dt);
 
     /* '->' */
