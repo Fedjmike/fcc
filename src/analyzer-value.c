@@ -707,7 +707,7 @@ static void analyzerLambda (analyzerCtx* ctx, ast* Node) {
         fn->returnType = typeDeepDuplicate(analyzerValue(ctx, Node->r));
 
     /*Result*/
-    Node->dt = fn;
+    Node->dt = typeCreatePtr(fn);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
     Node->symbol->storage = storageStatic;
 }
