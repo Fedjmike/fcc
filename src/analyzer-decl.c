@@ -290,9 +290,6 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
 
     const type* L = analyzerDeclNode(ctx, Node->l, base, module, storage);
 
-    if (!typeIsAssignment(L))
-        errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
-
     /*Struct/array initializer?*/
     if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
         analyzerCompoundInit(ctx, Node->r, L, true);
@@ -303,6 +300,9 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
 
         if (!typeIsCompatible(R, L))
             errorInitMismatch(ctx, Node->l, Node->r);
+
+        else if (!typeIsAssignment(L))
+            errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
     }
 
     /*Is an assignment to this symbol valid?*/
