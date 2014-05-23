@@ -182,7 +182,9 @@ const type* typeGetReturn (const type* DT) {
         return 0;
 
     DT = typeTryThroughTypedef(DT);
-    return DT->tag == typeFunction ? DT->returnType : 0;
+    return   DT->tag == typeFunction ? DT->returnType
+           : DT->tag == typePtr && typeIsFunction(DT->base) ? typeGetReturn(DT->base)
+           : 0;
 }
 
 const sym* typeGetRecord (const type* DT) {
