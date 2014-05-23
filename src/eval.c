@@ -8,14 +8,14 @@
 
 #include "string.h"
 
-static evalResult evalBOP (const architecture* arch, ast* Node);
-static evalResult evalUOP (const architecture* arch, ast* Node);
-static evalResult evalTernary (const architecture* arch, ast* Node);
-static evalResult evalCast (const architecture* arch, ast* Node);
-static evalResult evalSizeof (const architecture* arch, ast* Node);
-static evalResult evalLiteral (const architecture* arch, ast* Node);
+static evalResult evalBOP (const architecture* arch, const ast* Node);
+static evalResult evalUOP (const architecture* arch, const ast* Node);
+static evalResult evalTernary (const architecture* arch, const ast* Node);
+static evalResult evalCast (const architecture* arch, const ast* Node);
+static evalResult evalSizeof (const architecture* arch, const ast* Node);
+static evalResult evalLiteral (const architecture* arch, const ast* Node);
 
-evalResult eval (const architecture* arch, ast* Node) {
+evalResult eval (const architecture* arch, const ast* Node) {
     if (Node->tag == astBOP)
         return evalBOP(arch, Node);
 
@@ -47,7 +47,7 @@ evalResult eval (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalBOP (const architecture* arch, ast* Node) {
+static evalResult evalBOP (const architecture* arch, const ast* Node) {
     evalResult L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
@@ -112,7 +112,7 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalUOP (const architecture* arch, ast* Node) {
+static evalResult evalUOP (const architecture* arch, const ast* Node) {
     if (Node->o == opAddressOf || Node->o == opDeref
         || Node->o == opPostIncrement || Node->o == opPostDecrement
         || Node->o == opPreIncrement || Node->o == opPreDecrement)
@@ -135,7 +135,7 @@ static evalResult evalUOP (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalTernary (const architecture* arch, ast* Node) {
+static evalResult evalTernary (const architecture* arch, const ast* Node) {
     evalResult Cond = eval(arch, Node->firstChild),
                L = eval(arch, Node->l),
                R = eval(arch, Node->r);
@@ -154,15 +154,15 @@ static evalResult evalTernary (const architecture* arch, ast* Node) {
         return (evalResult) {false, 0};
 }
 
-static evalResult evalCast (const architecture* arch, ast* Node) {
+static evalResult evalCast (const architecture* arch, const ast* Node) {
     return eval(arch, Node->r);
 }
 
-static evalResult evalSizeof (const architecture* arch, ast* Node) {
+static evalResult evalSizeof (const architecture* arch, const ast* Node) {
     return (evalResult) {true, typeGetSize(arch, Node->dt)};
 }
 
-static evalResult evalLiteral (const architecture* arch, ast* Node) {
+static evalResult evalLiteral (const architecture* arch, const ast* Node) {
     (void) arch;
 
     if (Node->litTag == literalInt)
