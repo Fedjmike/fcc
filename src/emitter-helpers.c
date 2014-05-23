@@ -95,13 +95,10 @@ operand emitterGetInReg (emitterCtx* ctx,  irBlock* block, operand src, int size
 }
 
 operand emitterTakeReg (emitterCtx* ctx, irBlock* block, regIndex r, int* oldSize, int newSize) {
-    if (regIsUsed(r)) {
-        *oldSize = regs[r].allocatedAs;
+    if (regIsUsed(r))
         asmSaveReg(ctx->ir, block, r);
 
-    } else
-        *oldSize = 0;
-
+    *oldSize = regs[r].allocatedAs;
     regs[r].allocatedAs = newSize;
     return operandCreateReg(&regs[r]);
 }
