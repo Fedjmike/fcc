@@ -255,7 +255,7 @@ static void analyzerLogicalBOP (analyzerCtx* ctx, ast* Node) {
 static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
     const type* L = analyzerValue(ctx, Node->l);
 
-    const sym* record = typeGetRecord(L);
+    const type* record = typeGetRecord(L);
 
     if (typeIsInvalid(L) || typeIsInvalid(typeGetBase(L)))
         Node->dt = typeCreateInvalid();
@@ -279,7 +279,7 @@ static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
                 errorOpTypeExpected(ctx, Node->l, Node->o, "direct structure or union");
 
         /*Incomplete, won't find any fields*/
-        if (!record->complete) {
+        if (!record->basic->complete) {
             /*Only give an error if it was a pointer, otherwise the true mistake
               probably lies in the declaration and will already have errored*/
             if (typeIsPtr(L))
@@ -289,10 +289,12 @@ static void analyzerMemberBOP (analyzerCtx* ctx, ast* Node) {
 
         /*Try to find the field inside the record and get the return type*/
         } else {
-            Node->symbol = analyzerRecordMember(ctx, Node->r, Node->o, record);
+            Node->symbol = analyzerRecordMember(ctx, Node->r, Node->o, record->basic);
             Node->dt = Node->symbol ? typeDeepDuplicate(Node->symbol->dt)
                                     : typeCreateInvalid();
         }
+
+        Node->dt->qual.isConst |= record->qual.isConst;
     }
 }
 

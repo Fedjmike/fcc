@@ -66,7 +66,7 @@ type* typeDeepDuplicate (const type* DT);
 const sym* typeGetBasic (const type* DT);
 const type* typeGetBase (const type* DT);
 const type* typeGetReturn (const type* DT);
-const sym* typeGetRecord (const type* DT);
+const type* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
 int typeGetArraySize (const type* DT);
 

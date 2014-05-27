@@ -187,13 +187,13 @@ const type* typeGetReturn (const type* DT) {
            : 0;
 }
 
-const sym* typeGetRecord (const type* DT) {
+const type* typeGetRecord (const type* DT) {
     DT = typeTryThroughTypedef(DT);
 
     if (    DT->tag == typeBasic && DT->basic
         && (   DT->basic->tag == symStruct
             || DT->basic->tag == symUnion))
-        return DT->basic;
+        return DT;
 
     else if (DT->tag == typePtr && typeIsBasic(DT->base))
         return typeGetRecord(DT->base);
