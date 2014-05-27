@@ -52,6 +52,7 @@ void configDestroy (config conf) {
     vectorFreeObjs(&conf.includeSearchPaths, free);
 
     free(conf.output);
+    conf.output = 0;
 }
 
 static void configSetMode (config* conf, configMode mode, const char* option) {

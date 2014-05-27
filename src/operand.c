@@ -91,15 +91,20 @@ operand operandCreateLabelOffset (const char* label) {
 }
 
 void operandFree (operand Value) {
-    if (Value.tag == operandReg)
+    if (Value.tag == operandReg) {
         regFree(Value.base);
+        Value.base = 0;
 
-    else if (Value.tag == operandMem) {
-        if (Value.base != 0 && Value.base != regGet(regRBP))
+    } else if (Value.tag == operandMem) {
+        if (Value.base != 0 && Value.base != regGet(regRBP)) {
             regFree(Value.base);
+            Value.base = 0;
+        }
 
-        if (Value.index != 0)
+        if (Value.index != 0) {
             regFree(Value.index);
+            Value.index = 0;
+        }
 
     } else if (   Value.tag == operandUndefined || Value.tag == operandInvalid
                || Value.tag == operandVoid || Value.tag == operandFlags

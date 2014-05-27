@@ -53,8 +53,12 @@ void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<ch
 
 void compilerEnd (compilerCtx* ctx) {
     hashmapFreeObjs(&ctx->modules, (hashmapKeyDtor) free, (hashmapValueDtor) parserResultDestroy);
+
     symEnd(ctx->global);
+    ctx->global = 0;
+
     free(ctx->types);
+    ctx->types = 0;
 }
 
 void compiler (compilerCtx* ctx, const char* input, const char* output) {

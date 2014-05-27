@@ -19,6 +19,8 @@ vector* vectorInit (vector* v, int initialCapacity) {
 
 void vectorFree (vector* v) {
     free(v->buffer);
+    v->length = 0;
+    v->capacity = 0;
     v->buffer = 0;
 }
 

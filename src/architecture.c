@@ -35,6 +35,9 @@ void archFree (architecture* arch) {
 
     free(arch->asflags);
     free(arch->ldflags);
+
+    arch->asflags = 0;
+    arch->ldflags = 0;
 }
 
 /*:::: SETUP ::::*/

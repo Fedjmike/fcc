@@ -50,7 +50,10 @@ static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullna
 
 static void parserEnd (parserCtx* ctx) {
     free(ctx->path);
+    ctx->path = 0;
+
     lexerEnd(ctx->lexer);
+    ctx->lexer = 0;
 }
 
 static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
