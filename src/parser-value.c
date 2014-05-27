@@ -237,7 +237,7 @@ static ast* parserTerm (parserCtx* ctx) {
 static ast* parserUnary (parserCtx* ctx) {
     debugEnter("Unary");
 
-    ast* Node = 0;
+    ast* Node;
     tokenLocation loc = ctx->location;
     opTag o;
 
@@ -341,7 +341,7 @@ static ast* parserObject (parserCtx* ctx) {
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");
 
-    ast* Node = 0;
+    ast* Node;
 
     tokenLocation loc = ctx->location;
 

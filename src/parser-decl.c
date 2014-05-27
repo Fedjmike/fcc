@@ -288,7 +288,7 @@ ast* parserParam (parserCtx* ctx, bool inDecl) {
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
 
-    ast* Node = 0;
+    ast* Node;
 
     tokenLocation constloc = ctx->location;
     bool isConst = tokenTryMatchKeyword(ctx, keywordConst);
@@ -474,7 +474,7 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclUnary");
 
-    ast* Node = 0;
+    ast* Node;
     tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctTimes)) {
@@ -598,7 +598,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclAtom");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenTryMatchPunct(ctx, punctLParen)) {
         Node = parserDeclExpr(ctx, inDecl, tag);
@@ -651,7 +651,7 @@ static bool isTypedefException (sym* Symbol, symTag newtag) {
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("Name");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenIsIdent(ctx)) {
         tokenLocation loc = ctx->location;

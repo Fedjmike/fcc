@@ -220,7 +220,7 @@ ast* parserCode (parserCtx* ctx) {
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenIsKeyword(ctx, keywordIf))
         Node = parserIf(ctx);
