@@ -87,8 +87,7 @@ static void verrorf (const char* format, va_list args) {
 
                 if ((Symbol->tag == symId || Symbol->tag == symParam)) {
                     if (Symbol->dt) {
-                        char* identStr = malloc(strlen(colourIdent)+strlen(ident)+strlen(colourType)+1);
-                        sprintf(identStr, "%s%s%s", colourIdent, ident, colourType);
+                        char* identStr = strjoin((char**) (const char* []) {colourIdent, ident, colourType}, 3, malloc);
                         char* typeStr = typeToStrEmbed(Symbol->dt, identStr);
                         printf("%s%s%s", colourType, typeStr, consoleNormal);
                         free(identStr);

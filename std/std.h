@@ -2,11 +2,13 @@
 
 #include "compat.h"
 
+#include "stddef.h"
+
 char* strdup (const char* Str);
 
 /*Non standard (mine)*/
 
-typedef void* (*stdalloc)(int);
+typedef void* (*stdalloc)(size_t);
 
 /**
  * Modify a file names extension
@@ -28,7 +30,8 @@ char* fstripname (const char* fullname);
 
 bool strprefix (const char* str, const char* prefix);
 
-char* strjoin (char** strs, int n, const char* separator, void* (*allocator)(int));
+char* strjoin (char** strs, int n, void* (*allocator)(size_t));
+char* strjoinwith (char** strs, int n, const char* separator, void* (*allocator)(size_t));
 
 int systemf (const char* format, ...);
 

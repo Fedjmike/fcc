@@ -40,8 +40,8 @@ static bool driver (config conf) {
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
-        char* intermediates = strjoin((char**) conf.intermediates.buffer, conf.intermediates.length,
-                                      " ", (stdalloc) malloc);
+        char* intermediates = strjoinwith((char**) conf.intermediates.buffer, conf.intermediates.length,
+                                          " ", malloc);
 
         if (conf.mode == modeNoLink)
             fail |= systemf("gcc %s -c %s", conf.arch.asflags, intermediates) != 0;

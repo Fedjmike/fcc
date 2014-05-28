@@ -125,7 +125,11 @@ bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }
 
-char* strjoin (char** strs, int n, const char* separator, void* (*allocator)(int)) {
+char* strjoin (char** strs, int n, void* (*allocator)(size_t)) {
+    return strjoinwith(strs, n, "", allocator);
+}
+
+char* strjoinwith (char** strs, int n, const char* separator, void* (*allocator)(size_t)) {
     if (n <= 0)
         return calloc(1, sizeof(char));
 

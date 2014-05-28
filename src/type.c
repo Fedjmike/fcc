@@ -551,7 +551,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
             if (DT->variadic)
                 vectorPush(&paramStrs, "...");
 
-            params = strjoin((char**) paramStrs.buffer, paramStrs.length, ", ", (stdalloc) malloc);
+            params = strjoinwith((char**) paramStrs.buffer, paramStrs.length, ", ", malloc);
 
             if (DT->variadic)
                 paramStrs.length--;
