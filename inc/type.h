@@ -89,12 +89,18 @@ bool typeIsArray (const type* DT);
 bool typeIsFunction (const type* DT);
 bool typeIsInvalid (const type* DT);
 
+typedef enum typeMutability {
+    mutConstQualified,
+    mutHasConstFields,
+    mutMutable
+} typeMutability;
+
 bool typeIsComplete (const type* DT);
 bool typeIsVoid (const type* DT);
 bool typeIsNonVoid (const type* DT);
 bool typeIsStruct (const type* DT);
 bool typeIsUnion (const type* DT);
-bool typeIsMutable (const type* DT);
+typeMutability typeIsMutable (const type* DT);
 
 bool typeIsNumeric (const type* DT);
 bool typeIsOrdinal (const type* DT);

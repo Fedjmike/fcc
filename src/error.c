@@ -453,6 +453,10 @@ void errorConstAssignment (analyzerCtx* ctx, const ast* Node, opTag o) {
     errorAnalyzer(ctx, Node, "$o tried to modify immutable $a", o, Node);
 }
 
+void errorStructWithConstFieldAssignment (analyzerCtx* ctx, const ast* Node, opTag o) {
+    errorAnalyzer(ctx, Node, "$o tried to modify a struct with a const field, $a", o, Node);
+}
+
 void errorFnTag (analyzerCtx* ctx, ast* Node) {
     errorAnalyzer(ctx, Node, "function implementation illegally given to $n, a $c",
                   Node->symbol, Node->symbol);

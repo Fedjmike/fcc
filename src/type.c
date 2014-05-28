@@ -343,10 +343,18 @@ bool typeIsUnion (const type* DT) {
            || typeIsInvalid(DT);
 }
 
-bool typeIsMutable (const type* DT) {
+typeMutability typeIsMutable (const type* DT) {
     typeQualifiers qual = typeQualifiersCreate();
     DT = typeTryThroughTypedefQual(DT, &qual);
-    return !qual.isConst || typeIsInvalid(DT);
+
+    if (qual.isConst)
+        return mutConstQualified;
+
+    else if (DT->tag == typeBasic && DT->basic->hasConstFields)
+        return mutHasConstFields;
+
+    else
+        return mutMutable;
 }
 
 bool typeIsNumeric (const type* DT) {

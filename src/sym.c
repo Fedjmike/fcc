@@ -44,6 +44,7 @@ static sym* symCreate (symTag tag) {
     Symbol->label = 0;
     Symbol->offset = 0;
     Symbol->constValue = 0;
+    Symbol->hasConstFields = false;
 
     return Symbol;
 }

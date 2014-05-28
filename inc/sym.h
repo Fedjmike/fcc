@@ -119,7 +119,6 @@ typedef struct sym {
     ///Position in parent's vector
     int nthChild;
 
-    /*Emitter specifics*/
     union {
         /*symId: storageStatic storageExtern*/
         ///Label associated with this symbol in the assembly
@@ -129,6 +128,8 @@ typedef struct sym {
         int offset;
         /*symEnumConstants*/
         int constValue;
+        /*symStruct*/
+        bool hasConstFields;
     };
 } sym;
 

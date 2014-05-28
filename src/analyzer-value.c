@@ -196,11 +196,16 @@ static void analyzerBOP (analyzerCtx* ctx, ast* Node) {
         if (!typeIsAssignment(L))
             errorOpTypeExpected(ctx, Node->l, Node->o, "assignable type");
 
+        typeMutability mut = typeIsMutable(L);
+
         if (!isNodeLvalue(Node->l))
             errorLvalue(ctx, Node->l, Node->o);
 
-        else if (!typeIsMutable(L))
+        else if (mut == mutConstQualified)
             errorConstAssignment(ctx, Node->l, Node->o);
+
+        else if (mut == mutHasConstFields)
+            errorStructWithConstFieldAssignment(ctx, Node->l, Node->o);
     }
 
     /*Work out the type of the result*/
@@ -323,7 +328,7 @@ static void analyzerUOP (analyzerCtx* ctx, ast* Node) {
                 if (!isNodeLvalue(Node->r))
                     errorLvalue(ctx, Node->r, Node->o);
 
-                else if (!typeIsMutable(R))
+                else if (typeIsMutable(R) != mutMutable)
                     errorConstAssignment(ctx, Node->r, Node->o);
             }
 

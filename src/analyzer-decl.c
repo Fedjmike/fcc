@@ -172,11 +172,26 @@ static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node) {
     return Node->dt;
 }
 
+static bool analyzerStructAnyDeclConst (ast* Node) {
+    for (ast* field = Node->firstChild;
+         field;
+         field = field->nextSibling)
+        if (   field->symbol && field->symbol->tag == symId && field->symbol->dt
+            && typeIsMutable(field->symbol->dt) != mutMutable)
+            return true;
+
+    return false;
+}
+
 static void analyzerStruct (analyzerCtx* ctx, ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling) {
         analyzerDecl(ctx, Current, false);
+
+        if (   !Node->symbol->hasConstFields
+            && analyzerStructAnyDeclConst(Current))
+            Node->symbol->hasConstFields = true;
     }
 
     Node->dt = typeCreateBasic(Node->symbol);
