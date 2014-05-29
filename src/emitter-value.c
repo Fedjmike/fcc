@@ -885,7 +885,7 @@ static void emitterStructInit (emitterCtx* ctx, irBlock** block, const ast* Node
     /*For every field*/
     for (ast* current = Node->firstChild;
          current;
-         current = current->nextSibling) {
+         current = current->nextSibling, index++) {
         ast* value = current;
         sym* field = vectorGet(&record->children, index);
 
@@ -904,7 +904,7 @@ static void emitterStructInit (emitterCtx* ctx, irBlock** block, const ast* Node
 
         emitterElementInit(ctx, block, value, L);
 
-        bitarraySet(&initd, index++);
+        bitarraySet(&initd, index);
     }
 
     /*Zero the fields not otherwise initialized*/
@@ -963,7 +963,7 @@ static void emitterArrayInit (emitterCtx* ctx, irBlock** block, const ast* Node,
         L.offset += elementSize;
 
         if (!prefill)
-            bitarraySet(&initd, index++);
+            bitarraySet(&initd, index);
     }
 
     if (!prefill) {
