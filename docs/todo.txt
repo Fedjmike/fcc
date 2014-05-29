@@ -7,9 +7,11 @@ High importance:
 	[x] Parsing
 	[x] Type annotation
 	[ ] Type compatibility/equality
-	[-] Assignable
-		[ ] structs with const fields
-	[ ] Fields of const structs/unions const themselves
+        - No qualifiers dropped, qual smearing if added
+	[x] Assignable
+		[x] structs with const fields
+	[x] Fields of const structs/unions const themselves
+    [ ] (const)[] => const ()[]
 [ ] Review type compatibility
 	[ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
@@ -17,11 +19,9 @@ High importance:
 	[ ] Incomplete arrays
 	[ ] Cast to incomplete
 [x] Varargs
-[-] extern
+[x] extern
 [-] static
     [ ] Function linkage
-    [ ] Disallow all others?
-[ ] Disallow global variables
 [-] Modules
     [-] Separated namespaces
     [x] Include once only
@@ -41,13 +41,16 @@ Medium:
 [ ] wchar_t
 [ ] x ?: y
 [ ] String literal concatenation
-[x] % /
-[x] >> <<
 [-] Closures
 	- Syntax?
 	[x] Capture-less lambdas
-[ ] Designated initializers in compound literals
+[x] Designated initializers in compound literals
 [-] auto type inference
+    [ ] Pointer and array base type
+    [ ] Errors for auto function return and param types
+    [ ] Type qualifiers
+    [ ] Don't allow an inferred var in its own init
+    [ ] (auto[]) {...} ?
 [ ] assert
 [ ] Warnings
 	[ ] main conformance
@@ -100,7 +103,6 @@ Other issues:
 [-] Use vector in:
 	[ ] ast
 	[x] sym
-[x] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
 [ ] Declare structs inside modules, not their headers, if not part of the interface
 [ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
 [ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
@@ -119,9 +121,8 @@ Semantic analyzer:
 
 [ ] Array size detection (basic x[] = {...})
     - analyzer-decl.c
-[-] Make sure prototypes and implementation match exactly (static)
 [x] Initialization/impl_n of extern and typedef
-[ ] Evaluate casts properly
+[ ] Rules for cast compatibility
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
@@ -144,7 +145,6 @@ Emitter:
       sends them off to emitterValue, handles operands and reg
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
-[x] requestReturn for eax
 [ ] Cache sym size
 	=> move to analyzer?
 	=> as well as offset
@@ -152,3 +152,4 @@ Emitter:
 	=> eval.c
 	o OR not, handle in IR?
 [ ] Optimize pointer indexing similar to array indexing
+[ ] Fix pointer arithmetic
