@@ -33,8 +33,7 @@ ElementInit = [   (   ( "." <Ident> )
                     | ( "[" Value "]" ) DesignatedInit )
                 | AssignValue ]
 DesignatedInit = "=" AssignValue
-Lambda = "[" "]"
-         "(" [ Param [{ "," Param }] ] ")"
+Lambda = "[" "]" ParamList
          ( "{" Code "}" ) | ( "(" Value ")" )
 VAStart = va_start "(" AssignValue "," <Ident> ")"
 VAEnd = va_end "(" AssignValue ")"
@@ -57,7 +56,7 @@ Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
-DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
+DeclObject = DeclAtom [{ ParamList | ( "[" Value "]" ) }]
+ParamList = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

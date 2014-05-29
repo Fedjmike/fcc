@@ -17,6 +17,7 @@ static ast* parserFnImpl (parserCtx* ctx, ast* decl);
 
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);
+static ast* parserParam (parserCtx* ctx, bool inDecl);
 
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
@@ -25,7 +26,6 @@ static ast* parserEnum (parserCtx* ctx);
 static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag);
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, ast* atom);
 static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag);
 static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
@@ -268,7 +268,7 @@ static ast* parserEnumField (parserCtx* ctx) {
  * DeclExpr is told to accept but not require identifiers and symbol
  * creation if and only if inDecl is true.
  */
-ast* parserParam (parserCtx* ctx, bool inDecl) {
+static ast* parserParam (parserCtx* ctx, bool inDecl) {
     debugEnter("Param");
 
     tokenLocation loc = ctx->location;
@@ -494,7 +494,7 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
 }
 
 /**
- * DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
+ * DeclObject = DeclAtom [{ ParamList | ( "[" Value "]" ) }]
  */
 static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclObject");
@@ -503,26 +503,34 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
     ast* Node = parserDeclAtom(ctx, inDecl, tag);
 
     while (true) {
+        sym* Symbol = Node->symbol;
+
         /*Function*/
-        if (tokenIsPunct(ctx, punctLParen))
-            Node = parserDeclFunction(ctx, inDecl, loc, Node);
+        if (tokenIsPunct(ctx, punctLParen)) {
+            /*The proper param symbols are created just before the parsing of the body,
+              prototype params go in the bin, but exist for diagnostics*/
+            sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
+
+            Node = astCreateCall(loc, Node);
+            parserParamList(ctx, Node, inDecl);
+
+            ctx->scope = OldScope;
 
         /*Array*/
-        else if (tokenTryMatchPunct(ctx, punctLBracket)) {
-            sym* Symbol = Node->symbol;
-
-            if (tokenTryMatchPunct(ctx, punctRBracket))
+        } else if (tokenTryMatchPunct(ctx, punctLBracket)) {
+            if (tokenIsPunct(ctx, punctRBracket))
                 Node = astCreateIndex(loc, Node, astCreateEmpty(loc));
 
-            else {
+            else
                 Node = astCreateIndex(loc, Node, parserValue(ctx));
-                tokenMatchPunct(ctx, punctRBracket);
-            }
 
-            Node->symbol = Symbol;
+            tokenMatchPunct(ctx, punctRBracket);
 
         } else
             break;
+
+        /*Propogate the declared symbol up the chain*/
+        Node->symbol = Symbol;
     }
 
     debugLeave();
@@ -531,26 +539,20 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 }
 
 /**
- * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
+ * ParamList = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
  */
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, ast* atom) {
-    debugEnter("DeclFunction");
+void parserParamList (parserCtx* ctx, ast* Node, bool inDecl) {
+    debugEnter("ParamList");
 
     tokenMatchPunct(ctx, punctLParen);
-
-    ast* Node = astCreateCall(loc, atom);
-    /*Propogate the declared symbol up the chain*/
-    Node->symbol = atom->symbol;
-    /*The proper param symbols are created just before the parsing of the body,
-      prototype params go in the bin, but exist for diagnostics*/
-    sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
 
     if (!tokenIsPunct(ctx, punctRParen)) {
         tokenLocation voidloc = ctx->location;
 
         bool end = false;
 
-        /*Could be f(void), could be the beginning of a param decl*/
+        /*Either an empty prototype declaration,
+          or the beginning of a void* parameter*/
         if (tokenTryMatchKeyword(ctx, keywordVoid)) {
             if (!tokenIsPunct(ctx, punctRParen)) {
                 ast* basic = astCreateLiteralIdent(voidloc, strdup("void"));
@@ -580,11 +582,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
 
     tokenMatchPunct(ctx, punctRParen);
 
-    ctx->scope = OldScope;
-
     debugLeave();
-
-    return Node;
 }
 
 /**

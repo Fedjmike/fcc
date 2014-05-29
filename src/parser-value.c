@@ -537,8 +537,7 @@ static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array) {
 }
 
 /**
- * Lambda = "[" "]"
- *          "(" [ Param [{ "," Param }] ] ")"
+ * Lambda = "[" "]" ParamList
  *          ( "{" Code "}" ) | ( "(" Value ")" )
  */
 static ast* parserLambda (parserCtx* ctx, bool partial) {
@@ -557,13 +556,7 @@ static ast* parserLambda (parserCtx* ctx, bool partial) {
 
     /*Params*/
 
-    tokenMatchPunct(ctx, punctLParen);
-
-    if (!tokenIsPunct(ctx, punctRParen)) do {
-        astAddChild(Node, parserParam(ctx, true));
-    } while (tokenTryMatchPunct(ctx, punctComma));
-
-    tokenMatchPunct(ctx, punctRParen);
+    parserParamList(ctx, Node, true);
 
     /*Body*/
 
