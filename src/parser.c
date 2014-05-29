@@ -139,7 +139,7 @@ static ast* parserModule (parserCtx* ctx) {
 
     while (ctx->lexer->token != tokenEOF) {
         if (tokenTryMatchPunct(ctx, punctSemicolon))
-            astAddChild(Module, astCreateEmpty(ctx->location));
+            ;
 
         else if (tokenIsKeyword(ctx, keywordUsing))
             astAddChild(Module, parserUsing(ctx));
