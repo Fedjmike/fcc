@@ -519,7 +519,10 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
         /*Array*/
         } else if (tokenTryMatchPunct(ctx, punctLBracket)) {
             if (tokenIsPunct(ctx, punctRBracket))
-                Node = astCreateIndex(loc, Node, astCreateEmpty(loc));
+                /*An empty [] is a synonym for * when in params*/
+                Node =   tag == symParam
+                       ? astCreateUOP(loc, opDeref, Node)
+                       : astCreateIndex(loc, Node, astCreateEmpty(ctx->location));
 
             else
                 Node = astCreateIndex(loc, Node, parserValue(ctx));

@@ -21,6 +21,13 @@ typedef struct typeQualifiers {
     bool isConst;
 } typeQualifiers;
 
+enum {
+    arraySizeError = -2,
+    ///to indicate unspecified size in a declaration e.g. int x[] = {1, 2};
+    ///NOT as a synonym for * e.g. void (*)(int[]) == void (*)(int*)
+    arraySizeUnspecified = -1
+};
+
 /**
  *
  */
@@ -38,9 +45,7 @@ typedef struct type {
         struct {
             type* base;
             ///Size of the array
-            ///-1 to indicate unspecified size in a declaration e.g. int x[] = {1, 2};
-            ///NOT as a synonym for * e.g. void (*)(int[]) == void (*)(int*)
-            ///-2 indicates an error finding the size
+            ///Negative indices are described by enum constants
             int array;
         };
         /*typeFunction*/
@@ -69,6 +74,8 @@ const type* typeGetReturn (const type* DT);
 const type* typeGetRecord (const type* DT);
 const type* typeGetCallable (const type* DT);
 int typeGetArraySize (const type* DT);
+
+bool typeSetArraySize (type* DT, int size);
 
 type* typeDeriveFrom (const type* DT);
 type* typeDeriveFromTwo (const type* L, const type* R);

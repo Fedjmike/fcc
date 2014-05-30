@@ -15,7 +15,7 @@ static type* typeCreate (typeTag tag);
 /**
  * Jump through (immediate) typedefs, possibly recursively, to actual type
  */
-static const type* typeTryThroughTypedef (const type* DT);
+static type* typeTryThroughTypedef (const type* DT);
 
 /**
  * As above, but collects qualifiers, e.g.
@@ -27,7 +27,7 @@ static const type* typeTryThroughTypedef (const type* DT);
  * ->
  *    TryThroughTypedefQual(z) == {volatile x*, const}
  */
-static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
+static type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
 
 static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R);
 
@@ -142,15 +142,15 @@ type* typeDeepDuplicate (const type* DT) {
 
 /*:::: TYPE MISC HELPERS ::::*/
 
-static const type* typeTryThroughTypedef (const type* DT) {
+static type* typeTryThroughTypedef (const type* DT) {
     if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
         return typeTryThroughTypedef(DT->basic->dt);
 
     else
-        return DT;
+        return (type*) DT;
 }
 
-static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
+static type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
     if (qualOut)
         qualOut->isConst |= DT->qual.isConst;
 
@@ -158,7 +158,7 @@ static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qu
         return typeTryThroughTypedefQual(DT->basic->dt, qualOut);
 
     else
-        return DT;
+        return (type*) DT;
 }
 
 const sym* typeGetBasic (const type* DT) {
@@ -210,7 +210,20 @@ const type* typeGetCallable (const type* DT) {
 
 int typeGetArraySize (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return DT->tag == typeArray ? DT->array >= 0 ? DT->array : 0 : 0;
+    return DT->tag == typeArray && DT->array != arraySizeError ? DT->array : 0;
+}
+
+/*:::: TYPE MODIFICATION ::::*/
+
+bool typeSetArraySize (type* DT, int size) {
+    DT = typeTryThroughTypedef(DT);
+
+    if (DT->tag == typeArray) {
+        DT->array = size;
+        return true;
+    }
+
+    return false;
 }
 
 /*:::: TYPE DERIVATION ::::*/
@@ -312,7 +325,8 @@ bool typeIsInvalid (const type* DT) {
 
 bool typeIsComplete (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return !(DT->tag == typeBasic && !DT->basic->complete);
+    return !(   (DT->tag == typeBasic && !DT->basic->complete)
+             || (DT->tag == typeArray && DT->array == arraySizeUnspecified));
 }
 
 bool typeIsVoid (const type* DT) {

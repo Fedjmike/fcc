@@ -533,18 +533,16 @@ static void analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 
 static void analyzerCompoundLiteral (analyzerCtx* ctx, ast* Node) {
     const type* L = analyzerType(ctx, Node->l);
+    analyzerCompoundInit(ctx, Node, L);
 
-    if (!typeIsComplete(L))
-        errorIncompleteCompound(ctx, Node, L);
+    if (!typeIsComplete(Node->dt))
+        errorIncompleteCompound(ctx, Node, Node->dt);
 
-    analyzerCompoundInit(ctx, Node, L, false);
     Node->symbol->dt = typeDeepDuplicate(Node->dt);
     Node->symbol->storage = storageAuto;
 }
 
-void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool directInit) {
-    Node->dt = typeDeepDuplicate(DT);
-
+void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT) {
     if (typeIsInvalid(DT))
         ;
 
@@ -556,7 +554,7 @@ void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool dir
 
     /*Scalar*/
     else {
-        if (Node->children == 0 && !directInit)
+        if (Node->children == 0)
             ;
 
         else if (Node->children != 1)
@@ -568,6 +566,8 @@ void analyzerCompoundInit (analyzerCtx* ctx, ast* Node, const type* DT, bool dir
             if (!typeIsCompatible(R, DT))
                 errorTypeExpectedType(ctx, Node->r, "variable initialization", DT);
         }
+
+        Node->dt = typeDeepDuplicate(DT);
     }
 }
 
@@ -623,10 +623,11 @@ static void analyzerStructInit (analyzerCtx* ctx, ast* Node, const type* DT) {
             index = field->nthChild+1;
         }
     }
+
+    Node->dt = typeDeepDuplicate(DT);
 }
 
 static void analyzerArrayInit (analyzerCtx* ctx, ast* Node, const type* DT) {
-    int elementNo = typeGetArraySize(DT);
     const type* base = typeGetBase(DT);
 
     bool error = false;
@@ -671,7 +672,16 @@ static void analyzerArrayInit (analyzerCtx* ctx, ast* Node, const type* DT) {
         }
     }
 
-    if (maxIndex >= elementNo)
+    Node->dt = typeDeepDuplicate(DT);
+
+    int elementNo = typeGetArraySize(DT);
+
+    /*If the array size was unspecifed, or if there was an error,
+      infer the size from the initializer given*/
+    if (elementNo < 0)
+        typeSetArraySize(Node->dt, maxIndex+1);
+
+    else if (maxIndex >= elementNo)
         errorDegree(ctx, Node, "elements", elementNo, maxIndex+1, "array");
 }
 
@@ -682,7 +692,7 @@ static void analyzerElementInit (analyzerCtx* ctx, ast* Node, const type* expect
 
     /*Recursive initialization*/
     else if (Node->tag == astLiteral && Node->litTag == literalInit)
-        analyzerCompoundInit(ctx, Node, expected, false);
+        analyzerCompoundInit(ctx, Node, expected);
 
     /*Regular value*/
     else

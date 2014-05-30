@@ -306,11 +306,14 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
     const type* L = analyzerDeclNode(ctx, Node->l, base, module, storage);
 
     /*Struct/array initializer?*/
-    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        analyzerCompoundInit(ctx, Node->r, L, true);
+    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit) {
+        analyzerCompoundInit(ctx, Node->r, L);
+
+        if (typeIsArray(L) && typeGetArraySize(L) < 0)
+            typeSetArraySize(Node->symbol->dt, typeGetArraySize(Node->r->dt));
 
     /*Regular assignment*/
-    else {
+    } else {
         const type* R = analyzerValue(ctx, Node->r);
 
         if (!typeIsCompatible(R, L))
@@ -365,31 +368,31 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnTy
 }
 
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
-    type* DT;
+    int size = arraySizeError;
 
-    /*[], synonym for ptr*/
+    /*Unspecified size, will (hopefully) infer it from an initializer
+      [] as a synonym for * is differentiated by the parser*/
     if (Node->r->tag == astEmpty)
-        DT = typeCreatePtr(base);
+        size = arraySizeUnspecified;
 
-    /*Array*/
     else {
         /*Get the size*/
         analyzerValue(ctx, Node->r);
-        evalResult size = eval(ctx->arch, Node->r);
+        evalResult sizeExpr = eval(ctx->arch, Node->r);
 
-        /*Sanitize it*/
+        /*Validate it*/
 
-        if (!size.known) {
+        if (!sizeExpr.known)
             errorCompileTimeKnown(ctx, Node->r, Node->l->symbol, "array size");
-            size.value = -2;
 
-        } else if (size.value <= 0)
-            errorIllegalArraySize(ctx, Node->r, Node->l->symbol, size.value);
+        else if (sizeExpr.value <= 0)
+            errorIllegalArraySize(ctx, Node->r, Node->l->symbol, sizeExpr.value);
 
-        DT = typeCreateArray(base, size.value);
+        else
+            size = sizeExpr.value;
     }
 
-    return analyzerDeclNode(ctx, Node->l, DT, module, storage);
+    return analyzerDeclNode(ctx, Node->l, typeCreateArray(base, size), module, storage);
 }
 
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
