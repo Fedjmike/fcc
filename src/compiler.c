@@ -30,6 +30,8 @@ static void compilerInitSymbols (compilerCtx* ctx) {
     ctx->types[builtinInt] = symCreateType(ctx->global, "int", 4, typeIntegral);
     ctx->types[builtinVAList] = symCreateType(ctx->global, "va_list", ctx->arch->wordsize, typeAssignment);
 
+    symCreateType(ctx->global, "size_t", ctx->arch->wordsize, typeIntegral);
+
     symCreateType(ctx->global, "int8_t", 1, typeIntegral);
     symCreateType(ctx->global, "int16_t", 2, typeIntegral);
     symCreateType(ctx->global, "int32_t", 4, typeIntegral);

@@ -1,9 +1,9 @@
-void* malloc (int);
-void* calloc (int, int);
-void* realloc (void*, int);
+void* malloc (size_t);
+void* calloc (size_t, size_t);
+void* realloc (void*, size_t);
 void free (void*);
 
-void* memset (void*, int, int);
+void* memset (void*, int, size_t);
 
 void srand (int);
 int rand ();

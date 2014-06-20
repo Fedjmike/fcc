@@ -1,4 +1,4 @@
-int strlen (const char*);
+size_t strlen (const char*);
 
 char* strcpy (char*, const char*);
 char* strncpy (char*, int, const char*);
@@ -12,4 +12,4 @@ int strncmp (const char*, int, const char*);
 const char* strchr (const char*, int);
 const char* strrchr (const char*, int);
 
-void* memcpy (void*, const void*, int);
+void* memcpy (void*, const void*, size_t);

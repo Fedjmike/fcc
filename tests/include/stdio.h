@@ -20,8 +20,8 @@ int putchar (int);
 int getchar (void);
 
 int sprintf (char*, const char*, ...);
-int snprintf (char*, int, const char*, ...);
-int vsnprintf (char*, int, const char*, va_list);
+int snprintf (char*, size_t, const char*, ...);
+int vsnprintf (char*, size_t, const char*, va_list);
 
 extern FILE *stdout, *stdin, *stderr;
 
