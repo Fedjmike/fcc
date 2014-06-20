@@ -243,26 +243,22 @@ static void analyzerIter (analyzerCtx* ctx, ast* Node) {
 static void analyzerReturn (analyzerCtx* ctx, ast* Node) {
     /*Return type, if any, matches?*/
 
-    if (ctx->fnctx.returnType) {
-        if (Node->r) {
-            const type* R = analyzerValue(ctx, Node->r);
+    const type* R = Node->r ? analyzerValue(ctx, Node->r) : 0;
 
+    if (ctx->fnctx.returnType) {
+        if (R) {
             if (!typeIsCompatible(R, ctx->fnctx.returnType))
                 errorReturnType(ctx, Node->r, ctx->fnctx);
 
-        } else if (!typeIsVoid(ctx->fnctx.returnType)) {
-            Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
+        } else if (!typeIsVoid(ctx->fnctx.returnType))
             errorReturnType(ctx, Node->r, ctx->fnctx);
-        }
 
-    /*No known return type because we're in a lambda
-      Infer the type from the expression given. Any further returns will be
-      checked against this, and it will also be used for the type of the lambda
-      itself.*/
-    } else {
-        ctx->fnctx.returnType =   Node->r
-                                ? typeDeepDuplicate(analyzerValue(ctx, Node->r))
-                                : typeCreateBasic(ctx->types[builtinVoid]);
-    }
+    /*No known return type because we're in a lambda:
+       - Infer the type from the expression given,
+       - Any further returns will be checked against this, and it will also be
+         used for the type of the lambda itself.*/
+    } else
+        ctx->fnctx.returnType = R ? typeDeepDuplicate(R)
+                                  : typeCreateBasic(ctx->types[builtinVoid]);
 }
 
