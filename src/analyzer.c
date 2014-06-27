@@ -205,7 +205,7 @@ static void analyzerLoop (analyzerCtx* ctx, ast* Node) {
     analyzerValue(ctx, cond);
 
     if (!typeIsCondition(cond->dt))
-        errorTypeExpected(ctx, cond, "do loop", "condition");
+        errorTypeExpected(ctx, cond, "while loop", "condition");
 
     /*Code*/
 

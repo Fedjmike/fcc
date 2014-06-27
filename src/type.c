@@ -205,7 +205,7 @@ const type* typeGetRecord (const type* DT) {
 const type* typeGetCallable (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return DT->tag == typeFunction ? DT :
-           DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
+           DT->tag == typePtr && DT->base->tag == typeFunction ? DT->base : 0;
 }
 
 int typeGetArraySize (const type* DT) {
@@ -601,7 +601,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
     /*Array or Ptr*/
     } else {
-        char* format = 0;
+        char* format;
 
         if (typeIsPtr(DT)) {
             format = malloc(strlen(embedded) + 4 + (DT->qual.isConst ? 7 : 0));

@@ -24,9 +24,9 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
                                  emitterRequest request, const operand* suggestion);
 
 static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
-static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterLogicalBOPImpl (emitterCtx* ctx, irBlock** block, const ast* Node, irBlock* continuation, operand* Value);
 
@@ -157,8 +157,10 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
         Dest = Value;
 
         if (   Value.tag != operandMem
-            && Value.tag != operandLabelMem)
+            && Value.tag != operandLabelMem) {
             debugError("emitterValueImpl", "unable to convert non lvalue operand tag, %s", operandTagGetStr(Value.tag));
+            Dest = operandCreateInvalid();
+        }
 
     /*Specific class of operand*/
     } else if (request == requestReg || request == requestRegOrMem || request == requestValue) {
@@ -313,6 +315,34 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     return Value;
 }
 
+static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    /*Keep the left in memory so that the lvalue gets modified*/
+    operand Value, R = emitterValue(ctx, block, Node->r, requestValue),
+                   L = emitterValue(ctx, block, Node->l, requestMem);
+
+    boperation bop = Node->o == opAddAssign ? bopAdd :
+                     Node->o == opSubtractAssign ? bopSub :
+                     Node->o == opMultiplyAssign ? bopMul :
+                     Node->o == opBitwiseAndAssign ? bopBitAnd :
+                     Node->o == opBitwiseOrAssign ? bopBitOr :
+                     Node->o == opBitwiseXorAssign ? bopBitXor : bopUndefined;
+
+    if (Node->o == opAssign) {
+        Value = R;
+        asmMove(ctx->ir, *block, L, R);
+        operandFree(L);
+
+    } else if (bop != bopUndefined) {
+        Value = L;
+        asmBOP(ctx->ir, *block, bop, L, R);
+        operandFree(R);
+
+    } else
+        debugErrorUnhandled("emitterAssignmentBOP", "operator", opTagGetStr(Node->o));
+
+    return Value;
+}
+
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
     /*x86 is really non-orthogonal for division. EDX:EAX is treated as the LHS
       and then EDX stores the remainder and EAX the quotient*/
@@ -412,34 +442,6 @@ static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Nod
         emitterGiveBackReg(ctx, *block, regRCX, rcxOldSize);
 
     return L;
-}
-
-static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
-    /*Keep the left in memory so that the lvalue gets modified*/
-    operand Value, R = emitterValue(ctx, block, Node->r, requestValue),
-                   L = emitterValue(ctx, block, Node->l, requestMem);
-
-    boperation bop = Node->o == opAddAssign ? bopAdd :
-                     Node->o == opSubtractAssign ? bopSub :
-                     Node->o == opMultiplyAssign ? bopMul :
-                     Node->o == opBitwiseAndAssign ? bopBitAnd :
-                     Node->o == opBitwiseOrAssign ? bopBitOr :
-                     Node->o == opBitwiseXorAssign ? bopBitXor : bopUndefined;
-
-    if (Node->o == opAssign) {
-        Value = R;
-        asmMove(ctx->ir, *block, L, R);
-        operandFree(L);
-
-    } else if (bop != bopUndefined) {
-        Value = L;
-        asmBOP(ctx->ir, *block, bop, L, R);
-        operandFree(R);
-
-    } else
-        debugErrorUnhandled("emitterAssignmentBOP", "operator", opTagGetStr(Node->o));
-
-    return Value;
 }
 
 static operand emitterLogicalBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {

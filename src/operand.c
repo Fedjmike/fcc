@@ -151,7 +151,7 @@ int operandGetSize (const architecture* arch, operand Value) {
     else if (Value.tag == operandReg)
         return Value.base->allocatedAs;
 
-    else if (   Value.tag == operandMem || Value.tag == operandLabelMem)
+    else if (Value.tag == operandMem || Value.tag == operandLabelMem)
         return Value.size;
 
     else if (Value.tag == operandLiteral)
@@ -184,7 +184,7 @@ char* operandToStr (operand Value) {
     } else if (Value.tag == operandReg)
         return strdup(regGetStr(Value.base));
 
-    else if (   Value.tag == operandMem || Value.tag == operandLabelMem) {
+    else if (Value.tag == operandMem || Value.tag == operandLabelMem) {
         const char* sizeStr;
 
         if (Value.size == 1)

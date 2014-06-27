@@ -253,6 +253,7 @@ static irBlock* emitterIter (emitterCtx* ctx, irBlock* block, const ast* Node) {
     ctx->continueTo = oldContinueTo;
 
     /*Iterate and loop check*/
+
     emitterValue(ctx, &iterate, iter, requestVoid);
     emitterBranchOnValue(ctx, iterate, cond, body, continuation);
 

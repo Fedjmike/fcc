@@ -6,8 +6,6 @@
 #include "../inc/ast.h"
 #include "../inc/architecture.h"
 
-#include "string.h"
-
 static evalResult evalBOP (const architecture* arch, const ast* Node);
 static evalResult evalUOP (const architecture* arch, const ast* Node);
 static evalResult evalTernary (const architecture* arch, const ast* Node);

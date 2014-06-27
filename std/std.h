@@ -4,7 +4,7 @@
 
 #include "stddef.h"
 
-char* strdup (const char* Str);
+char* strdup (const char* str);
 
 /*Non standard (mine)*/
 

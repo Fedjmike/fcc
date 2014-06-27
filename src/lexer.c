@@ -155,7 +155,6 @@ void lexerNext (lexerCtx* ctx) {
                      ? tokenKeyword
                      : tokenIdent;
 
-
     /*Number*/
     } else if (isdigit(ctx->stream->current)) {
         ctx->token = tokenInt;

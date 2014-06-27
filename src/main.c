@@ -13,6 +13,10 @@
 
 static bool driver (config conf);
 
+static const char* plural (int n) {
+    return n == 1 ? "" : "s";
+}
+
 static bool driver (config conf) {
     bool fail = false;
 
@@ -30,12 +34,12 @@ static bool driver (config conf) {
 
     if (comp.errors != 0 || comp.warnings != 0)
         printf("Compilation complete with %d error%s and %d warning%s\n",
-               comp.errors, comp.errors == 1 ? "" : "s",
-               comp.warnings, comp.warnings == 1 ? "" : "s");
+               comp.errors, plural(comp.errors),
+               comp.warnings, plural(comp.warnings));
 
     else if (internalErrors)
         printf("Compilation complete with %d internal error%s\n",
-               internalErrors, internalErrors == 1 ? "" : "s");
+               internalErrors, plural(internalErrors));
 
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {

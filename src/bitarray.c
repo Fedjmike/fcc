@@ -47,7 +47,7 @@ bool bitarrayUnset (bitarray* bits, int index) {
 
 bitarrayWord bitarrayTest (const bitarray* bits, int index) {
     if (index >= bits->bitno)
-        return false;
+        return 0;
 
     int word = index / bitsPerWord,
         bit = index % bitsPerWord;

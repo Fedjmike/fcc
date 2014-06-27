@@ -397,6 +397,8 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base, b
 
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
     bool fn = typeIsFunction(base);
+    /*Defaults to extern if a function, static if a module level variable,
+      auto otherwise, but an explicit storage specifier overrides all.*/
     Node->storage =   storage ? storage
                     : fn ? storageExtern
                     : module ? storageStatic : storageAuto;
