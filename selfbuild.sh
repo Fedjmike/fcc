@@ -1,6 +1,7 @@
 mkdir -p {obj,bin}/self
 
-ANTIPATTERN="debug|error|lexer|reg"
+ANTIPATTERN="reg|lexer\.c"
+ANTIANTIPATTERN="reg"
 
 set -e
 
@@ -14,7 +15,7 @@ HOSTING=`find ../../src/*.c | egrep -v "$ANTIPATTERN"`
 ../../bin/$CONFIG/fcc -I ../../tests/include -c $HOSTING
 popd >/dev/null
 
-EXT=`find src/*.c | egrep "$ANTIPATTERN"`
+EXT=`find src/*.c | egrep "$ANTIANTIPATTERN"`
 gcc -g -m32 $CFLAGS $EXT obj/self/*.o -o bin/self/fcc
 rm -f src/*.o
 
