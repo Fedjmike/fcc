@@ -23,7 +23,7 @@
 static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
 
-static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
+static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion);
 static operand emitterAssignmentBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterShiftBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterDivisionBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
@@ -80,7 +80,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             Value = emitterLogicalBOP(ctx, block, Node);
 
         else
-            Value = emitterBOP(ctx, block, Node);
+            Value = emitterBOP(ctx, block, Node, suggestion);
 
     } else if (Node->tag == astUOP)
         Value = emitterUOP(ctx, block, Node);
@@ -257,7 +257,7 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
     return Dest;
 }
 
-static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
+static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* suggestion) {
     operand L, R, Value;
 
     /* '.' */
@@ -288,8 +288,8 @@ static operand emitterBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
 
     /* ',' */
     } else if (Node->o == opComma) {
-        operandFree(emitterValue(ctx, block, Node->l, requestAny));
-        Value = emitterValue(ctx, block, Node->r, requestAny);
+        emitterValue(ctx, block, Node->l, requestVoid);
+        Value = emitterValueSuggest(ctx, block, Node->r, suggestion);
 
     /*Numeric operator*/
     } else {
