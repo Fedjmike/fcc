@@ -19,6 +19,7 @@ static void emitterEnum (emitterCtx* ctx, sym* Symbol);
 
 static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
+static void emitterDeclCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclName (emitterCtx* ctx, const ast* Node);
 
 void emitterDecl (emitterCtx* ctx, irBlock** block, const ast* Node) {
@@ -130,8 +131,7 @@ static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astCall) {
-        /*Nothing to do with the params*/
-        emitterDeclNode(ctx, block, Node->l);
+        emitterDeclCall(ctx, block, Node);
 
     } else if (Node->tag == astIndex) {
         /*The emitter does nothing the to size of the array, so only go
@@ -175,6 +175,24 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* N
 
     } else if (Node->symbol->storage != storageExtern)
         debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
+}
+
+static void emitterDeclCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    for (ast* param = Node->firstChild;
+         param;
+         param = param->nextSibling) {
+        if (param->tag == astParam) {
+            emitterDeclBasic(ctx, param->l);
+            emitterDeclNode(ctx, block, param->r);
+
+        } else if (param->tag == astEllipsis)
+            ;
+
+        else
+            debugErrorUnhandled("emitterDeclCall", "AST tag", astTagGetStr(param->tag));
+    }
+
+    emitterDeclNode(ctx, block, Node->l);
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {

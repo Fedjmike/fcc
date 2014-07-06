@@ -89,8 +89,7 @@ static void emitterModule (emitterCtx* ctx, const ast* Node) {
 static void emitterFnImpl (emitterCtx* ctx, const ast* Node) {
     debugEnter("FnImpl");
 
-    if (Node->symbol->label == 0)
-        ctx->arch->symbolMangler(Node->symbol);
+    emitterDecl(ctx, 0, Node->l);
 
     int stacksize = emitterFnAllocateStack(ctx->arch, Node->symbol);
 
