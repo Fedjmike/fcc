@@ -482,7 +482,7 @@ static void analyzerSizeof (analyzerCtx* ctx, ast* Node) {
     else
         analyzerValue(ctx, Node->r);
 
-    Node->dt = typeCreateBasic(ctx->types[builtinInt]);
+    Node->dt = typeCreateBasic(ctx->types[builtinSizeT]);
 }
 
 static void analyzerLiteral (analyzerCtx* ctx, ast* Node) {
