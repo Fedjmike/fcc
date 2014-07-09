@@ -679,7 +679,13 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
         }
 
     } else {
-        errorExpected(ctx, "name");
+        if (ctx->lexer->token == tokenKeyword) {
+            errorKeywordAsIdent(ctx);
+            tokenNext(ctx);
+
+        } else
+            errorExpected(ctx, "identifier");
+
         Node = astCreateInvalid(ctx->location);
         Node->literal = strdup("");
         Node->symbol = symCreateNamed(tag, ctx->scope, "");

@@ -10,6 +10,7 @@ typedef struct analyzerFnCtx analyzerFnCtx;
 
 void errorExpected (parserCtx* ctx, const char* expected);
 void errorUndefSym (parserCtx* ctx);
+void errorKeywordAsIdent (parserCtx* ctx);
 void errorUndefType (parserCtx* ctx);
 void errorIllegalOutside (parserCtx* ctx, const char* what, const char* where);
 void errorRedeclaredSymAs (parserCtx* ctx, const sym* Symbol, symTag tag);

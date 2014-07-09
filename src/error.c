@@ -189,6 +189,10 @@ void errorUndefSym (parserCtx* ctx) {
     errorParser(ctx, "'$h' undefined", ctx->lexer->buffer);
 }
 
+void errorKeywordAsIdent (parserCtx* ctx) {
+    errorParser(ctx, "cannot use keyword '$h' as an identifier", ctx->lexer->buffer);
+}
+
 void errorUndefType (parserCtx* ctx) {
     errorParser(ctx, "'$h' undefined, expected type", ctx->lexer->buffer);
 }
