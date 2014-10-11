@@ -147,7 +147,7 @@ void optionsParse (config* conf, int argc, char** argv) {
             } else {
                 if (fexists(option)) {
                     vectorPush(&conf->inputs, strdup(option));
-                    vectorPush(&conf->intermediates, filext(option, "s"));
+                    vectorPush(&conf->intermediates, filext(option, "s", malloc));
 
                 } else
                     printf("fcc: Input file '%s' doesn't exist\n", option);
@@ -171,7 +171,7 @@ void optionsParse (config* conf, int argc, char** argv) {
             }
 
             if (conf->output == 0)
-                conf->output = filext(vectorGet(&conf->inputs, 0), "");
+                conf->output = filext(vectorGet(&conf->inputs, 0), "", malloc);
         }
     }
 }

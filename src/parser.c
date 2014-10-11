@@ -30,7 +30,7 @@ static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullna
 
     ctx->filename = filename;
     ctx->fullname = fullname;
-    ctx->path = fgetpath(fullname);
+    ctx->path = fgetpath(fullname, malloc);
 
     ctx->comp = comp;
 
@@ -101,7 +101,7 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
             sym* scope = symCreateScope(comp->global);
 
             parserCtx ctx;
-            parserInit(&ctx, scope, fstripname(filename), fullname, comp);
+            parserInit(&ctx, scope, fstripname(filename, malloc), fullname, comp);
             ast* Module = parserModule(&ctx);
             parserEnd(&ctx);
 

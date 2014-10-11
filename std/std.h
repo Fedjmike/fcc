@@ -13,7 +13,7 @@ typedef void* (*stdalloc)(size_t);
 /**
  * Modify a file names extension
  */
-char* filext (const char* name, const char* extension);
+char* filext (const char* name, const char* extension, void* (*allocator)(size_t));
 
 /**
  * Returns the floor of the log of x, in a given base
@@ -24,9 +24,9 @@ int logi (int x, int base);
 
 bool fexists (const char* filename);
 
-char* fgetpath (const char* fullname);
-char* fgetname (const char* fullname);
-char* fstripname (const char* fullname);
+char* fgetpath (const char* fullname, void* (*allocator)(size_t));
+char* fgetname (const char* fullname, void* (*allocator)(size_t));
+char* fstripname (const char* fullname, void* (*allocator)(size_t));
 
 bool strprefix (const char* str, const char* prefix);
 
