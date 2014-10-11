@@ -501,10 +501,9 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
 
     tokenLocation loc = ctx->location;
     ast* Node = parserDeclAtom(ctx, inDecl, tag);
+    sym* Symbol = Node->symbol;
 
     while (true) {
-        sym* Symbol = Node->symbol;
-
         /*Function*/
         if (tokenIsPunct(ctx, punctLParen)) {
             /*The proper param symbols are created just before the parsing of the body,
