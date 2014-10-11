@@ -13,7 +13,7 @@ typedef struct streamCtx {
     int lineChar;
 } streamCtx;
 
-streamCtx* streamInit (FILE* file);
+streamCtx* streamInit (const char* filename);
 void streamEnd (streamCtx* ctx);
 
 /**

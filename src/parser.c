@@ -25,7 +25,7 @@ static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
 static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullname, compilerCtx* comp) {
-    ctx->lexer = lexerInit(fopen(fullname, "r"));
+    ctx->lexer = lexerInit(fullname);
     ctx->location = (tokenLocation) {0, 0, 0};
 
     ctx->filename = filename;

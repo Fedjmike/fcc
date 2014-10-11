@@ -74,7 +74,7 @@ typedef struct lexerCtx {
     int length;
 } lexerCtx;
 
-lexerCtx* lexerInit (FILE* file);
+lexerCtx* lexerInit (const char* filename);
 void lexerEnd (lexerCtx* ctx);
 
 void lexerNext (lexerCtx* ctx);
