@@ -180,7 +180,7 @@ void irBlockOut (irBlock* block, const char* format, ...) {
     debugVarMsg(format, args[1]);
     va_end(args[1]);
 
-    int length = vsnprintf(block->str+block->length, block->capacity, format, args[0]);
+    int length = vsnprintf(block->str+block->length, block->capacity-block->length, format, args[0]);
     va_end(args[0]);
 
     if (length < 0 || block->length+length >= block->capacity) {
