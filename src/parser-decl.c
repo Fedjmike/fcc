@@ -335,7 +335,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
  * Name is told to create a symbol of the tag indicated by the first
  * token.
  */
-static struct ast* parserStructOrUnion (parserCtx* ctx) {
+static ast* parserStructOrUnion (parserCtx* ctx) {
     debugEnter("StructOrUnion");
 
     tokenLocation loc = ctx->location;
@@ -393,7 +393,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 /**
  * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
  */
-static struct ast* parserEnum (parserCtx* ctx) {
+static ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
 
     tokenLocation loc = ctx->location;
