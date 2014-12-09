@@ -35,6 +35,7 @@ static void compilerInitSymbols (compilerCtx* ctx) {
     symCreateType(ctx->global, "int16_t", 2, typeIntegral);
     symCreateType(ctx->global, "int32_t", 4, typeIntegral);
     symCreateType(ctx->global, "intptr_t", ctx->arch->wordsize, typeIntegral);
+    symCreateType(ctx->global, "intmax_t", ctx->arch->wordsize, typeIntegral);
 
     if (ctx->arch->wordsize >= 8)
         symCreateType(ctx->global, "int64_t", 8, typeIntegral);
