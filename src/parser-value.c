@@ -335,7 +335,7 @@ static ast* parserObject (parserCtx* ctx) {
  *          | ( "(" Type ")" Unary )
  *          | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
- *          | VAStart | VAEnd | VAArg | VACopy
+ *          | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
  *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
@@ -438,6 +438,12 @@ static ast* parserFactor (parserCtx* ctx) {
                || tokenIsKeyword(ctx, keywordVAArg)
                || tokenIsKeyword(ctx, keywordVACopy)) {
         Node = parserVA(ctx);
+
+    /*assert*/
+    } else if (tokenTryMatchKeyword(ctx, keywordAssert)) {
+        tokenMatchPunct(ctx, punctLParen);
+        Node = astCreateAssert(loc, parserAssignValue(ctx));
+        tokenMatchPunct(ctx, punctRParen);
 
     /*Identifier*/
     } else if (tokenIsIdent(ctx)) {

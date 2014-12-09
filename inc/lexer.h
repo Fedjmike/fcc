@@ -25,7 +25,8 @@ typedef enum keywordTag {
     keywordStruct, keywordUnion, keywordEnum,
     keywordVoid, keywordBool, keywordChar, keywordInt,
     keywordTrue, keywordFalse,
-    keywordVAStart, keywordVAEnd, keywordVAArg, keywordVACopy
+    keywordVAStart, keywordVAEnd, keywordVAArg, keywordVACopy,
+    keywordAssert
 } keywordTag;
 
 typedef enum punctTag {

@@ -35,7 +35,7 @@ typedef enum astTag {
     astType, astDecl, astParam, astStruct, astUnion, astEnum, astConst,
     astCode, astBranch, astLoop, astIter, astReturn, astBreak, astContinue,
     astBOP, astUOP, astTOP, astIndex, astCall, astCast, astSizeof, astLiteral,
-    astVAStart, astVAEnd, astVAArg, astVACopy, astEllipsis
+    astVAStart, astVAEnd, astVAArg, astVACopy, astAssert, astEllipsis
 } astTag;
 
 typedef enum markerTag {
@@ -62,7 +62,8 @@ typedef enum opTag {
     opLogicalNot, opBitwiseNot, opUnaryPlus, opNegate, opDeref, opAddressOf,
     opIndex, opCall,
     opPreIncrement, opPreDecrement, opPostIncrement, opPostDecrement,
-    opMember, opMemberDeref
+    opMember, opMemberDeref,
+    opAssert
 } opTag;
 
 typedef enum literalTag {
@@ -83,7 +84,6 @@ typedef enum literalTag {
  * Subclasses:
  *   o Values
  *      - Defined as those that are returned by parserValue.
- *      - One of: BOP, UOP, TOP, Index, Call, Cast, Sizeof, Literal, Empty
  *      - They represent value returning expressions.
  *      - Handled by functions such as analyzerValue, emitterValue.
  *
@@ -187,6 +187,7 @@ ast* astCreateCast (tokenLocation location, ast* result, ast* r);
 ast* astCreateSizeof (tokenLocation location, ast* r);
 ast* astCreateLiteral (tokenLocation location, literalTag litTag);
 ast* astCreateLiteralIdent (tokenLocation location, char* ident);
+ast* astCreateAssert (tokenLocation location, ast* expr);
 
 void astAddChild (ast* Parent, ast* Child);
 

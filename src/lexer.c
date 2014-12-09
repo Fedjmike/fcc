@@ -266,10 +266,16 @@ static keywordTag lookKeyword (const char* str) {
     const char* rest[] = {str+1, str+2, str+3, str+4};
 
     switch (str[0]) {
-    case 'a': return !strcmp(rest[0], "uto") ? keywordAuto : keywordUndefined;
     case 'd': return !strcmp(rest[0], "o") ? keywordDo : keywordUndefined;
     case 'r': return !strcmp(rest[0], "eturn") ? keywordReturn : keywordUndefined;
     case 'w': return !strcmp(rest[0], "hile") ? keywordWhile : keywordUndefined;
+
+    case 'a':
+        switch (str[1]) {
+        case 's': return !strcmp(rest[1], "sert") ? keywordAssert : keywordUndefined;
+        case 'u': return !strcmp(rest[1], "to") ? keywordAuto : keywordUndefined;
+        default: return keywordUndefined;
+        }
 
     case 'b':
         switch (str[1]) {

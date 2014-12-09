@@ -186,6 +186,12 @@ ast* astCreateLiteralIdent (tokenLocation location, char* ident) {
     return Node;
 }
 
+ast* astCreateAssert (tokenLocation location, ast* expr) {
+    ast* Node = astCreate(astAssert, location);
+    Node->r = expr;
+    return Node;
+}
+
 void astAddChild (ast* Parent, ast* Child) {
     if (Parent->firstChild == 0) {
         Parent->firstChild = Child;
@@ -204,7 +210,8 @@ bool astIsValueTag (astTag tag) {
     return    tag == astBOP || tag == astUOP || tag == astTOP
            || tag == astCall || tag == astIndex || tag == astCast
            || tag == astSizeof || tag == astLiteral || tag == astVAStart
-           || tag == astVAEnd || tag == astVAArg || tag == astVACopy;
+           || tag == astVAEnd || tag == astVAArg || tag == astVACopy
+           || tag == astAssert;
 }
 
 const char* astTagGetStr (astTag tag) {
@@ -242,6 +249,7 @@ const char* astTagGetStr (astTag tag) {
     else if (tag == astVAEnd) return "astVAEnd";
     else if (tag == astVAArg) return "astVAArg";
     else if (tag == astVACopy) return "astVACopy";
+    else if (tag == astAssert) return "astAssert";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

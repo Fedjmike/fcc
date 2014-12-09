@@ -48,6 +48,8 @@ static operand emitterVAEnd (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterVAArg (emitterCtx* ctx, irBlock** block, const ast* Node);
 static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node);
 
+static operand emitterAssert (emitterCtx* ctx, irBlock** block, const ast* Node);
+
 operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request) {
     return emitterValueImpl(ctx, block, Node, request, 0);
 }
@@ -114,6 +116,9 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
 
     else if (Node->tag == astVACopy)
         Value = emitterVACopy(ctx, block, Node);
+
+    else if (Node->tag == astAssert)
+        Value = emitterAssert(ctx, block, Node);
 
     else if (Node->tag == astEmpty)
         Value = operandCreateVoid();
@@ -1091,5 +1096,10 @@ static operand emitterVACopy (emitterCtx* ctx, irBlock** block, const ast* Node)
 
     asmMove(ctx->ir, *block, L, R);
 
+    return operandCreateVoid();
+}
+
+static operand emitterAssert (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    (void) ctx, (void) block, (void) Node;
     return operandCreateVoid();
 }

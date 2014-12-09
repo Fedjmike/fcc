@@ -73,7 +73,7 @@ static bool isNodeLvalue (const ast* Node) {
     else if (   Node->tag == astCall || Node->tag == astCast
              || Node->tag == astVAStart || Node->tag == astVAEnd
              || Node->tag == astVAArg || Node->tag == astVACopy
-             || Node->tag == astSizeof )
+             || Node->tag == astSizeof || Node->tag == astAssert)
         return false;
 
     else if (Node->tag == astLiteral)
@@ -159,6 +159,9 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
 
     else if (Node->tag == astVACopy)
         analyzerVACopy(ctx, Node);
+
+    else if (Node->tag == astAssert)
+        analyzerAssert(ctx, Node);
 
     else if (Node->tag == astInvalid)
         Node->dt = typeCreateInvalid();
@@ -766,4 +769,13 @@ static void analyzerVAListParam (analyzerCtx* ctx, ast* Node, const char* where,
 
     else if (!isNodeLvalue(Node))
         errorVAxLvalue(ctx, Node, where, which);
+}
+
+static void analyzerAssert (analyzerCtx* ctx, ast* Node) {
+    const type* R = analyzerValue(ctx, Node->r);
+
+    if (!typeIsCondition(R))
+        errorOpTypeExpected(ctx, Node->r, opAssert, "condition value");
+
+    Node->dt = typeCreateBasic(ctx->types[builtinVoid]);
 }
