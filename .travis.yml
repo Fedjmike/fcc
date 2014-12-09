@@ -6,4 +6,4 @@ branches:
     except: ir
 script: >
         make --keep-going print all &&
-        make --keep-going print-tests tests-all
+        make --keep-going print-tests tests

@@ -111,7 +111,7 @@ ifneq ($(shell command -v valgrind; echo $?),)
 	VALGRIND ?= valgrind $(VFLAGS)
 endif
 
-tests-all: $(TESTS)
+tests: $(TESTS)
 	
 bin/tests/%-error.txt: tests/%-error.c $(FCC)
 	@mkdir -p bin/tests
@@ -151,5 +151,5 @@ bin/self/fcc: $(OUT) selfbuild.sh
 #
 #
 	
-.PHONY: all clean print print-tests tests-all selfbuild
+.PHONY: all clean print print-tests tests selfbuild
 .SUFFIXES:

@@ -90,7 +90,7 @@ Makefile options (all optional):
 - `VALGRIND`, default: true (if Valgrind is found)
 
 Makefile targets:
-- `all clean print  tests-all print-tests  selfbuild`
+- `all clean print  tests print-tests  selfbuild`
 
 Use the `FCC` option to choose which copy of FCC to run the tests against.
 
