@@ -90,11 +90,11 @@ Makefile options (all optional):
 - `VALGRIND`, default: true (if Valgrind is found)
 
 Makefile targets:
-- `all clean print  tests print-tests  selfbuild`
+- `all clean print  tests print-tests  selfhost`
 
 Use the `FCC` option to choose which copy of FCC to run the tests against.
 
-The `selfbuild` target executes a partial self-host: a predefined set of modules is compiled by FCC, the rest by GCC (this is not overrideable). The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both. [The modifications](https://github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http://en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
+The `selfhost` target fully compiles FCC using an existing copy, `bin/$CONFIG/fcc`. The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both FCC and a regular C compiler. [The modifications](https:/github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http:/en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
 
 If found on the system the compiler will be run against Valgrind when building tests. To disable this, set `VALGRIND=""`.
 

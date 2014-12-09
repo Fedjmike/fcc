@@ -56,7 +56,7 @@ POSTBUILD = @[ -e $@ ] && du -hs $@; echo
 #
 
 HEADERS = $(wildcard inc/*.h) defaults.h
-OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
+OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(filter-out src/lexerself.c, $(filter-out src/regself.c, $(wildcard src/*.c))))
 
 OBJ = obj/$(CONFIG)
 BIN = bin/$(CONFIG)
@@ -137,19 +137,19 @@ print-tests:
 	@echo "===================="
 	
 #
-# Partial selfbuild
+# Selfhost
 #
 
-selfbuild: bin/self/fcc
+selfhost: bin/self/fcc
 
-bin/self/fcc: $(OUT) selfbuild.sh
-	@echo " [FCC+GCC] $@"
-	@CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
+bin/self/fcc: $(OUT) src/lexerself.c src/regself.c
+	@echo " [FCC] $@"
+	@$(VALGRIND) $(FCC) -I tests/include `find src/*.[c] | egrep -v "lexer.c|reg.c"` -o $@
 	$(POSTBUILD)
 	
 #	
 #
 #
 	
-.PHONY: all clean print print-tests tests selfbuild
+.PHONY: all clean print print-tests tests selfhost
 .SUFFIXES:
