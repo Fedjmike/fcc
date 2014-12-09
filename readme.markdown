@@ -9,10 +9,12 @@ The compiler implements a language quite similar to C, but there are some major 
 - Features added:
   - Lambdas
   - Simple module system
-  - `bool` type
+  - `bool` type, `true` and `false` are boolean literals
 - Different semantics:
   - Unified variable/typedef/struct/union/enum namespace
   - Logical operators (`||`, `&&`, and `!`) return `bool`
+  - `va_*` are implemented as builtins, and including `stdarg.h` has no effect
+  - The types usually defined by `stdint.h` are also builtins
   - Empty prototype parentheses means zero arguments
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
@@ -21,7 +23,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - String literals are `const char*`
 - The features of C99 and C11 supported:
   - Anonymous structs/unions
-  - Compound literals
+  - Compound literals and designated initializers
   - Intermingled code/declarations including for-loop declarations
   - C++ comments
 - No support for / features removed:
@@ -34,14 +36,13 @@ The compiler implements a language quite similar to C, but there are some major 
   - Bitfields
   - Implicit casts / coercion between integral types
   - `goto` and labels
-  - Designated initializers for initializers and compound literals
   - `volatile`
   - `register` storage class
 
 The compiler is advanced enough to self-host much of itself with the rest compiled with GCC. As the compiler matures experimental additions to the language considered are:
 
 - Type polymorphism as in ML/Haskell
-- Lambdas/closures
+- Closures
 - Option types (`option` in ML, `Maybe` in Haskell)
 - Algebraic types (a more general solution to option types)
 
@@ -66,6 +67,8 @@ Output
 ------
 
 The compiler generates assembly for x86 (32-bit) CPUs. 64-bit AMD64 is experimental. The compiler does very little optimization before emitting straight to assembly.
+
+To run the 32-bit code on a 64-bit OS, you will probably need to install 32-bit runtime libraries (try `sudo apt-get install gcc-multilib`).
 
 The ABI is largely compatible GCC and Clang's. However, passing and returning structs as values will often not work. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another.
 
@@ -113,3 +116,17 @@ Usage: `fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>`
 - `-o <file>`  Output into a specific file
 - `--help`     Display command line information
 - `--version`  Display version information
+
+License
+-------
+
+Unless otherwise stated, a source file in this package is under the GNU GPL V3 license.
+
+Fedjmike's C Compiler Copyright (C) 2012-2014 Sam Nipps
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+
+You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses/.
+
