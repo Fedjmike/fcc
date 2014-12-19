@@ -443,7 +443,7 @@ void errorIncompleteParamDecl (analyzerCtx* ctx, const ast* Node, const ast* fn,
     }
 
     if (Node->symbol && Node->symbol->ident)
-        errorAnalyzer(ctx, Node, "parameter $d$s$h, $h declared with incomplete type $t", n, of, ident, Node->symbol->ident, Node->dt);
+        errorAnalyzer(ctx, Node, "parameter $d$s$h, $h declared with incomplete type $t", n, of, ident, Node->symbol->ident, DT);
 
     else
         errorAnalyzer(ctx, Node, "parameter $d$s$h declared with incomplete type $t", n, of, ident, DT);
