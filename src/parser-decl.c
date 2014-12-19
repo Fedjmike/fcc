@@ -48,6 +48,16 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
     return Node;
 }
 
+/**
+ * In C, prototypes are allowed to name the parameters but these names aren't
+ * actually used; only the declarations of the parameters from the function
+ * implementation matter. However, during the parsing of a decl we can't tell
+ * whether we're seeing an implementation or not!
+ * So, we call this function after the '{' is seen and it traces up the AST
+ * creating param symbols. @see parserFnImpl
+ * To complicate matter, for diagnostics purposes we *do* actually create param
+ * symbols for prototypes, but we put them in a "bin". @see parserDeclObject
+ */
 static void parserCreateParamSymbols (ast* Node, sym* scope) {
     /*Trace up the AST to find the astCall*/
 
@@ -97,11 +107,8 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
         if (ident && ident->litTag == literalIdent)
             param->symbol = symCreateNamed(symParam, scope, (char*) ident->literal);
 
-        /*Trace back up, assigning the symbol to all the nodes*/
+        /*Trace up again, assigning the symbol to all the nodes*/
         for (ident = param; ident;) {
-            if (!ident)
-                break;
-
             ident->symbol = param->symbol;
 
             if (   ident->tag == astBOP || ident->tag == astIndex
