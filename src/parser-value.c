@@ -12,6 +12,7 @@
 
 #include "stdlib.h"
 #include "string.h"
+#include "assert.h"
 
 static ast* parserComma (parserCtx* ctx);
 static ast* parserAssign (parserCtx* ctx);
@@ -633,8 +634,10 @@ static ast* parserVA (parserCtx* ctx) {
         } else if (tag == astVAArg)
             Node->r = parserType(ctx);
 
-        else /*if (tag == astVACopy)*/
+        else {
+            assert(tag == astVACopy);
             Node->r = parserAssignValue(ctx);
+        }
     }
 
     tokenMatchPunct(ctx, punctRParen);
