@@ -13,6 +13,7 @@
 #include "../inc/analyzer-decl.h"
 
 #include "stdlib.h"
+#include "assert.h"
 
 static void analyzerBOP (analyzerCtx* ctx, ast* Node);
 static void analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
@@ -233,10 +234,13 @@ static void analyzerComparisonBOP (analyzerCtx* ctx, ast* Node) {
             errorOpTypeExpected(ctx, !typeIsOrdinal(L) ? Node->l : Node->r,
                                 Node->o, "comparable type");
 
-    } else /*if (opIsEquality(Node->o))*/
+    } else {
+        assert(opIsEquality(Node->o));
+
         if (!typeIsEquality(L) || !typeIsEquality(R))
             errorOpTypeExpected(ctx, !typeIsEquality(L) ? Node->l : Node->r,
                                 Node->o, "comparable type");
+    }
 
     if (!typeIsCompatible(L, R))
         errorMismatch(ctx, Node, Node->o);
