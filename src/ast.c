@@ -370,6 +370,7 @@ const char* opTagGetStr (opTag tag) {
     else if (tag == opCall) return "()";
     else if (tag == opMember) return ".";
     else if (tag == opMemberDeref) return "->";
+    else if (tag == opAssert) return "assert";
     else {
         char* str = malloc(logi((int) tag, 10)+2);
         sprintf(str, "%d", tag);
