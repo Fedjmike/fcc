@@ -49,7 +49,7 @@ bool tokenIsChar (const parserCtx* ctx) {
 }
 
 bool tokenIsDecl (const parserCtx* ctx) {
-    sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
+    sym* Symbol = tokenIsIdent(ctx) ? symFind(ctx->scope, ctx->lexer->buffer) : 0;
 
     return    (Symbol && Symbol->tag != symId
                       && Symbol->tag != symParam)
