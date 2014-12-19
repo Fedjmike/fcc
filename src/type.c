@@ -218,12 +218,11 @@ int typeGetArraySize (const type* DT) {
 bool typeSetArraySize (type* DT, int size) {
     DT = typeTryThroughTypedef(DT);
 
-    if (DT->tag == typeArray) {
-        DT->array = size;
-        return true;
-    }
+    if (DT->tag != typeArray)
+        return false;
 
-    return false;
+    DT->array = size;
+    return true;
 }
 
 /*:::: TYPE DERIVATION ::::*/
