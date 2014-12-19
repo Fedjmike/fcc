@@ -246,8 +246,8 @@ void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src) {
         char* DestStr = operandToStr(Dest);
         char* SrcStr = operandToStr(Src);
 
-        if (operandGetSize(ctx->arch, Dest) > operandGetSize(ctx->arch, Src) &&
-            Src.tag != operandLiteral)
+        if (   operandGetSize(ctx->arch, Dest) > operandGetSize(ctx->arch, Src)
+            && Src.tag != operandLiteral)
             irBlockOut(block, "movzx %s, %s", DestStr, SrcStr);
 
         else

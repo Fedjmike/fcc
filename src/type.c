@@ -397,8 +397,8 @@ bool typeIsAssignment (const type* DT) {
 
 bool typeIsCondition (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition)) ||
-            typeIsPtr(DT) || typeIsInvalid(DT);
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition))
+           || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 /*:::: TYPE COMPARISON ::::*/
@@ -589,8 +589,8 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
         /* */
 
-        char* format = malloc(strlen(embedded) +
-                              strlen(params)+5);
+        char* format = malloc(  strlen(embedded) + 2
+                              + strlen(params) + 3);
 
         if (!embedded[0])
             sprintf(format, "()(%s)", params);
