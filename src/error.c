@@ -106,7 +106,7 @@ static void verrorf (const char* format, va_list args) {
                 if (Node->symbol && Node->symbol->ident && Node->symbol->dt)
                     if (Node->symbol->tag == symId || Node->symbol->tag == symParam) {
                         char* identStr = strjoin((char**) (const char* []) {colourIdent, Node->symbol->ident, colourType}, 3, malloc);
-                        char* typeStr = typeToStrEmbed(Node->dt, identStr);
+                        char* typeStr = typeToStrEmbed(Node->symbol->dt, identStr);
                         printf("%s%s%s", colourType, typeStr, consoleNormal);
                         free(identStr);
                         free(typeStr);
