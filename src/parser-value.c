@@ -334,7 +334,7 @@ static ast* parserObject (parserCtx* ctx) {
  * Factor =   ( "(" Value ")" )
  *          | ( "(" Type ")" Unary )
  *          | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
- *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
+ *          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
  *          | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
  *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
