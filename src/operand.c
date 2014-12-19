@@ -9,6 +9,8 @@
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
+#include "assert.h"
+
 using "../inc/operand.h";
 
 using "stdlib.h";
@@ -138,9 +140,11 @@ bool operandIsEqual (operand L, operand R) {
     else if (L.tag == operandLabel || L.tag == operandLabelMem || L.tag == operandLabelOffset)
         return L.label == R.label;
 
-    else /*if (   L.tag == operandVoid || L.tag == operandStack
-               || L.tag == operandInvalid || L.tag == operandUndefined)*/
+    else {
+        assert(   L.tag == operandVoid || L.tag == operandStack
+               || L.tag == operandInvalid || L.tag == operandUndefined);
         return true;
+    }
 }
 
 int operandGetSize (const architecture* arch, operand Value) {
