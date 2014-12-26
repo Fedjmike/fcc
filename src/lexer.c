@@ -183,81 +183,84 @@ void lexerNext (lexerCtx* ctx) {
 
         streamNext(ctx->stream);
 
-    /*Other symbols or punctuation*/
+    /*Punctuation or an unrecognised character*/
     } else {
-        ctx->token = tokenOther;
         lexerEatNext(ctx);
 
         /*Assume punctuation*/
-        ctx->token = tokenPunct;
-
-        switch (ctx->buffer[0]) {
-        case '{': ctx->punct = punctLBrace; break;
-        case '}': ctx->punct = punctRBrace; break;
-        case '(': ctx->punct = punctLParen; break;
-        case ')': ctx->punct = punctRParen; break;
-        case '[': ctx->punct = punctLBracket; break;
-        case ']': ctx->punct = punctRBracket; break;
-        case ';': ctx->punct = punctSemicolon; break;
-        case '.':
-            ctx->punct = punctPeriod;
-
-            if (ctx->stream->current == '.') {
-                lexerEatNext(ctx);
-
-                if (ctx->stream->current == '.') {
-                    ctx->punct = punctEllipsis;
-                    lexerEatNext(ctx);
-
-                /*Oops, it's just two dots, backtrack*/
-                } else {
-                    streamPrev(ctx->stream);
-                    ctx->length--;
-                }
-            }
-
-            break;
-
-        case ',': ctx->punct = punctComma; break;
-
-        case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
-        case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
-        case '>': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctGreaterEqual
-                               : lexerTryEatNext(ctx, '>')
-                                 ? (lexerTryEatNext(ctx, '=') ? punctShrAssign : punctShr)
-                                 : punctGreater; break;
-        case '<': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctLessEqual
-                               : lexerTryEatNext(ctx, '<')
-                                 ? (lexerTryEatNext(ctx, '=') ? punctShlAssign : punctShl)
-                                 : punctLess; break;
-
-        case '?': ctx->punct = punctQuestion; break;
-        case ':': ctx->punct = punctColon; break;
-
-        case '&': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign
-                               : lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
-        case '|': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign
-                               : lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
-        case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
-        case '~': ctx->punct = punctBitwiseNot; break;
-
-        case '+': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctPlusAssign
-                               : lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
-        case '-': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctMinusAssign
-                               : lexerTryEatNext(ctx, '-') ? punctMinusMinus
-                               : lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
-        case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
-        case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
-        case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
-
-        /*Oops, actually an unrecognised character*/
-        default: ctx->token = tokenOther;
-        }
+        lexerPunct(ctx);
     }
 
     lexerEat(ctx, 0);
 
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
+}
+
+static lexerPunct (lexerCtx* ctx) {
+    ctx->token = tokenPunct;
+
+    switch (ctx->buffer[0]) {
+    case '{': ctx->punct = punctLBrace; break;
+    case '}': ctx->punct = punctRBrace; break;
+    case '(': ctx->punct = punctLParen; break;
+    case ')': ctx->punct = punctRParen; break;
+    case '[': ctx->punct = punctLBracket; break;
+    case ']': ctx->punct = punctRBracket; break;
+    case ';': ctx->punct = punctSemicolon; break;
+    case '.':
+        ctx->punct = punctPeriod;
+
+        if (ctx->stream->current == '.') {
+            lexerEatNext(ctx);
+
+            if (ctx->stream->current == '.') {
+                ctx->punct = punctEllipsis;
+                lexerEatNext(ctx);
+
+            /*Oops, it's just two dots, backtrack*/
+            } else {
+                streamPrev(ctx->stream);
+                ctx->length--;
+            }
+        }
+
+        break;
+
+    case ',': ctx->punct = punctComma; break;
+
+    case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
+    case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
+    case '>': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctGreaterEqual
+                           : lexerTryEatNext(ctx, '>')
+                             ? (lexerTryEatNext(ctx, '=') ? punctShrAssign : punctShr)
+                             : punctGreater; break;
+    case '<': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctLessEqual
+                           : lexerTryEatNext(ctx, '<')
+                             ? (lexerTryEatNext(ctx, '=') ? punctShlAssign : punctShl)
+                             : punctLess; break;
+
+    case '?': ctx->punct = punctQuestion; break;
+    case ':': ctx->punct = punctColon; break;
+
+    case '&': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign
+                           : lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
+    case '|': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign
+                           : lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
+    case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
+    case '~': ctx->punct = punctBitwiseNot; break;
+
+    case '+': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctPlusAssign
+                           : lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
+    case '-': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctMinusAssign
+                           : lexerTryEatNext(ctx, '-') ? punctMinusMinus
+                           : lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
+    case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
+    case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
+    case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
+
+    /*Oops, actually an unrecognised character*/
+    default: ctx->token = tokenOther;
+    }
 }
 
 static keywordTag keywordMatch (const char* str, int n, const char* look, keywordTag kw) {
