@@ -14,7 +14,7 @@ static void lexerEat (lexerCtx* ctx, char c);
 static void lexerEatNext (lexerCtx* ctx);
 static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
-static keywordTag lookKeyword (const char* str);
+static keywordTag lookKeyword (const char* str, int length);
 
 lexerCtx* lexerInit (const char* filename) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
@@ -150,7 +150,7 @@ void lexerNext (lexerCtx* ctx) {
 
         lexerEat(ctx, 0);
 
-        ctx->keyword = lookKeyword(ctx->buffer);
+        ctx->keyword = lookKeyword(ctx->buffer, ctx->length);
         ctx->token =   ctx->keyword != keywordUndefined
                      ? tokenKeyword
                      : tokenIdent;
@@ -269,7 +269,12 @@ static keywordTag keywordMatch2 (const char* str, int n, const char* look, keywo
            : !strcmp(str+n+1, look2+n+1) ? kw2 : keywordUndefined;
 }
 
-static keywordTag lookKeyword (const char* str) {
+static keywordTag lookKeyword (const char* str, int length) {
+    int longest = strlen("continue")+1;
+
+    if (length > longest)
+        return keywordUndefined;
+
     /*Manual trie
       Yeah it's ugly, but it's fast. And lexing is the slowest part of compilation.*/
 
