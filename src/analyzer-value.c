@@ -42,6 +42,8 @@ static void analyzerVAArg (analyzerCtx* ctx, ast* Node);
 static void analyzerVACopy (analyzerCtx* ctx, ast* Node);
 static void analyzerVAListParam (analyzerCtx* ctx, ast* Node, const char* where, const char* which);
 
+static void analyzerAssert (analyzerCtx* ctx, ast* Node);
+
 static bool isNodeLvalue (const ast* Node) {
     if (Node->tag == astBOP) {
         if (   opIsNumeric(Node->o) || opIsOrdinal(Node->o)
