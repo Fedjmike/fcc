@@ -14,6 +14,7 @@ static void lexerEat (lexerCtx* ctx, char c);
 static void lexerEatNext (lexerCtx* ctx);
 static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
+static void lexerPunct (lexerCtx* ctx);
 static keywordTag lookKeyword (const char* str, int length);
 
 lexerCtx* lexerInit (const char* filename) {
@@ -101,7 +102,7 @@ static void lexerSkipInsignificants (lexerCtx* ctx) {
         /*Not insignificant, leave*/
         default:
             return;
-
+        }
     }
 }
 
@@ -196,7 +197,7 @@ void lexerNext (lexerCtx* ctx) {
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
 }
 
-static lexerPunct (lexerCtx* ctx) {
+static void lexerPunct (lexerCtx* ctx) {
     ctx->token = tokenPunct;
 
     switch (ctx->buffer[0]) {
