@@ -175,11 +175,8 @@ static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* No
             || (Value.tag == operandLiteral && request == requestValue))
             Dest = Value;
 
-        else {
-            Dest = operandCreateReg(regAlloc(typeGetSize(ctx->arch, Node->dt)));
-            asmMove(ctx->ir, *block, Dest, Value);
-            operandFree(Value);
-        }
+        else
+            Dest = emitterGetInReg(ctx, *block, Value, typeGetSize(ctx->arch, Node->dt));
 
     /*Array, from Mem or LabelMem*/
     } else if (request == requestArray) {
