@@ -15,6 +15,8 @@
 #include "stdlib.h"
 #include "assert.h"
 
+static const type* analyzerValueFrom (analyzerCtx* ctx, ast* Node, astTag parent);
+
 static void analyzerBOP (analyzerCtx* ctx, ast* Node);
 static void analyzerComparisonBOP (analyzerCtx* ctx, ast* Node);
 static void analyzerLogicalBOP (analyzerCtx* ctx, ast* Node);
@@ -105,6 +107,10 @@ static sym* analyzerRecordMember (analyzerCtx* ctx, ast* Node, opTag o, const sy
 }
 
 const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
+    return analyzerValueFrom(ctx, Node, astUndefined);
+}
+
+static const type* analyzerValueFrom (analyzerCtx* ctx, ast* Node, astTag parent) {
     debugEnter(astTagGetStr(Node->tag));
 
     if (Node->tag == astBOP) {
@@ -171,6 +177,9 @@ const type* analyzerValue (analyzerCtx* ctx, ast* Node) {
         debugErrorUnhandled("analyzerValue", "AST tag", astTagGetStr(Node->tag));
         Node->dt = typeCreateInvalid();
     }
+
+    if (Node->dt->tag == typeFunction && parent != astCall)
+        Node->dt = typeCreatePtr(Node->dt);
 
     debugLeave();
 
@@ -422,7 +431,7 @@ static void analyzerIndex (analyzerCtx* ctx, ast* Node) {
 }
 
 static void analyzerCall (analyzerCtx* ctx, ast* Node) {
-    const type* L = analyzerValue(ctx, Node->l);
+    const type* L = analyzerValueFrom(ctx, Node->l, Node->tag);
 
     /*Find a typeFunction, if possible*/
     const type* fn = typeGetCallable(L);
