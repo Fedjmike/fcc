@@ -427,11 +427,10 @@ static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* 
                 errorConflictingDeclarations(ctx, Node, Node->symbol, base);
 
             /*Even if types match, not allowed to be redeclared if a variable*/
-            else if (   Node->symbol->tag == symId &&
-                     !(   fn
-                       || Node->symbol->parent->tag == symStruct
-                       || Node->symbol->parent->tag == symUnion
-                       || Node->symbol->storage == storageExtern))
+            else if (   Node->symbol->tag == symId && !fn
+                     && Node->symbol->parent->tag != symStruct
+                     && Node->symbol->parent->tag != symUnion
+                     && Node->symbol->storage != storageExtern)
                 errorRedeclared(ctx, Node, Node->symbol);
 
             reportSymbol(Node->symbol);
