@@ -571,7 +571,10 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
         char* params = 0;
 
-        if (DT->params != 0) {
+        if (DT->params == 0)
+            params = strdup("void");
+
+        else {
             vector/*<char*>*/ paramStrs;
             vectorInit(&paramStrs, DT->params+1);
             vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params, sizeof(type*));
@@ -586,9 +589,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
                 paramStrs.length--;
 
             vectorFreeObjs(&paramStrs, free);
-
-        } else
-            params = strdup("void");
+        }
 
         /* */
 
