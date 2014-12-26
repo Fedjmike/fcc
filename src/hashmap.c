@@ -2,6 +2,7 @@
 
 #include "stdlib.h"
 #include "string.h"
+#include "assert.h"
 
 static int hashstr (const char* key, int mapsize);
 
@@ -129,45 +130,40 @@ static int generalmapFind (const generalmap* map, const char* key,
 
 static bool generalmapAdd (generalmap* map, const char* key, void* value,
                            generalmapHash hashf, generalmapCmp cmp, bool values) {
-    int hash = hashf(key, map->size);
-    int index = generalmapFind(map, key, hash, cmp);
-
-    /*Present, remap*/
-    if (generalmapIsMatch(map, index, key, hash, cmp)) {
-        map->keysStr[index] = key;
-
-        if (cmp != 0)
-            map->hashes[index] = hash;
-
-        if (values)
-            map->values[index] = value;
-
-        return true;
-
-    /*Empty spot*/
-    } else if (map->keysInt[index] == 0) {
-        map->keysStr[index] = key;
-        map->elements++;
-
-        if (cmp != 0)
-            map->hashes[index] = hash;
-
-        if (values)
-            map->values[index] = value;
-
-        return false;
-
-    /*Full: create a new one twice the size and add it to that*/
-    } else {
+    /*Half full: create a new one twice the size and copy elements over.
+      Allows us to assume there is space for the key.*/
+    if (map->elements*2 + 1 >= map->size) {
         generalmap newmap;
         generalmapInit(&newmap, map->size*2, cmp != 0, values);
         generalmapMerge(&newmap, map, hashf, cmp, 0, values);
-        generalmapAdd(&newmap, key, value, hashf, cmp, values);
-
         generalmapFree(map, values, cmp != 0);
         *map = newmap;
-        return false;
     }
+
+    int hash = hashf(key, map->size);
+    int index = generalmapFind(map, key, hash, cmp);
+
+    bool present;
+
+    /*Empty spot*/
+    if (map->keysInt[index] == 0) {
+        map->keysStr[index] = key;
+        map->elements++;
+        present = false;
+
+        if (cmp != 0)
+            map->hashes[index] = hash;
+
+    /*Present, remap*/
+    } else {
+        assert(generalmapIsMatch(map, index, key, hash, cmp));
+        present = true;
+    }
+
+    if (values)
+        map->values[index] = value;
+
+    return present;
 }
 
 static void generalmapMerge (generalmap* dest, const generalmap* src,
