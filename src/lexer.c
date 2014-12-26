@@ -217,34 +217,30 @@ void lexerNext (lexerCtx* ctx) {
 
         case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
         case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
-        case '>': ctx->punct = lexerTryEatNext(ctx, '=') ? punctGreaterEqual :
-                               lexerTryEatNext(ctx, '>') ?
-                                   (  lexerTryEatNext(ctx, '=')
-                                    ? punctShrAssign
-                                    : punctShr) :
-                               punctGreater; break;
-        case '<': ctx->punct = lexerTryEatNext(ctx, '=') ? punctLessEqual :
-                               lexerTryEatNext(ctx, '<') ?
-                                   (  lexerTryEatNext(ctx, '=')
-                                    ? punctShlAssign
-                                    : punctShl) :
-                               punctLess; break;
+        case '>': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctGreaterEqual
+                               : lexerTryEatNext(ctx, '>')
+                                 ? (lexerTryEatNext(ctx, '=') ? punctShrAssign : punctShr)
+                                 : punctGreater; break;
+        case '<': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctLessEqual
+                               : lexerTryEatNext(ctx, '<')
+                                 ? (lexerTryEatNext(ctx, '=') ? punctShlAssign : punctShl)
+                                 : punctLess; break;
 
         case '?': ctx->punct = punctQuestion; break;
         case ':': ctx->punct = punctColon; break;
 
-        case '&': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign :
-                               lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
-        case '|': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign :
-                               lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
+        case '&': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign
+                               : lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
+        case '|': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign
+                               : lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
         case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
         case '~': ctx->punct = punctBitwiseNot; break;
 
-        case '+': ctx->punct = lexerTryEatNext(ctx, '=') ? punctPlusAssign :
-                               lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
-        case '-': ctx->punct = lexerTryEatNext(ctx, '=') ? punctMinusAssign :
-                               lexerTryEatNext(ctx, '-') ? punctMinusMinus :
-                               lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
+        case '+': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctPlusAssign
+                               : lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
+        case '-': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctMinusAssign
+                               : lexerTryEatNext(ctx, '-') ? punctMinusMinus
+                               : lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
         case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
         case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
         case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
