@@ -33,6 +33,11 @@ const reg* regGet (regIndex r) {
 }
 
 reg* regRequest (regIndex r, int size) {
+    if (size == 0) {
+        debugError("regRequest", "zero sized register requested, %s", regIndexGetName(r, 8));
+        size = regs[r].size == 8 ? 8 : 4;
+    }
+
     if (regs[r].allocatedAs == 0 && regs[r].size <= size) {
         regs[r].allocatedAs = size;
         return &regs[r];
