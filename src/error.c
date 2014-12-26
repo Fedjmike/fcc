@@ -80,38 +80,40 @@ static void verrorf (const char* format, va_list args) {
                 printf("%s%s%s", colourType, typeStr, consoleNormal);
                 free(typeStr);
 
+            /*Type with name*/
+            } else if (format[i] == 'T') {
+                const type* dt = va_arg(args, const type*);
+                const char* ident = va_arg(args, const char*);
+
+                char* identStr = strjoin((char**) (const char* []) {colourIdent, ident, colourType}, 3, malloc);
+                char* typeStr = typeToStrEmbed(dt, identStr);
+                printf("%s%s%s", colourType, typeStr, consoleNormal);
+                free(identStr);
+                free(typeStr);
+
             /*Named symbol*/
             } else if (format[i] == 'n') {
                 const sym* Symbol = va_arg(args, sym*);
                 const char* ident = Symbol->ident ? Symbol->ident : "";
 
-                if (Symbol->tag == symId || Symbol->tag == symParam) {
-                    if (Symbol->dt) {
-                        char* identStr = strjoin((char**) (const char* []) {colourIdent, ident, colourType}, 3, malloc);
-                        char* typeStr = typeToStrEmbed(Symbol->dt, identStr);
-                        printf("%s%s%s", colourType, typeStr, consoleNormal);
-                        free(identStr);
-                        free(typeStr);
-
-                    } else
-                        printf("%s%s%s", colourIdent, ident, consoleNormal);
-
-                } else
+                if (Symbol->tag != symId && Symbol->tag != symParam)
                     printf("%s%s%s %s%s", colourTag, symTagGetStr(Symbol->tag), colourIdent, ident, consoleNormal);
+
+                else if (Symbol->dt)
+                    errorf("$T", Symbol->dt, ident);
+
+                else
+                    printf("%s%s%s", colourIdent, ident, consoleNormal);
 
             /*AST node*/
             } else if (format[i] == 'a') {
                 const ast* Node = va_arg(args, ast*);
 
                 if (Node->symbol && Node->symbol->ident && Node->symbol->dt)
-                    if (Node->symbol->tag == symId || Node->symbol->tag == symParam) {
-                        char* identStr = strjoin((char**) (const char* []) {colourIdent, Node->symbol->ident, colourType}, 3, malloc);
-                        char* typeStr = typeToStrEmbed(Node->symbol->dt, identStr);
-                        printf("%s%s%s", colourType, typeStr, consoleNormal);
-                        free(identStr);
-                        free(typeStr);
+                    if (Node->symbol->tag == symId || Node->symbol->tag == symParam)
+                        errorf("$T", Node->dt, Node->symbol->ident);
 
-                    } else
+                    else
                         errorf("$n", Node->symbol);
 
                 else
