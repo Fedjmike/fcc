@@ -39,6 +39,7 @@ ifeq ($(CONFIG),release)
 endif
 ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
+	LDFLAGS += -O3 -pg
 endif
 ifeq ($(CONFIG),coverage)
 	CFLAGS += --coverage
@@ -102,7 +103,7 @@ print:
 # Tests
 #
 
-TFLAGS = -I tests/include
+TFLAGS = -I tests/include -s
 TOUT = xor-list hashset xor-list-error.txt
 TESTS = $(patsubst %, bin/tests/%, $(TOUT))
 
@@ -142,8 +143,8 @@ print-tests:
 
 selfhost: bin/self/fcc
 
-bin/self/fcc: $(OUT) src/lexerself.c src/regself.c
-	@echo " [FCC] $@"
+bin/self/%: $(FCC) src/lexerself.c src/regself.c
+	@echo " [$(FCC)] $@"
 	@$(VALGRIND) $(FCC) -I tests/include `find src/*.[c] | egrep -v "lexer.c|reg.c"` -o $@
 	$(POSTBUILD)
 	
