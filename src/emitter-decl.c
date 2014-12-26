@@ -13,6 +13,8 @@
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
 
+#include "assert.h"
+
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
