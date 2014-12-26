@@ -39,25 +39,28 @@ void lexerEnd (lexerCtx* ctx) {
 
 /*Eat as many insignificants (comments, whitespace etc) as possible*/
 static void lexerSkipInsignificants (lexerCtx* ctx) {
-    while (ctx->stream->current != 0) {
+    while (true) {
+        switch (ctx->stream->current) {
         /*Whitespace*/
-        if (   ctx->stream->current == ' '
-            || ctx->stream->current == '\t'
-            || ctx->stream->current == '\n'
-            || ctx->stream->current == '\r')
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
             streamNext(ctx->stream);
+            break;
 
         /*C preprocessor is treated as a comment*/
-        else if (ctx->stream->current == '#') {
+        case '#':
             /*Eat until a new line*/
             while (   ctx->stream->current != '\n'
                    && ctx->stream->current != 0)
                 streamNext(ctx->stream);
 
             streamNext(ctx->stream);
+            break;
 
         /*Comment?*/
-        } else if (ctx->stream->current == '/') {
+        case '/':
             streamNext(ctx->stream);
 
             /*C comment*/
@@ -90,12 +93,14 @@ static void lexerSkipInsignificants (lexerCtx* ctx) {
             /*Fuck, we just ate an important character. Backtrack!*/
             } else {
                 streamPrev(ctx->stream);
-                break;
+                return;
             }
 
-        /*Not insignificant, leave*/
-        } else
             break;
+
+        /*Not insignificant, leave*/
+        default:
+            return;
 
     }
 }
