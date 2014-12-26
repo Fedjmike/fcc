@@ -18,7 +18,7 @@ static storageTag analyzerStorage (analyzerCtx* ctx, ast* Node);
 /**
  * Handle any basic node produced by parserDeclBasic.
  *
- * Callee takes ownership of the returned type.
+ * The given node takes ownership of the returned type.
  */
 static const type* analyzerDeclBasic (analyzerCtx* ctx, ast* Node);
 
