@@ -4,11 +4,12 @@
 #include "string.h"
 #include "assert.h"
 
-static int hashstr (const char* key, int mapsize);
+static intptr_t hashstr (const char* key, int mapsize);
+static intptr_t hashint (intptr_t element, int mapsize);
 
 typedef void (*generalmapKeyDtor)(char* key, const void* value);
 typedef void (*generalmapValueDtor)(void* value);
-typedef int (*generalmapHash)(const char* key, int mapsize);
+typedef intptr_t (*generalmapHash)(const char* key, int mapsize);
 //Like strcmp, returns 0 for match
 typedef int (*generalmapCmp)(const char* actual, const char* key);
 typedef char* (*generalmapDup)(const char* key);
@@ -29,17 +30,40 @@ static bool generalmapTest (const generalmap* map, const char* key, generalmapHa
 
 /*:::: HASH FUNCTIONS ::::*/
 
-static int hashstr (const char* key, int mapsize) {
-    int hash = 0;
+static intptr_t hashstr (const char* key, int mapsize) {
+    /*Jenkin's One-at-a-Time Hash
+      Taken from http://www.burtleburtle.net/bob/hash/doobs.html
+      Public domain*/
 
-    for (int i = 0; key[i]; i++)
+    intptr_t hash = 0;
+
+    for (int i = 0; key[i]; i++) {
         hash += key[i];
+        hash += hash << 10;
+        hash ^= hash >> 6;
+    }
 
-    return (hash % (mapsize-1)) + 1;
+    hash += hash << 3;
+    hash ^= hash >> 11;
+    hash += hash << 15;
+
+    /*Assumes mapsize is a power of two*/
+    intptr_t mask = mapsize-1;
+    return hash & mask;
 }
 
-static int hashint (int element, int mapsize) {
-    return (element % (mapsize-1)) + 1;
+static intptr_t hashint (intptr_t element, int mapsize) {
+    /*The above, for a single value*/
+
+    intptr_t hash = element;
+    hash += hash << 10;
+    hash ^= hash >> 6;
+    hash += hash << 3;
+    hash ^= hash >> 11;
+    hash += hash << 15;
+
+    intptr_t mask = mapsize-1;
+    return hash & mask;
 }
 
 /*:::: GENERALMAP ::::*/
@@ -57,7 +81,24 @@ static bool generalmapIsMatch (const generalmap* map, int index, const char* key
 static int generalmapFind (const generalmap* map, const char* key,
                            int hash, generalmapCmp cmp);
 
+static int pow2ize (int x) {
+    assert(sizeof(x) <= 8);
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    /*No-op if x is less than 33 bits
+      Shift twice to avoid warnings, as this is intended.*/
+    x |= (x >> 16) >> 16;
+    return x+1;
+}
+
 static generalmap* generalmapInit (generalmap* map, int size, bool hashes) {
+    /*The hash requires that the size is a power of two*/
+    size = pow2ize(size);
+
     map->size = size;
     map->elements = 0;
     map->keysInt = calloc(size, sizeof(char*));
