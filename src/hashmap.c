@@ -13,11 +13,11 @@ typedef int (*generalmapHash)(const char* key, int mapsize);
 typedef int (*generalmapCmp)(const char* actual, const char* key);
 typedef char* (*generalmapDup)(const char* key);
 
-static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values);
+static generalmap* generalmapInit (generalmap* map, int size, bool hashes);
 
-static void generalmapFree (generalmap* map, bool hashes, bool values);
+static void generalmapFree (generalmap* map, bool hashes);
 static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
-                                bool hashes, bool values);
+                                bool hashes);
 
 static bool generalmapAdd (generalmap* map, const char* key, void* value,
                            generalmapHash hashf, generalmapCmp cmp, bool values);
@@ -57,24 +57,23 @@ static bool generalmapIsMatch (const generalmap* map, int index, const char* key
 static int generalmapFind (const generalmap* map, const char* key,
                            int hash, generalmapCmp cmp);
 
-static generalmap* generalmapInit (generalmap* map, int size, bool hashes, bool values) {
+static generalmap* generalmapInit (generalmap* map, int size, bool hashes) {
     map->size = size;
     map->elements = 0;
     map->keysInt = calloc(size, sizeof(char*));
     map->hashes = hashes ? calloc(size, sizeof(int)) : 0;
-    map->values = values ? calloc(size, sizeof(char*)) : 0;
+    map->values = calloc(size, sizeof(char*));
 
     return map;
 }
 
-static void generalmapFree (generalmap* map, bool hashes, bool values) {
+static void generalmapFree (generalmap* map, bool hashes) {
     free(map->keysInt);
 
     if (hashes)
         free(map->hashes);
 
-    if (values)
-        free(map->values);
+    free(map->values);
 
     map->keysInt = 0;
     map->hashes = 0;
@@ -82,11 +81,11 @@ static void generalmapFree (generalmap* map, bool hashes, bool values) {
 }
 
 static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, generalmapValueDtor valueDtor,
-                                bool hashes, bool values) {
+                                bool hashes) {
     /*Until the end of the buffer*/
     for (int index = 0; index < map->size; index++) {
         /*Skip empties*/
-        if (map->keysInt[index] == 0)
+        if (map->values[index] == 0)
             continue;
 
         /*Call the dtor*/
@@ -98,7 +97,7 @@ static void generalmapFreeObjs (generalmap* map, generalmapKeyDtor keyDtor, gene
             valueDtor(map->values[index]);
     }
 
-    generalmapFree(map, hashes, values);
+    generalmapFree(map, hashes);
 }
 
 static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp) {
@@ -116,12 +115,12 @@ static int generalmapFind (const generalmap* map, const char* key,
       the values buffer, if need be*/
     for (int index = hash; index < map->size; index++)
         /*Exit if empty or found the key*/
-        if (map->keysInt[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
+        if (map->values[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
             return index;
 
     /*Then from the start all the way back to the first choice slot*/
     for (int index = 0; index < hash; index++)
-        if (map->keysInt[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
+        if (map->values[index] == 0 || generalmapIsMatch(map, index, key, hash, cmp))
             return index;
 
     /*Done an entire sweep of the buffer, not found & full*/
@@ -134,9 +133,9 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
       Allows us to assume there is space for the key.*/
     if (map->elements*2 + 1 >= map->size) {
         generalmap newmap;
-        generalmapInit(&newmap, map->size*2, cmp != 0, values);
+        generalmapInit(&newmap, map->size*2, cmp != 0);
         generalmapMerge(&newmap, map, hashf, cmp, 0, values);
-        generalmapFree(map, values, cmp != 0);
+        generalmapFree(map, cmp != 0);
         *map = newmap;
     }
 
@@ -146,7 +145,7 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
     bool present;
 
     /*Empty spot*/
-    if (map->keysInt[index] == 0) {
+    if (map->values[index] == 0) {
         map->keysStr[index] = key;
         map->elements++;
         present = false;
@@ -160,8 +159,7 @@ static bool generalmapAdd (generalmap* map, const char* key, void* value,
         present = true;
     }
 
-    if (values)
-        map->values[index] = value;
+    map->values[index] = values ? value : (void*) true;
 
     return present;
 }
@@ -196,15 +194,15 @@ static bool generalmapTest (const generalmap* map, const char* key, generalmapHa
 /*:::: HASHMAP ::::*/
 
 hashmap* hashmapInit (hashmap* map, int size) {
-    return generalmapInit(map, size, true, true);
+    return generalmapInit(map, size, true);
 }
 
 void hashmapFree (hashmap* map) {
-    generalmapFree(map, true, true);
+    generalmapFree(map, true);
 }
 
 void hashmapFreeObjs (hashmap* map, hashmapKeyDtor keyDtor, hashmapValueDtor valueDtor) {
-    generalmapFreeObjs(map, keyDtor, valueDtor, true, true);
+    generalmapFreeObjs(map, keyDtor, valueDtor, true);
 }
 
 bool hashmapAdd (hashmap* map, const char* key, void* value) {
@@ -226,15 +224,15 @@ void* hashmapMap (const hashmap* map, const char* key) {
 /*:::: INTMAP ::::*/
 
 intmap* intmapInit (intmap* map, int size) {
-    return generalmapInit(map, size, false, true);
+    return generalmapInit(map, size, false);
 }
 
 void intmapFree (intmap* map) {
-    generalmapFree(map, false, true);
+    generalmapFree(map, false);
 }
 
 void intmapFreeObjs (intmap* map, intmapValueDtor dtor) {
-    generalmapFreeObjs(map, 0, (generalmapValueDtor) dtor, false, true);
+    generalmapFreeObjs(map, 0, (generalmapValueDtor) dtor, false);
 }
 
 bool intmapAdd (intmap* map, intptr_t element, void* value) {
@@ -252,15 +250,15 @@ void* intmapMap (const intmap* map, intptr_t element) {
 /*:::: HASHSET ::::*/
 
 hashset* hashsetInit (hashset* set, int size) {
-    return generalmapInit(set, size, true, false);
+    return generalmapInit(set, size, true);
 }
 
 void hashsetFree (hashset* set) {
-    generalmapFree(set, true, false);
+    generalmapFree(set, true);
 }
 
 void hashsetFreeObjs (hashset* set, hashsetDtor dtor) {
-    generalmapFreeObjs(set, (generalmapKeyDtor) dtor, 0, true, false);
+    generalmapFreeObjs(set, (generalmapKeyDtor) dtor, 0, true);
 }
 
 bool hashsetAdd (hashset* set, const char* element) {
@@ -283,11 +281,11 @@ bool hashsetTest (const hashset* set, const char* element) {
 /*:::: INTSET ::::*/
 
 intset* intsetInit (intset* set, int size) {
-    return generalmapInit(set, size, false, false);
+    return generalmapInit(set, size, false);
 }
 
 void intsetFree (intset* set) {
-    generalmapFree(set, false, false);
+    generalmapFree(set, false);
 }
 
 bool intsetAdd (intset* set, intptr_t element) {
