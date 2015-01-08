@@ -42,7 +42,7 @@ static void compilerInitSymbols (compilerCtx* ctx) {
 }
 
 void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<char*>*/* searchPaths) {
-    hashmapInit(&ctx->modules, 1009);
+    hashmapInit(&ctx->modules, 1024);
 
     ctx->arch = arch;
     ctx->searchPaths = searchPaths;

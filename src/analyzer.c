@@ -33,8 +33,8 @@ static analyzerCtx* analyzerInit (sym** Types, const architecture* arch) {
     ctx->fnctx.fn = 0;
     ctx->fnctx.returnType = 0;
 
-    intsetInit(&ctx->incompleteDeclIgnore, 17);
-    intsetInit(&ctx->incompletePtrIgnore, 17);
+    intsetInit(&ctx->incompleteDeclIgnore, 16);
+    intsetInit(&ctx->incompletePtrIgnore, 16);
 
     ctx->errors = 0;
     ctx->warnings = 0;
