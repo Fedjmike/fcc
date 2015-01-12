@@ -214,6 +214,26 @@ void reportSymbol (const sym* Symbol) {
     debugOut("\n");
 }
 
+void reportSymbolTree (const sym* Symbol, int level) {
+    for (int i = 0; i < level; i++)
+        debugOut("| ");
+
+    debugOut("+ %s", symTagGetStr(Symbol->tag));
+
+    if (Symbol->ident)
+        debugOut(" %s", Symbol->ident);
+
+    debugOut("\n");
+
+    if (Symbol->tag == symModuleLink)
+        return;
+
+    for (int i = 0; i < Symbol->children.length; i++) {
+        sym* current = vectorGet(&Symbol->children, i);
+        reportSymbolTree(current, level+1);
+    }
+}
+
 void reportNode (const ast* Node) {
     debugOut("node: %p   tag: %s   ",
              (void*) Node,

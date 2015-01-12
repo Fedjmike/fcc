@@ -51,6 +51,7 @@ void debugErrorUnhandledChar (const char* functionName,
 void report (const char* str);
 void reportType (const type* DT);
 void reportSymbol (const sym* Symbol);
+void reportSymbolTree (const sym* Symbol, int level);
 void reportNode (const ast* Node);
 void reportRegs (void);
 void reportOperand (const architecture* arch, const operand* R);
