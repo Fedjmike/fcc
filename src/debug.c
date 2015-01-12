@@ -21,7 +21,7 @@ int internalErrors;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;
-    debugSetMode(debugFull);
+    debugSetMode(debugMinimal);
 }
 
 debugMode debugSetMode (debugMode nmode) {
@@ -32,7 +32,7 @@ debugMode debugSetMode (debugMode nmode) {
 
 void debugWait () {
     #ifdef FCC_DEBUGMODE
-    if (mode <= debugMinimal)
+    if (mode <= debugFull)
         getchar();
     #endif
 }
