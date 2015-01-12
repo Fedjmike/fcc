@@ -26,20 +26,21 @@ The compiler implements a language quite similar to C, but there are some major 
   - Compound literals and designated initializers
   - Intermingled code/declarations including for-loop declarations
   - C++ comments
-- No support for / features removed:
-  - Preprocessor
+- Features removed:
+  - Preprocessor (treated as line comments)
   - `switch`
+  - Bitfields
+  - Implicit casts / coercion between integral types
+  - `goto` and labels
+- No support for (yet?):
   - Floating point types
   - Unsigned integers
   - `long`
   - Wide characters
-  - Bitfields
-  - Implicit casts / coercion between integral types
-  - `goto` and labels
-  - `volatile`
+  - `volatile` quantifier
   - `register` storage class
 
-The compiler is advanced enough to self-host much of itself with the rest compiled with GCC. As the compiler matures experimental additions to the language considered are:
+The compiler is self hosting, on branch `selfhosting` (see Building). As the compiler matures experimental additions to the language considered are:
 
 - Type polymorphism as in ML/Haskell
 - Closures
@@ -79,12 +80,12 @@ Building the compiler is simple, just call make in the root directory:
 
 ```bash
 cd <fcc>
-make CONFIG=release
+make CC=clang
 ```
 
 This puts an fcc binary in `<fcc>/bin/$CONFIG`
 
-Makefile options (all optional):
+Makefile parameters (all optional):
 - `OS=[linux windows]`, default: `linux`
 - `ARCH=[32 64]`, default: `32`
 - `CONFIG=[debug profiling release]`, default: `release`
@@ -95,13 +96,13 @@ Makefile options (all optional):
 Makefile targets:
 - `all clean print  tests print-tests  selfhost`
 
-Use the `FCC` option to choose which copy of FCC to run the tests against.
+Use the `FCC` parameter to choose which copy of FCC to run the tests against.
 
 The `selfhost` target fully compiles FCC using an existing copy, `bin/$CONFIG/fcc`. The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both FCC and a regular C compiler. [The modifications](https:/github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http:/en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
 
 If found on the system the compiler will be run against Valgrind when building tests. To disable this, set `VALGRIND=""`.
 
-Simply specifying `FCC=bin/self/fcc` as an option for the `tests-all` target will trigger a partial self-host.
+Simply specifying `FCC=bin/self/fcc` as an parameter for the `tests-all` target will trigger a partial self-host.
 
 Running
 -------
