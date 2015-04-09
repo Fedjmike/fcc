@@ -8,30 +8,9 @@
 #include "stdlib.h"
 
 ast* astCreate (astTag tag, tokenLocation location) {
-    ast* Node = malloc(sizeof(ast));
+    ast* Node = calloc(1, sizeof(ast));
     Node->tag = tag;
-
     Node->location = location;
-
-    Node->firstChild = 0;
-    Node->lastChild = 0;
-    Node->nextSibling = 0;
-    Node->prevSibling = 0;
-    Node->children = 0;
-
-    Node->l = 0;
-    Node->o = opUndefined;
-    Node->r = 0;
-    Node->dt = 0;
-
-    Node->symbol = 0;
-    Node->storage = storageUndefined;
-
-    Node->marker = markerUndefined;
-
-    Node->litTag = literalUndefined;
-    Node->literal = 0;
-
     return Node;
 }
 
