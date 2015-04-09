@@ -14,7 +14,6 @@ typedef struct architecture architecture;
  */
 typedef struct analyzerFnCtx {
     sym* fn;
-    ///Return type
     type* returnType;
 } analyzerFnCtx;
 
