@@ -4,40 +4,40 @@ Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
 Polymorphism:
 
 [ ] Parsing declarations
-	[ ] Type variables
-		- Scope?
-		  o Lexical scope
-		  o (Implicit) decl scope
-	[ ] Struct/unions
-		- Definition
-		- Instantiation? or always inferred?
-	[ ] Typedefs of constraints
+    [ ] Type variables
+        - Scope?
+          o Lexical scope
+          o (Implicit) decl scope
+    [ ] Struct/unions
+        - Definition
+        - Instantiation? or always inferred?
+    [ ] Typedefs of constraints
 
 [ ] Parsing expressions?
-	o Explicit type variable substitution?
-	  - f[int :a]
-	  - Where does it do type variable name resolution? :S
-	o Or just casting to a monomorph
+    o Explicit type variable substitution?
+      - f[int :a]
+      - Where does it do type variable name resolution? :S
+    o Or just casting to a monomorph
 
 [ ] Definition semantics
-	[ ] Constraint inference
-		[ ] () fn
-		[ ] * [] -> ptr not array
-		[ ] . -> fields in records
-		[ ] = op= ++ --
-			- Remove default const?
-			- Re-entrancy...
-			- What of explicit prototypes?
-		[ ] Other ops
-			o Type classes
-			o Named ops
-			  - Doesn't require a keyword
-			  - Unclear that :a+ is the same as :a-
-			  - How do you write condition? `?`
-			  - More granularity (to what end?)
+    [ ] Constraint inference
+        [ ] () fn
+        [ ] * [] -> ptr not array
+        [ ] . -> fields in records
+        [ ] = op= ++ --
+            - Remove default const?
+            - Re-entrancy...
+            - What of explicit prototypes?
+        [ ] Other ops
+            o Type classes
+            o Named ops
+              - Doesn't require a keyword
+              - Unclear that :a+ is the same as :a-
+              - How do you write condition? `?`
+              - More granularity (to what end?)
 
 [ ] Expression semantics
-	[ ] Inference of type variable substitutions at call site
+    [ ] Inference of type variable substitutions at call site
 
 [ ] Symbol mangler
 
@@ -48,20 +48,20 @@ Polymorphism:
 High importance:
 
 [-] const
-	[x] Parsing
-	[x] Type annotation
-	[ ] Type compatibility/equality
+    [x] Parsing
+    [x] Type annotation
+    [ ] Type compatibility/equality
         - No qualifiers dropped, qual smearing if added
-	[x] Assignable
-		[x] structs with const fields
-	[x] Fields of const structs/unions const themselves
+    [x] Assignable
+        [x] structs with const fields
+    [x] Fields of const structs/unions const themselves
     [ ] (const)[] => const ()[]
 [ ] Review type compatibility
-	[ ] Cast compatibility
+    [ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
 [-] Type completeness
-	[ ] Incomplete arrays
-	[ ] Cast to incomplete
+    [ ] Incomplete arrays
+    [ ] Cast to incomplete
 [x] Varargs
 [x] extern
 [-] static
@@ -69,7 +69,7 @@ High importance:
 [-] Modules
     [-] Separated namespaces
     [x] Include once only
-	[ ] Infinite loops
+    [ ] Infinite loops
 [ ] Tests
     [-] assert
     [ ] Use assert in existing tests
@@ -77,11 +77,11 @@ High importance:
 Medium:
 
 [-] Platform support
-	[-] 64-bit
-		[-] Windows
-		[-] Linux
-	[x] 32-bit
-	[-] Cross-compilation by command line
+    [-] 64-bit
+        [-] Windows
+        [-] Linux
+    [x] 32-bit
+    [-] Cross-compilation by command line
 [ ] Unsigned integers
 [ ] Floating point numbers
 [ ] long (long long)
@@ -89,13 +89,13 @@ Medium:
 [ ] x ?: y
 [ ] String literal concatenation
 [-] Closures
-	[x] Capture-less lambdas
-	[ ] Closures
-		- Same syntax as C++ inside the square brackets
-		- &x makes available the expression &x, not x
-		- Providing an allocator makes the env. manually managed
-		  - Cleaned up with a call to free on the returned fn ptr, nothing else (?)
-		- Otherwise automatic storage
+    [x] Capture-less lambdas
+    [ ] Closures
+        - Same syntax as C++ inside the square brackets
+        - &x makes available the expression &x, not x
+        - Providing an allocator makes the env. manually managed
+          - Cleaned up with a call to free on the returned fn ptr, nothing else (?)
+        - Otherwise automatic storage
 [x] Designated initializers in compound literals
 [-] auto type inference
     [ ] Pointer and array base type
@@ -104,19 +104,19 @@ Medium:
     [ ] Don't allow an inferred var in its own init
     [ ] (auto[]) {...} ?
 [ ] Warnings
-	[ ] main conformance
-	[ ] Unused value
-	[ ] Statement without effect
-	[ ] Empty decl
-	[ ] Empty block body, if (...);
-	[ ] Assignment as condition
-	[ ] Widening/narrowing
+    [ ] main conformance
+    [ ] Unused value
+    [ ] Statement without effect
+    [ ] Empty decl
+    [ ] Empty block body, if (...);
+    [ ] Assignment as condition
+    [ ] Widening/narrowing
 [ ] AST optimizer
-	[ ] Strength reduction
-	[ ] Constant folding
-	[ ] Constant propogation?
-	[ ] Factorization (CSE)
-	[ ] Operand commutation => Strahler number
+    [ ] Strength reduction
+    [ ] Constant folding
+    [ ] Constant propogation?
+    [ ] Factorization (CSE)
+    [ ] Operand commutation => Strahler number
 [ ] Octal and hex literals
 
 Low:
@@ -129,23 +129,23 @@ Low:
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
-	[ ] Newline in string
-	[ ] Suffix on integer literal
+    [ ] Newline in string
+    [ ] Suffix on integer literal
 [ ] Modules
     [ ] header & using, special meaning?
-	[ ] Different dialect?
+    [ ] Different dialect?
         - No impls
-		- No static
-		- No globals (except extern)
+        - No static
+        - No globals (except extern)
 [ ] Initializing arrays from strings
 [ ] Expand eval.c
     [ ] String literals and indexing
     [ ] Records and arrays
 [-] Full ABI conformance
-	- structs, bah
-	- GCC
-	- Clang
-	  Doing something weird with struct returning, LTO across module boundaries?
+    - structs, bah
+    - GCC
+    - Clang
+      Doing something weird with struct returning, LTO across module boundaries?
 [ ] Inverse comma (`)
 [ ] Coalesce (??)
 
@@ -154,8 +154,8 @@ Other issues:
 [ ] Add symbol size back to debug output
 [ ] Use jump tables in tag string lookup
 [-] Use vector in:
-	[ ] ast
-	[x] sym
+    [ ] ast
+    [x] sym
 [ ] Declare structs inside modules, not their headers, if not part of the interface
 [ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
 [ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
@@ -175,7 +175,7 @@ Parser:
 [ ] Complain about keywords as idents
 [ ] Implicit declarations on error
 [ ] Error for unnamed structs/unions that don't define variables
-	- OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
+    - OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
 [ ] Missing semicolon after decl (more?) shouldn't cascade so terribly
 
 Semantic analyzer:
@@ -198,9 +198,9 @@ Semantic analyzer:
 Emitter:
 
 [-] Remove global state
-	[x] labels
-	[ ] registers
-	[ ] debug?
+    [x] labels
+    [ ] registers
+    [ ] debug?
 [-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
@@ -211,11 +211,11 @@ Emitter:
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
 [ ] Cache sym size
-	=> move to analyzer?
-	=> as well as offset
-	=> offsetOf?
-	=> eval.c
-	o OR not, handle in IR?
+    => move to analyzer?
+    => as well as offset
+    => offsetOf?
+    => eval.c
+    o OR not, handle in IR?
 [ ] Optimize pointer indexing similar to array indexing
 [ ] Fix pointer arithmetic
 [ ] Static compound initializers (red black tree)

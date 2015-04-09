@@ -42,7 +42,7 @@ VACopy = va_copy "(" AssignValue "," AssignValue ")"
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
-									       | FnImpl )
+                                           | FnImpl )
 Storage = [ "auto" | "static" | "extern" | "typedef" ]
 FnImpl = Code
 
