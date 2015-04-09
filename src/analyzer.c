@@ -48,14 +48,8 @@ static void analyzerEnd (analyzerCtx* ctx) {
 }
 
 static analyzerFnCtx analyzerPushFnctx (analyzerCtx* ctx, sym* Symbol) {
-    type* ret;
     const type* fn = typeGetCallable(Symbol->dt);
-
-    if (fn)
-        ret = typeDeriveReturn(fn);
-
-    else
-        ret = typeCreateInvalid();
+    type* ret = fn ? typeDeriveReturn(fn) : typeCreateInvalid();
 
     analyzerFnCtx old = ctx->fnctx;
     ctx->fnctx = (analyzerFnCtx) {Symbol, ret};
