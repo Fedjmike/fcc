@@ -8,6 +8,11 @@ typedef struct parserCtx parserCtx;
 typedef struct analyzerCtx analyzerCtx;
 typedef struct analyzerFnCtx analyzerFnCtx;
 
+void errorf (const char* format, ...);
+
+void errorParser (parserCtx* ctx, const char* format, ...);
+void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...);
+
 void errorExpected (parserCtx* ctx, const char* expected);
 void errorUndefSym (parserCtx* ctx);
 void errorKeywordAsIdent (parserCtx* ctx);

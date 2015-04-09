@@ -15,16 +15,13 @@
 #include "string.h"
 
 static void tokenLocationMsg (tokenLocation loc);
-static void errorf (const char* format, ...);
 static void verrorf (const char* format, va_list args);
-static void errorParser (parserCtx* ctx, const char* format, ...);
-static void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...);
 
 static void tokenLocationMsg (tokenLocation loc) {
     printf("%s:%d:%d: ", loc.filename, loc.line, loc.lineChar);
 }
 
-static void errorf (const char* format, ...) {
+void errorf (const char* format, ...) {
     va_list args;
     va_start(args, format);
     verrorf(format, args);
@@ -147,7 +144,7 @@ static void verrorf (const char* format, va_list args) {
     }
 }
 
-static void errorParser (parserCtx* ctx, const char* format, ...) {
+void errorParser (parserCtx* ctx, const char* format, ...) {
     if (ctx->location.line == ctx->lastErrorLine)
         return;
 
@@ -166,7 +163,7 @@ static void errorParser (parserCtx* ctx, const char* format, ...) {
     debugWait();
 }
 
-static void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...) {
+void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...) {
     tokenLocationMsg(Node->location);
     errorf("$r: ", "error");
 
