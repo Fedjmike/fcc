@@ -68,6 +68,7 @@ High importance:
     [ ] Function linkage
 [-] Modules
     [-] Separated namespaces
+    [ ] "using" not transitive
     [x] Include once only
     [ ] Infinite loops
 [ ] Tests
@@ -88,8 +89,9 @@ Medium:
 [ ] wchar_t
 [ ] x ?: y
 [ ] String literal concatenation
-[-] Closures
+[-] Lambdas
     [x] Capture-less lambdas
+    [ ] Variadic lambdas
     [ ] Closures
         - Same syntax as C++ inside the square brackets
         - &x makes available the expression &x, not x
@@ -103,6 +105,7 @@ Medium:
     [ ] Type qualifiers
     [ ] Don't allow an inferred var in its own init
     [ ] (auto[]) {...} ?
+[ ] Static fields?
 [ ] Warnings
     [ ] main conformance
     [ ] Unused value
@@ -123,6 +126,7 @@ Low:
 
 [ ] Unicode
 [ ] Pretty printing control by command line
+[ ] -o dir
 [-] New IR
 [ ] Lexer errors
     [ ] Multichar
@@ -152,21 +156,43 @@ Low:
 Other issues:
 
 [ ] Add symbol size back to debug output
-[ ] Use jump tables in tag string lookup
-[-] Use vector in:
-    [ ] ast
-    [x] sym
-[ ] Declare structs inside modules, not their headers, if not part of the interface
-[ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
-[ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
+[ ] make sure fstripname doesn't erase leading ../ (or leading /), use in parser for fullname
+
+Code style:
+
+[ ] More comments about ownership
+[ ] "Why" comments
+[ ] Get rid of any commented code
+[ ] Use size_t for dimensions
+[ ] Rule: never allocate and return without the allocator idiom? Probably too strict
 [x] Change "else //(assumption)" into assertions
 [ ] Explain default-zero types and their uses
+[ ] malloc(sizeof(*var))
+[ ] Make sure the result of a typeUnify or inferXXX is never thrown away
+int to size_t and similar
+
+Refactors:
+
+[ ] Use an enum + struct in hashmap
+[ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
+[ ] Simpler initiation with calloc (see astCreate)
+[ ] Declare structs inside modules, not their headers, if not part of the interface
+
+Optimizations:
+
+[ ] Use jump tables in tag string lookup
+[ ] Use vector in ast
+[ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
 [ ] Use a hashmap for sym -- scope rules?
+    - hashmap*, most don't have children
+[ ] smallmap (binary search tree)
+[ ] Type squash
 
 Lexer:
 
-[ ] Do keyword lookup as ident/kw is lexed
 [ ] Preprocessor line continuations
+[ ] Move buffer from lexer to parser
+[ ] Change tokenLocation to a pointer
 
 Parser:
 
@@ -194,12 +220,16 @@ Semantic analyzer:
 [ ] Make indexing fn ptrs illegal
 [ ] More checks for completeness: sizeof, casts, va_xxx
 [ ] static function without implementation
+[ ] Void declarations
+[ ] Cast to array
+[ ] Arrays as params
+[ ] Array assignment
 
 Emitter:
 
 [-] Remove global state
     [x] labels
-    [ ] registers
+    [-] registers
     [ ] debug?
 [-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
@@ -219,4 +249,7 @@ Emitter:
 [ ] Optimize pointer indexing similar to array indexing
 [ ] Fix pointer arithmetic
 [ ] Static compound initializers (red black tree)
-[ ] Pass requests/suggestions up the tree
+[-] Pass requests/suggestions up the tree
+[ ] Line numbers in generated code
+[ ] Larger than word sized registers (with indirection)
+[ ] Smaller than word sized pushes
