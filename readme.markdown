@@ -1,6 +1,8 @@
 Fedjmike's C Compiler
 =====================
 
+Dependencies: C standard library.
+
 Features
 --------
 
@@ -35,7 +37,7 @@ The compiler implements a language quite similar to C, but there are some major 
 - No support for (yet?):
   - Floating point types
   - Unsigned integers
-  - `long`
+  - `short` and `long`
   - Wide characters
   - `volatile` quantifier
   - `register` storage class
@@ -106,7 +108,7 @@ Simply specifying `FCC=bin/self/fcc` as an parameter for the `tests-all` target 
 Running
 -------
 
-The command line interface is similar to that of GCC:
+The command line interface is similar to that of a POSIX C compiler, such as GCC.
 
 Usage: `fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>`
 - `-I <dir>`   Add a directory to be searched for headers
