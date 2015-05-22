@@ -259,6 +259,16 @@ void lexerNext (lexerCtx* ctx) {
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
 }
 
+static keywordTag keywordMatch (const char* str, int n, const char* look, keywordTag kw) {
+    return !strcmp(str+n+1, look+n+1) ? kw : keywordUndefined;
+}
+
+static keywordTag keywordMatch2 (const char* str, int n, const char* look, keywordTag kw,
+                                 const char* look2, keywordTag kw2) {
+    return   !strcmp(str+n+1, look+n+1) ? kw
+           : !strcmp(str+n+1, look2+n+1) ? kw2 : keywordUndefined;
+}
+
 static keywordTag lookKeyword (const char* str) {
     /*Manual trie
       Yeah it's ugly, but it's fast. And lexing is the slowest part of compilation.*/
@@ -266,87 +276,51 @@ static keywordTag lookKeyword (const char* str) {
     const char* rest[] = {str+1, str+2, str+3, str+4};
 
     switch (str[0]) {
-    case 'd': return !strcmp(rest[0], "o") ? keywordDo : keywordUndefined;
-    case 'r': return !strcmp(rest[0], "eturn") ? keywordReturn : keywordUndefined;
-    case 'w': return !strcmp(rest[0], "hile") ? keywordWhile : keywordUndefined;
+    case 'd': return keywordMatch(str, 0, "do", keywordDo);
+    case 'r': return keywordMatch(str, 0, "return", keywordReturn);
+    case 'w': return keywordMatch(str, 0, "while", keywordWhile);
 
-    case 'a':
-        switch (str[1]) {
-        case 's': return !strcmp(rest[1], "sert") ? keywordAssert : keywordUndefined;
-        case 'u': return !strcmp(rest[1], "to") ? keywordAuto : keywordUndefined;
-        default: return keywordUndefined;
-        }
-
-    case 'b':
-        switch (str[1]) {
-        case 'o': return !strcmp(rest[1], "ol") ? keywordBool : keywordUndefined;
-        case 'r': return !strcmp(rest[1], "eak") ? keywordBreak : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'a': return keywordMatch2(str, 0, "assert", keywordAssert,
+                                           "auto", keywordAuto);
+    case 'b': return keywordMatch2(str, 0, "bool", keywordBool,
+                                           "break", keywordBreak);
+    case 't': return keywordMatch2(str, 0, "true", keywordTrue,
+                                           "typedef", keywordTypedef);
+    case 'u': return keywordMatch2(str, 0, "union", keywordUnion,
+                                           "using", keywordUsing);
 
     case 'c':
         switch (str[1]) {
-        case 'h': return !strcmp(rest[1], "ar") ? keywordChar : keywordUndefined;
+        case 'h': return keywordMatch(str, 1, "char", keywordChar);
         case 'o':
-            if (str[2] == 'n') {
-                switch (str[3]) {
-                case 's': return !strcmp(rest[3], "t") ? keywordConst : keywordUndefined;
-                case 't': return !strcmp(rest[3], "inue") ? keywordContinue : keywordUndefined;
-                default: return keywordUndefined;
-                }
-
-            } else
+            if (str[2] != 'n')
                 return keywordUndefined;
+
+            return keywordMatch2(str, 2, "const", keywordConst,
+                                         "continue", keywordContinue);
 
         default: return keywordUndefined;
         }
 
     case 'e':
         switch (str[1]) {
-        case 'l': return !strcmp(rest[1], "se") ? keywordElse : keywordUndefined;
-        case 'n': return !strcmp(rest[1], "um") ? keywordEnum : keywordUndefined;
-        case 'x': return !strcmp(rest[1], "tern") ? keywordExtern : keywordUndefined;
+        case 'l': return keywordMatch(str, 1, "else", keywordElse);
+        case 'n': return keywordMatch(str, 1, "enum", keywordEnum);
+        case 'x': return keywordMatch(str, 1, "extern", keywordExtern);
         default: return keywordUndefined;
         }
 
-    case 'f':
-        switch (str[1]) {
-        case 'a': return !strcmp(rest[1], "lse") ? keywordFalse : keywordUndefined;
-        case 'o': return !strcmp(rest[1], "r") ? keywordFor : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'f': return keywordMatch2(str, 0, "false", keywordFalse,
+                                           "for", keywordFor);
 
-    case 'i':
-        switch (str[1]) {
-        case 'f': return str[2] == 0 ? keywordIf : keywordUndefined;
-        case 'n': return !strcmp(rest[1], "t") ? keywordInt : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'i': return keywordMatch2(str, 0, "if", keywordIf,
+                                           "int", keywordInt);
 
     case 's':
         switch (str[1]) {
-        case 'i': return !strcmp(rest[1], "zeof") ? keywordSizeof : keywordUndefined;
-        case 't':
-            switch (str[2]) {
-            case 'a': return !strcmp(rest[2], "tic") ? keywordStatic : keywordUndefined;
-            case 'r': return !strcmp(rest[2], "uct") ? keywordStruct : keywordUndefined;
-            default: return keywordUndefined;
-            }
-
-        default: return keywordUndefined;
-        }
-
-    case 't':
-        switch (str[1]) {
-        case 'r': return !strcmp(rest[1], "ue") ? keywordTrue : keywordUndefined;
-        case 'y': return !strcmp(rest[1], "pedef") ? keywordTypedef : keywordUndefined;
-        default: return keywordUndefined;
-        }
-
-    case 'u':
-        switch (str[1]) {
-        case 'n': return !strcmp(rest[1], "ion") ? keywordUnion : keywordUndefined;
-        case 's': return !strcmp(rest[1], "ing") ? keywordUsing : keywordUndefined;
+        case 'i': return keywordMatch(str, 1, "sizeof", keywordSizeof);
+        case 't': return keywordMatch2(str, 1, "static", keywordStatic,
+                                               "struct", keywordStruct);
         default: return keywordUndefined;
         }
 
@@ -355,17 +329,17 @@ static keywordTag lookKeyword (const char* str) {
         case 'a':
             if (str[2] == '_') {
                 switch (str[3]) {
-                    case 'a': return !strcmp(rest[3], "rg") ? keywordVAArg : keywordUndefined;
-                    case 'c': return !strcmp(rest[3], "opy") ? keywordVACopy : keywordUndefined;
-                    case 'e': return !strcmp(rest[3], "nd") ? keywordVAEnd : keywordUndefined;
-                    case 's': return !strcmp(rest[3], "tart") ? keywordVAStart : keywordUndefined;
+                    case 'a': return keywordMatch(str, 3, "va_arg", keywordVAArg);
+                    case 'c': return keywordMatch(str, 3, "va_copy", keywordVACopy);
+                    case 'e': return keywordMatch(str, 3, "va_end", keywordVAEnd);
+                    case 's': return keywordMatch(str, 3, "va_start", keywordVAStart);
                     default: return keywordUndefined;
                 }
 
             } else
                 return keywordUndefined;
 
-        case 'o': return !strcmp(rest[1], "id") ? keywordVoid : keywordUndefined;
+        case 'o': return keywordMatch(str, 1, "void", keywordVoid);
         default: return keywordUndefined;
         }
 
