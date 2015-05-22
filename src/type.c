@@ -332,7 +332,8 @@ bool typeIsComplete (const type* DT) {
 bool typeIsVoid (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     /*Is it a built in type of size zero (void)*/
-    return    (   (DT->tag == typeBasic && DT->basic->tag == symType)
+    return    (   DT->tag == typeBasic
+               && DT->basic->tag == symType
                && DT->basic->size == 0)
            || typeIsInvalid(DT);
 }
@@ -347,13 +348,13 @@ bool typeIsNonVoid (const type* DT) {
 
 bool typeIsStruct (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   DT->tag == typeBasic && DT->basic->tag == symStruct)
+    return    (DT->tag == typeBasic && DT->basic->tag == symStruct)
            || typeIsInvalid(DT);
 }
 
 bool typeIsUnion (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   DT->tag == typeBasic && DT->basic->tag == symUnion)
+    return    (DT->tag == typeBasic && DT->basic->tag == symUnion)
            || typeIsInvalid(DT);
 }
 
@@ -407,11 +408,11 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     DT = typeTryThroughTypedef(DT);
     Model = typeTryThroughTypedef(Model);
 
-    if (typeIsInvalid(DT) || typeIsInvalid(Model))
+    if (typeIsInvalid(DT) || typeIsInvalid(Model)) {
         return true;
 
     /*If function requested, match params and return*/
-    else if (typeIsFunction(Model)) {
+    } else if (typeIsFunction(Model)) {
         /*fn ptr <=> fn*/
         if (typeIsPtr(DT) && typeIsFunction(DT->base))
             return typeIsCompatible(DT->base, Model);
@@ -428,7 +429,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
                            Model->returnType);
 
     /*If pointer requested, allow pointers and arrays and basic numeric types*/
-    } else if (typeIsPtr(Model))
+    } else if (typeIsPtr(Model)) {
         /*Except for fn pointers*/
         if (typeIsFunction(Model->base) && typeIsFunction(DT))
             return typeIsCompatible(DT, Model->base);
@@ -438,13 +439,13 @@ bool typeIsCompatible (const type* DT, const type* Model) {
                    || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
-    else if (typeIsArray(Model))
+    } else if (typeIsArray(Model)) {
         return    typeIsArray(DT)
                && (DT->array == Model->array || Model->array < 0 || DT->array < 0)
                && typeIsCompatible(DT->base, Model->base);
 
     /*Basic type*/
-    else {
+    } else {
         if (typeIsPtr(DT))
             return Model->basic->typeMask & typeNumeric;
 
