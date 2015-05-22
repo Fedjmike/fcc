@@ -95,8 +95,10 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             record->size += fieldSize;
             nextOffset += fieldSize;
 
-        } else /*if (record->tag == symUnion)*/
+        } else {
+            assert(record->tag == symUnion);
             record->size = max(record->size, fieldSize);
+        }
     }
 
     reportSymbol(record);

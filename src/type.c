@@ -241,7 +241,7 @@ type* typeDeriveFromTwo (const type* L, const type* R) {
         return typeDeepDuplicate(L);
 
     else {
-        debugAssert("typeDeriveFromTwo", "type compatibility", typeIsCompatible(L, R));
+        assert(typeIsCompatible(L, R));
         return typeDeriveFrom(L);
     }
 }
@@ -254,7 +254,7 @@ type* typeDeriveUnified (const type* L, const type* R) {
         return typeDeepDuplicate(L);
 
     else {
-        debugAssert("typeDeriveUnified", "type compatibility", typeIsCompatible(L, R));
+        assert(typeIsCompatible(L, R));
 
         if (typeIsEqual(L, R))
             return typeDeepDuplicate(L); //== R
@@ -483,8 +483,10 @@ bool typeIsEqual (const type* L, const type* R) {
         return    (L->array == R->array || L->array < 0 || R->array < 0)
                && typeIsEqual(L->base, R->base);
 
-    else /*(typeIsBasic(L))*/
+    else {
+        assert(typeIsBasic(L));
         return L->basic == R->basic;
+    }
 }
 
 /*:::: MISC INTERFACES ::::*/
@@ -520,8 +522,10 @@ int typeGetSize (const architecture* arch, const type* DT) {
     else if (typeIsPtr(DT) || typeIsFunction(DT))
         return arch->wordsize;
 
-    else /*if (typeIsBasic(DT))*/
+    } else {
+        assert(typeIsBasic(DT));
         return DT->basic->size;
+    }
 }
 
 char* typeToStr (const type* DT) {
@@ -617,7 +621,9 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
             free(qualified);
 
-        } else /*if (typeIsArray(DT))*/ {
+        } else {
+            assert(typeIsArray(DT));
+
             format = malloc(  strlen(embedded)
                             + (DT->array < 0 ? 0 : logi(DT->array, 10)) + 4);
 

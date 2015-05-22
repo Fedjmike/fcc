@@ -19,6 +19,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "assert.h"
 
 static operand emitterValueImpl (emitterCtx* ctx, irBlock** block, const ast* Node,
                                  emitterRequest request, const operand* suggestion);
@@ -607,7 +608,7 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
 
     int size = typeGetSize(ctx->arch, Node->dt);
 
-    /*Is it an array? Are we directly offsetting the address*/
+    /*Array? Directly offset the address*/
     if (typeIsArray(Node->l->dt)) {
         L = emitterValue(ctx, block, Node->l, requestArray);
         R = emitterValue(ctx, block, Node->r, requestValue);
@@ -664,8 +665,10 @@ static operand emitterIndex (emitterCtx* ctx, irBlock** block, const ast* Node) 
         Value.size = size;
         Value.array = typeIsArray(Node->dt);
 
-    /*Is it instead a pointer? Get value and offset*/
-    } else /*if (typeIsPtr(Node->l->dt)*/ {
+    /*Pointer? Get value and offset*/
+    } else {
+        assert(typeIsPtr(Node->l->dt));
+
         /* index = R*sizeof(*L) */
         R = emitterValue(ctx, block, Node->r, requestReg);
         asmBOP(ctx->ir, *block, bopMul, R, operandCreateLiteral(size));
