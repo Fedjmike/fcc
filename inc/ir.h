@@ -132,6 +132,7 @@ void irFree (irCtx* ctx);
 
 void irEmit (irCtx* ctx);
 
+/**If no name is provided, one will be allocated*/
 irFn* irFnCreate (irCtx* ctx, const char* name, int stacksize);
 irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 

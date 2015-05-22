@@ -520,10 +520,10 @@ static void analyzerLiteral (analyzerCtx* ctx, ast* Node) {
 
     } else if (Node->litTag == literalIdent) {
         if (Node->symbol->tag == symEnumConstant || Node->symbol->tag == symId || Node->symbol->tag == symParam) {
-            if (Node->symbol->dt)
+            if (Node->symbol->dt) {
                 Node->dt = typeDeepDuplicate(Node->symbol->dt);
 
-            else {
+            } else {
                 debugError("analyzerLiteral", "Symbol '%s' referenced without type", Node->symbol->ident);
                 Node->dt = typeCreateInvalid();
             }

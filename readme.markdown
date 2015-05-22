@@ -63,7 +63,6 @@ In either case the result of the expression is a function pointer whose return t
 
 See `<fcc>/tests/`[`lambda.c`](/tests/lambda.c) and [`swap.c`](/tests/swap.c).
 
-
 Output
 ------
 
