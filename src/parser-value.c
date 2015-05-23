@@ -591,13 +591,19 @@ static ast* parserCaptureList (parserCtx* ctx, sym* fn) {
     /*Captures*/
 
     do {
-        ast* capture = parserSymbol(ctx);
+        char* ident = strdup(tokenIsIdent(ctx) ? ctx->lexer->buffer : "<unnamed capture>");
+
+        ast* capture = astCreateMarker(ctx->location, markerCapture);
+        capture->l = parserSymbol(ctx);
         astAddChild(Node, capture);
 
-        if (capture->symbol) {
-            sym* captured = symCreateNamed(symId, fn, capture->symbol->ident);
-            vectorPush(&captured->decls, capture);
-        }
+        /*Copy the captured symbol,
+          including this and all previous decls in the new one*/
+        capture->symbol = symCreateNamed(symId, fn, ident);
+        vectorPush(&capture->symbol->decls, capture);
+        vectorPushFromVector(&capture->symbol->decls, &capture->l->symbol->decls);
+
+        free(ident);
     } while (tokenTryMatchPunct(ctx, punctComma));
 
     /*Allocator*/
