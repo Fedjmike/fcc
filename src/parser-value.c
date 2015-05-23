@@ -29,7 +29,9 @@ static ast* parserFactor (parserCtx* ctx);
 static ast* parserElementInit (parserCtx* ctx);
 static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array);
 static ast* parserLambda (parserCtx* ctx, bool partial);
+static ast* parserCaptureList (parserCtx* ctx, sym* fn);
 static ast* parserVA (parserCtx* ctx);
+static ast* parserSymbol (parserCtx* ctx);
 
 /**
  * Value = Comma
@@ -337,7 +339,7 @@ static ast* parserObject (parserCtx* ctx) {
  *          | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
  *          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
  *          | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
- *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
+ *          | Lambda | Symbol | <Int> | <Bool> | <Str> | <Char>
  */
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");
@@ -446,21 +448,9 @@ static ast* parserFactor (parserCtx* ctx) {
         Node = astCreateAssert(loc, parserAssignValue(ctx));
         tokenMatchPunct(ctx, punctRParen);
 
-    /*Identifier*/
+    /*Symbol*/
     } else if (tokenIsIdent(ctx)) {
-        sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
-
-        /*Valid symbol?*/
-        if (Symbol) {
-            Node = astCreateLiteral(ctx->location, literalIdent);
-            Node->literal = (char*) tokenDupMatch(ctx);
-            Node->symbol = Symbol;
-
-        } else {
-            Node = astCreateInvalid(ctx->location);
-            errorUndefSym(ctx);
-            tokenNext(ctx);
-        }
+        Node = parserSymbol(ctx);
 
     } else {
         Node = astCreateInvalid(ctx->location);
@@ -544,7 +534,7 @@ static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array) {
 }
 
 /**
- * Lambda = "[" "]" ParamList
+ * Lambda = "[" [ CaptureList ] "]" ParamList
  *          ( "{" Code "}" ) | ( "(" Value ")" )
  */
 static ast* parserLambda (parserCtx* ctx, bool partial) {
@@ -552,14 +542,18 @@ static ast* parserLambda (parserCtx* ctx, bool partial) {
 
     ast* Node = astCreateLiteral(ctx->location, literalLambda);
     Node->symbol = symCreateNamed(symId, ctx->module, "");
-    sym* oldScope = scopeSet(ctx, Node->symbol);
 
-    /*Capture (not supported yet)*/
+    /*Capture*/
 
     if (!partial)
         tokenMatchPunct(ctx, punctLBracket);
 
+    if (!tokenIsPunct(ctx, punctRBracket))
+        Node->l = parserCaptureList(ctx, Node->symbol);
+
     tokenMatchPunct(ctx, punctRBracket);
+
+    sym* oldScope = scopeSet(ctx, Node->symbol);
 
     /*Params*/
 
@@ -580,6 +574,40 @@ static ast* parserLambda (parserCtx* ctx, bool partial) {
     }
 
     ctx->scope = oldScope;
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * CaptureList = Symbol [{ "," Symbol }] ";" AssignValue
+ */
+static ast* parserCaptureList (parserCtx* ctx, sym* fn) {
+    debugEnter("CaptureList");
+
+    ast* Node = astCreateMarker(ctx->location, markerCaptureList);
+
+    /*Captures*/
+
+    do {
+        ast* capture = parserSymbol(ctx);
+        astAddChild(Node, capture);
+
+        if (capture->symbol) {
+            sym* captured = symCreateNamed(symId, fn, capture->symbol->ident);
+            vectorPush(&captured->decls, capture);
+        }
+    } while (tokenTryMatchPunct(ctx, punctComma));
+
+    /*Allocator*/
+
+    if (   tokenTryMatchPunct(ctx, punctSemicolon)
+        && !tokenIsPunct(ctx, punctRBracket))
+        Node->r = parserAssignValue(ctx);
+
+    else
+        errorExpected(ctx, "an allocator for the parameter capture");
 
     debugLeave();
 
@@ -641,6 +669,32 @@ static ast* parserVA (parserCtx* ctx) {
     }
 
     tokenMatchPunct(ctx, punctRParen);
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Symbol = <QualifiedIdent>
+ */
+static ast* parserSymbol (parserCtx* ctx) {
+    debugEnter("Symbol");
+
+    ast* Node;
+    sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
+
+    /*Valid symbol?*/
+    if (Symbol) {
+        Node = astCreateLiteral(ctx->location, literalIdent);
+        Node->literal = (char*) tokenDupMatch(ctx);
+        Node->symbol = Symbol;
+
+    } else {
+        Node = astCreateInvalid(ctx->location);
+        errorUndefSym(ctx);
+        tokenNext(ctx);
+    }
 
     debugLeave();
 

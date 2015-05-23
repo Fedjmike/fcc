@@ -28,17 +28,19 @@ Factor =   ( "(" Value ")" )
          | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
          | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
-         | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
+         | Lambda | Symbol | <Int> | <Bool> | <Str> | <Char>
 ElementInit = [   (   ( "." <Ident> )
                     | ( "[" Value "]" ) DesignatedInit )
                 | AssignValue ]
 DesignatedInit = "=" AssignValue
-Lambda = "[" "]" ParamList
+Lambda = "[" [ CaptureList ] "]" ParamList
          ( "{" Code "}" ) | ( "(" Value ")" )
+CaptureList = Symbol [{ "," Symbol }] ";" AssignValue
 VAStart = va_start "(" AssignValue "," <Ident> ")"
 VAEnd = va_end "(" AssignValue ")"
 VAArg = va_arg "(" AssignValue "," Type ")"
 VACopy = va_copy "(" AssignValue "," AssignValue ")"
+Symbol = <QualifiedIdent>
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )

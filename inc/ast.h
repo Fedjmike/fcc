@@ -44,7 +44,8 @@ typedef enum markerTag {
     markerStatic,
     markerExtern,
     markerArrayDesignatedInit,
-    markerStructDesignatedInit
+    markerStructDesignatedInit,
+    markerCaptureList
 } markerTag;
 
 typedef enum opTag {
