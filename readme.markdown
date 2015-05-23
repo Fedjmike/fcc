@@ -17,7 +17,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - Logical operators (`||`, `&&`, and `!`) return `bool`
   - `va_*` are implemented as builtins, and including `stdarg.h` has no effect
   - The types usually defined by `stdint.h` are also builtins
-  - Empty prototype parentheses means zero arguments
+  - Empty prototype parentheses means zero arguments (as in C++)
   - Operator precedence simplified
   - Ternary (`?:`) can return lvalues (as in C++)
   - Comma (`,`) can return a constant expression
@@ -39,7 +39,7 @@ The compiler implements a language quite similar to C, but there are some major 
   - Unsigned integers
   - `short` and `long`
   - Wide characters
-  - `volatile` quantifier
+  - `volatile` qualifier
   - `register` storage class
 
 The compiler is self hosting, on branch `selfhosting` (see Building). As the compiler matures experimental additions to the language considered are:
@@ -72,7 +72,7 @@ The compiler generates assembly for x86 (32-bit) CPUs. 64-bit AMD64 is experimen
 
 To run the 32-bit code on a 64-bit OS, you will probably need to install 32-bit runtime libraries (try `sudo apt-get install gcc-multilib`).
 
-The ABI is largely compatible GCC and Clang's. However, passing and returning structs as values will often not work. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another.
+The ABI is largely compatible GCC and Clang's. This means that most code compiled with one compiler can be successfully linked and run with code compiled with another. However, passing and returning structs as values will often not work, for reasons I'm not totally clear on.
 
 Building
 --------
@@ -97,13 +97,11 @@ Makefile parameters (all optional):
 Makefile targets:
 - `all clean print  tests print-tests  selfhost`
 
-Use the `FCC` parameter to choose which copy of FCC to run the tests against.
-
 The `selfhost` target fully compiles FCC using an existing copy, `bin/$CONFIG/fcc`. The result goes in `bin/self/fcc`. As the language accepted by the compiler differs slightly to C, only the `selfhosting` branch will compile under both FCC and a regular C compiler. [The modifications](https:/github.com/Fedjmike/fcc/compare/selfhosting) required to be a [polyglot](http:/en.wikipedia.org/wiki/Polyglot_(computing)) are quite minimal, mostly just concerning the module system and explicit type coercion.
 
 If found on the system the compiler will be run against Valgrind when building tests. To disable this, set `VALGRIND=""`.
 
-Simply specifying `FCC=bin/self/fcc` as an parameter for the `tests-all` target will trigger a partial self-host.
+Use the `FCC` parameter to choose which copy of FCC to run the tests against. Simply specifying `FCC=bin/self/fcc` as a parameter for the `tests-all` target will trigger a self-host. Remember to do this only on the `selfhosting` branch.
 
 Running
 -------

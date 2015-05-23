@@ -283,8 +283,6 @@ static keywordTag lookKeyword (const char* str, int length) {
     /*Manual trie
       Yeah it's ugly, but it's fast. And lexing is the slowest part of compilation.*/
 
-    const char* rest[] = {str+1, str+2, str+3, str+4};
-
     switch (str[0]) {
     case 'd': return keywordMatch(str, 0, "do", keywordDo);
     case 'r': return keywordMatch(str, 0, "return", keywordReturn);

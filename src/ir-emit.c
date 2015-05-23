@@ -151,7 +151,7 @@ static void irEmitTerm (irCtx* ctx, FILE* file, const irTerm* term, const irBloc
         }
 
     } else if (term->tag == termCall) {
-        asmCall(ctx->asm, term->toAsSym->ident);
+        asmCall(ctx->asm, term->toAsSym->label);
         jumpTo = term->ret;
 
     } else if (term->tag == termCallIndirect) {

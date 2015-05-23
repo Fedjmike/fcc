@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
+#include "assert.h"
 
 static typeQualifiers typeQualifiersCreate (void);
 static type* typeCreate (typeTag tag);
@@ -524,7 +525,7 @@ int typeGetSize (const architecture* arch, const type* DT) {
     else if (typeIsPtr(DT) || typeIsFunction(DT))
         return arch->wordsize;
 
-    } else {
+    else {
         assert(typeIsBasic(DT));
         return DT->basic->size;
     }
