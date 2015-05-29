@@ -370,8 +370,8 @@ static const type* analyzerDeclCall (analyzerCtx* ctx, ast* Node, type* returnTy
 static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
     int size = arraySizeError;
 
-    /*Unspecified size, will (hopefully) infer it from an initializer
-      [] as a synonym for * is differentiated by the parser*/
+    /*Unspecified size, we will (hopefully) infer it from an initializer
+      [] as a synonym for * was earlier differentiated by the parser*/
     if (Node->r->tag == astEmpty)
         size = arraySizeUnspecified;
 
@@ -397,8 +397,11 @@ static const type* analyzerDeclIndex (analyzerCtx* ctx, ast* Node, type* base, b
 
 static const type* analyzerDeclIdentLiteral (analyzerCtx* ctx, ast* Node, type* base, bool module, storageTag storage) {
     bool fn = typeIsFunction(base);
-    /*Defaults to extern if a function, static if a module level variable,
-      auto otherwise, but an explicit storage specifier overrides all.*/
+    /*The storage tag defaults to:
+        - extern if the symbol is a function,
+        - static if a module level variable,
+        - auto otherwise,
+     But an explicit storage specifier overrides all.*/
     Node->storage =   storage ? storage
                     : fn ? storageExtern
                     : module ? storageStatic : storageAuto;

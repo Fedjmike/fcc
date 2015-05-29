@@ -11,17 +11,6 @@
 
 #include "assert.h"
 
-using "../inc/operand.h";
-
-using "stdlib.h";
-using "string.h";
-using "stdio.h";
-
-using "../inc/debug.h";
-using "../inc/ast.h";
-using "../inc/architecture.h";
-using "../inc/reg.h";
-
 operand operandCreate (operandTag tag) {
     operand ret;
     ret.tag = tag;

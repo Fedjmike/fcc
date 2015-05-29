@@ -1,9 +1,5 @@
 #include "hashmap.h"
 
-using "forward.h";
-
-using "hashmap.h";
-
 typedef struct ast ast;
 typedef struct sym sym;
 typedef struct type type;
