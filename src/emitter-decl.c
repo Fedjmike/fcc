@@ -207,7 +207,7 @@ static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
             || Node->symbol->storage == storageExtern))
         ctx->arch->symbolMangler(Node->symbol);
 
-    /*Static delcaration without an explicit initializer?*/
+    /*Static declaration without an explicit initializer?*/
     if (   Node->symbol->tag == symId
         && Node->storage == storageStatic
         && !Node->symbol->impl)
