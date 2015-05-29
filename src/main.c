@@ -48,10 +48,10 @@ static bool driver (config conf) {
                                           " ", malloc);
 
         if (conf.mode == modeNoLink)
-            fail |= systemf("gcc %s -c %s", conf.arch.asflags, intermediates) != 0;
+            fail |= systemf("cc %s -c %s", conf.arch.asflags, intermediates) != 0;
 
         else {
-            fail |= systemf("gcc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
+            fail |= systemf("cc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
 
             if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);

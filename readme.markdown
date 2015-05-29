@@ -1,7 +1,7 @@
 Fedjmike's C Compiler
 =====================
 
-Dependencies: C standard library.
+Dependencies: C standard library, a POSIX `cc` for assembly and linking.
 
 Features
 --------
