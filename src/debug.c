@@ -22,8 +22,7 @@ int internalErrors = 0;
 void debugInit (FILE* nlog) {
     logFile = nlog;
     logFile = stdout;
-    debugSetMode(debugFull);
-    internalErrors = 0;
+    debugSetMode(debugMinimal);
 }
 
 debugMode debugSetMode (debugMode nmode) {
@@ -34,7 +33,7 @@ debugMode debugSetMode (debugMode nmode) {
 
 void debugWait () {
     #ifdef FCC_DEBUGMODE
-    if (mode <= debugMinimal)
+    if (mode <= debugFull)
         getchar();
     #endif
 }
@@ -127,6 +126,12 @@ void debugErrorUnhandledInt (const char* functionName,
     debugError(functionName, "unhandled %s: %d", className, classInt);
 }
 
+void debugErrorUnhandledChar (const char* functionName,
+                              const char* className,
+                              char classChar) {
+    debugError(functionName, "unhandled %s: '%c'", className, classChar);
+}
+
 /*:::: REPORTING INTERNAL STRUCTURES ::::*/
 
 void report (const char* str) {
@@ -208,6 +213,26 @@ void reportSymbol (const sym* Symbol) {
         debugOut("offset: %d", Symbol->offset);
 
     debugOut("\n");
+}
+
+void reportSymbolTree (const sym* Symbol, int level) {
+    for (int i = 0; i < level; i++)
+        debugOut("| ");
+
+    debugOut("+ %s", symTagGetStr(Symbol->tag));
+
+    if (Symbol->ident)
+        debugOut(" %s", Symbol->ident);
+
+    debugOut("\n");
+
+    if (Symbol->tag == symModuleLink)
+        return;
+
+    for (int i = 0; i < Symbol->children.length; i++) {
+        sym* current = vectorGet(&Symbol->children, i);
+        reportSymbolTree(current, level+1);
+    }
 }
 
 void reportNode (const ast* Node) {

@@ -1,10 +1,15 @@
 #include "operand.h"
 
+#include "stdint.h"
+#include "stdio.h"
+
 using "forward.h";
 
 using "operand.h";
 
 typedef struct asmCtx asmCtx;
+typedef struct irBlock irBlock;
+typedef struct irCtx irCtx;
 typedef enum regIndex regIndex;
 
 typedef enum boperation {
@@ -30,51 +35,60 @@ typedef enum uoperation {
 void asmFilePrologue (asmCtx* ctx);
 void asmFileEpilogue (asmCtx* ctx);
 
-void asmFnPrologue (asmCtx* ctx, const char* name, int localSize);
-void asmFnEpilogue (asmCtx* ctx, operand labelEnd);
+void asmFnLinkage (FILE* file, const char* name);
+
+void asmFnPrologue (irCtx* ir, irBlock* block, int localSize);
+void asmFnEpilogue (irCtx* ir, irBlock* block);
 
 /**
  * Save and restore a register using the stack
  */
-void asmSaveReg (asmCtx* ctx, regIndex r);
-void asmRestoreReg (asmCtx* ctx, regIndex r);
+void asmSaveReg (irCtx* ir, irBlock* block, regIndex r);
+void asmRestoreReg (irCtx* ir, irBlock* block, regIndex r);
+
+void asmDataSection (asmCtx* ctx);
+void asmRODataSection (asmCtx* ctx);
+
+void asmStaticData (asmCtx* ctx, const char* label, bool global, int size, intptr_t initial);
 
 /**
  * Place a string constant in the rodata section with the given label
  */
-void asmStringConstant (asmCtx* ctx, operand label, const char* str);
+void asmStringConstant (asmCtx* ctx, const char* label, const char* str);
 
 /**
  * Place a previously named label in the output
  */
-void asmLabel (asmCtx* ctx, operand L);
+void asmLabel (asmCtx* ctx, const char* label);
 
-void asmJump (asmCtx* ctx, operand L);
-void asmBranch (asmCtx* ctx, operand Condition, operand L);
+void asmJump (asmCtx* ctx, const char* label);
+void asmBranch (asmCtx* ctx, operand Condition, const char* label);
 
 /**
  * Call a function with the arguments currently on the stack
  */
-void asmCall (asmCtx* ctx, operand L);
+void asmCall (asmCtx* ctx, const char* label);
+void asmCallIndirect (irBlock* block, operand L);
 
-void asmPush (asmCtx* ctx, operand L);
-void asmPop (asmCtx* ctx, operand L);
+void asmReturn (asmCtx* ctx);
 
-void asmPushN (asmCtx* ctx, int n);
-void asmPopN (asmCtx* ctx, int n);
+void asmPush (irCtx* ir, irBlock* block, operand L);
+void asmPop (irCtx* ir, irBlock* block, operand L);
 
-void asmMove (asmCtx* ctx, operand Dest, operand Src);
-void asmConditionalMove (asmCtx* ctx, operand Cond, operand Dest, operand Src);
+void asmPushN (irCtx* ir, irBlock* block, int n);
+void asmPopN (irCtx* ir, irBlock* block, int n);
 
-operand asmWiden (asmCtx* ctx, operand R, int size);
-operand asmNarrow (asmCtx* ctx, operand R, int size);
+void asmMove (irCtx* ir, irBlock* block, operand Dest, operand Src);
+void asmConditionalMove (irCtx* ir, irBlock* block, operand Cond, operand Dest, operand Src);
+void asmRepStos (irCtx* ir, irBlock* block, operand RAX, operand RCX, operand RDI,
+                 operand Dest, int length, operand Src);
 
-void asmEvalAddress (asmCtx* ctx, operand L, operand R);
+void asmEvalAddress (irCtx* ir, irBlock* block, operand L, operand R);
 
-void asmCompare (asmCtx* ctx, operand L, operand R);
+void asmCompare (irCtx* ir, irBlock* block, operand L, operand R);
 
-void asmBOP (asmCtx* ctx, boperation Op, operand L, operand R);
+void asmBOP (irCtx* ir, irBlock* block, boperation Op, operand L, operand R);
 
-void asmDivision (asmCtx* ctx, operand R);
+void asmDivision (irCtx* ir, irBlock* block, operand R);
 
-void asmUOP (asmCtx* ctx, uoperation Op, operand R);
+void asmUOP (irCtx* ir, irBlock* block, uoperation Op, operand R);

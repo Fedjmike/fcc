@@ -33,6 +33,11 @@ const reg* regGet (regIndex r) {
 }
 
 reg* regRequest (regIndex r, int size) {
+    if (size == 0) {
+        debugError("regRequest", "zero sized register requested, %s", regIndexGetName(r, 8));
+        size = regs[r].size == 8 ? 8 : 4;
+    }
+
     if (regs[r].allocatedAs == 0 && regs[r].size <= size) {
         regs[r].allocatedAs = size;
         return &regs[r];
@@ -60,25 +65,29 @@ reg* regAlloc (int size) {
     return regRequest(regRAX, size);
 }
 
-const char* regIndexGetName (regIndex r, int size) {
+static const char* regGetName (const reg* r, int size) {
     if (size == 1)
-        return regs[r].names[0];
+        return r->names[0];
 
     else if (size == 2)
-        return regs[r].names[1];
+        return r->names[1];
 
     else if (size == 4)
-        return regs[r].names[2];
+        return r->names[2];
 
     else if (size == 8)
-        return regs[r].names[3];
+        return r->names[3];
 
     else {
-        debugErrorUnhandledInt("regIndexGetName", "register size", size);
-        return regs[r].names[3];
+        debugErrorUnhandledInt("regGetName", "register size", size);
+        return "unhandled";
     }
 }
 
+const char* regIndexGetName (regIndex r, int size) {
+    return regGetName(&regs[r], size);
+}
+
 const char* regGetStr (const reg* r) {
-    return regIndexGetName(r-regs, r->allocatedAs);
+    return regGetName(r, r->allocatedAs);
 }

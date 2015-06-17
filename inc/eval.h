@@ -10,4 +10,6 @@ typedef struct evalResult {
     int value;
 } evalResult;
 
-evalResult eval (const architecture* arch, ast* Node);
+evalResult eval (const architecture* arch, const ast* Node);
+
+bool evalIsConstantInit (const ast* Node);

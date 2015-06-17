@@ -1,8 +1,15 @@
-int strlen (const char*);
+size_t strlen (const char*);
 
 char* strcpy (char*, const char*);
+char* strncpy (char*, int, const char*);
 char* strdup (const char*);
 
-int strcmp (const char*, const char*);
+char* strncat (char*, int, const char*);
 
-void* memcpy (void*, const void*, int);
+int strcmp (const char*, const char*);
+int strncmp (const char*, int, const char*);
+
+const char* strchr (const char*, int);
+const char* strrchr (const char*, int);
+
+void* memcpy (void*, const void*, size_t);

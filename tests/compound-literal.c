@@ -14,7 +14,7 @@ int f (int *p, int n) {
 int main () {
     A a = (A) {0, 0};
 	
-	f((int[3]) {0, 1, 2}, 3);
+	f((int[]) {0, 1, 2}, 3);
 		
     return 0;
 }

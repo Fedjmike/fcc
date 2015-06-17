@@ -9,6 +9,8 @@
 #include "../inc/architecture.h"
 #include "../inc/reg.h"
 
+#include "assert.h"
+
 using "../inc/operand.h";
 
 using "stdlib.h";
@@ -23,8 +25,8 @@ using "../inc/reg.h";
 operand operandCreate (operandTag tag) {
     operand ret;
     ret.tag = tag;
-    ret.base = regUndefined;
-    ret.index = regUndefined;
+    ret.base = 0;
+    ret.index = 0;
     ret.factor = 0;
     ret.offset = 0;
     ret.literal = 0;
@@ -58,7 +60,7 @@ operand operandCreateReg (reg* r) {
 operand operandCreateMem (reg* base, int offset, int size) {
     operand ret = operandCreate(operandMem);
     ret.base = base;
-    ret.index = regUndefined;
+    ret.index = 0;
     ret.factor = 0;
     ret.offset = offset;
     ret.size = size;
@@ -91,15 +93,20 @@ operand operandCreateLabelOffset (const char* label) {
 }
 
 void operandFree (operand Value) {
-    if (Value.tag == operandReg)
+    if (Value.tag == operandReg) {
         regFree(Value.base);
+        Value.base = 0;
 
-    else if (Value.tag == operandMem) {
-        if (Value.base != 0 && Value.base != regGet(regRBP))
+    } else if (Value.tag == operandMem) {
+        if (Value.base != 0 && Value.base != regGet(regRBP)) {
             regFree(Value.base);
+            Value.base = 0;
+        }
 
-        if (Value.index != 0)
+        if (Value.index != 0) {
             regFree(Value.index);
+            Value.index = 0;
+        }
 
     } else if (   Value.tag == operandUndefined || Value.tag == operandInvalid
                || Value.tag == operandVoid || Value.tag == operandFlags
@@ -133,9 +140,11 @@ bool operandIsEqual (operand L, operand R) {
     else if (L.tag == operandLabel || L.tag == operandLabelMem || L.tag == operandLabelOffset)
         return L.label == R.label;
 
-    else /*if (   L.tag == operandVoid || L.tag == operandStack
-               || L.tag == operandInvalid || L.tag == operandUndefined)*/
+    else {
+        assert(   L.tag == operandVoid || L.tag == operandStack
+               || L.tag == operandInvalid || L.tag == operandUndefined);
         return true;
+    }
 }
 
 int operandGetSize (const architecture* arch, operand Value) {
@@ -146,7 +155,7 @@ int operandGetSize (const architecture* arch, operand Value) {
     else if (Value.tag == operandReg)
         return Value.base->allocatedAs;
 
-    else if (   Value.tag == operandMem || Value.tag == operandLabelMem)
+    else if (Value.tag == operandMem || Value.tag == operandLabelMem)
         return Value.size;
 
     else if (Value.tag == operandLiteral)
@@ -179,7 +188,7 @@ char* operandToStr (operand Value) {
     } else if (Value.tag == operandReg)
         return strdup(regGetStr(Value.base));
 
-    else if (   Value.tag == operandMem || Value.tag == operandLabelMem) {
+    else if (Value.tag == operandMem || Value.tag == operandLabelMem) {
         const char* sizeStr;
 
         if (Value.size == 1)
@@ -193,7 +202,7 @@ char* operandToStr (operand Value) {
         else if (Value.size == 16)
             sizeStr = "oword";
         else
-            sizeStr = "undefined";
+            sizeStr = "dword";
 
         if (Value.tag == operandLabelMem) {
             char* ret = malloc(  strlen(sizeStr)
@@ -213,7 +222,7 @@ char* operandToStr (operand Value) {
                 const char* regStr = regGetStr(Value.base);
                 char* ret = malloc(  strlen(sizeStr)
                                    + strlen(regStr)
-                                   + logi(Value.offset, 10) + 2 + 9);
+                                   + logi(Value.offset, 10) + 3 + 10);
                 sprintf(ret, "%s ptr [%s%+d]", sizeStr, regStr, Value.offset);
                 return ret;
             }
@@ -225,7 +234,7 @@ char* operandToStr (operand Value) {
                                + strlen(regStr)
                                + logi(Value.factor, 10) + 3
                                + strlen(indexStr)
-                               + logi(Value.offset, 10) + 2 + 9);
+                               + logi(Value.offset, 10) + 3 + 10);
             sprintf(ret, "%s ptr [%s%+d*%s%+d]",
                      sizeStr, regStr, Value.factor, indexStr, Value.offset);
             return ret;

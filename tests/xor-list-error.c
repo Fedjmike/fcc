@@ -10,6 +10,7 @@ typedef struct list_node {
     int item;
     //Simply next or previous for first and last nodes
     intptr_t xor_ptr;
+    const int x;
 } list_node;
 
 int list_node;
@@ -173,6 +174,10 @@ int main () {
     }
 
 	*printf;
+	
+	int for;
+    
+    *fifth = *fourth;
 	
     puts((list_node) "\nInserting 6, deleting 3");
     list_node* newnode = insert_between(fourth, fifth, 6);

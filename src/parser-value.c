@@ -12,6 +12,7 @@
 
 #include "stdlib.h"
 #include "string.h"
+#include "assert.h"
 
 using "../inc/debug.h";
 using "../inc/sym.h";
@@ -37,6 +38,10 @@ static ast* parserUnary (parserCtx* ctx);
 static ast* parserPostUnary (parserCtx* ctx);
 static ast* parserObject (parserCtx* ctx);
 static ast* parserFactor (parserCtx* ctx);
+static ast* parserElementInit (parserCtx* ctx);
+static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array);
+static ast* parserLambda (parserCtx* ctx, bool partial);
+static ast* parserVA (parserCtx* ctx);
 
 /**
  * Value = Comma
@@ -245,7 +250,7 @@ static ast* parserTerm (parserCtx* ctx) {
 static ast* parserUnary (parserCtx* ctx) {
     debugEnter("Unary");
 
-    ast* Node = 0;
+    ast* Node;
     tokenLocation loc = ctx->location;
     opTag o;
 
@@ -260,7 +265,6 @@ static ast* parserUnary (parserCtx* ctx) {
         Node = astCreateUOP(loc, o, parserUnary(ctx));
 
     else
-        /*Interestingly, this call to parserObject parses itself*/
         Node = parserPostUnary(ctx);
 
     debugLeave();
@@ -274,6 +278,7 @@ static ast* parserUnary (parserCtx* ctx) {
 static ast* parserPostUnary (parserCtx* ctx) {
     debugEnter("PostUnary");
 
+    /*Interestingly, this call to parserObject parses itself*/
     ast* Node = parserObject(ctx);
     tokenLocation loc = ctx->location;
     opTag o;
@@ -341,14 +346,15 @@ static ast* parserObject (parserCtx* ctx) {
 /**
  * Factor =   ( "(" Value ")" )
  *          | ( "(" Type ")" Unary )
- *          | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
- *          | ( "sizeof" ( "(" Type | Value ")" ) | Value )
- *          | <Int> | <Bool> | <Str> | <Char> | <Ident>
+ *          | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
+ *          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
+ *          | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
+ *          | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
  */
 static ast* parserFactor (parserCtx* ctx) {
     debugEnter("Factor");
 
-    ast* Node = 0;
+    ast* Node;
 
     tokenLocation loc = ctx->location;
 
@@ -366,13 +372,8 @@ static ast* parserFactor (parserCtx* ctx) {
                 Node->symbol = symCreateNamed(symId, ctx->scope, "");
                 Node->l = tmp;
 
-                do {
-                    /*Skipped field/element*/
-                    if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
-                        astAddChild(Node, astCreateEmpty(ctx->location));
-
-                    else
-                        astAddChild(Node, parserAssignValue(ctx));
+                if (!tokenIsPunct(ctx, punctRBrace)) do {
+                    astAddChild(Node, parserElementInit(ctx));
                 } while (tokenTryMatchPunct(ctx, punctComma));
 
                 tokenMatchPunct(ctx, punctRBrace);
@@ -391,13 +392,8 @@ static ast* parserFactor (parserCtx* ctx) {
     } else if (tokenTryMatchPunct(ctx, punctLBrace)) {
         Node = astCreateLiteral(loc, literalInit);
 
-        do {
-            /*Skipped field/element*/
-            if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
-                astAddChild(Node, astCreateEmpty(ctx->location));
-
-            else
-                astAddChild(Node, parserAssignValue(ctx));
+        if (!tokenIsPunct(ctx, punctRBrace)) do {
+            astAddChild(Node, parserElementInit(ctx));
         } while (tokenTryMatchPunct(ctx, punctComma));
 
         tokenMatchPunct(ctx, punctRBrace);
@@ -419,6 +415,10 @@ static ast* parserFactor (parserCtx* ctx) {
             Node = parserUnary(ctx);
 
         Node = astCreateSizeof(loc, Node);
+
+    /*Lambda*/
+    } else if (tokenIsPunct(ctx, punctLBracket)) {
+        Node = parserLambda(ctx, false);
 
     /*Integer*/
     } else if (tokenIsInt(ctx)) {
@@ -445,6 +445,19 @@ static ast* parserFactor (parserCtx* ctx) {
         Node->literal = malloc(sizeof(char));
         *(char*) Node->literal = tokenMatchChar(ctx);
 
+    /*va_start va_end va_arg va_copy*/
+    } else if (   tokenIsKeyword(ctx, keywordVAStart)
+               || tokenIsKeyword(ctx, keywordVAEnd)
+               || tokenIsKeyword(ctx, keywordVAArg)
+               || tokenIsKeyword(ctx, keywordVACopy)) {
+        Node = parserVA(ctx);
+
+    /*assert*/
+    } else if (tokenTryMatchKeyword(ctx, keywordAssert)) {
+        tokenMatchPunct(ctx, punctLParen);
+        Node = astCreateAssert(loc, parserAssignValue(ctx));
+        tokenMatchPunct(ctx, punctRParen);
+
     /*Identifier*/
     } else if (tokenIsIdent(ctx)) {
         sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
@@ -466,6 +479,180 @@ static ast* parserFactor (parserCtx* ctx) {
         errorExpected(ctx, "expression");
         tokenNext(ctx);
     }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * ElementInit = [   (   ( "." <Ident> )
+ *                     | ( "[" Value "]" ) DesignatedInit )
+ *                 | AssignValue ]
+ */
+static ast* parserElementInit (parserCtx* ctx) {
+    debugEnter("ElementInit");
+
+    tokenLocation loc = ctx->location;
+    ast* Node;
+
+    /*Skipped field/element*/
+    if (tokenIsPunct(ctx, punctComma) || tokenIsPunct(ctx, punctRBrace))
+        Node = astCreateEmpty(loc);
+
+    /*Struct designated initializer*/
+    else if (tokenTryMatchPunct(ctx, punctPeriod)) {
+        ast* field = astCreateLiteral(loc, literalIdent);
+        field->literal = (void*) strdup(ctx->lexer->buffer);
+
+        if (tokenIsIdent(ctx))
+            tokenMatch(ctx);
+
+        else
+            errorExpected(ctx, "field name");
+
+        Node = parserDesignatedInit(ctx, field, false);
+
+    /*Array designated initializer, or the beginning of a lambda*/
+    } else if (tokenTryMatchPunct(ctx, punctLBracket)) {
+        /*Lambda*/
+        if (tokenIsPunct(ctx, punctRBracket))
+            Node = parserLambda(ctx, true);
+
+        /*Designated initializer*/
+        else {
+            ast* element = parserValue(ctx);
+            tokenMatchPunct(ctx, punctRBracket);
+
+            Node = parserDesignatedInit(ctx, element, true);
+        }
+
+    /*Regular value*/
+    } else
+        Node = parserAssignValue(ctx);
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * DesignatedInit = "=" AssignValue
+ */
+static ast* parserDesignatedInit (parserCtx* ctx, ast* element, bool array) {
+    debugEnter("DesignatedInit");
+
+    tokenLocation loc = ctx->location;
+    tokenMatchPunct(ctx, punctAssign);
+
+    ast* Node = astCreateMarker(loc, array ? markerArrayDesignatedInit
+                                           : markerStructDesignatedInit);
+    Node->l = element;
+    Node->r = parserAssignValue(ctx);
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Lambda = "[" "]" ParamList
+ *          ( "{" Code "}" ) | ( "(" Value ")" )
+ */
+static ast* parserLambda (parserCtx* ctx, bool partial) {
+    debugEnter("Lambda");
+
+    ast* Node = astCreateLiteral(ctx->location, literalLambda);
+    Node->symbol = symCreateNamed(symId, ctx->module, "");
+    sym* oldScope = scopeSet(ctx, Node->symbol);
+
+    /*Capture (not supported yet)*/
+
+    if (!partial)
+        tokenMatchPunct(ctx, punctLBracket);
+
+    tokenMatchPunct(ctx, punctRBracket);
+
+    /*Params*/
+
+    parserParamList(ctx, Node, true);
+
+    /*Body*/
+
+    if (tokenIsPunct(ctx, punctLBrace))
+        Node->r = parserCode(ctx);
+
+    else if (tokenTryMatchPunct(ctx, punctLParen)) {
+        Node->r = parserValue(ctx);
+        tokenTryMatchPunct(ctx, punctRParen);
+
+    } else {
+        errorExpected(ctx, "lambda body");
+        Node->r = astCreateInvalid(ctx->location);
+    }
+
+    ctx->scope = oldScope;
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * VAStart = va_start "(" AssignValue "," <Ident> ")"
+ * VAEnd = va_end "(" AssignValue ")"
+ * VAArg = va_arg "(" AssignValue "," Type ")"
+ * VACopy = va_copy "(" AssignValue "," AssignValue ")"
+ */
+static ast* parserVA (parserCtx* ctx) {
+    debugEnter("VA");
+
+    /*Parse all builtins in one, remembering which keyword was found.*/
+
+    tokenLocation loc = ctx->location;
+
+    astTag tag =   tokenTryMatchKeyword(ctx, keywordVAStart) ? astVAStart
+                 : tokenTryMatchKeyword(ctx, keywordVAEnd) ? astVAEnd
+                 : tokenTryMatchKeyword(ctx, keywordVACopy) ? astVACopy
+                 : (tokenMatchKeyword(ctx, keywordVAArg), astVAArg);
+
+    ast* Node = astCreate(tag, loc);
+
+    tokenMatchPunct(ctx, punctLParen);
+
+    Node->l = parserAssignValue(ctx);
+
+    if (tag == astVAEnd)
+        ;
+
+    else {
+        tokenMatchPunct(ctx, punctComma);
+
+        /*va_start takes a parameter name
+          Validate it as an ident but don't validate the symbol*/
+        if (tag == astVAStart) {
+            sym* Symbol = symFind(ctx->scope, (char*) ctx->lexer->buffer);
+
+            if (tokenIsIdent(ctx) && Symbol) {
+                Node->r = astCreateLiteral(ctx->location, literalIdent);
+                Node->r->literal = (char*) tokenDupMatch(ctx);
+                Node->r->symbol = Symbol;
+
+            } else {
+                errorExpected(ctx, "parameter name");
+                Node->r = astCreateInvalid(ctx->location);
+            }
+
+        } else if (tag == astVAArg)
+            Node->r = parserType(ctx);
+
+        else {
+            assert(tag == astVACopy);
+            Node->r = parserAssignValue(ctx);
+        }
+    }
+
+    tokenMatchPunct(ctx, punctRParen);
 
     debugLeave();
 

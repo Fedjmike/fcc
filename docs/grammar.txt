@@ -25,26 +25,38 @@ Object = Factor [{   ( "[" Value "]" )
                    | ( "." | "->" <Ident> ) }]
 Factor =   ( "(" Value ")" )
          | ( "(" Type ")" Unary )
-         | ( [ "(" Type ")" ] "{" [ AssignValue [{ "," [ AssignValue ] }] ] "}" )
+         | ( [ "(" Type ")" ] "{" [ ElementInit [{ "," ElementInit }] ] "}" )
          | ( "sizeof" ( "(" Type | Value ")" ) | Unary )
-         | <Int> | <Bool> | <Str> | <Char> | <Ident>
+         | VAStart | VAEnd | VAArg | VACopy | ( "assert" "(" AssignValue ")" )
+         | Lambda | <Int> | <Bool> | <Str> | <Char> | <Ident>
+ElementInit = [   (   ( "." <Ident> )
+                    | ( "[" Value "]" ) DesignatedInit )
+                | AssignValue ]
+DesignatedInit = "=" AssignValue
+Lambda = "[" "]" ParamList
+         ( "{" Code "}" ) | ( "(" Value ")" )
+VAStart = va_start "(" AssignValue "," <Ident> ")"
+VAEnd = va_end "(" AssignValue ")"
+VAArg = va_arg "(" AssignValue "," Type ")"
+VACopy = va_copy "(" AssignValue "," AssignValue ")"
 
 Type = DeclBasic DeclExpr#
 Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
-									       | Code# )
+                                           | FnImpl )
+Storage = [ "auto" | "static" | "extern" | "typedef" ]
+FnImpl = Code
 
 Field = DeclBasic [ DeclExpr# [{ "," DeclExpr# }] ] ";"
 EnumField = Name# [ "=" AssignValue ]
 Param = DeclBasic DeclExpr#
 
-Storage = [ "auto" | "static" | "extern" | "typedef" ]
 DeclBasic = [ "const" ] <Ident> | StructOrUnion | Enum
 StructOrUnion = "struct" | "union" Name# ^ ( "{" [{ Field }] "}" )
 Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
 
 DeclExpr = DeclUnary [ "=" AssignValue ]
 DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
-DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
-DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
+DeclObject = DeclAtom [{ ParamList | ( "[" Value "]" ) }]
+ParamList = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
 DeclAtom = [ ( "(" DeclExpr ")" ) | Name ]
 Name = <UnqualifiedIdent>

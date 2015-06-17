@@ -46,6 +46,9 @@ void archFree (architecture* arch) {
 
     free(arch->asflags);
     free(arch->ldflags);
+
+    arch->asflags = 0;
+    arch->ldflags = 0;
 }
 
 /*:::: SETUP ::::*/
@@ -121,8 +124,8 @@ static void archSetupDriverFlags (architecture* arch, osTag os) {
         arch->ldflags = strdup("-m64");
 
     } else {
-        arch->asflags = "";
-        arch->ldflags = "";
+        arch->asflags = strdup("");
+        arch->ldflags = strdup("");
     }
 }
 

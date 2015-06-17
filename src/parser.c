@@ -40,15 +40,16 @@ static ast* parserDoWhile (parserCtx* ctx);
 static ast* parserFor (parserCtx* ctx);
 
 static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullname, compilerCtx* comp) {
-    ctx->lexer = lexerInit(fopen(fullname, "r"));
+    ctx->lexer = lexerInit(fullname);
     ctx->location = (tokenLocation) {0, 0, 0};
 
     ctx->filename = filename;
     ctx->fullname = fullname;
-    ctx->path = fgetpath(fullname);
+    ctx->path = fgetpath(fullname, malloc);
 
     ctx->comp = comp;
 
+    ctx->module = scope;
     ctx->scope = scope;
 
     ctx->breakLevel = 0;
@@ -64,7 +65,10 @@ static void parserInit (parserCtx* ctx, sym* scope, char* filename, char* fullna
 
 static void parserEnd (parserCtx* ctx) {
     free(ctx->path);
+    ctx->path = 0;
+
     lexerEnd(ctx->lexer);
+    ctx->lexer = 0;
 }
 
 static char* parserFindFile (const char* filename, const char* initialPath, const vector/*<char*>*/* searchPaths) {
@@ -112,7 +116,7 @@ parserResult parser (const char* filename, const char* initialPath, compilerCtx*
             sym* scope = symCreateScope(comp->global);
 
             parserCtx ctx;
-            parserInit(&ctx, scope, fstripname(filename), fullname, comp);
+            parserInit(&ctx, scope, fstripname(filename, malloc), fullname, comp);
             ast* Module = parserModule(&ctx);
             parserEnd(&ctx);
 
@@ -150,7 +154,7 @@ static ast* parserModule (parserCtx* ctx) {
 
     while (ctx->lexer->token != tokenEOF) {
         if (tokenTryMatchPunct(ctx, punctSemicolon))
-            astAddChild(Module, astCreateEmpty(ctx->location));
+            ;
 
         else if (tokenIsKeyword(ctx, keywordUsing))
             astAddChild(Module, parserUsing(ctx));
@@ -231,7 +235,7 @@ ast* parserCode (parserCtx* ctx) {
 static ast* parserLine (parserCtx* ctx) {
     debugEnter("Line");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenIsKeyword(ctx, keywordIf))
         Node = parserIf(ctx);

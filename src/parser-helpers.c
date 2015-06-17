@@ -61,7 +61,7 @@ bool tokenIsChar (const parserCtx* ctx) {
 }
 
 bool tokenIsDecl (const parserCtx* ctx) {
-    sym* Symbol = symFind(ctx->scope, ctx->lexer->buffer);
+    sym* Symbol = tokenIsIdent(ctx) ? symFind(ctx->scope, ctx->lexer->buffer) : 0;
 
     return    (Symbol && Symbol->tag != symId
                       && Symbol->tag != symParam)
@@ -195,10 +195,11 @@ char* tokenMatchIdent (parserCtx* ctx) {
 }
 
 char* tokenMatchStr (parserCtx* ctx) {
-    char* str = calloc(ctx->lexer->length, sizeof(char));
+    int total = ctx->lexer->length;
+    char* str = calloc(total, sizeof(char));
 
     if (tokenIsString(ctx)) {
-        for (int i = 0, length = 0; i+1 < ctx->lexer->length; i++) {
+        for (int i = 0, length = 0; i+1 < total; i++) {
             /*Escape sequence*/
             if (ctx->lexer->buffer[i] == '\\') {
                 i++;
@@ -208,6 +209,16 @@ char* tokenMatchStr (parserCtx* ctx) {
                     || ctx->lexer->buffer[i] == '\'' || ctx->lexer->buffer[i] == '"') {
                     str[length++] = '\\';
                     str[length++] = ctx->lexer->buffer[i];
+
+                } else if (ctx->lexer->buffer[i] == 'e') {
+                    str = realloc(str, total+3);
+					memset(&str[total+1], sizeof(str[0])*3, 0);
+					total += 3;
+
+                    str[length++] = '\\';
+                    str[length++] = '0';
+                    str[length++] = '3';
+                    str[length++] = '3';
 
                 /*An actual linebreak mid string? Escaped, ignore it*/
                 } else if (   ctx->lexer->buffer[i] == '\n'

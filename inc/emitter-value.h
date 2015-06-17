@@ -6,6 +6,7 @@ using "forward.h";
 
 typedef struct ast ast;
 typedef struct emitterCtx emitterCtx;
+typedef struct irBlock irBlock;
 
 typedef enum emitterRequest {
     requestAny,
@@ -18,6 +19,7 @@ typedef enum emitterRequest {
     requestValue,
     requestArray,
     requestFlags,
+    requestReturn,
     requestStack
 } emitterRequest;
 
@@ -25,12 +27,14 @@ typedef enum emitterRequest {
  * Calculate the value of an astNode, requesting it to go in a certain operand
  * class, returning where it goes.
  */
-operand emitterValue (emitterCtx* ctx, const ast* Node, emitterRequest request);
+operand emitterValue (emitterCtx* ctx, irBlock** block, const ast* Node, emitterRequest request);
 
 /**
  * Calculate the value, requesting that it go in a specific, already allocated
  * operand which is then returned.
  */
-operand emitterValueSuggest (emitterCtx* ctx, const ast* Node, const operand* request);
+operand emitterValueSuggest (emitterCtx* ctx, irBlock** block, const ast* Node, const operand* request);
 
-void emitterCompoundInit (emitterCtx* ctx, const ast* Node, operand base);
+operand emitterSymbol (emitterCtx* ctx, const sym* Symbol);
+
+void emitterCompoundInit (emitterCtx* ctx, irBlock** block, const ast* Node, operand base);

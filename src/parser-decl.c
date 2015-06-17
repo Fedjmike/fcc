@@ -24,21 +24,22 @@ using "../inc/parser-value.h";
 using "stdlib.h";
 using "string.h";
 
+static ast* parserStorage (parserCtx* ctx, symTag* tag);
+static ast* parserFnImpl (parserCtx* ctx, ast* decl);
+
 static ast* parserField (parserCtx* ctx);
 static ast* parserEnumField (parserCtx* ctx);
 static ast* parserParam (parserCtx* ctx, bool inDecl);
 
-static storageTag parserStorage (parserCtx* ctx);
 static ast* parserDeclBasic (parserCtx* ctx);
 static ast* parserStructOrUnion (parserCtx* ctx);
 static ast* parserEnum (parserCtx* ctx);
 
-static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage);
-static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage);
-static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage);
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, ast* atom);
-static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage);
-static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage);
+static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag);
+static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag);
+static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag);
+static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag);
+static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag);
 
 /**
  * Type = DeclBasic DeclExpr#
@@ -51,7 +52,7 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
 
     tokenLocation loc = ctx->location;
     ast* basic = parserDeclBasic(ctx);
-    ast* expr = parserDeclExpr(ctx, false, symUndefined, storageUndefined);
+    ast* expr = parserDeclExpr(ctx, false, symUndefined);
     ast* Node = astCreateType(loc, basic, expr);
 
     debugLeave();
@@ -59,6 +60,16 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
     return Node;
 }
 
+/**
+ * In C, prototypes are allowed to name the parameters but these names aren't
+ * actually used; only the declarations of the parameters from the function
+ * implementation matter. However, during the parsing of a decl we can't tell
+ * whether we're seeing an implementation or not!
+ * So, we call this function after the '{' is seen and it traces up the AST
+ * creating param symbols. @see parserFnImpl
+ * To complicate matter, for diagnostics purposes we *do* actually create param
+ * symbols for prototypes, but we put them in a "bin". @see parserDeclObject
+ */
 static void parserCreateParamSymbols (ast* Node, sym* scope) {
     /*Trace up the AST to find the astCall*/
 
@@ -90,7 +101,8 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
             if (!ident)
                 break;
 
-            else if (ident->tag == astBOP || ident->tag == astIndex)
+            else if (   ident->tag == astBOP || ident->tag == astIndex
+                     || ident->tag == astCall)
                 ident = ident->l;
 
             else if (   ident->tag == astUOP || ident->tag == astConst
@@ -107,14 +119,12 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
         if (ident && ident->litTag == literalIdent)
             param->symbol = symCreateNamed(symParam, scope, (char*) ident->literal);
 
-        /*Trace back up, assigning the symbol to all the nodes*/
+        /*Trace up again, assigning the symbol to all the nodes*/
         for (ident = param; ident;) {
-            if (!ident)
-                break;
-
             ident->symbol = param->symbol;
 
-            if (ident->tag == astBOP || ident->tag == astIndex)
+            if (   ident->tag == astBOP || ident->tag == astIndex
+                || ident->tag == astCall)
                 ident = ident->l;
 
             else if (   ident->tag == astUOP || ident->tag == astConst
@@ -129,7 +139,7 @@ static void parserCreateParamSymbols (ast* Node, sym* scope) {
 
 /**
  * Decl = Storage DeclBasic ";" | ( DeclExpr#   ( [{ "," DeclExpr# }] ";" )
- *                                            | Code# )
+ *                                            | FnImpl )
  *
  * DeclExpr is told to require identifiers, allow initiations and
  * create symbols.
@@ -138,47 +148,92 @@ ast* parserDecl (parserCtx* ctx, bool module) {
     debugEnter("Decl");
 
     tokenLocation loc = ctx->location;
-    storageTag storage = parserStorage(ctx);
 
+    symTag tag = symId;
+    ast* storage = parserStorage(ctx, &tag);
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
+    Node->r = storage;
 
+    /*Declares no symbols*/
     if (tokenTryMatchPunct(ctx, punctSemicolon))
         ;
 
     else {
-        /*Grammatically, typedef is a storage class, but semantically
-          a symbol tag.*/
-        symTag symt = storage == storageTypedef ? symTypedef : symId;
+        astAddChild(Node, parserDeclExpr(ctx, true, tag));
 
-        astAddChild(Node, parserDeclExpr(ctx, true, symt, storage));
-
+        /*Function*/
         if (tokenIsPunct(ctx, punctLBrace)) {
-            Node = astCreateFnImpl(ctx->location, Node);
-            Node->symbol = Node->l->firstChild->symbol;
-
-            if (Node->symbol->impl)
-                errorReimplementedSym(ctx, Node->symbol);
-
-            else {
-                Node->symbol->impl = Node;
-                /*Now that we have the implementation, create param symbols*/
-                parserCreateParamSymbols(Node->l->firstChild, Node->symbol);
-            }
-
             if (!module)
                 errorIllegalOutside(ctx, "function implementation", "module level code");
 
-            sym* OldScope = scopeSet(ctx, Node->symbol);
-            Node->r = parserCode(ctx);
-            ctx->scope = OldScope;
+            Node = parserFnImpl(ctx, Node);
 
+        /*Regular decl*/
         } else {
             while (tokenTryMatchPunct(ctx, punctComma))
-                astAddChild(Node, parserDeclExpr(ctx, true, symt, storage));
+                astAddChild(Node, parserDeclExpr(ctx, true, tag));
 
             tokenMatchPunct(ctx, punctSemicolon);
         }
     }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * Storage = [ "auto" | "static" | "extern" | "typedef" ]
+ */
+static ast* parserStorage (parserCtx* ctx, symTag* tag) {
+    debugEnter("Storage");
+
+    ast* Node = 0;
+
+    markerTag marker =   tokenIsKeyword(ctx, keywordAuto) ? markerAuto
+                       : tokenIsKeyword(ctx, keywordStatic) ? markerStatic
+                       : tokenIsKeyword(ctx, keywordExtern) ? markerExtern : markerUndefined;
+
+    if (tokenTryMatchKeyword(ctx, keywordTypedef))
+        *tag = symTypedef;
+
+    else if (marker) {
+        Node = astCreateMarker(ctx->location, marker);
+        tokenMatch(ctx);
+    }
+
+    debugLeave();
+
+    return Node;
+}
+
+/**
+ * FnImpl = Code
+ */
+static ast* parserFnImpl (parserCtx* ctx, ast* decl) {
+    debugEnter("FnImpl");
+
+    sym* fn = decl->firstChild->symbol;
+
+    ast* Node = astCreateFnImpl(ctx->location, decl);
+    Node->symbol = fn;
+
+    /*Is a function implementation valid for this symbol?*/
+
+    if (fn->impl)
+        errorReimplementedSym(ctx, fn);
+
+    else {
+        fn->impl = Node;
+        /*Now that we have the implementation, create param symbols*/
+        parserCreateParamSymbols(decl->firstChild, fn);
+    }
+
+    /*Body*/
+
+    sym* OldScope = scopeSet(ctx, fn);
+    Node->r = parserCode(ctx);
+    ctx->scope = OldScope;
 
     debugLeave();
 
@@ -197,7 +252,7 @@ static ast* parserField (parserCtx* ctx) {
     ast* Node = astCreateDecl(loc, parserDeclBasic(ctx));
 
     if (!tokenIsPunct(ctx, punctSemicolon)) do {
-        astAddChild(Node, parserDeclExpr(ctx, true, symId, storageAuto));
+        astAddChild(Node, parserDeclExpr(ctx, true, symId));
     } while (tokenTryMatchPunct(ctx, punctComma));
 
     tokenMatchPunct(ctx, punctSemicolon);
@@ -213,7 +268,7 @@ static ast* parserField (parserCtx* ctx) {
 static ast* parserEnumField (parserCtx* ctx) {
     debugEnter("EnumField");
 
-    ast* Node = parserName(ctx, true, symEnumConstant, storageUndefined);
+    ast* Node = parserName(ctx, true, symEnumConstant);
     tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctAssign)) {
@@ -237,7 +292,7 @@ static ast* parserParam (parserCtx* ctx, bool inDecl) {
 
     tokenLocation loc = ctx->location;
     ast* basic = parserDeclBasic(ctx);
-    ast* expr = parserDeclExpr(ctx, inDecl, symParam, storageAuto);
+    ast* expr = parserDeclExpr(ctx, inDecl, symParam);
     ast* Node = astCreateParam(loc, basic, expr);
     Node->symbol = Node->r->symbol;
 
@@ -247,28 +302,12 @@ static ast* parserParam (parserCtx* ctx, bool inDecl) {
 }
 
 /**
- * Storage = [ "auto" | "static" | "extern" | "typedef" ]
- */
-static storageTag parserStorage (parserCtx* ctx) {
-    debugEnter("Storage");
-
-    storageTag storage = tokenTryMatchKeyword(ctx, keywordStatic) ? storageStatic :
-                         tokenTryMatchKeyword(ctx, keywordExtern) ? storageExtern :
-                         tokenTryMatchKeyword(ctx, keywordTypedef) ? storageTypedef :
-                         (tokenTryMatchKeyword(ctx, keywordAuto), storageAuto);
-
-    debugLeave();
-
-    return storage;
-}
-
-/**
  * DeclBasic = [ "const" ] <Ident> | StructUnion | Enum
  */
 static ast* parserDeclBasic (parserCtx* ctx) {
     debugEnter("DeclBasic");
 
-    ast* Node = 0;
+    ast* Node;
 
     tokenLocation constloc = ctx->location;
     bool isConst = tokenTryMatchKeyword(ctx, keywordConst);
@@ -315,7 +354,7 @@ static ast* parserDeclBasic (parserCtx* ctx) {
  * Name is told to create a symbol of the tag indicated by the first
  * token.
  */
-static struct ast* parserStructOrUnion (parserCtx* ctx) {
+static ast* parserStructOrUnion (parserCtx* ctx) {
     debugEnter("StructOrUnion");
 
     tokenLocation loc = ctx->location;
@@ -329,7 +368,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
     /*Name*/
 
     if (tokenIsIdent(ctx))
-        name = parserName(ctx, true, tag, storageUndefined);
+        name = parserName(ctx, true, tag);
 
     /*Anonymous struct, will require a body*/
     else {
@@ -373,7 +412,7 @@ static struct ast* parserStructOrUnion (parserCtx* ctx) {
 /**
  * Enum = "enum" Name# ^ ( "{" EnumField [{ "," EnumField }] [ "," ] "}" )
  */
-static struct ast* parserEnum (parserCtx* ctx) {
+static ast* parserEnum (parserCtx* ctx) {
     debugEnter("Enum");
 
     tokenLocation loc = ctx->location;
@@ -384,7 +423,7 @@ static struct ast* parserEnum (parserCtx* ctx) {
     ast* name;
 
     if (tokenIsIdent(ctx))
-        name = parserName(ctx, true, symEnum, storageUndefined);
+        name = parserName(ctx, true, symEnum);
 
     else {
         name = astCreateEmpty(loc);
@@ -398,9 +437,14 @@ static struct ast* parserEnum (parserCtx* ctx) {
 
     /*Body*/
     if (Node->l->tag == astEmpty || tokenIsPunct(ctx, punctLBrace)) {
-        tokenMatchPunct(ctx, punctLBrace);
+        /*Only error if not already errored for wrong tag*/
+        if (Node->symbol->impl && Node->symbol->tag == symEnum)
+            errorReimplementedSym(ctx, Node->symbol);
 
-        Node->symbol->complete = true;
+        else
+            Node->symbol->impl = Node;
+
+        tokenMatchPunct(ctx, punctLBrace);
 
         if (!tokenIsPunct(ctx, punctRBrace)) do {
             astAddChild(Node, parserEnumField(ctx));
@@ -423,10 +467,10 @@ static struct ast* parserEnum (parserCtx* ctx) {
  * which would be parsed as
  *     int x = (5, y = 6);
  */
-static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage) {
+static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclExpr");
 
-    ast* Node = parserDeclUnary(ctx, inDecl, tag, storage);
+    ast* Node = parserDeclUnary(ctx, inDecl, tag);
     tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctAssign)) {
@@ -435,6 +479,7 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag, storageTag 
 
         Node = astCreateBOP(loc, Node, opAssign, parserAssignValue(ctx));
         Node->symbol = Node->l->symbol;
+        Node->symbol->impl = Node->r;
     }
 
     debugLeave();
@@ -445,22 +490,22 @@ static ast* parserDeclExpr (parserCtx* ctx, bool inDecl, symTag tag, storageTag 
 /**
  * DeclUnary = ( "*" | "const" DeclUnary ) | DeclObject
  */
-static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage) {
+static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclUnary");
 
-    ast* Node = 0;
+    ast* Node;
     tokenLocation loc = ctx->location;
 
     if (tokenTryMatchPunct(ctx, punctTimes)) {
-        Node = astCreateUOP(loc, opDeref, parserDeclUnary(ctx, inDecl, tag, storage));
+        Node = astCreateUOP(loc, opDeref, parserDeclUnary(ctx, inDecl, tag));
         Node->symbol = Node->r->symbol;
 
     } else if (tokenTryMatchKeyword(ctx, keywordConst)) {
-        Node = astCreateConst(loc, parserDeclUnary(ctx, inDecl, tag, storage));
+        Node = astCreateConst(loc, parserDeclUnary(ctx, inDecl, tag));
         Node->symbol = Node->r->symbol;
 
     } else
-        Node = parserDeclObject(ctx, inDecl, tag, storage);
+        Node = parserDeclObject(ctx, inDecl, tag);
 
     debugLeave();
 
@@ -468,35 +513,45 @@ static ast* parserDeclUnary (parserCtx* ctx, bool inDecl, symTag tag, storageTag
 }
 
 /**
- * DeclObject = DeclAtom [{ DeclFunction | ( "[" Value "]" ) }]
+ * DeclObject = DeclAtom [{ ParamList | ( "[" Value "]" ) }]
  */
-static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage) {
+static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclObject");
 
     tokenLocation loc = ctx->location;
-    ast* Node = parserDeclAtom(ctx, inDecl, tag, storage);
+    ast* Node = parserDeclAtom(ctx, inDecl, tag);
+    sym* Symbol = Node->symbol;
 
     while (true) {
         /*Function*/
-        if (tokenIsPunct(ctx, punctLParen))
-            Node = parserDeclFunction(ctx, inDecl, loc, Node);
+        if (tokenIsPunct(ctx, punctLParen)) {
+            /*The proper param symbols are created just before the parsing of the body,
+              prototype params go in the bin, but exist for diagnostics*/
+            sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
+
+            Node = astCreateCall(loc, Node);
+            parserParamList(ctx, Node, inDecl);
+
+            ctx->scope = OldScope;
 
         /*Array*/
-        else if (tokenTryMatchPunct(ctx, punctLBracket)) {
-            sym* Symbol = Node->symbol;
+        } else if (tokenTryMatchPunct(ctx, punctLBracket)) {
+            if (tokenIsPunct(ctx, punctRBracket))
+                /*An empty [] is a synonym for * when in params*/
+                Node =   tag == symParam
+                       ? astCreateUOP(loc, opDeref, Node)
+                       : astCreateIndex(loc, Node, astCreateEmpty(ctx->location));
 
-            if (tokenTryMatchPunct(ctx, punctRBracket))
-                Node = astCreateIndex(loc, Node, astCreateEmpty(loc));
-
-            else {
+            else
                 Node = astCreateIndex(loc, Node, parserValue(ctx));
-                tokenMatchPunct(ctx, punctRBracket);
-            }
 
-            Node->symbol = Symbol;
+            tokenMatchPunct(ctx, punctRBracket);
 
         } else
             break;
+
+        /*Propogate the declared symbol up the chain*/
+        Node->symbol = Symbol;
     }
 
     debugLeave();
@@ -505,30 +560,24 @@ static ast* parserDeclObject (parserCtx* ctx, bool inDecl, symTag tag, storageTa
 }
 
 /**
- * DeclFunction = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
+ * ParamList = "(" [ ( Param [{ "," Param }] [ "," "..." ] ) | "..." | "void" ] ")"
  */
-static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, ast* atom) {
-    debugEnter("DeclFunction");
+void parserParamList (parserCtx* ctx, ast* Node, bool inDecl) {
+    debugEnter("ParamList");
 
     tokenMatchPunct(ctx, punctLParen);
-
-    ast* Node = astCreateCall(loc, atom);
-    /*Propogate the declared symbol up the chain*/
-    Node->symbol = atom->symbol;
-    /*The proper param symbols are created just before the parsing of the body,
-      prototype params go in the bin, but exist for diagnostics*/
-    sym* OldScope = scopeSet(ctx, symCreateScope(ctx->scope));
 
     if (!tokenIsPunct(ctx, punctRParen)) {
         tokenLocation voidloc = ctx->location;
 
         bool end = false;
 
-        /*Could be f(void), could be the beginning of a param decl*/
+        /*Either an empty prototype declaration,
+          or the beginning of a void* parameter*/
         if (tokenTryMatchKeyword(ctx, keywordVoid)) {
             if (!tokenIsPunct(ctx, punctRParen)) {
                 ast* basic = astCreateLiteralIdent(voidloc, strdup("void"));
-                ast* expr = parserDeclExpr(ctx, inDecl, symParam, storageUndefined);
+                ast* expr = parserDeclExpr(ctx, inDecl, symParam);
                 ast* param = astCreateParam(voidloc, basic, expr);
                 param->symbol = basic->symbol = symFind(ctx->scope, "void");
                 astAddChild(Node, param);
@@ -542,7 +591,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
 
         if (!end) do {
             if (tokenIsPunct(ctx, punctEllipsis)) {
-                astAddChild(Node, astCreateEllipsis(ctx->location));
+                astAddChild(Node, astCreate(astEllipsis, ctx->location));
                 tokenMatch(ctx);
                 break;
 
@@ -554,11 +603,7 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
 
     tokenMatchPunct(ctx, punctRParen);
 
-    ctx->scope = OldScope;
-
     debugLeave();
-
-    return Node;
 }
 
 /**
@@ -569,18 +614,18 @@ static ast* parserDeclFunction (parserCtx* ctx, bool inDecl, tokenLocation loc, 
  * Inside a declaration, an ident is *required* unless in the parameters,
  * where they are optional (even outside a prototype...).
  */
-static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage) {
+static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("DeclAtom");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenTryMatchPunct(ctx, punctLParen)) {
-        Node = parserDeclExpr(ctx, inDecl, tag, storage);
+        Node = parserDeclExpr(ctx, inDecl, tag);
         tokenMatchPunct(ctx, punctRParen);
 
     } else if (tokenIsIdent(ctx)) {
         if (inDecl || tag == symParam)
-            Node = parserName(ctx, inDecl, tag, storage);
+            Node = parserName(ctx, inDecl, tag);
 
         else {
             Node = astCreateInvalid(ctx->location);
@@ -589,7 +634,7 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag, storageTag 
         }
 
     } else if (inDecl && tag != symParam)
-        Node = parserName(ctx, inDecl, tag, storage);
+        Node = parserName(ctx, inDecl, tag);
 
     else
         Node = astCreateEmpty(ctx->location);
@@ -599,16 +644,33 @@ static ast* parserDeclAtom (parserCtx* ctx, bool inDecl, symTag tag, storageTag 
     return Node;
 }
 
+static bool isTypedefException (sym* Symbol, symTag newtag) {
+    /*SPECIAL EXCEPTION
+      In C, there are multiple symbol tables for variables, typedefs, structs etc
+      But not in fcc! So there is this special exception: structs and unions and
+      enums may be redeclared as typedefs, to allow for this idiom:
+
+      typedef struct x {
+          ...
+      } x;
+
+      Doesn't guarantee that it's redeclaring the *right* symbol.*/
+    return    newtag == symTypedef
+           && (   Symbol->tag == symStruct
+               || Symbol->tag == symUnion
+               || Symbol->tag == symEnum);
+}
+
 /**
  * Name = <UnqualifiedIdent>
  *
  * If inDecl, creates a symbol, adding it to the list of declarations
  * if already created.
  */
-static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag storage) {
+static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag) {
     debugEnter("Name");
 
-    ast* Node = 0;
+    ast* Node;
 
     if (tokenIsIdent(ctx)) {
         tokenLocation loc = ctx->location;
@@ -622,38 +684,26 @@ static ast* parserName (parserCtx* ctx, bool inDecl, symTag tag, storageTag stor
             Node->symbol = Symbol;
             symChangeParent(Symbol, ctx->scope);
 
-            /*SPECIAL EXCEPTION
-              In C, there are multiple symbol tables for variables, typedefs, structs etc
-              But not in fcc! So there is this special exception: structs and unions and
-              enums may be redeclared as typedefs, to allow for this idiom:
-
-              typedef struct x {
-                  ...
-              } x;
-
-              Doesn't guarantee that it's redeclaring the *right* symbol.*/
-            if (   Node->symbol->tag != tag
-                && !(   (   Node->symbol->tag == symStruct
-                         || Node->symbol->tag == symUnion
-                         || Node->symbol->tag == symEnum)
-                     && tag == symTypedef))
+            if (Node->symbol->tag != tag && !isTypedefException(Node->symbol, tag))
                 errorRedeclaredSymAs(ctx, Node->symbol, tag);
 
-        } else {
-            if (inDecl)
-                Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
-        }
+        } else if (inDecl)
+            Node->symbol = symCreateNamed(tag, ctx->scope, (char*) Node->literal);
 
         if (Node->symbol) {
-            Node->symbol->storage = storage;
-
             /*Can't tell whether this is a duplicate declaration
               or a (matching) redefinition*/
             vectorPush(&Node->symbol->decls, Node);
         }
 
     } else {
-        errorExpected(ctx, "name");
+        if (ctx->lexer->token == tokenKeyword) {
+            errorKeywordAsIdent(ctx);
+            tokenNext(ctx);
+
+        } else
+            errorExpected(ctx, "identifier");
+
         Node = astCreateInvalid(ctx->location);
         Node->literal = strdup("");
         Node->symbol = symCreateNamed(tag, ctx->scope, "");

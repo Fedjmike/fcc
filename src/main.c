@@ -26,6 +26,10 @@ using "../defaults.h";
 
 static bool driver (config conf);
 
+static const char* plural (int n) {
+    return n == 1 ? "" : "s";
+}
+
 static bool driver (config conf) {
     bool fail = false;
 
@@ -43,24 +47,24 @@ static bool driver (config conf) {
 
     if (comp.errors != 0 || comp.warnings != 0)
         printf("Compilation complete with %d error%s and %d warning%s\n",
-               comp.errors, comp.errors == 1 ? "" : "s",
-               comp.warnings, comp.warnings == 1 ? "" : "s");
+               comp.errors, plural(comp.errors),
+               comp.warnings, plural(comp.warnings));
 
     else if (internalErrors)
         printf("Compilation complete with %d internal error%s\n",
-               internalErrors, internalErrors == 1 ? "" : "s");
+               internalErrors, plural(internalErrors));
 
     /*Assemble/link*/
     else if (conf.mode != modeNoAssemble) {
         /*Produce a string list of all the intermediates*/
-        char* intermediates = strjoin((char**) conf.intermediates.buffer, conf.intermediates.length,
-                                      " ", (stdalloc) malloc);
+        char* intermediates = strjoinwith((char**) conf.intermediates.buffer, conf.intermediates.length,
+                                          " ", malloc);
 
         if (conf.mode == modeNoLink)
-            fail |= systemf("gcc %s -c %s", conf.arch.asflags, intermediates) != 0;
+            fail |= systemf("cc %s -c %s", conf.arch.asflags, intermediates) != 0;
 
         else {
-            fail |= systemf("gcc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
+            fail |= systemf("cc %s %s -o %s", conf.arch.ldflags, intermediates, conf.output) != 0;
 
             if (conf.deleteAsm && !fail)
                 systemf("rm %s", intermediates);
@@ -95,7 +99,7 @@ int main (int argc, char** argv) {
         puts("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
 
     } else if (conf.mode == modeHelp) {
-        puts("Usage: fcc [--help] [--version] [-csS] [-I <dir>] [-o <file>] <files...>");
+        puts("Usage: fcc [options...] <files...>");
         puts("Options:");
         puts("  -I <dir>   Add a directory to be searched for headers");
         puts("  -c         Compile and assemble only, do not link");

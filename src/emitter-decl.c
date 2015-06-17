@@ -7,12 +7,13 @@
 #include "../inc/ast.h"
 #include "../inc/sym.h"
 #include "../inc/architecture.h"
-#include "../inc/reg.h"
-#include "../inc/asm.h"
-#include "../inc/asm-amd64.h"
+#include "../inc/ir.h"
 
+#include "../inc/eval.h"
 #include "../inc/emitter.h"
 #include "../inc/emitter-value.h"
+
+#include "assert.h"
 
 using "../std/std.h";
 
@@ -33,11 +34,12 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
 
-static void emitterDeclNode (emitterCtx* ctx, ast* Node);
-static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node);
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node);
+static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
+static void emitterDeclCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclName (emitterCtx* ctx, const ast* Node);
 
-void emitterDecl (emitterCtx* ctx, const ast* Node) {
+void emitterDecl (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugEnter("Decl");
 
     emitterDeclBasic(ctx, Node->l);
@@ -45,12 +47,14 @@ void emitterDecl (emitterCtx* ctx, const ast* Node) {
     for (ast* Current = Node->firstChild;
          Current;
          Current = Current->nextSibling)
-        emitterDeclNode(ctx, Current);
+        emitterDeclNode(ctx, block, Current);
 
     debugLeave();
 }
 
 static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astStruct || Node->tag == astUnion)
         emitterStructOrUnion(ctx, Node->symbol, 0);
 
@@ -65,11 +69,11 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node) {
 
     else
         debugErrorUnhandled("emitterDeclBasic", "AST tag", astTagGetStr(Node->tag));
+
+    debugLeave();
 }
 
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) {
-    debugEnter("StructOrUnion");
-
     record->size = 0;
 
     /*For every field*/
@@ -108,53 +112,50 @@ static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset) 
             record->size += fieldSize;
             nextOffset += fieldSize;
 
-        } else /*if (record->tag == symUnion)*/
+        } else {
+            assert(record->tag == symUnion);
             record->size = max(record->size, fieldSize);
+        }
     }
 
     reportSymbol(record);
-
-    debugLeave();
 }
 
 static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
-    debugEnter("Enum");
-
     Symbol->size = ctx->arch->wordsize;
     reportSymbol(Symbol);
-
-    debugLeave();
 }
 
-static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
+    debugEnter(astTagGetStr(Node->tag));
+
     if (Node->tag == astInvalid || Node->tag == astEmpty)
         ;
 
     else if (Node->tag == astBOP) {
         if (Node->o == opAssign)
-            emitterDeclAssignBOP(ctx, Node);
+            emitterDeclAssignBOP(ctx, block, Node);
 
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astConst) {
-        emitterDeclNode(ctx, Node->r);
+        emitterDeclNode(ctx, block, Node->r);
 
     } else if (Node->tag == astUOP) {
         if (Node->o == opDeref)
-            emitterDeclNode(ctx, Node->r);
+            emitterDeclNode(ctx, block, Node->r);
 
         else
             debugErrorUnhandled("emitterDeclNode", "operator", opTagGetStr(Node->o));
 
     } else if (Node->tag == astCall) {
-        /*Nothing to do with the params*/
-        emitterDeclNode(ctx, Node->l);
+        emitterDeclCall(ctx, block, Node);
 
     } else if (Node->tag == astIndex) {
         /*The emitter does nothing the to size of the array, so only go
           down the left branch*/
-        emitterDeclNode(ctx, Node->l);
+        emitterDeclNode(ctx, block, Node->l);
 
     } else if (Node->tag == astLiteral) {
         if (Node->litTag == literalIdent)
@@ -165,37 +166,67 @@ static void emitterDeclNode (emitterCtx* ctx, ast* Node) {
 
     } else
         debugErrorUnhandled("emitterDeclNode", "AST tag", astTagGetStr(Node->tag));
-}
-
-static void emitterDeclAssignBOP (emitterCtx* ctx, const ast* Node) {
-    debugEnter("DeclAssignBOP");
-
-    emitterDeclNode(ctx, Node->l);
-
-    operand L = operandCreateMem(&regs[regRBP],
-                                 Node->symbol->offset,
-                                 typeGetSize(ctx->arch,
-                                             Node->symbol->dt));
-
-    if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
-        emitterCompoundInit(ctx, Node->r, L);
-
-    else {
-        if (Node->symbol->storage == storageAuto)
-            emitterValueSuggest(ctx, Node->r, &L);
-
-        else
-            debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
-    }
 
     debugLeave();
+}
+
+static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    emitterDeclNode(ctx, block, Node->l);
+
+    if (   Node->symbol->storage == storageStatic
+        || Node->symbol->storage == storageExtern) {
+        if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+            debugError("emitterDeclAssignBOP", "compound initializers for static objects unsupported");
+
+        else
+            irStaticValue(ctx->ir, Node->symbol->label, Node->symbol->storage == storageExtern,
+                          typeGetSize(ctx->arch, Node->symbol->dt), eval(ctx->arch, Node->r).value);
+
+    } else if (Node->symbol->storage == storageAuto) {
+        operand L = emitterSymbol(ctx, Node->symbol);
+
+        if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
+            emitterCompoundInit(ctx, block, Node->r, L);
+
+        else {
+            emitterValueSuggest(ctx, block, Node->r, &L);
+        }
+
+    } else if (Node->symbol->storage != storageExtern)
+        debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));
+}
+
+static void emitterDeclCall (emitterCtx* ctx, irBlock** block, const ast* Node) {
+    for (ast* param = Node->firstChild;
+         param;
+         param = param->nextSibling) {
+        if (param->tag == astParam) {
+            emitterDeclBasic(ctx, param->l);
+            emitterDeclNode(ctx, block, param->r);
+
+        } else if (param->tag == astEllipsis)
+            ;
+
+        else
+            debugErrorUnhandled("emitterDeclCall", "AST tag", astTagGetStr(param->tag));
+    }
+
+    emitterDeclNode(ctx, block, Node->l);
 }
 
 static void emitterDeclName (emitterCtx* ctx, const ast* Node) {
-    debugEnter("DeclName");
-
-    if (Node->symbol->label == 0)
+    /*Function or statically stored variable? Provide a label if none*/
+    if (   Node->symbol->tag == symId
+        && Node->symbol->label == 0
+        && (   Node->symbol->storage == storageStatic
+            || Node->symbol->storage == storageExtern))
         ctx->arch->symbolMangler(Node->symbol);
 
-    debugLeave();
+    /*Static declaration without an explicit initializer?*/
+    if (   Node->symbol->tag == symId
+        && Node->storage == storageStatic
+        && !Node->symbol->impl)
+        /*Emit, and initialize to zero*/
+        irStaticValue(ctx->ir, Node->symbol->label, Node->symbol->storage == storageExtern,
+                      typeGetSize(ctx->arch, Node->symbol->dt), 0);
 }

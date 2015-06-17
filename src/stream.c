@@ -6,9 +6,9 @@
 #include "stdlib.h"
 #include "stdio.h"
 
-streamCtx* streamInit (FILE* file) {
+streamCtx* streamInit (const char* filename) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
-    ctx->file = file;
+    ctx->file = fopen(filename, "r");
 
     ctx->current = 0;
     ctx->line = 1;
@@ -28,7 +28,7 @@ char streamNext (streamCtx* ctx) {
     char old = ctx->current;
     ctx->current = fgetc(ctx->file);
 
-    if (feof(ctx->file) || ctx->current == ((char) 0xFF))
+    if (feof(ctx->file) || ctx->current == '\255')
         ctx->current = 0;
 
     ctx->lineChar++;

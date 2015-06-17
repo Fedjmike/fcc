@@ -14,9 +14,9 @@
  * Details of concrete implementations:
  *  - hashmap is a map from null terminated (char*) strings to void* values.
  *    It is the most general of these structures.
- *  - intmap is a map from uintptr_t integers to void* values.
+ *  - intmap is a map from intptr_t integers to void* values.
  *  - hashset is a set of strings.
- *  - intset is a set of uintptr_t integers.
+ *  - intset is a set of intptr_t integers.
  *
  * They are implemented by the same algorithm and struct, generalmap. Use the
  * specific interfaces, and avoid using the struct fields directly.

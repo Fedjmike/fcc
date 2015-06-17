@@ -14,11 +14,12 @@ static void lexerEat (lexerCtx* ctx, char c);
 static void lexerEatNext (lexerCtx* ctx);
 static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
-static keywordTag lookKeyword (const char* str);
+static void lexerPunct (lexerCtx* ctx);
+static keywordTag lookKeyword (const char* str, int length);
 
-lexerCtx* lexerInit (FILE* file) {
+lexerCtx* lexerInit (const char* filename) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
-    ctx->stream = streamInit(file);
+    ctx->stream = streamInit(filename);
     ctx->line = 1;
     ctx->lineChar = 1;
 
@@ -39,25 +40,28 @@ void lexerEnd (lexerCtx* ctx) {
 
 /*Eat as many insignificants (comments, whitespace etc) as possible*/
 static void lexerSkipInsignificants (lexerCtx* ctx) {
-    while (ctx->stream->current != 0) {
+    while (true) {
+        switch (ctx->stream->current) {
         /*Whitespace*/
-        if (   ctx->stream->current == ' '
-            || ctx->stream->current == '\t'
-            || ctx->stream->current == '\n'
-            || ctx->stream->current == '\r')
+        case ' ':
+        case '\t':
+        case '\n':
+        case '\r':
             streamNext(ctx->stream);
+            break;
 
         /*C preprocessor is treated as a comment*/
-        else if (ctx->stream->current == '#') {
+        case '#':
             /*Eat until a new line*/
             while (   ctx->stream->current != '\n'
                    && ctx->stream->current != 0)
                 streamNext(ctx->stream);
 
             streamNext(ctx->stream);
+            break;
 
         /*Comment?*/
-        } else if (ctx->stream->current == '/') {
+        case '/':
             streamNext(ctx->stream);
 
             /*C comment*/
@@ -90,13 +94,15 @@ static void lexerSkipInsignificants (lexerCtx* ctx) {
             /*Fuck, we just ate an important character. Backtrack!*/
             } else {
                 streamPrev(ctx->stream);
-                break;
+                return;
             }
 
-        /*Not insignificant, leave*/
-        } else
             break;
 
+        /*Not insignificant, leave*/
+        default:
+            return;
+        }
     }
 }
 
@@ -150,11 +156,10 @@ void lexerNext (lexerCtx* ctx) {
 
         lexerEat(ctx, 0);
 
-        ctx->keyword = lookKeyword(ctx->buffer);
+        ctx->keyword = lookKeyword(ctx->buffer, ctx->length);
         ctx->token =   ctx->keyword != keywordUndefined
                      ? tokenKeyword
                      : tokenIdent;
-
 
     /*Number*/
     } else if (isdigit(ctx->stream->current)) {
@@ -179,80 +184,12 @@ void lexerNext (lexerCtx* ctx) {
 
         streamNext(ctx->stream);
 
-    /*Other symbols or punctuation*/
+    /*Punctuation or an unrecognised character*/
     } else {
-        ctx->token = tokenOther;
         lexerEatNext(ctx);
 
         /*Assume punctuation*/
-        ctx->token = tokenPunct;
-
-        switch (ctx->buffer[0]) {
-        case '{': ctx->punct = punctLBrace; break;
-        case '}': ctx->punct = punctRBrace; break;
-        case '(': ctx->punct = punctLParen; break;
-        case ')': ctx->punct = punctRParen; break;
-        case '[': ctx->punct = punctLBracket; break;
-        case ']': ctx->punct = punctRBracket; break;
-        case ';': ctx->punct = punctSemicolon; break;
-        case '.':
-            ctx->punct = punctPeriod;
-
-            if (ctx->stream->current == '.') {
-                lexerEatNext(ctx);
-
-                if (ctx->stream->current == '.') {
-                    ctx->punct = punctEllipsis;
-                    lexerEatNext(ctx);
-
-                /*Oops, it's just two dots, backtrack*/
-                } else {
-                    streamPrev(ctx->stream);
-                    ctx->length--;
-                }
-            }
-
-            break;
-
-        case ',': ctx->punct = punctComma; break;
-
-        case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
-        case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
-        case '>': ctx->punct = lexerTryEatNext(ctx, '=') ? punctGreaterEqual :
-                               lexerTryEatNext(ctx, '>') ?
-                                   (  lexerTryEatNext(ctx, '=')
-                                    ? punctShrAssign
-                                    : punctShr) :
-                               punctGreater; break;
-        case '<': ctx->punct = lexerTryEatNext(ctx, '=') ? punctLessEqual :
-                               lexerTryEatNext(ctx, '<') ?
-                                   (  lexerTryEatNext(ctx, '=')
-                                    ? punctShlAssign
-                                    : punctShl) :
-                               punctLess; break;
-
-        case '?': ctx->punct = punctQuestion; break;
-        case ':': ctx->punct = punctColon; break;
-
-        case '&': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign :
-                               lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
-        case '|': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign :
-                               lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
-        case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
-        case '~': ctx->punct = punctBitwiseNot; break;
-
-        case '+': ctx->punct = lexerTryEatNext(ctx, '=') ? punctPlusAssign :
-                               lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
-        case '-': ctx->punct = lexerTryEatNext(ctx, '=') ? punctMinusAssign :
-                               lexerTryEatNext(ctx, '-') ? punctMinusMinus :
-                               lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
-        case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
-        case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
-        case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
-
-        /*Oops, actually an unrecognised character*/
-        default: ctx->token = tokenOther;
-        }
+        lexerPunct(ctx);
     }
 
     lexerEat(ctx, 0);
@@ -260,89 +197,157 @@ void lexerNext (lexerCtx* ctx) {
     //printf("token(%d:%d): '%s'.\n", ctx->stream->line, ctx->stream->lineChar, ctx->buffer);
 }
 
-static keywordTag lookKeyword (const char* str) {
+static void lexerPunct (lexerCtx* ctx) {
+    ctx->token = tokenPunct;
+
+    switch (ctx->buffer[0]) {
+    case '{': ctx->punct = punctLBrace; break;
+    case '}': ctx->punct = punctRBrace; break;
+    case '(': ctx->punct = punctLParen; break;
+    case ')': ctx->punct = punctRParen; break;
+    case '[': ctx->punct = punctLBracket; break;
+    case ']': ctx->punct = punctRBracket; break;
+    case ';': ctx->punct = punctSemicolon; break;
+    case '.':
+        ctx->punct = punctPeriod;
+
+        if (ctx->stream->current == '.') {
+            lexerEatNext(ctx);
+
+            if (ctx->stream->current == '.') {
+                ctx->punct = punctEllipsis;
+                lexerEatNext(ctx);
+
+            /*Oops, it's just two dots, backtrack*/
+            } else {
+                streamPrev(ctx->stream);
+                ctx->length--;
+            }
+        }
+
+        break;
+
+    case ',': ctx->punct = punctComma; break;
+
+    case '=': ctx->punct = lexerTryEatNext(ctx, '=') ? punctEqual : punctAssign; break;
+    case '!': ctx->punct = lexerTryEatNext(ctx, '=') ? punctNotEqual : punctLogicalNot; break;
+    case '>': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctGreaterEqual
+                           : lexerTryEatNext(ctx, '>')
+                             ? (lexerTryEatNext(ctx, '=') ? punctShrAssign : punctShr)
+                             : punctGreater; break;
+    case '<': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctLessEqual
+                           : lexerTryEatNext(ctx, '<')
+                             ? (lexerTryEatNext(ctx, '=') ? punctShlAssign : punctShl)
+                             : punctLess; break;
+
+    case '?': ctx->punct = punctQuestion; break;
+    case ':': ctx->punct = punctColon; break;
+
+    case '&': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseAndAssign
+                           : lexerTryEatNext(ctx, '&') ? punctLogicalAnd : punctBitwiseAnd; break;
+    case '|': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctBitwiseOrAssign
+                           : lexerTryEatNext(ctx, '|') ? punctLogicalOr : punctBitwiseOr; break;
+    case '^': ctx->punct = lexerTryEatNext(ctx, '=') ? punctBitwiseXorAssign : punctBitwiseXor; break;
+    case '~': ctx->punct = punctBitwiseNot; break;
+
+    case '+': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctPlusAssign
+                           : lexerTryEatNext(ctx, '+') ? punctPlusPlus : punctPlus; break;
+    case '-': ctx->punct =   lexerTryEatNext(ctx, '=') ? punctMinusAssign
+                           : lexerTryEatNext(ctx, '-') ? punctMinusMinus
+                           : lexerTryEatNext(ctx, '>') ? punctArrow : punctMinus; break;
+    case '*': ctx->punct = lexerTryEatNext(ctx, '=') ? punctTimesAssign : punctTimes; break;
+    case '/': ctx->punct = lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide; break;
+    case '%': ctx->punct = lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo; break;
+
+    /*Oops, actually an unrecognised character*/
+    default: ctx->token = tokenOther;
+    }
+}
+
+static keywordTag keywordMatch (const char* str, int n, const char* look, keywordTag kw) {
+    return !strcmp(str+n+1, look+n+1) ? kw : keywordUndefined;
+}
+
+static keywordTag keywordMatch2 (const char* str, int n, const char* look, keywordTag kw,
+                                 const char* look2, keywordTag kw2) {
+    return   !strcmp(str+n+1, look+n+1) ? kw
+           : !strcmp(str+n+1, look2+n+1) ? kw2 : keywordUndefined;
+}
+
+static keywordTag lookKeyword (const char* str, int length) {
+    int longest = strlen("continue")+1;
+
+    if (length > longest)
+        return keywordUndefined;
+
     /*Manual trie
       Yeah it's ugly, but it's fast. And lexing is the slowest part of compilation.*/
 
-    const char* rest[] = {str+1, str+2, str+3, str+4};
-
     switch (str[0]) {
-    case 'a': return !strcmp(rest[0], "uto") ? keywordAuto : keywordUndefined;
-    case 'd': return !strcmp(rest[0], "o") ? keywordDo : keywordUndefined;
-    case 'r': return !strcmp(rest[0], "eturn") ? keywordReturn : keywordUndefined;
-    case 'v': return !strcmp(rest[0], "oid") ? keywordVoid : keywordUndefined;
-    case 'w': return !strcmp(rest[0], "hile") ? keywordWhile : keywordUndefined;
+    case 'd': return keywordMatch(str, 0, "do", keywordDo);
+    case 'r': return keywordMatch(str, 0, "return", keywordReturn);
+    case 'w': return keywordMatch(str, 0, "while", keywordWhile);
 
-    case 'b':
-        switch (str[1]) {
-        case 'o': return !strcmp(rest[1], "ol") ? keywordBool : keywordUndefined;
-        case 'r': return !strcmp(rest[1], "eak") ? keywordBreak : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'a': return keywordMatch2(str, 0, "assert", keywordAssert,
+                                           "auto", keywordAuto);
+    case 'b': return keywordMatch2(str, 0, "bool", keywordBool,
+                                           "break", keywordBreak);
+    case 't': return keywordMatch2(str, 0, "true", keywordTrue,
+                                           "typedef", keywordTypedef);
+    case 'u': return keywordMatch2(str, 0, "union", keywordUnion,
+                                           "using", keywordUsing);
 
     case 'c':
         switch (str[1]) {
-        case 'h': return !strcmp(rest[1], "ar") ? keywordChar : keywordUndefined;
+        case 'h': return keywordMatch(str, 1, "char", keywordChar);
         case 'o':
-            if (str[2] == 'n') {
-                switch (str[3]) {
-                case 's': return !strcmp(rest[3], "t") ? keywordConst : keywordUndefined;
-                case 't': return !strcmp(rest[3], "inue") ? keywordContinue : keywordUndefined;
-                default: return keywordUndefined;
-                }
-
-            } else
+            if (str[2] != 'n')
                 return keywordUndefined;
+
+            return keywordMatch2(str, 2, "const", keywordConst,
+                                         "continue", keywordContinue);
 
         default: return keywordUndefined;
         }
 
     case 'e':
         switch (str[1]) {
-        case 'l': return !strcmp(rest[1], "se") ? keywordElse : keywordUndefined;
-        case 'n': return !strcmp(rest[1], "um") ? keywordEnum : keywordUndefined;
-        case 'x': return !strcmp(rest[1], "tern") ? keywordExtern : keywordUndefined;
+        case 'l': return keywordMatch(str, 1, "else", keywordElse);
+        case 'n': return keywordMatch(str, 1, "enum", keywordEnum);
+        case 'x': return keywordMatch(str, 1, "extern", keywordExtern);
         default: return keywordUndefined;
         }
 
-    case 'f':
-        switch (str[1]) {
-        case 'a': return !strcmp(rest[1], "lse") ? keywordFalse : keywordUndefined;
-        case 'o': return !strcmp(rest[1], "r") ? keywordFor : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'f': return keywordMatch2(str, 0, "false", keywordFalse,
+                                           "for", keywordFor);
 
-    case 'i':
-        switch (str[1]) {
-        case 'f': return str[2] == 0 ? keywordIf : keywordUndefined;
-        case 'n': return !strcmp(rest[1], "t") ? keywordInt : keywordUndefined;
-        default: return keywordUndefined;
-        }
+    case 'i': return keywordMatch2(str, 0, "if", keywordIf,
+                                           "int", keywordInt);
 
     case 's':
         switch (str[1]) {
-        case 'i': return !strcmp(rest[1], "zeof") ? keywordSizeof : keywordUndefined;
-        case 't':
-            switch (str[2]) {
-            case 'a': return !strcmp(rest[2], "tic") ? keywordStatic : keywordUndefined;
-            case 'r': return !strcmp(rest[2], "uct") ? keywordStruct : keywordUndefined;
-            default: return keywordUndefined;
-            }
-
+        case 'i': return keywordMatch(str, 1, "sizeof", keywordSizeof);
+        case 't': return keywordMatch2(str, 1, "static", keywordStatic,
+                                               "struct", keywordStruct);
         default: return keywordUndefined;
         }
 
-    case 't':
+    case 'v':
         switch (str[1]) {
-        case 'r': return !strcmp(rest[1], "ue") ? keywordTrue : keywordUndefined;
-        case 'y': return !strcmp(rest[1], "pedef") ? keywordTypedef : keywordUndefined;
-        default: return keywordUndefined;
-        }
+        case 'a':
+            if (str[2] == '_') {
+                switch (str[3]) {
+                    case 'a': return keywordMatch(str, 3, "va_arg", keywordVAArg);
+                    case 'c': return keywordMatch(str, 3, "va_copy", keywordVACopy);
+                    case 'e': return keywordMatch(str, 3, "va_end", keywordVAEnd);
+                    case 's': return keywordMatch(str, 3, "va_start", keywordVAStart);
+                    default: return keywordUndefined;
+                }
 
-    case 'u':
-        switch (str[1]) {
-        case 'n': return !strcmp(rest[1], "ion") ? keywordUnion : keywordUndefined;
-        case 's': return !strcmp(rest[1], "ing") ? keywordUsing : keywordUndefined;
+            } else
+                return keywordUndefined;
+
+        case 'o': return keywordMatch(str, 1, "void", keywordVoid);
         default: return keywordUndefined;
         }
 
@@ -376,6 +381,10 @@ const char* keywordTagGetStr (keywordTag tag) {
     else if (tag == keywordInt) return "int";
     else if (tag == keywordTrue) return "true";
     else if (tag == keywordFalse) return "false";
+    else if (tag == keywordVAStart) return "va_start";
+    else if (tag == keywordVAEnd) return "va_end";
+    else if (tag == keywordVAArg) return "va_arg";
+    else if (tag == keywordVACopy) return "va_copy";
     else {
         char* str = malloc(logi(tag, 10)+2);
         sprintf(str, "%d", tag);

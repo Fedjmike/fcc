@@ -27,6 +27,9 @@ typedef struct parserCtx {
 
     compilerCtx* comp;
 
+    ///Links to the module level and innermost scope
+    ///Owned by the symbol tree
+    sym* module;
     sym* scope;
 
     ///The levels of break-able control flows currently in

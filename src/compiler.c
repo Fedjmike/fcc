@@ -42,18 +42,21 @@ static void compilerInitSymbols (compilerCtx* ctx) {
     ctx->types[builtinBool] = symCreateType(ctx->global, "bool", 4, typeBool);
     ctx->types[builtinChar] = symCreateType(ctx->global, "char", 1, typeIntegral);
     ctx->types[builtinInt] = symCreateType(ctx->global, "int", 4, typeIntegral);
+    ctx->types[builtinSizeT] = symCreateType(ctx->global, "size_t", ctx->arch->wordsize, typeIntegral);
+    ctx->types[builtinVAList] = symCreateType(ctx->global, "va_list", ctx->arch->wordsize, typeAssignment);
 
     symCreateType(ctx->global, "int8_t", 1, typeIntegral);
     symCreateType(ctx->global, "int16_t", 2, typeIntegral);
     symCreateType(ctx->global, "int32_t", 4, typeIntegral);
     symCreateType(ctx->global, "intptr_t", ctx->arch->wordsize, typeIntegral);
+    symCreateType(ctx->global, "intmax_t", ctx->arch->wordsize, typeIntegral);
 
     if (ctx->arch->wordsize >= 8)
         symCreateType(ctx->global, "int64_t", 8, typeIntegral);
 }
 
 void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<char*>*/* searchPaths) {
-    hashmapInit(&ctx->modules, 1009);
+    hashmapInit(&ctx->modules, 1024);
 
     ctx->arch = arch;
     ctx->searchPaths = searchPaths;
@@ -66,8 +69,12 @@ void compilerInit (compilerCtx* ctx, const architecture* arch, const vector/*<ch
 
 void compilerEnd (compilerCtx* ctx) {
     hashmapFreeObjs(&ctx->modules, (hashmapKeyDtor) free, (hashmapValueDtor) parserResultDestroy);
+
     symEnd(ctx->global);
+    ctx->global = 0;
+
     free(ctx->types);
+    ctx->types = 0;
 }
 
 void compiler (compilerCtx* ctx, const char* input, const char* output) {

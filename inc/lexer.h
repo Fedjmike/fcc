@@ -30,7 +30,9 @@ typedef enum keywordTag {
     keywordAuto, keywordStatic, keywordExtern, keywordTypedef,
     keywordStruct, keywordUnion, keywordEnum,
     keywordVoid, keywordBool, keywordChar, keywordInt,
-    keywordTrue, keywordFalse
+    keywordTrue, keywordFalse,
+    keywordVAStart, keywordVAEnd, keywordVAArg, keywordVACopy,
+    keywordAssert
 } keywordTag;
 
 typedef enum punctTag {
@@ -79,7 +81,7 @@ typedef struct lexerCtx {
     int length;
 } lexerCtx;
 
-lexerCtx* lexerInit (FILE* file);
+lexerCtx* lexerInit (const char* filename);
 void lexerEnd (lexerCtx* ctx);
 
 void lexerNext (lexerCtx* ctx);

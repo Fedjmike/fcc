@@ -14,7 +14,6 @@ typedef struct architecture architecture;
  */
 typedef struct analyzerFnCtx {
     sym* fn;
-    ///Return type
     type* returnType;
 } analyzerFnCtx;
 
@@ -53,12 +52,11 @@ typedef struct analyzerResult {
 /**
  * Analyze the semantics of an AST tree in the context of a symbol table
  *
- * Attaches types to AST nodes and symbols and validates their semantics.
+ * Attaches types and storage tags to AST nodes and symbols and validates
+ * their semantics.
  *
  * Assumes a well formed AST in terms of fields filled and constraints on
- * what fills them upheld. For example, the children of a value tag are
- * assumed to all be value tags themselves. The o string in a BOP is
- * assumed to be a valid operator.
+ * what fills them upheld.
  */
 analyzerResult analyzer (ast* Tree, sym** Types, const architecture* arch);
 

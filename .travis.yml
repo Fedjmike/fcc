@@ -2,8 +2,8 @@ language: c
 compiler: clang
 env: CONFIG=release OS=linux ARCH=32
 before_install: sudo apt-get install gcc-multilib valgrind
-script:
-    - make print all
-    - make --keep-going print-tests tests-all
-    - CFLAGS="-std=c1x" make selfbuild
-    - make FCC=bin/self/fcc --keep-going print-tests tests-all
+branches:
+    except: ir
+script: >
+        make --keep-going print all &&
+        make --keep-going print-tests tests

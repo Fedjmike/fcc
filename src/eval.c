@@ -14,14 +14,14 @@ using "../inc/sym.h";
 using "../inc/ast.h";
 using "../inc/architecture.h";
 
-static evalResult evalBOP (const architecture* arch, ast* Node);
-static evalResult evalUOP (const architecture* arch, ast* Node);
-static evalResult evalTernary (const architecture* arch, ast* Node);
-static evalResult evalCast (const architecture* arch, ast* Node);
-static evalResult evalSizeof (const architecture* arch, ast* Node);
-static evalResult evalLiteral (const architecture* arch, ast* Node);
+static evalResult evalBOP (const architecture* arch, const ast* Node);
+static evalResult evalUOP (const architecture* arch, const ast* Node);
+static evalResult evalTernary (const architecture* arch, const ast* Node);
+static evalResult evalCast (const architecture* arch, const ast* Node);
+static evalResult evalSizeof (const architecture* arch, const ast* Node);
+static evalResult evalLiteral (const architecture* arch, const ast* Node);
 
-evalResult eval (const architecture* arch, ast* Node) {
+evalResult eval (const architecture* arch, const ast* Node) {
     if (Node->tag == astBOP)
         return evalBOP(arch, Node);
 
@@ -41,7 +41,9 @@ evalResult eval (const architecture* arch, ast* Node) {
         return evalLiteral(arch, Node);
 
     /*Never known*/
-    else if (Node->tag == astCall || Node->tag == astIndex)
+    else if (   Node->tag == astCall || Node->tag == astIndex
+             || Node->tag == astVAStart || Node->tag == astVAEnd
+             || Node->tag == astVAArg|| Node->tag == astVACopy)
         return (evalResult) {false, 0};
 
     else if (Node->tag == astInvalid)
@@ -53,7 +55,7 @@ evalResult eval (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalBOP (const architecture* arch, ast* Node) {
+static evalResult evalBOP (const architecture* arch, const ast* Node) {
     evalResult L = eval(arch, Node->l),
                R = eval(arch, Node->r);
 
@@ -118,7 +120,7 @@ static evalResult evalBOP (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalUOP (const architecture* arch, ast* Node) {
+static evalResult evalUOP (const architecture* arch, const ast* Node) {
     if (Node->o == opAddressOf || Node->o == opDeref
         || Node->o == opPostIncrement || Node->o == opPostDecrement
         || Node->o == opPreIncrement || Node->o == opPreDecrement)
@@ -141,7 +143,7 @@ static evalResult evalUOP (const architecture* arch, ast* Node) {
     }
 }
 
-static evalResult evalTernary (const architecture* arch, ast* Node) {
+static evalResult evalTernary (const architecture* arch, const ast* Node) {
     evalResult Cond = eval(arch, Node->firstChild),
                L = eval(arch, Node->l),
                R = eval(arch, Node->r);
@@ -160,15 +162,15 @@ static evalResult evalTernary (const architecture* arch, ast* Node) {
         return (evalResult) {false, 0};
 }
 
-static evalResult evalCast (const architecture* arch, ast* Node) {
+static evalResult evalCast (const architecture* arch, const ast* Node) {
     return eval(arch, Node->r);
 }
 
-static evalResult evalSizeof (const architecture* arch, ast* Node) {
+static evalResult evalSizeof (const architecture* arch, const ast* Node) {
     return (evalResult) {true, typeGetSize(arch, Node->dt)};
 }
 
-static evalResult evalLiteral (const architecture* arch, ast* Node) {
+static evalResult evalLiteral (const architecture* arch, const ast* Node) {
     (void) arch;
 
     if (Node->litTag == literalInt)
@@ -187,11 +189,36 @@ static evalResult evalLiteral (const architecture* arch, ast* Node) {
 
     else if (   Node->litTag == literalStr
              || Node->litTag == literalCompound
-             || Node->litTag == literalInit)
+             || Node->litTag == literalInit
+             || Node->litTag == literalLambda)
         return (evalResult) {false, 0};
 
     else {
         debugErrorUnhandled("evalLiteral", "literal tag", opTagGetStr(Node->o));
         return (evalResult) {false, 0};
     }
+}
+
+bool evalIsConstantInit (const ast* Node) {
+    /*Compound initializer: constant if all the fields/elements are constant*/
+    if (Node->tag == astLiteral && Node->litTag == literalInit) {
+        for (ast* current = Node->firstChild;
+             current;
+             current = current->nextSibling) {
+            ast* value = current;
+
+            /*Designated initializer?*/
+            if (   current->tag == astMarker
+                && (   current->marker == markerStructDesignatedInit
+                    || current->marker == markerArrayDesignatedInit))
+                value = current->r;
+
+            if (!evalIsConstantInit(value))
+                return false;
+        }
+
+        return true;
+
+    } else
+        return eval(&(architecture) {}, Node).known;
 }

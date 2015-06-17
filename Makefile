@@ -21,8 +21,13 @@ CONFIG ?= release
 
 CC ?= gcc
 CFLAGS ?= -std=c11
-CFLAGS += -Werror -Wall -Wextra
+CFLAGS += -Werror -Wall -Wextra -Wvla -Wstrict-aliasing -Wstrict-overflow=5 -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wmissing-field-initializers -g
 CFLAGS += -include defaults.h
+
+ifeq ($(STRICT),yes)
+	CFLAGS += -Wformat=2 -Wmissing-include-dirs -Wconversion -pedantic
+	CFLAGS += -Wno-format-nonliteral -Wno-sign-conversion
+endif
 
 ifeq ($(CONFIG),debug)
 	CFLAGS += -DFCC_DEBUGMODE -g
@@ -34,6 +39,7 @@ ifeq ($(CONFIG),release)
 endif
 ifeq ($(CONFIG),profiling)
 	CFLAGS += -O3 -pg
+	LDFLAGS += -O3 -pg
 endif
 ifeq ($(CONFIG),coverage)
 	CFLAGS += --coverage
@@ -51,7 +57,7 @@ POSTBUILD = @[ -e $@ ] && du -hs $@; echo
 #
 
 HEADERS = $(wildcard inc/*.h) defaults.h
-OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(wildcard src/*.c))
+OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(filter-out src/lexerself.c, $(filter-out src/regself.c, $(wildcard src/*.c))))
 
 OBJ = obj/$(CONFIG)
 BIN = bin/$(CONFIG)
@@ -61,7 +67,7 @@ OUT = $(BIN)/$(BINNAME)
 all: $(OUT)
 
 defaults.h: defaults.in.h
-	@echo " [makedefaults.h] $@"
+	@echo " [makedefaults.sh] $@"
 	@OS=$(OS_) WORDSIZE=$(WORDSIZE) bash makedefaults.sh $< >$@
 
 $(OBJ)/%.o: src/%.c $(HEADERS)
@@ -97,17 +103,19 @@ print:
 # Tests
 #
 
-TFLAGS = -I tests/include
-TESTS = $(patsubst %, bin/tests/%, xor-list hashset xor-list-error.txt)
+TFLAGS = -I tests/include -s
+TOUT = xor-list hashset xor-list-error.txt
+TESTS = $(patsubst %, bin/tests/%, $(TOUT))
 
 ifneq ($(shell command -v valgrind; echo $?),)
-	VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes
+	VFLAGS = -q --leak-check=full --workaround-gcc296-bugs=yes --error-exitcode=1
 	VALGRIND ?= valgrind $(VFLAGS)
 endif
 
-tests-all: $(TESTS)
+tests: $(TESTS)
 	
 bin/tests/%-error.txt: tests/%-error.c $(FCC)
+	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
 	@$(VALGRIND) $(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
 	$(POSTBUILD)
@@ -130,19 +138,19 @@ print-tests:
 	@echo "===================="
 	
 #
-# Partial selfbuild
+# Selfhost
 #
 
-selfbuild: bin/self/fcc
+selfhost: bin/self/fcc
 
-bin/self/fcc: $(OUT) selfbuild.sh
-	@echo " [FCC+CC] fcc"
-	@CFLAGS="$(CFLAGS)" CONFIG=$(CONFIG) bash selfbuild.sh
+bin/self/%: $(FCC) src/lexerself.c src/regself.c
+	@echo " [$(FCC)] $@"
+	@$(VALGRIND) $(FCC) -I tests/include `find src/*.[c] | egrep -v "lexer.c|reg.c"` -o $@
 	$(POSTBUILD)
 	
 #	
 #
 #
 	
-.PHONY: all clean print print-tests tests-all selfbuild
+.PHONY: all clean print print-tests tests selfhost
 .SUFFIXES:

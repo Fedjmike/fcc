@@ -49,7 +49,6 @@ typedef struct operand {
         /*operandLiteral*/
         int literal;
         /*operandFlags*/
-        ///Condition for the FALSE result
         conditionTag condition;
         /*operandLabel operandLabelMem operandLabelOffset*/
         const char* label;

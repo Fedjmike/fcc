@@ -8,6 +8,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
+#include "assert.h"
 
 using "../inc/type.h";
 
@@ -26,7 +27,7 @@ static type* typeCreate (typeTag tag);
 /**
  * Jump through (immediate) typedefs, possibly recursively, to actual type
  */
-static const type* typeTryThroughTypedef (const type* DT);
+static type* typeTryThroughTypedef (const type* DT);
 
 /**
  * As above, but collects qualifiers, e.g.
@@ -38,7 +39,7 @@ static const type* typeTryThroughTypedef (const type* DT);
  * ->
  *    TryThroughTypedefQual(z) == {volatile x*, const}
  */
-static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
+static type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut);
 
 static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R);
 
@@ -101,9 +102,6 @@ type* typeCreateInvalid () {
 }
 
 void typeDestroy (type* DT) {
-    if (debugAssert("typeDestroy", "null parameter", DT != 0))
-        return;
-
     if (DT->tag == typeBasic || DT->tag == typeInvalid)
         ;
 
@@ -123,9 +121,6 @@ void typeDestroy (type* DT) {
 }
 
 type* typeDeepDuplicate (const type* DT) {
-    if (debugAssert("typeDeepDuplicate", "null parameter", DT != 0))
-        return typeCreateInvalid();
-
     type* copy;
 
     if (DT->tag == typeInvalid)
@@ -159,15 +154,15 @@ type* typeDeepDuplicate (const type* DT) {
 
 /*:::: TYPE MISC HELPERS ::::*/
 
-static const type* typeTryThroughTypedef (const type* DT) {
+static type* typeTryThroughTypedef (const type* DT) {
     if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
         return typeTryThroughTypedef(DT->basic->dt);
 
     else
-        return DT;
+        return (type*) DT;
 }
 
-static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
+static type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qualOut) {
     if (qualOut)
         qualOut->isConst |= DT->qual.isConst;
 
@@ -175,7 +170,7 @@ static const type* typeTryThroughTypedefQual (const type* DT, typeQualifiers* qu
         return typeTryThroughTypedefQual(DT->basic->dt, qualOut);
 
     else
-        return DT;
+        return (type*) DT;
 }
 
 const sym* typeGetBasic (const type* DT) {
@@ -199,16 +194,18 @@ const type* typeGetReturn (const type* DT) {
         return 0;
 
     DT = typeTryThroughTypedef(DT);
-    return DT->tag == typeFunction ? DT->returnType : 0;
+    return   DT->tag == typeFunction ? DT->returnType
+           : DT->tag == typePtr && typeIsFunction(DT->base) ? typeGetReturn(DT->base)
+           : 0;
 }
 
-const sym* typeGetRecord (const type* DT) {
+const type* typeGetRecord (const type* DT) {
     DT = typeTryThroughTypedef(DT);
 
     if (    DT->tag == typeBasic && DT->basic
         && (   DT->basic->tag == symStruct
             || DT->basic->tag == symUnion))
-        return DT->basic;
+        return DT;
 
     else if (DT->tag == typePtr && typeIsBasic(DT->base))
         return typeGetRecord(DT->base);
@@ -220,12 +217,24 @@ const sym* typeGetRecord (const type* DT) {
 const type* typeGetCallable (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     return DT->tag == typeFunction ? DT :
-           DT->tag == typePtr ? (DT->base->tag == typeFunction ? DT->base : 0) : 0;
+           DT->tag == typePtr && DT->base->tag == typeFunction ? DT->base : 0;
 }
 
 int typeGetArraySize (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return DT->tag == typeArray ? DT->array >= 0 ? DT->array : 0 : 0;
+    return DT->tag == typeArray && DT->array != arraySizeError ? DT->array : 0;
+}
+
+/*:::: TYPE MODIFICATION ::::*/
+
+bool typeSetArraySize (type* DT, int size) {
+    DT = typeTryThroughTypedef(DT);
+
+    if (DT->tag != typeArray)
+        return false;
+
+    DT->array = size;
+    return true;
 }
 
 /*:::: TYPE DERIVATION ::::*/
@@ -243,7 +252,7 @@ type* typeDeriveFromTwo (const type* L, const type* R) {
         return typeDeepDuplicate(L);
 
     else {
-        debugAssert("typeDeriveFromTwo", "type compatibility", typeIsCompatible(L, R));
+        assert(typeIsCompatible(L, R));
         return typeDeriveFrom(L);
     }
 }
@@ -256,7 +265,7 @@ type* typeDeriveUnified (const type* L, const type* R) {
         return typeDeepDuplicate(L);
 
     else {
-        debugAssert("typeDeriveUnified", "type compatibility", typeIsCompatible(L, R));
+        assert(typeIsCompatible(L, R));
 
         if (typeIsEqual(L, R))
             return typeDeepDuplicate(L); //== R
@@ -327,33 +336,51 @@ bool typeIsInvalid (const type* DT) {
 
 bool typeIsComplete (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return !(DT->tag == typeBasic && !DT->basic->complete);
+    return !(   (DT->tag == typeBasic && !DT->basic->complete)
+             || (DT->tag == typeArray && DT->array == arraySizeUnspecified));
 }
 
 bool typeIsVoid (const type* DT) {
     DT = typeTryThroughTypedef(DT);
     /*Is it a built in type of size zero (void)*/
-    return    (   (DT->tag == typeBasic && DT->basic->tag == symType)
+    return    (   DT->tag == typeBasic
+               && DT->basic->tag == symType
                && DT->basic->size == 0)
+           || typeIsInvalid(DT);
+}
+
+bool typeIsNonVoid (const type* DT) {
+    DT = typeTryThroughTypedef(DT);
+    return    (   DT->tag != typeBasic
+               || DT->basic->tag != symType
+               || DT->basic->size != 0)
            || typeIsInvalid(DT);
 }
 
 bool typeIsStruct (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   DT->tag == typeBasic && DT->basic->tag == symStruct)
+    return    (DT->tag == typeBasic && DT->basic->tag == symStruct)
            || typeIsInvalid(DT);
 }
 
 bool typeIsUnion (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return    (   DT->tag == typeBasic && DT->basic->tag == symUnion)
+    return    (DT->tag == typeBasic && DT->basic->tag == symUnion)
            || typeIsInvalid(DT);
 }
 
-bool typeIsMutable (const type* DT) {
+typeMutability typeIsMutable (const type* DT) {
     typeQualifiers qual = typeQualifiersCreate();
     DT = typeTryThroughTypedefQual(DT, &qual);
-    return !qual.isConst || typeIsInvalid(DT);
+
+    if (qual.isConst)
+        return mutConstQualified;
+
+    else if (DT->tag == typeBasic && DT->basic->hasConstFields)
+        return mutHasConstFields;
+
+    else
+        return mutMutable;
 }
 
 bool typeIsNumeric (const type* DT) {
@@ -382,8 +409,8 @@ bool typeIsAssignment (const type* DT) {
 
 bool typeIsCondition (const type* DT) {
     DT = typeTryThroughTypedef(DT);
-    return (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition)) ||
-            typeIsPtr(DT) || typeIsInvalid(DT);
+    return    (DT->tag == typeBasic && (DT->basic->typeMask & typeCondition))
+           || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
 /*:::: TYPE COMPARISON ::::*/
@@ -392,11 +419,11 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     DT = typeTryThroughTypedef(DT);
     Model = typeTryThroughTypedef(Model);
 
-    if (typeIsInvalid(DT) || typeIsInvalid(Model))
+    if (typeIsInvalid(DT) || typeIsInvalid(Model)) {
         return true;
 
     /*If function requested, match params and return*/
-    else if (typeIsFunction(Model)) {
+    } else if (typeIsFunction(Model)) {
         /*fn ptr <=> fn*/
         if (typeIsPtr(DT) && typeIsFunction(DT->base))
             return typeIsCompatible(DT->base, Model);
@@ -413,7 +440,7 @@ bool typeIsCompatible (const type* DT, const type* Model) {
                            Model->returnType);
 
     /*If pointer requested, allow pointers and arrays and basic numeric types*/
-    } else if (typeIsPtr(Model))
+    } else if (typeIsPtr(Model)) {
         /*Except for fn pointers*/
         if (typeIsFunction(Model->base) && typeIsFunction(DT))
             return typeIsCompatible(DT, Model->base);
@@ -423,21 +450,24 @@ bool typeIsCompatible (const type* DT, const type* Model) {
                    || (typeIsBasic(DT) && (DT->basic->typeMask & typeNumeric));
 
     /*If array requested, accept only arrays of matching size and type*/
-    else if (typeIsArray(Model))
+    } else if (typeIsArray(Model)) {
         return    typeIsArray(DT)
                && (DT->array == Model->array || Model->array < 0 || DT->array < 0)
                && typeIsCompatible(DT->base, Model->base);
 
     /*Basic type*/
-    else {
+    } else {
         if (typeIsPtr(DT))
             return (bool)(Model->basic->typeMask & typeNumeric);
 
         else if (Model->basic->typeMask == typeIntegral)
             return DT->tag == typeBasic && DT->basic->typeMask == typeIntegral;
 
+        else if (Model->basic->typeMask == typeIntegral)
+            return DT->tag == typeBasic && DT->basic->typeMask == typeIntegral;
+
         else
-            return DT->tag == typeBasic && (DT->basic == Model->basic);
+            return DT->tag == typeBasic && DT->basic == Model->basic;
     }
 }
 
@@ -470,8 +500,10 @@ bool typeIsEqual (const type* L, const type* R) {
         return    (L->array == R->array || L->array < 0 || R->array < 0)
                && typeIsEqual(L->base, R->base);
 
-    else /*(typeIsBasic(L))*/
+    else {
+        assert(typeIsBasic(L));
         return L->basic == R->basic;
+    }
 }
 
 /*:::: MISC INTERFACES ::::*/
@@ -492,9 +524,6 @@ const char* typeTagGetStr (typeTag tag) {
 }
 
 int typeGetSize (const architecture* arch, const type* DT) {
-    if (debugAssert("typeGetSize", "null parameter", DT != 0))
-        return arch->wordsize;
-
     DT = typeTryThroughTypedef(DT);
 
     if (typeIsInvalid(DT))
@@ -510,8 +539,10 @@ int typeGetSize (const architecture* arch, const type* DT) {
     else if (typeIsPtr(DT) || typeIsFunction(DT))
         return arch->wordsize;
 
-    else /*if (typeIsBasic(DT))*/
+    else {
+        assert(typeIsBasic(DT));
         return DT->basic->size;
+    }
 }
 
 char* typeToStr (const type* DT) {
@@ -555,7 +586,10 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
         char* params = 0;
 
-        if (DT->params != 0) {
+        if (DT->params == 0)
+            params = strdup("void");
+
+        else {
             vector/*<char*>*/ paramStrs;
             vectorInit(&paramStrs, DT->params+1);
             vectorPushFromArray(&paramStrs, (void**) DT->paramTypes, DT->params, sizeof(type*));
@@ -564,20 +598,18 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
             if (DT->variadic)
                 vectorPush(&paramStrs, "...");
 
-            params = strjoin((char**) paramStrs.buffer, paramStrs.length, ", ", (stdalloc) malloc);
+            params = strjoinwith((char**) paramStrs.buffer, paramStrs.length, ", ", malloc);
 
             if (DT->variadic)
                 paramStrs.length--;
 
             vectorFreeObjs(&paramStrs, free);
-
-        } else
-            params = strdup("void");
+        }
 
         /* */
 
-        char* format = malloc(strlen(embedded) +
-                              strlen(params)+5);
+        char* format = malloc(  strlen(embedded) + 2
+                              + strlen(params) + 3);
 
         if (!embedded[0])
             sprintf(format, "()(%s)", params);
@@ -592,7 +624,7 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
     /*Array or Ptr*/
     } else {
-        char* format = 0;
+        char* format;
 
         if (typeIsPtr(DT)) {
             format = malloc(strlen(embedded) + 4 + (DT->qual.isConst ? 7 : 0));
@@ -607,7 +639,9 @@ char* typeToStrEmbed (const type* DT, const char* embedded) {
 
             free(qualified);
 
-        } else /*if (typeIsArray(DT))*/ {
+        } else {
+            assert(typeIsArray(DT));
+
             format = malloc(  strlen(embedded)
                             + (DT->array < 0 ? 0 : logi(DT->array, 10)) + 4);
 

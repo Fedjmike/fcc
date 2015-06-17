@@ -162,4 +162,6 @@ int main (int argc, char** argv) {
     printf("Count: %d\n", count);
 
     hashset_destroy(&set);
+    
+    return 0;
 }

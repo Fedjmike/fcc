@@ -23,7 +23,9 @@ typedef enum labelTag {
     labelContinue,
     labelBreak,
     labelShortCircuit,
-    labelROData
+    labelROData,
+    labelLambda,
+    labelPostLambda
 } labelTag;
 
 /**
@@ -44,22 +46,17 @@ typedef struct asmCtx {
     operand stackPtr;
     ///Base (of stack) pointer - RBP
     operand basePtr;
-
-    ///Owns the strings in it
-    vector/*<char*>*/ labels;
 } asmCtx;
 
 asmCtx* asmInit (const char* output, const architecture* arch);
 void asmEnd (asmCtx* ctx);
 
-void asmOutLn (asmCtx* ctx, char* format, ...);
+void asmOutLn (asmCtx* ctx, const char* format, ...);
 
-void asmComment (asmCtx* ctx, char* str);
+void asmComment (asmCtx* ctx, const char* str);
 
 /**
  * Enter a block (signalled by indentation)
  */
 void asmEnter (asmCtx* ctx);
 void asmLeave (asmCtx* ctx);
-
-operand asmCreateLabel (asmCtx* ctx, labelTag tag);

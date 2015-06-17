@@ -5,11 +5,6 @@
 #include "stdlib.h"
 #include "string.h"
 
-using "../inc/vector.h";
-
-using "stdlib.h";
-using "string.h";
-
 vector* vectorInit (vector* v, int initialCapacity) {
     v->length = 0;
     v->capacity = initialCapacity;
@@ -19,6 +14,8 @@ vector* vectorInit (vector* v, int initialCapacity) {
 
 void vectorFree (vector* v) {
     free(v->buffer);
+    v->length = 0;
+    v->capacity = 0;
     v->buffer = 0;
 }
 
@@ -33,11 +30,12 @@ static void vectorResize (vector* v, int size) {
     v->buffer = realloc(v->buffer, v->capacity*sizeof(void*));
 }
 
-void vectorPush (vector* v, void* item) {
+int vectorPush (vector* v, void* item) {
     if (v->length == v->capacity)
         vectorResize(v, v->capacity*2);
 
-    v->buffer[v->length++] = item;
+    v->buffer[v->length] = item;
+    return v->length++;
 }
 
 vector* vectorPushFromArray (vector* v, void** array, int length, int elementSize) {
@@ -58,12 +56,34 @@ vector* vectorPushFromArray (vector* v, void** array, int length, int elementSiz
     return v;
 }
 
+vector* vectorPushFromVector (vector* dest, const vector* src) {
+    return vectorPushFromArray(dest, src->buffer, src->length, sizeof(void*));
+}
+
 void* vectorPop (vector* v) {
-    return v->buffer[v->length -= 1];
+    return v->buffer[--v->length];
+}
+
+int vectorFind (vector* v, void* item) {
+    for (int i = 0; i < v->length; i++) {
+        if (v->buffer[i] == item)
+            return i;
+    }
+
+    return -1;
+}
+
+void* vectorRemoveReorder (vector* v, int n) {
+    if (v->length <= n)
+        return 0;
+
+    void* last = vectorPop(v);
+    vectorSet(v, n, last);
+    return last;
 }
 
 void* vectorGet (const vector* v, int n) {
-    if (n < v->length)
+    if (n < v->length && n >= 0)
         return v->buffer[n];
 
     else

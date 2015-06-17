@@ -1,136 +1,236 @@
 Legend:     [x] Finished task   [-] Partially complete task   [ ] Unstarted task
              -  Information      o  Option
 
+Polymorphism:
+
+[ ] Parsing declarations
+    [ ] Type variables
+        - Scope?
+          o Lexical scope
+          o (Implicit) decl scope
+    [ ] Struct/unions
+        - Definition
+        - Instantiation? or always inferred?
+    [ ] Typedefs of constraints
+
+[ ] Parsing expressions?
+    o Explicit type variable substitution?
+      - f[int :a]
+      - Where does it do type variable name resolution? :S
+    o Or just casting to a monomorph
+
+[ ] Definition semantics
+    [ ] Constraint inference
+        [ ] () fn
+        [ ] * [] -> ptr not array
+        [ ] . -> fields in records
+        [ ] = op= ++ --
+            - Remove default const?
+            - Re-entrancy...
+            - What of explicit prototypes?
+        [ ] Other ops
+            o Type classes
+            o Named ops
+              - Doesn't require a keyword
+              - Unclear that :a+ is the same as :a-
+              - How do you write condition? `?`
+              - More granularity (to what end?)
+
+[ ] Expression semantics
+    [ ] Inference of type variable substitutions at call site
+
+[ ] Symbol mangler
+
+[ ] Monomorph instantiation
+
+[ ] Field offset, record size, stack offset (OF EVERYTHING) now a function of tvs...
+
 High importance:
 
 [-] const
-	[x] Parsing
-	[x] Type annotation
-	[ ] Type compatibility/equality
-	[-] Assignable
-		[ ] structs with const fields
-	[ ] Fields of const structs/unions const themselves
+    [x] Parsing
+    [x] Type annotation
+    [ ] Type compatibility/equality
+        - No qualifiers dropped, qual smearing if added
+    [x] Assignable
+        [x] structs with const fields
+    [x] Fields of const structs/unions const themselves
+    [ ] (const)[] => const ()[]
 [ ] Review type compatibility
-	[ ] Cast compatibility
+    [ ] Cast compatibility
 [ ] Numeric type coercion: widening & narrowing
 [-] Type completeness
-	[ ] Incomplete arrays
-	[ ] Cast to incomplete
-[-] Varargs
-[-] extern
+    [ ] Incomplete arrays
+    [ ] Cast to incomplete
+[x] Varargs
+[x] extern
 [-] static
     [ ] Function linkage
-    [ ] Disallow all others?
-[ ] Disallow global variables
 [-] Modules
-    [ ] Separated namespaces
+    [-] Separated namespaces
+    [ ] "using" not transitive
     [x] Include once only
+    [ ] Infinite loops
+[ ] Tests
+    [-] assert
+    [ ] Use assert in existing tests
 
 Medium:
 
 [-] Platform support
-	[-] 64-bit
-		[-] Windows
-		[-] Linux
-	[x] 32-bit
-	[-] Cross-compilation by command line
+    [-] 64-bit
+        [-] Windows
+        [-] Linux
+    [x] 32-bit
+    [-] Cross-compilation by command line
 [ ] Unsigned integers
 [ ] Floating point numbers
 [ ] long (long long)
 [ ] wchar_t
 [ ] x ?: y
 [ ] String literal concatenation
-[x] % /
-[ ] >> <<
-[ ] assert
+[-] Lambdas
+    [x] Capture-less lambdas
+    [ ] Variadic lambdas
+    [ ] Closures
+        - Same syntax as C++ inside the square brackets
+        - &x makes available the expression &x, not x
+        - Providing an allocator makes the env. manually managed
+          - Cleaned up with a call to free on the returned fn ptr, nothing else (?)
+        - Otherwise automatic storage
+[x] Designated initializers in compound literals
+[-] auto type inference
+    [ ] Pointer and array base type
+    [ ] Errors for auto function return and param types
+    [ ] Type qualifiers
+    [ ] Don't allow an inferred var in its own init
+    [ ] (auto[]) {...} ?
+[ ] Static fields?
 [ ] Warnings
-	[ ] main conformance
-	[ ] Unused value
-	[ ] Statement without effect
-	[ ] Empty decl
-	[ ] Empty block body, if (...);
-	[ ] Assignment as condition
+    [ ] main conformance
+    [ ] Unused value
+    [ ] Statement without effect
+    [ ] Empty decl
+    [ ] Empty block body, if (...);
+    [ ] Assignment as condition
+    [ ] Widening/narrowing
 [ ] AST optimizer
-	[ ] Strength reduction
-	[ ] Constant folding
-	[ ] Constant propogation?
-	[ ] Factorization (CSE)
-	[ ] Operand commutation => Strahler number
+    [ ] Strength reduction
+    [ ] Constant folding
+    [ ] Constant propogation?
+    [ ] Factorization (CSE)
+    [ ] Operand commutation => Strahler number
+[ ] Octal and hex literals
 
 Low:
 
+[ ] Unicode
 [ ] Pretty printing control by command line
-[ ] string
-[ ] New IR
-    - Expression only (to start with)
-[ ] Designated initializers in compound literals
+[ ] -o dir
+[-] New IR
 [ ] Lexer errors
     [ ] Multichar
     [ ] EOF without EOL
     [ ] Unended comment / string / char
     [ ] Unrecognised escape
-	[ ] Newline in string
+    [ ] Newline in string
+    [ ] Suffix on integer literal
 [ ] Modules
     [ ] header & using, special meaning?
-	[ ] Different dialect?
+    [ ] Different dialect?
         - No impls
-		- No static
-		- No globals (except extern)
+        - No static
+        - No globals (except extern)
 [ ] Initializing arrays from strings
 [ ] Expand eval.c
     [ ] String literals and indexing
     [ ] Records and arrays
 [-] Full ABI conformance
-	- structs, bah
-	- GCC
-	- Clang
-	  Doing something weird with struct returning, LTO across module boundaries?
-
+    - structs, bah
+    - GCC
+    - Clang
+      Doing something weird with struct returning, LTO across module boundaries?
+[ ] Inverse comma (`)
+[ ] Coalesce (??)
 
 Other issues:
 
 [ ] Add symbol size back to debug output
+[ ] make sure fstripname doesn't erase leading ../ (or leading /), use in parser for fullname
+
+Code style:
+
+[ ] More comments about ownership
+[ ] "Why" comments
+[ ] Get rid of any commented code
+[ ] Use size_t for dimensions
+[ ] Rule: never allocate and return without the allocator idiom? Probably too strict
+[x] Change "else //(assumption)" into assertions
+[ ] Explain default-zero types and their uses
+[ ] malloc(sizeof(*var))
+[ ] Make sure the result of a typeUnify or inferXXX is never thrown away
+int to size_t and similar
+
+Refactors:
+
+[ ] Use an enum + struct in hashmap
+[ ] Change {int,hash}{set,map} from typedefs to unitary structs to prevent casting
+[ ] Simpler initiation with calloc (see astCreate)
+[ ] Declare structs inside modules, not their headers, if not part of the interface
+
+Optimizations:
+
 [ ] Use jump tables in tag string lookup
-[-] Use vector in:
-	[ ] ast
-	[x] sym
-[ ] Evaluate astEmpty as void, use in return / skipped field analysis/emission?
+[ ] Use vector in ast
+[ ] Use gcov to find which branches are usually taken => reorder ifs (particularly switch replacements)
+[ ] Use a hashmap for sym -- scope rules?
+    - hashmap*, most don't have children
+[ ] smallmap (binary search tree)
+[ ] Type squash
+
+Lexer:
+
+[ ] Preprocessor line continuations
+[ ] Move buffer from lexer to parser
+[ ] Change tokenLocation to a pointer
 
 Parser:
 
-[x] Fix AST node location
 [-] Symbol shadowing
 [ ] Get tokenMatch to guess whether to skip based on similarity of tokens
 [ ] Complain about keywords as idents
 [ ] Implicit declarations on error
 [ ] Error for unnamed structs/unions that don't define variables
-	- OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
+    - OUTSIDE structs/unions (those would be anonymous, not unnamed... because the difference is obvious)
 [ ] Missing semicolon after decl (more?) shouldn't cascade so terribly
 
 Semantic analyzer:
 
-[ ] Array size detection (basic x[] = {...})
-    - analyzer-decl.c
-[ ] Check that fn impl and var init are semantically valid
-[-] Make sure prototypes and implementation match exactly (static)
-[ ] Initialization of extern and typedef
-[ ] Evaluate casts properly
+[x] Array size detection (basic x[] = {...})
+[x] Initialization/impl_n of extern and typedef
+[ ] Rules for cast compatibility
 [ ] Ternary: allow compatible unequal?
 [ ] typedef unification
 [ ] On error expected type, chain types together and only complain again if found type not in chain?
 [ ] eval.c: casts, target sizes
 [ ] Improve errors for compound initializations: symbol name, type
 [ ] Very strict enum coercion: from enum to integer of same size?
+[ ] Only allow redecls of fields inside different record definitions
+[ ] Analyze field inits even if no field identified
+[ ] Make indexing fn ptrs illegal
+[ ] More checks for completeness: sizeof, casts, va_xxx
+[ ] static function without implementation
+[ ] Void declarations
+[ ] Cast to array
+[ ] Arrays as params
+[ ] Array assignment
 
 Emitter:
 
-[-] Get rid of global state in registers and labels
-[ ] Free operands before use, so can do things like:
-      mov rbx, dword ptr [rbp+16]
-      mov _rbx_, dword ptr [rbx+8]
-[-] Get rid of &regs[] use outside reg.c
-    - Make stack operations
-    - Differentiate between top and base operands
+[-] Remove global state
+    [x] labels
+    [-] registers
+    [ ] debug?
 [-] Short circuit ops optimization
     - If flag condition is the same, just return flags :D
       This chains well
@@ -140,11 +240,16 @@ Emitter:
       sends them off to emitterValue, handles operands and reg
       placement.
 [ ] Use temporary file (or pipe?) for output unless -[sSx]
-[-] Let asm stuff return operand?
-[ ] requestReturn for eax
 [ ] Cache sym size
-	=> move to analyzer?
-	=> as well as offset
-	=> offsetOf?
-	=> eval.c
+    => move to analyzer?
+    => as well as offset
+    => offsetOf?
+    => eval.c
+    o OR not, handle in IR?
 [ ] Optimize pointer indexing similar to array indexing
+[ ] Fix pointer arithmetic
+[ ] Static compound initializers (red black tree)
+[-] Pass requests/suggestions up the tree
+[ ] Line numbers in generated code
+[ ] Larger than word sized registers (with indirection)
+[ ] Smaller than word sized pushes

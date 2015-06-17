@@ -8,11 +8,11 @@
 
 /* ::::MISC:::: */
 
-char* filext (const char* name, const char* extension) {
+char* filext (const char* name, const char* extension, void* (*allocator)(size_t)) {
     /*Location of the last '.' (if any)*/
     int index = (int)(strrchr(name, (int) '.') - name);
 
-    char* ret = malloc(strlen(name)+strlen(extension)+2);
+    char* ret = allocator(strlen(name)+strlen(extension)+2);
 
     if (extension[0] != 0) {
         if (index < 0)
@@ -49,12 +49,12 @@ bool fexists (const char* filename) {
         return false;
 }
 
-char* fgetpath (const char* fullname) {
+char* fgetpath (const char* fullname, void* (*allocator)(size_t)) {
     const char* found = strrchr(fullname, (int) '/');
 
     if (found) {
         int index = (int)(found-fullname);
-        char* ret = strncpy(malloc(index+1), fullname, index);
+        char* ret = strncpy(allocator(index+1), fullname, index);
         ret[index] = 0;
         return ret;
 
@@ -62,20 +62,20 @@ char* fgetpath (const char* fullname) {
         return strdup(fullname);
 }
 
-char* fgetname (const char* fullname) {
+char* fgetname (const char* fullname, void* (*allocator)(size_t)) {
     const char* found = strrchr(fullname, (int) '/');
 
     if (found) {
         int index = (int)(found-fullname);
-        char* ret = strcpy(malloc(strlen(fullname)-index), fullname+index+1);
+        char* ret = strcpy(allocator(strlen(fullname)-index), fullname+index+1);
         return ret;
 
     } else
         return strdup(fullname);
 }
 
-char* fstripname (const char* fullname) {
-    char* stripped = malloc(strlen(fullname)+1);
+char* fstripname (const char* fullname, void* (*allocator)(size_t)) {
+    char* stripped = allocator(strlen(fullname)+1);
     int copied = 0;
 
     /*Iterate through the full name, keeping track of:
@@ -125,7 +125,11 @@ bool strprefix (const char* str, const char* prefix) {
     return !strncmp(str, prefix, strlen(prefix));
 }
 
-char* strjoin (char** strs, int n, const char* separator, void* (*allocator)(int)) {
+char* strjoin (char** strs, int n, void* (*allocator)(size_t)) {
+    return strjoinwith(strs, n, "", allocator);
+}
+
+char* strjoinwith (char** strs, int n, const char* separator, void* (*allocator)(size_t)) {
     if (n <= 0)
         return calloc(1, sizeof(char));
 
@@ -172,13 +176,14 @@ int systemf (const char* format, ...) {
     return ret;
 }
 
-#undef min
-#undef max
-
+#ifndef max
 int max (int x, int y) {
 	return x > y ? x : y;
 }
+#endif
 
-int mix (int x, int y) {
+#ifndef min
+int min (int x, int y) {
 	return x < y ? x : y;
 }
+#endif
