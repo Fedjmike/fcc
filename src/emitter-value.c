@@ -1031,10 +1031,7 @@ static operand emitterLambda (emitterCtx* ctx, irBlock** block, const ast* Node)
     ctx->curFn = oldFn;
     ctx->returnTo = oldReturnTo;
 
-    /*Return the label*/
-    operand Value = operandCreateLabel(fn->name);
-
-    return Value;
+    return operandCreateLabel(fn->name);
 }
 
 static operand emitterVAStart (emitterCtx* ctx, irBlock** block, const ast* Node) {
