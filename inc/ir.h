@@ -4,6 +4,12 @@
 
 #include "stdint.h"
 
+using "forward.h";
+
+using "vector.h";
+using "ast.h";
+using "operand.h";
+
 typedef struct sym sym;
 typedef struct architecture architecture;
 typedef struct asmCtx asmCtx;

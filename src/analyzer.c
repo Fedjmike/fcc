@@ -30,6 +30,7 @@ using "../inc/analyzer-value.h";
 using "../inc/analyzer-decl.h";
 
 using "stdlib.h";
+using "stdarg.h";
 
 static void analyzerModule (analyzerCtx* ctx, ast* Node);
 

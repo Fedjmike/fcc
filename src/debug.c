@@ -12,12 +12,26 @@
 #include "stdarg.h"
 #include "stdio.h"
 
+using "../inc/debug.h";
+
+using "../inc/type.h";
+using "../inc/ast.h";
+using "../inc/sym.h";
+using "../inc/reg.h";
+using "../inc/operand.h";
+
+using "../inc/architecture.h";
+
+using "stdlib.h";
+using "stdarg.h";
+using "stdio.h";
+
 FILE* logFile;
 debugMode mode;
 //Indentation level of debug output
 int depth;
 
-int internalErrors = 0;
+int internalErrors;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;

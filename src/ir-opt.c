@@ -4,6 +4,12 @@
 
 #include "stdio.h"
 
+using "../inc/ir.h";
+
+using "../inc/hashmap.h";
+
+using "stdio.h";
+
 static void blaFn (irFn* fn);
 static bool blaBlock (irFn* fn, intset/*<irBlock*>*/* done, irBlock* block);
 

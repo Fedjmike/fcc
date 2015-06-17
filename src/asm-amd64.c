@@ -14,6 +14,7 @@ using "../inc/asm-amd64.h";
 
 using "../inc/debug.h";
 using "../inc/architecture.h";
+using "../inc/ir.h";
 using "../inc/asm.h";
 using "../inc/reg.h";
 

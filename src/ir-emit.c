@@ -11,6 +11,19 @@
 #include "stdlib.h"
 #include "stdarg.h"
 
+using "../inc/ir.h";
+
+using "../inc/vector.h";
+using "../inc/hashmap.h";
+using "../inc/sym.h";
+using "../inc/debug.h";
+using "../inc/operand.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+
+using "stdlib.h";
+using "stdarg.h";
+
 static void irEmitStaticData (irCtx* ctx, FILE* file, const irStaticData* data);
 
 static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn);

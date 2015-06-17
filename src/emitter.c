@@ -29,6 +29,7 @@ using "../inc/type.h";
 using "../inc/ast.h";
 using "../inc/sym.h";
 using "../inc/architecture.h";
+using "../inc/ir.h";
 using "../inc/operand.h";
 using "../inc/asm.h";
 using "../inc/asm-amd64.h";
@@ -36,6 +37,7 @@ using "../inc/reg.h";
 
 using "../inc/emitter-value.h";
 using "../inc/emitter-decl.h";
+using "../inc/emitter-helpers.h";
 
 using "string.h";
 using "stdlib.h";

@@ -12,12 +12,15 @@
 
 #include "stdlib.h"
 
+using "../inc/parser-decl.h";
+
 using "../inc/debug.h";
 using "../inc/sym.h";
 using "../inc/ast.h";
 using "../inc/error.h";
 
 using "../inc/lexer.h";
+using "../inc/parser.h";
 using "../inc/parser-helpers.h";
 using "../inc/parser-value.h";
 

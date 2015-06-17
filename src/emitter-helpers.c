@@ -13,6 +13,21 @@
 
 #include "stdlib.h"
 
+using "../inc/emitter-helpers.h";
+
+using "../inc/debug.h";
+using "../inc/type.h";
+using "../inc/sym.h";
+using "../inc/ir.h";
+using "../inc/reg.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+
+using "../inc/emitter.h";
+using "../inc/emitter-value.h";
+
+using "stdlib.h";
+
 static int emitterScopeAssignOffsets (const architecture* arch, sym* Scope, int offset);
 
 irFn* emitterSetFn (emitterCtx* ctx, irFn* fn) {

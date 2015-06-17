@@ -6,6 +6,14 @@
 #include "string.h"
 #include "stdarg.h"
 
+using "../std/std.h";
+using "../std/stdlib.h";
+
+using "stdio.h";
+using "stdlib.h";
+using "string.h";
+using "stdarg.h";
+
 /* ::::MISC:::: */
 
 char* filext (const char* name, const char* extension, void* (*allocator)(size_t)) {

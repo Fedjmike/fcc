@@ -10,6 +10,18 @@
 #include "string.h"
 #include "stdarg.h"
 
+using "../inc/ir.h";
+
+using "../inc/vector.h";
+using "../inc/debug.h";
+using "../inc/operand.h";
+using "../inc/asm.h";
+using "../inc/asm-amd64.h";
+
+using "stdlib.h";
+using "string.h";
+using "stdarg.h";
+
 static void irAddFn (irCtx* ctx, irFn* fn);
 static void irAddData (irCtx* ctx, irStaticData* data);
 static void irAddROData (irCtx* ctx, irStaticData* data);

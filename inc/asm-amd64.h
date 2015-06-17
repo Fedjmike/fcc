@@ -7,6 +7,8 @@ using "forward.h";
 
 using "operand.h";
 
+using "stdio.h";
+
 typedef struct asmCtx asmCtx;
 typedef struct irBlock irBlock;
 typedef struct irCtx irCtx;

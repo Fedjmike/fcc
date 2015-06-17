@@ -1,6 +1,9 @@
 #include "operand.h"
 
+using "operand.h";
+
 typedef struct ast ast;
+typedef struct sym sym;
 typedef struct architecture architecture;
 typedef struct irBlock irBlock;
 typedef struct irFn irFn;

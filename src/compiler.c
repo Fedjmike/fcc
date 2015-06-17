@@ -17,6 +17,8 @@
 
 using "../inc/compiler.h";
 
+using "../std/std.h";
+
 using "../inc/hashmap.h";
 using "../inc/debug.h";
 using "../inc/ast.h";

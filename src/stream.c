@@ -6,6 +6,14 @@
 #include "stdlib.h"
 #include "stdio.h"
 
+using "../inc/stream.h";
+
+using "../std/std.h";
+
+using "string.h";
+using "stdlib.h";
+using "stdio.h";
+
 streamCtx* streamInit (const char* filename) {
     streamCtx* ctx = malloc(sizeof(streamCtx));
     ctx->file = fopen(filename, "r");

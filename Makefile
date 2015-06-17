@@ -57,7 +57,7 @@ POSTBUILD = @[ -e $@ ] && du -hs $@; echo
 #
 
 HEADERS = $(wildcard inc/*.h) defaults.h
-OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(filter-out src/lexerself.c, $(filter-out src/regself.c, $(wildcard src/*.c))))
+OBJS = $(patsubst src/%.c, obj/$(CONFIG)/%.o, $(filter-out src/lexerself.c, $(wildcard src/*.c)))
 
 OBJ = obj/$(CONFIG)
 BIN = bin/$(CONFIG)

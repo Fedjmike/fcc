@@ -7,6 +7,7 @@
 using "../inc/hashmap.h";
 
 using "stdlib.h";
+using "stdio.h";
 using "string.h";
 
 static intptr_t hashstr (const char* key, int mapsize);

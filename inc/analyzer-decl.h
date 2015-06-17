@@ -1,3 +1,5 @@
+#include "../std/std.h"
+
 using "forward.h";
 
 typedef struct type type;
