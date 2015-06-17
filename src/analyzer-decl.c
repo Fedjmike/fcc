@@ -328,7 +328,9 @@ static const type* analyzerDeclAssignBOP (analyzerCtx* ctx, ast* Node, type* bas
     if (Node->l->symbol->tag == symTypedef)
         errorIllegalInit(ctx, Node, "a typedef");
 
-    /*The initialization is illegal if /this/ is an extern decl*/
+    /*The initialization is illegal if this decl is extern,
+      irrespective of whether the symbol has previously been
+      declared extern*/
     else if (storage == storageExtern)
         errorIllegalInit(ctx, Node, "an extern variable");
 
