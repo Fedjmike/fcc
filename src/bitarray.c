@@ -2,6 +2,10 @@
 
 #include "stdlib.h"
 
+using "../inc/bitarray.h";
+
+using "stdlib.h";
+
 enum {
     bitsPerWord = 8*sizeof(bitarrayWord)
 };

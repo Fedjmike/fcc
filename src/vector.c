@@ -5,6 +5,13 @@
 #include "stdlib.h"
 #include "string.h"
 
+using "../inc/vector.h";
+
+using "../std/std.h";
+
+using "stdlib.h";
+using "string.h";
+
 vector* vectorInit (vector* v, int initialCapacity) {
     v->length = 0;
     v->capacity = initialCapacity;

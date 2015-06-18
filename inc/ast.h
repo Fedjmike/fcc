@@ -10,6 +10,8 @@
 
 using "forward.h";
 
+using "sym.h";
+
 using "parser.h";
 
 typedef struct type type;

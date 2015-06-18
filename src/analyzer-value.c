@@ -25,6 +25,7 @@ using "../inc/error.h";
 
 using "../inc/compiler.h";
 
+using "../inc/eval.h";
 using "../inc/analyzer.h";
 using "../inc/analyzer-decl.h";
 

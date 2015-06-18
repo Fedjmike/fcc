@@ -26,16 +26,19 @@ using "../inc/emitter-value.h";
 using "../std/std.h";
 
 using "../inc/debug.h";
+using "../inc/bitarray.h";
 using "../inc/type.h";
 using "../inc/ast.h";
 using "../inc/sym.h";
 using "../inc/architecture.h";
+using "../inc/ir.h";
 using "../inc/operand.h";
 using "../inc/asm.h";
 using "../inc/asm-amd64.h";
 using "../inc/reg.h";
 
 using "../inc/emitter.h";
+using "../inc/emitter-helpers.h";
 
 using "stdio.h";
 using "stdlib.h";
