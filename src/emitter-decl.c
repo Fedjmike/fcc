@@ -173,9 +173,8 @@ static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* N
         if (Node->r->tag == astLiteral && Node->r->litTag == literalInit)
             emitterCompoundInit(ctx, block, Node->r, L);
 
-        else {
+        else
             emitterValueSuggest(ctx, block, Node->r, &L);
-        }
 
     } else if (Node->symbol->storage != storageExtern)
         debugErrorUnhandled("emitterDeclAssignBOP", "storage tag", storageTagGetStr(Node->symbol->storage));

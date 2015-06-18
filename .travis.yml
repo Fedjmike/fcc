@@ -1,7 +1,9 @@
 language: c
 compiler: clang
 env: CONFIG=release OS=linux ARCH=32
-before_install: sudo apt-get install g++-multilib valgrind
+before_install: >
+    sudo apt-get -qq update &&
+    sudo apt-get -qq install gcc-multilib valgrind
 branches:
     except: ir
 script: >

@@ -40,10 +40,10 @@ static void verrorf (const char* format, va_list args) {
 
     const char* colourString = consoleWhite;
     const char* colourNumber = consoleMagenta;
-    const char* colourOp = consoleCyan;
-    const char* colourType = consoleGreen;
-    const char* colourIdent = consoleWhite;
-    const char* colourTag = consoleCyan;
+    const char* colourOp     = consoleCyan;
+    const char* colourType   = consoleGreen;
+    const char* colourIdent  = consoleWhite;
+    const char* colourTag    = consoleCyan;
 
     int flen = strlen(format);
 

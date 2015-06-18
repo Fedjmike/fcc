@@ -40,8 +40,7 @@ typedef struct type {
         /*typeInvalid*/
         /*typeBasic*/
         const sym* basic;
-        /*typePtr
-          typeArray*/
+        /*typePtr typeArray*/
         struct {
             type* base;
             ///Size of the array
@@ -85,8 +84,8 @@ type* typeDerivePtr (const type* base);
 type* typeDeriveArray (const type* base, int size);
 type* typeDeriveReturn (const type* fn);
 
-/*All the following typeIsXXX respond positively when given a
-  typeInvalid, so that one error doesn't cascade. If it is important
+/*All the following typeIsXXX respond positively when given an
+  invalid, so that one error doesn't cascade. If it is important
   to know the actual tag of a type (e.g. directly accessing a field)
   first check for typeInvalid then continue.*/
 

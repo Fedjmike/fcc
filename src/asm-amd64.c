@@ -23,11 +23,15 @@ void asmFileEpilogue (asmCtx* ctx) {
     (void) ctx;
 }
 
-void asmFnLinkage (FILE* file, const char* name) {
+void asmFnLinkageBegin (FILE* file, const char* name) {
     /*Symbol, linkage and alignment*/
     fprintf(file, ".balign 16\n");
     fprintf(file, ".globl %s\n", name);
     fprintf(file, "%s:\n", name);
+}
+
+void asmFnLinkageEnd (FILE* file, const char* name) {
+    (void) file, (void) name;
 }
 
 void asmFnPrologue (irCtx* ir, irBlock* block, int localSize) {

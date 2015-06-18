@@ -113,7 +113,7 @@ static evalResult evalBOP (const architecture* arch, const ast* Node) {
 }
 
 static evalResult evalUOP (const architecture* arch, const ast* Node) {
-    if (Node->o == opAddressOf || Node->o == opDeref
+    if (   Node->o == opAddressOf || Node->o == opDeref
         || Node->o == opPostIncrement || Node->o == opPostDecrement
         || Node->o == opPreIncrement || Node->o == opPreDecrement)
         return (evalResult) {false, 0};
