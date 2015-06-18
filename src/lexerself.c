@@ -27,9 +27,9 @@ static bool lexerTryEatNext (lexerCtx* ctx, char c);
 
 static keywordTag lookKeyword (const char* str);
 
-lexerCtx* lexerInit (FILE* file) {
+lexerCtx* lexerInit (const char* filename) {
     lexerCtx* ctx = malloc(sizeof(lexerCtx));
-    ctx->stream = streamInit(file);
+    ctx->stream = streamInit(filename);
     ctx->line = 1;
     ctx->lineChar = 1;
 
@@ -199,7 +199,8 @@ void lexerNext (lexerCtx* ctx) {
         ctx->token = tokenPunct;
 
         enum {tableSize = sizeof(ctx->buffer[0])*256};
-        punctTag (*table[tableSize])(lexerCtx*);
+        typedef punctTag (*charHandler)(lexerCtx*);
+        charHandler table[tableSize];
         memset(table, 0, sizeof(table));
 
         table['{'] = [](lexerCtx*) (punctLBrace);
@@ -268,7 +269,7 @@ void lexerNext (lexerCtx* ctx) {
         table['/'] = [](lexerCtx* ctx) (lexerTryEatNext(ctx, '=') ? punctDivideAssign : punctDivide);
         table['%'] = [](lexerCtx* ctx) (lexerTryEatNext(ctx, '=') ? punctModuloAssign : punctModulo);
 
-        auto fn = table[(int) ctx->buffer[0]];
+        charHandler fn = table[(int) ctx->buffer[0]];
 
         if (fn != 0)
             ctx->punct = fn(ctx);
