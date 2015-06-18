@@ -35,7 +35,16 @@ typedef enum regIndex {
     regMax
 } regIndex;
 
-extern reg regs[regMax];
+#if 1
+#undef using
+#define using extern reg regs[regMax]; USINGIMPL(CONCAT(__usingcompatstr_, __COUNTER__))
+#else
+extern reg* regs;
+#endif
+
+using "forward.h";
+#undef using
+#define using USINGIMPL(CONCAT(__usingcompatstr_, __COUNTER__))
 
 /**
  * Check if a register is in use
