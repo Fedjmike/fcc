@@ -80,13 +80,13 @@ $(OUT): $(OBJS)
 	@echo " [LD] $@"
 	@$(CC) $(LDFLAGS) $(OBJS) -o $@
 	$(POSTBUILD)
-	
+
 clean:
 	rm -f defaults.h
 	rm -f obj/*/*.o
 	rm -f bin/*/$(BINNAME)*
 	rm -f bin/tests/*
-	
+
 print:
 	@echo "===================="
 	@echo " OS     : $(OS)"
@@ -98,7 +98,7 @@ print:
 	@echo " OBJS   : $(OBJS)"
 	@echo " OUT    : $(OUT)"
 	@echo "===================="
-	
+
 #
 # Tests
 #
@@ -113,13 +113,13 @@ ifneq ($(shell command -v valgrind; echo $?),)
 endif
 
 tests: $(TESTS)
-	
+
 bin/tests/%-error.txt: tests/%-error.c $(FCC)
 	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
 	@$(VALGRIND) $(FCC) $(TFLAGS) $< >$@; [ $$? -eq 1 ]
 	$(POSTBUILD)
-	
+
 bin/tests/%: tests/%.c $(FCC)
 	@mkdir -p bin/tests
 	@echo " [$(FCC)] $@"
@@ -128,7 +128,7 @@ bin/tests/%: tests/%.c $(FCC)
 	@echo " [$@]"
 	@$@ $(SILENT)
 	$(POSTBUILD)
-	
+
 print-tests:
 	@echo "===================="
 	@echo " FCC     : $(FCC)"
@@ -147,10 +147,10 @@ bin/self/%: $(FCC) src/lexerself.c src/regself.c
 	@echo " [$(FCC)] $@"
 	@$(VALGRIND) $(FCC) -I tests/include `find src/*.[c] | egrep -v "lexer.c|reg.c"` -o $@
 	$(POSTBUILD)
-	
-#	
+
 #
 #
-	
+#
+
 .PHONY: all clean print print-tests tests selfhost
 .SUFFIXES:
