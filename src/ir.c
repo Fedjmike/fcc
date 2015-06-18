@@ -14,17 +14,17 @@ static void irAddFn (irCtx* ctx, irFn* fn);
 static void irAddData (irCtx* ctx, irStaticData* data);
 static void irAddROData (irCtx* ctx, irStaticData* data);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static irStaticData* irStaticDataCreate (irCtx* ctx, bool ro, irStaticDataTag tag);
 static void irStaticDataDestroy (irStaticData* data);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static void irFnDestroy (irFn* fn);
 static void irAddBlock (irFn* fn, irBlock* block);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static void irBlockDestroy (irBlock* block);
 static void irAddInstr (irBlock* block, irInstr* instr);
@@ -35,17 +35,17 @@ static void irBlockTerminate (irBlock* block, irTerm* term);
  */
 static void irBlockLink (irBlock* from, irBlock* to);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static irInstr* irInstrCreate (irInstrTag tag, irBlock* block);
 static void irInstrDestroy (irInstr* instr);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static irTerm* irTermCreate (irTermTag tag, irBlock* block);
 static void irTermDestroy (irTerm* term);
 
-/*:::: ::::*/
+/*==== ====*/
 
 static void irReturn (irBlock* block);
 
@@ -62,7 +62,7 @@ enum {
     irBlockSuccNo = 2
 };
 
-/*:::: IR CONTEXT ::::*/
+/*==== IR context ====*/
 
 void irInit (irCtx* ctx, const char* output, const architecture* arch) {
     vectorInit(&ctx->fns, irCtxFnNo);
@@ -100,7 +100,7 @@ static char* irCreateLabel (irCtx* ctx) {
     return label;
 }
 
-/*:::: FUNCTION INTERNALS ::::*/
+/*==== Function internals ====*/
 
 irFn* irFnCreate (irCtx* ctx, const char* name, int stacksize) {
     irFn* fn = malloc(sizeof(irFn));
@@ -133,7 +133,7 @@ static void irAddBlock (irFn* fn, irBlock* block) {
     block->nthChild = vectorPush(&fn->blocks, block);
 }
 
-/*:::: BLOCK INTERNALS ::::*/
+/*==== Block internals ====*/
 
 irBlock* irBlockCreate (irCtx* ctx, irFn* fn) {
     irBlock* block = malloc(sizeof(irBlock));
@@ -215,7 +215,7 @@ static void irBlockLink (irBlock* from, irBlock* to) {
     vectorPush(&to->preds, from);
 }
 
-/*:::: STATIC DATA INTERNALS ::::*/
+/*==== Static data internals ====*/
 
 static irStaticData* irStaticDataCreate (irCtx* ctx, bool ro, irStaticDataTag tag) {
     irStaticData* data = malloc(sizeof(irStaticData));
@@ -235,7 +235,7 @@ static void irStaticDataDestroy (irStaticData* data) {
     free(data);
 }
 
-/*:::: STATIC DATA ::::*/
+/*==== Static data ====*/
 
 void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial) {
     irStaticData* data = irStaticDataCreate(ctx, false, dataRegular);
@@ -253,7 +253,7 @@ operand irStringConstant (irCtx* ctx, const char* str) {
     return operandCreateLabelOffset(data->label);
 }
 
-/*:::: INSTRUCTION INTERNALS ::::*/
+/*==== Instruction internals ====*/
 
 static irInstr* irInstrCreate (irInstrTag tag, irBlock* block) {
     irInstr* instr = malloc(sizeof(irInstr));
@@ -274,7 +274,7 @@ static void irInstrDestroy (irInstr* instr) {
     free(instr);
 }
 
-/*:::: TERMINAL INSTRUCTION INTERNALS ::::*/
+/*==== Terminal instruction internals ====*/
 
 static irTerm* irTermCreate (irTermTag tag, irBlock* block) {
     irTerm* term = malloc(sizeof(irTerm));
@@ -297,7 +297,7 @@ static void irTermDestroy (irTerm* term) {
     free(term);
 }
 
-/*:::: TERMINAL INSTRUCTIONS ::::*/
+/*==== Terminal instructions ====*/
 
 void irJump (irBlock* block, irBlock* to) {
     irTerm* term = irTermCreate(termJump, block);
@@ -340,7 +340,7 @@ static void irReturn (irBlock* block) {
     irTermCreate(termReturn, block);
 }
 
-/*:::: TRANSFORMATIONS ::::*/
+/*==== Transformations ====*/
 
 void irBlockDelete (irFn* fn, irBlock* block) {
     /*Remove it from the fn's vector*/

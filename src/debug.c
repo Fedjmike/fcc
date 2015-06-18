@@ -87,7 +87,7 @@ void debugVarOut (const char* format, va_list args) {
     #endif
 }
 
-/*:::: INTERNAL ERRORS ::::*/
+/*==== Internal errors ====*/
 
 void debugError (const char* functionName,
                  const char* format, ...) {
@@ -131,7 +131,7 @@ void debugErrorUnhandledChar (const char* functionName,
     debugError(functionName, "unhandled %s: '%c'", className, classChar);
 }
 
-/*:::: REPORTING INTERNAL STRUCTURES ::::*/
+/*==== Reporting internal structures ====*/
 
 void report (const char* str) {
     debugOut("%s\n", str);

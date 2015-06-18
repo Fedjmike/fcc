@@ -113,7 +113,7 @@ bool hashset_test (hashset* set, void* element) {
     return set->buffer[hashset_find(set, element)] == element;
 }
 
-/*:::: Iterators ::::*/
+/*==== Iterators ====*/
 
 hashset_iter hashset_begin (hashset* set) {
     return hashset_next((hashset_iter) {set, -1});

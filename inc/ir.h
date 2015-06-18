@@ -10,7 +10,7 @@ typedef struct asmCtx asmCtx;
 
 typedef struct irBlock irBlock;
 
-/*::::  ::::*/
+/*====  ====*/
 
 typedef enum irInstrTag {
     instrUndefined,
@@ -26,7 +26,7 @@ typedef struct irInstr {
     operand dest, l, r;
 } irInstr;
 
-/*::::  ::::*/
+/*====  ====*/
 
 typedef enum irTermTag {
     termUndefined,
@@ -61,7 +61,7 @@ typedef struct irTerm {
     };
 } irTerm;
 
-/*::::  ::::*/
+/*====  ====*/
 
 typedef enum irStaticDataTag {
     dataUndefined,
@@ -88,7 +88,7 @@ typedef struct irStaticData {
     };
 } irStaticData;
 
-/*::::  ::::*/
+/*====  ====*/
 
 typedef struct irBlock {
     vector/*<irInstr*>*/ instrs;
@@ -138,28 +138,28 @@ irBlock* irBlockCreate (irCtx* ctx, irFn* fn);
 
 void irBlockOut (irBlock* block, const char* format, ...);
 
-/*:::: STATIC DATA ::::*/
+/*==== Static data ====*/
 
 void irStaticValue (irCtx* ctx, const char* label, bool global, int size, intptr_t initial);
 operand irStringConstant (irCtx* ctx, const char* str);
 
-/*:::: TERMINAL INSTRUCTIONS ::::*/
+/*==== Terminal instructions ====*/
 
 void irJump (irBlock* block, irBlock* to);
 void irBranch (irBlock* block, operand cond, irBlock* ifTrue, irBlock* ifFalse);
 void irCall (irBlock* block, sym* to, irBlock* ret);
 void irCallIndirect (irBlock* block, operand to, irBlock* ret);
 
-/*:::: ::::*/
+/*==== ====*/
 
 int irBlockGetPredNo (irFn* fn, irBlock* block);
 int irBlockGetSuccNo (irBlock* block);
 
-/*:::: TRANSFORMATIONS ::::*/
+/*==== Transformations ====*/
 
 void irBlockDelete (irFn* fn, irBlock* block);
 void irBlocksCombine (irFn* fn, irBlock* pred, irBlock* succ);
 
-/*:::: ::::*/
+/*==== ====*/
 
 void irBlockLevelAnalysis (irCtx* ctx);

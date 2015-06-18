@@ -55,7 +55,7 @@ typedef generalmap intmap;
 typedef generalmap hashset;
 typedef generalmap intset;
 
-/*:::: HASHMAP ::::*/
+/*==== hashmap ====*/
 
 typedef void (*hashmapKeyDtor)(char* key, const void* value);
 typedef void (*hashmapValueDtor)(void* value);
@@ -71,7 +71,7 @@ void hashmapMergeDup (hashmap* dest, const hashmap* src);
 
 void* hashmapMap (const hashmap* map, const char* key);
 
-/*:::: INTMAP ::::*/
+/*==== intmap ====*/
 
 typedef void (*intmapValueDtor)(void* value, int key);
 
@@ -85,7 +85,7 @@ void intmapMerge (intmap* dest, const intmap* src);
 
 void* intmapMap (const intmap* map, intptr_t element);
 
-/*:::: HASHSET ::::*/
+/*==== hashset ====*/
 
 typedef void (*hashsetDtor)(char* element);
 
@@ -100,7 +100,7 @@ void hashsetMergeDup (hashset* dest, const hashset* src);
 
 bool hashsetTest (const hashset* set, const char* element);
 
-/*:::: INTSET ::::*/
+/*==== intset ====*/
 
 intset* intsetInit (intset* set, int size);
 void intsetFree (intset* set);

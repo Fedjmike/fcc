@@ -34,7 +34,7 @@ static bool typeQualIsEqual (typeQualifiers L, typeQualifiers R);
 
 static char* typeQualifiersToStr (typeQualifiers qual, const char* embedded);
 
-/*:::: TYPE CTORS/DTOR ::::*/
+/*==== Ctors/dtors ====*/
 
 static typeQualifiers typeQualifiersCreate () {
     return (typeQualifiers) {false};
@@ -141,7 +141,7 @@ type* typeDeepDuplicate (const type* DT) {
     return copy;
 }
 
-/*:::: TYPE MISC HELPERS ::::*/
+/*==== Misc. helpers ====*/
 
 static type* typeTryThroughTypedef (const type* DT) {
     if (DT->tag == typeBasic && DT->basic && DT->basic->tag == symTypedef)
@@ -214,7 +214,7 @@ int typeGetArraySize (const type* DT) {
     return DT->tag == typeArray && DT->array != arraySizeError ? DT->array : 0;
 }
 
-/*:::: TYPE MODIFICATION ::::*/
+/*==== Modification ====*/
 
 bool typeSetArraySize (type* DT, int size) {
     DT = typeTryThroughTypedef(DT);
@@ -226,7 +226,7 @@ bool typeSetArraySize (type* DT, int size) {
     return true;
 }
 
-/*:::: TYPE DERIVATION ::::*/
+/*==== Derivation (deep copies with modifications) ====*/
 
 type* typeDeriveFrom (const type* DT) {
     type* New = typeDeepDuplicate(DT);
@@ -293,7 +293,7 @@ type* typeDeriveReturn (const type* fn) {
         return typeDeepDuplicate(fn->returnType);
 }
 
-/*:::: TYPE CLASSIFICATION ::::*/
+/*==== Type classification ====*/
 
 bool typeIsBasic (const type* DT) {
     DT = typeTryThroughTypedef(DT);
@@ -402,7 +402,7 @@ bool typeIsCondition (const type* DT) {
            || typeIsPtr(DT) || typeIsInvalid(DT);
 }
 
-/*:::: TYPE COMPARISON ::::*/
+/*==== Comparisons ====*/
 
 bool typeIsCompatible (const type* DT, const type* Model) {
     DT = typeTryThroughTypedef(DT);
@@ -492,7 +492,7 @@ bool typeIsEqual (const type* L, const type* R) {
     }
 }
 
-/*:::: MISC INTERFACES ::::*/
+/*==== Misc. interfaces ====*/
 
 const char* typeTagGetStr (typeTag tag) {
     if (tag == typeBasic) return "typeBasic";

@@ -13,7 +13,7 @@
 
 static char* tokenTagGetStr (tokenTag Token);
 
-/*:::: SCOPE ::::*/
+/*==== Scope ====*/
 
 sym* scopeSet (parserCtx* ctx, sym* scope) {
     sym* old = ctx->scope;
@@ -21,7 +21,7 @@ sym* scopeSet (parserCtx* ctx, sym* scope) {
     return old;
 }
 
-/*:::: TOKEN HANDLING ::::*/
+/*==== Token handling ====*/
 
 bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword) {
     /*Keyword is keywordUndefined if not keyword token*/

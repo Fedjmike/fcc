@@ -23,7 +23,7 @@ static void stateSetExpect (optionsState* state, expectTag expect, const char* o
 static void optionsParseMacro (config* conf, optionsState* state, const char* option);
 static void optionsParseMicro (config* conf, optionsState* state, const char* option);
 
-/*:::: PROGRAM CONFIGURATION ::::*/
+/*==== Program configuration ====*/
 
 config configCreate () {
     config conf;
@@ -62,7 +62,7 @@ static void configSetMode (config* conf, configMode mode, const char* option) {
     conf->mode = mode;
 }
 
-/*:::: OPTIONS STATE ::::*/
+/*==== Options state ====*/
 
 static void stateSetExpect (optionsState* state, expectTag expect, const char* option) {
     if (state->expect != expectNothing)
@@ -71,7 +71,7 @@ static void stateSetExpect (optionsState* state, expectTag expect, const char* o
     state->expect = expect;
 }
 
-/*:::: OPTIONS PARSER ::::*/
+/*==== Options parser ====*/
 
 static void optionsParseMacro (config* conf, optionsState* state, const char* option) {
     (void) state;

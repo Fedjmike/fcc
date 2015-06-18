@@ -7,7 +7,7 @@ typedef struct parserCtx parserCtx;
 
 sym* scopeSet (parserCtx* ctx, sym* scope);
 
-/*::::*/
+/*====*/
 
 bool tokenIsKeyword (const parserCtx* ctx, keywordTag keyword);
 bool tokenIsPunct (const parserCtx* ctx, punctTag punct);
@@ -17,12 +17,12 @@ bool tokenIsString (const parserCtx* ctx);
 bool tokenIsChar (const parserCtx* ctx);
 bool tokenIsDecl (const parserCtx* ctx);
 
-/*::::*/
+/*====*/
 
 void tokenNext (parserCtx* ctx);
 void tokenSkipMaybe (parserCtx* ctx);
 
-/*::::*/
+/*====*/
 
 void tokenMatch (parserCtx* ctx);
 char* tokenDupMatch (parserCtx* ctx);

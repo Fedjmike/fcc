@@ -15,7 +15,7 @@ static void archSetupDriverFlags (architecture* arch, osTag os);
 static void manglerLinux (sym* Symbol);
 static void manglerWindows (sym* Symbol);
 
-/*:::: CTOR/DTOR ::::*/
+/*==== Ctor/dtor ====*/
 
 void archInit (architecture* arch) {
     arch->wordsize = 0;
@@ -40,7 +40,7 @@ void archFree (architecture* arch) {
     arch->ldflags = 0;
 }
 
-/*:::: SETUP ::::*/
+/*==== Setup ====*/
 
 void archSetup (architecture* arch, osTag os, int wordsize) {
     /*Most details got from Agner Fog's calling convention manual;
@@ -118,7 +118,7 @@ static void archSetupDriverFlags (architecture* arch, osTag os) {
     }
 }
 
-/*:::: ARCH SPECIFICS ::::*/
+/*==== Arch specifics ====*/
 
 static void manglerLinux (sym* Symbol) {
     Symbol->label = strdup(Symbol->ident);

@@ -28,7 +28,7 @@ static void generalmapMerge (generalmap* dest, const generalmap* src,
 static void* generalmapMap (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
 static bool generalmapTest (const generalmap* map, const char* key, generalmapHash hashf, generalmapCmp cmp);
 
-/*:::: HASH FUNCTIONS ::::*/
+/*==== Hash functions ====*/
 
 static intptr_t hashstr (const char* key, int mapsize) {
     /*Jenkin's One-at-a-Time Hash
@@ -66,7 +66,7 @@ static intptr_t hashint (intptr_t element, int mapsize) {
     return hash & mask;
 }
 
-/*:::: GENERALMAP ::::*/
+/*==== generalmap ====*/
 
 static bool generalmapIsMatch (const generalmap* map, int index, const char* key, int hash, generalmapCmp cmp);
 
@@ -232,7 +232,7 @@ static bool generalmapTest (const generalmap* map, const char* key, generalmapHa
     return generalmapIsMatch(map, index, key, hash, cmp);
 }
 
-/*:::: HASHMAP ::::*/
+/*==== HASHMAP ====*/
 
 hashmap* hashmapInit (hashmap* map, int size) {
     return generalmapInit(map, size, true);
@@ -262,7 +262,7 @@ void* hashmapMap (const hashmap* map, const char* key) {
     return generalmapMap(map, key, hashstr, strcmp);
 }
 
-/*:::: INTMAP ::::*/
+/*==== intmap ====*/
 
 intmap* intmapInit (intmap* map, int size) {
     return generalmapInit(map, size, false);
@@ -288,7 +288,7 @@ void* intmapMap (const intmap* map, intptr_t element) {
     return generalmapMap(map, (void*) element, (generalmapHash) hashint, 0);
 }
 
-/*:::: HASHSET ::::*/
+/*==== hashset ====*/
 
 hashset* hashsetInit (hashset* set, int size) {
     return generalmapInit(set, size, true);
@@ -319,7 +319,7 @@ bool hashsetTest (const hashset* set, const char* element) {
 }
 
 
-/*:::: INTSET ::::*/
+/*==== intset ====*/
 
 intset* intsetInit (intset* set, int size) {
     return generalmapInit(set, size, false);
