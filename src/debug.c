@@ -35,7 +35,6 @@ int internalErrors;
 
 void debugInit (FILE* nlog) {
     logFile = nlog;
-    logFile = stdout;
     debugSetMode(debugMinimal);
 }
 

@@ -50,10 +50,6 @@ void asmFnPrologue (irCtx* ir, irBlock* block, int localSize) {
     asmPush(ir, block, ctx->basePtr);
     asmMove(ir, block, ctx->basePtr, ctx->stackPtr);
 
-    asmOutLn(ctx, "push ebx");
-    asmOutLn(ctx, "push esi");
-    asmOutLn(ctx, "push edi");
-
     if (localSize != 0)
         asmBOP(ir, block, bopSub, ctx->stackPtr, operandCreateLiteral(localSize));
 
