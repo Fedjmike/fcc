@@ -6,8 +6,8 @@
 #include "../inc/debug.h"
 
 #include "../inc/lexer.h"
-#include "../inc/parser.h"
-#include "../inc/analyzer.h"
+#include "../inc/parser-internal.h"
+#include "../inc/analyzer-internal.h"
 
 #include "stdarg.h"
 #include "stdio.h"

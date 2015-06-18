@@ -1,4 +1,4 @@
-#include "../inc/emitter-decl.h"
+#include "../inc/emitter-internal.h"
 
 #include "../std/std.h"
 
@@ -10,8 +10,6 @@
 #include "../inc/ir.h"
 
 #include "../inc/eval.h"
-#include "../inc/emitter.h"
-#include "../inc/emitter-value.h"
 
 #include "assert.h"
 

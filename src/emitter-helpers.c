@@ -1,4 +1,4 @@
-#include "../inc/emitter-helpers.h"
+#include "../inc/emitter-internal.h"
 
 #include "../inc/debug.h"
 #include "../inc/type.h"
@@ -7,9 +7,6 @@
 #include "../inc/reg.h"
 #include "../inc/asm.h"
 #include "../inc/asm-amd64.h"
-
-#include "../inc/emitter.h"
-#include "../inc/emitter-value.h"
 
 #include "stdlib.h"
 

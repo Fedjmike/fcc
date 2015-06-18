@@ -1,4 +1,4 @@
-#include "../inc/parser-value.h"
+#include "../inc/parser-internal.h"
 
 #include "../inc/debug.h"
 #include "../inc/sym.h"
@@ -6,9 +6,6 @@
 #include "../inc/error.h"
 
 #include "../inc/lexer.h"
-#include "../inc/parser.h"
-#include "../inc/parser-helpers.h"
-#include "../inc/parser-decl.h"
 
 #include "stdlib.h"
 #include "string.h"

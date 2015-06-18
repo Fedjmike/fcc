@@ -4,7 +4,7 @@
 
 #include "sym.h"
 
-#include "parser.h"
+#include "parser-internal.h"
 
 #include "stdint.h"
 

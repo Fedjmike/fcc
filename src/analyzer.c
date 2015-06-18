@@ -1,4 +1,5 @@
 #include "../inc/analyzer.h"
+#include "../inc/analyzer-internal.h"
 
 #include "../inc/debug.h"
 #include "../inc/type.h"
@@ -8,9 +9,6 @@
 #include "../inc/architecture.h"
 
 #include "../inc/compiler.h"
-
-#include "../inc/analyzer-value.h"
-#include "../inc/analyzer-decl.h"
 
 #include "stdlib.h"
 #include "stdarg.h"

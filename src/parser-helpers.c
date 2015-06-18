@@ -1,11 +1,9 @@
-#include "../inc/parser-helpers.h"
+#include "../inc/parser-internal.h"
 
 #include "../inc/debug.h"
 #include "../inc/sym.h"
 #include "../inc/ast.h"
 #include "../inc/error.h"
-
-#include "../inc/parser.h"
 
 #include "stdlib.h"
 #include "stdarg.h"

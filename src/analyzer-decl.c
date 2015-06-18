@@ -1,4 +1,4 @@
-#include "../inc/analyzer-decl.h"
+#include "../inc/analyzer-internal.h"
 
 #include "../inc/debug.h"
 #include "../inc/type.h"
@@ -7,9 +7,6 @@
 #include "../inc/error.h"
 
 #include "../inc/eval.h"
-
-#include "../inc/analyzer.h"
-#include "../inc/analyzer-value.h"
 
 #include "stdlib.h"
 

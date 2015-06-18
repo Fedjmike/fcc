@@ -53,7 +53,7 @@ void hashset_destroy (hashset* set) {
 
 static int hashset_hash (hashset* set, void* element) {
     int hash = (int) element;
-    
+
     while (hash > set->size)
         hash -= set->size;
 
@@ -162,6 +162,6 @@ int main (int argc, char** argv) {
     printf("Count: %d\n", count);
 
     hashset_destroy(&set);
-    
+
     return 0;
 }
