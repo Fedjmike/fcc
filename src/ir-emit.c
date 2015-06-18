@@ -78,8 +78,6 @@ static void irEmitBlockChain (irCtx* ctx, FILE* file,
 static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
     debugEnter(fn->name);
 
-    asmFnLinkage(file, fn->name);
-
     intset/*<irBlock*>*/ done;
     intsetInit(&done, fn->blocks.length*2);
 
@@ -90,6 +88,9 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
     irEmitBlockChain(ctx, file, &done, &priority, fn->epilogue);
 
     /*Emit*/
+
+    asmFnLinkageBegin(file, fn->name);
+
     for (int j = 0; j < priority.length; j++) {
         irBlock *prevblock = vectorGet(&priority, j-1),
                 *block = vectorGet(&priority, j),
@@ -97,6 +98,9 @@ static void irEmitFn (irCtx* ctx, FILE* file, const irFn* fn) {
         irEmitBlock(ctx, file, prevblock, block, nextblock);
     }
 
+    asmFnLinkageEnd(file, fn->name);
+
+    /*Cleanup*/
     vectorFree(&priority);
     intsetFree(&done);
 

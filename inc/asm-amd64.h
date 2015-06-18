@@ -31,7 +31,8 @@ typedef enum uoperation {
 void asmFilePrologue (asmCtx* ctx);
 void asmFileEpilogue (asmCtx* ctx);
 
-void asmFnLinkage (FILE* file, const char* name);
+void asmFnLinkageBegin (FILE* file, const char* name);
+void asmFnLinkageEnd (FILE* file, const char* name);
 
 void asmFnPrologue (irCtx* ir, irBlock* block, int localSize);
 void asmFnEpilogue (irCtx* ir, irBlock* block);
