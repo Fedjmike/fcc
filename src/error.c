@@ -47,8 +47,12 @@ static void verrorf (const char* format, va_list args) {
 
     int flen = strlen(format);
 
+    int upto = 0;
+
     for (int i = 0; i < flen; i++) {
         if (format[i] == '$') {
+            printf("%.*s", i-upto, format+upto);
+            upto = i+2;
             i++;
 
             /*Regular string*/
@@ -138,10 +142,10 @@ static void verrorf (const char* format, va_list args) {
 
             else
                 debugErrorUnhandledChar("verrorf", "format specifier", format[i]);
-
-        } else
-            putchar(format[i]);
+        }
     }
+
+    printf("%.*s", flen-upto, &format[upto]);
 }
 
 void errorParser (parserCtx* ctx, const char* format, ...) {
