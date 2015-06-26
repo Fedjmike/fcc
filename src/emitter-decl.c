@@ -17,7 +17,7 @@ static void emitterDeclBasic (emitterCtx* ctx, ast* Node);
 static void emitterStructOrUnion (emitterCtx* ctx, sym* record, int nextOffset);
 static void emitterEnum (emitterCtx* ctx, sym* Symbol);
 
-static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node);
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclAssignBOP (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclCall (emitterCtx* ctx, irBlock** block, const ast* Node);
 static void emitterDeclName (emitterCtx* ctx, const ast* Node);
@@ -109,7 +109,7 @@ static void emitterEnum (emitterCtx* ctx, sym* Symbol) {
     reportSymbol(Symbol);
 }
 
-static void emitterDeclNode (emitterCtx* ctx, irBlock** block, ast* Node) {
+static void emitterDeclNode (emitterCtx* ctx, irBlock** block, const ast* Node) {
     debugEnter(astTagGetStr(Node->tag));
 
     if (Node->tag == astInvalid || Node->tag == astEmpty)
