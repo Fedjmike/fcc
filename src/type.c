@@ -431,8 +431,8 @@ bool typeIsCompatible (const type* DT, const type* Model) {
     /*If pointer requested, allow pointers and arrays and basic numeric types*/
     } else if (typeIsPtr(Model)) {
         /*Except for fn pointers*/
-        if (typeIsFunction(Model->base) && typeIsFunction(DT))
-            return typeIsCompatible(DT, Model->base);
+        if (typeIsFunction(Model->base))
+            return typeIsFunction(DT) && typeIsCompatible(DT, Model->base);
 
         else
             return    typeIsPtr(DT) || typeIsArray(DT)
