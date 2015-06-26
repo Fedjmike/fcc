@@ -182,7 +182,7 @@ void errorAnalyzer (analyzerCtx* ctx, const ast* Node, const char* format, ...) 
     debugWait();
 }
 
-/*:::: PARSER ERRORS ::::*/
+/*==== Parser errors ====*/
 
 void errorExpected (parserCtx* ctx, const char* expected) {
     errorParser(ctx, "expected $h, found '$h'", expected, ctx->lexer->buffer);
@@ -224,7 +224,7 @@ void errorFileNotFound (parserCtx* ctx, const char* name) {
     errorParser(ctx, "file not found, '$h'", name);
 }
 
-/*:::: ANALYZER ERRORS ::::*/
+/*==== Analyzer errors ====*/
 
 void errorTypeExpected (analyzerCtx* ctx, const ast* Node, const char* where, const char* expected) {
     errorAnalyzer(ctx, Node, "$h requires $s, found $a", where, expected, Node);
